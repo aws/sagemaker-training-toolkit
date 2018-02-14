@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import sys
 import subprocess
 import logging
@@ -6,12 +8,6 @@ import traceback
 
 if __name__ == '__main__':
     try:
-        subprocess.check_call([
-            '/opt/amazon/bin/startup.sh',
-            str(sys.version_info.major),
-            str(sys.version_info.minor)])
-
-        # this import must happen after startup.sh is run or boto3 models will be missing
         import container_support as cs
         cs.configure_logging()
         logging.info("running container entrypoint")
