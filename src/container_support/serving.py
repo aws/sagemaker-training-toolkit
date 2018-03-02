@@ -37,10 +37,14 @@ class Server(object):
         cs.configure_logging()
         logger.info("creating Server instance")
         env = cs.HostingEnvironment()
+
+        env.pip_install_requirements()
         logger.info("importing user module")
         user_module = env.import_user_module() if env.user_script_name else None
+
         framework = cs.ContainerEnvironment.load_framework()
         transformer = framework.transformer(user_module)
+
         server = Server("model server", transformer)
         logger.info("returning initialized server")
         return server

@@ -19,6 +19,7 @@ INPUT_DATA_CONFIG = {
 
 HYPERPARAMETERS = {
     ContainerEnvironment.USER_SCRIPT_NAME_PARAM: 'myscript.py',
+    ContainerEnvironment.USER_REQUIREMENTS_FILE_PARAM: 'requirements.txt',
     ContainerEnvironment.USER_SCRIPT_ARCHIVE_PARAM: 's3://mybucket/code.tar.gz',
     "sagemaker_s3_uri_training": "blah/blah",
     "sagemaker_s3_uri_validation": "xxx/yyy",
@@ -37,6 +38,7 @@ def optml(subdirs=[]):
 @pytest.fixture()
 def hosting():
     os.environ[ContainerEnvironment.USER_SCRIPT_NAME_PARAM.upper()] = "myscript.py"
+    os.environ[ContainerEnvironment.USER_REQUIREMENTS_FILE_PARAM.upper()] = "requirements.txt"
     os.environ[ContainerEnvironment.USER_SCRIPT_ARCHIVE_PARAM.upper()] = "s3://mybucket/code.tar.gz"
 
     d = optml(["model"])
@@ -112,6 +114,12 @@ def test_model_server_workers(hosting):
                                    'SAGEMAKER_REGION': 'us-west-2'}):
         env = HostingEnvironment(hosting)
         assert env.model_server_workers == 2
+
+
+def test_user_requirements_file(hosting):
+    with patch.dict('os.environ', {'SAGEMAKER_CONTAINER_LOG_LEVEL': '20', 'SAGEMAKER_REGION': 'us-west-2'}):
+        env = HostingEnvironment(hosting)
+        assert env.user_requirements_file == 'requirements.txt'
 
 
 def test_container_log_level_unset(hosting):
@@ -207,6 +215,11 @@ def test_user_script_name_training(training):
     assert env.user_script_name == "myscript.py"
 
 
+def test_user_requirements_file_training(training):
+    env = TrainingEnvironment(training)
+    assert env.user_requirements_file == 'requirements.txt'
+
+
 @patch('tempfile.gettempdir')
 @patch('container_support.download_s3_resource')
 @patch('container_support.untar_directory')
@@ -226,6 +239,16 @@ def test_import_user_module(import_module, training):
     env = TrainingEnvironment(training)
     env.import_user_module()
     import_module.assert_called_with('myscript')
+
+
+@patch('os.path.exists')
+@patch('subprocess.check_output')
+def test_pip_install_requirements_training(subprocess_call, path_exists, training):
+    env = TrainingEnvironment(training)
+    path_exists.return_value = True
+
+    env.pip_install_requirements()
+    subprocess_call.assert_called_with(['pip', 'install', '-r', os.path.join(training, 'code', 'requirements.txt')])
 
 
 @patch('importlib.import_module')
@@ -248,4 +271,3 @@ def _write_resource_config(path, current_host, hosts):
 
 def _serialize_hyperparameters(hp):
     return {str(k): json.dumps(v) for (k, v) in hp.items()}
-

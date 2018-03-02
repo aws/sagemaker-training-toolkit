@@ -1,4 +1,3 @@
-import container_support as cs
 import importlib
 import json
 import logging
@@ -7,6 +6,8 @@ import os
 import subprocess
 import sys
 import tempfile
+
+import container_support as cs
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class ContainerEnvironment(object):
 
     BASE_DIRECTORY = "/opt/ml"
     USER_SCRIPT_NAME_PARAM = "sagemaker_program"
+    USER_REQUIREMENTS_FILE_PARAM = "sagemaker_requirements"
     USER_SCRIPT_ARCHIVE_PARAM = "sagemaker_submit_directory"
     CLOUDWATCH_METRICS_PARAM = "sagemaker_enable_cloudwatch_metrics"
     CONTAINER_LOG_LEVEL_PARAM = "sagemaker_container_log_level"
@@ -46,6 +48,10 @@ class ContainerEnvironment(object):
         # subclasses will override
         self.user_script_name = None
         "The filename of the python script that contains user-supplied training/hosting code."
+
+        # subclasses will override
+        self.user_requirements_file = None
+        "The filename of the text file that contains user-supplied dependencies required to be installed by pip"
 
         # subclasses will override
         self.user_script_archive = None
@@ -80,6 +86,20 @@ class ContainerEnvironment(object):
 
         user_module = importlib.import_module(script)
         return user_module
+
+    def pip_install_requirements(self):
+        """Install user-supplied requirements with pip.
+        """
+        if not self.user_requirements_file:
+            return
+
+        requirements_file = os.path.join(self.code_dir, self.user_requirements_file)
+        if os.path.exists(requirements_file):
+            logger.info('current Python environment:\n{}'.format(subprocess.check_output(['pip', 'freeze'])))
+
+            logger.info('installing requirements in {} via pip'.format(requirements_file))
+            output = subprocess.check_output(['pip', 'install', '-r', requirements_file])
+            logger.info(output)
 
     def start_metrics_if_enabled(self):
         if self.enable_cloudwatch_metrics:
@@ -165,6 +185,7 @@ class TrainingEnvironment(ContainerEnvironment):
         self.channel_dirs = {channel: self._get_channel_dir(channel) for channel in self.channels}
 
         self.user_script_name = self.hyperparameters.get(ContainerEnvironment.USER_SCRIPT_NAME_PARAM, '')
+        self.user_requirements_file = self.hyperparameters.get(ContainerEnvironment.USER_REQUIREMENTS_FILE_PARAM, None)
         self.user_script_archive = self.hyperparameters.get(ContainerEnvironment.USER_SCRIPT_ARCHIVE_PARAM, '')
 
         self.enable_cloudwatch_metrics = self.hyperparameters.get(ContainerEnvironment.CLOUDWATCH_METRICS_PARAM, False)
@@ -244,6 +265,7 @@ class HostingEnvironment(ContainerEnvironment):
         super(HostingEnvironment, self).__init__(base_dir)
         self.model_server_timeout = os.environ.get(HostingEnvironment.MODEL_SERVER_TIMEOUT_PARAM, 60)
         self.user_script_name = os.environ.get(ContainerEnvironment.USER_SCRIPT_NAME_PARAM.upper(), None)
+        self.user_requirements_file = os.environ.get(ContainerEnvironment.USER_REQUIREMENTS_FILE_PARAM.upper(), None)
         self.user_script_archive = os.environ.get(ContainerEnvironment.USER_SCRIPT_ARCHIVE_PARAM.upper(), None)
 
         self.enable_cloudwatch_metrics = os.environ.get(
