@@ -7,6 +7,7 @@ from flask import Flask, request, Response
 import container_support as cs
 import subprocess
 import shutil
+import pkg_resources
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +70,11 @@ class Server(object):
         gunicorn_bind_address = '0.0.0.0:8080'
         if env.use_nginx:
             logger.info("starting nginx")
+            nginx_conf = pkg_resources.resource_filename('container_support', 'etc/nginx.conf')
             subprocess.check_call(['ln', '-sf', '/dev/stdout', '/var/log/nginx/access.log'])
             subprocess.check_call(['ln', '-sf', '/dev/stderr', '/var/log/nginx/error.log'])
             gunicorn_bind_address = 'unix:/tmp/gunicorn.sock'
-            nginx_pid = subprocess.Popen(['nginx', '-c', '/opt/amazon/etc/nginx.conf']).pid
+            nginx_pid = subprocess.Popen(['nginx', '-c', nginx_conf]).pid
 
         logger.info("starting gunicorn")
         gunicorn_pid = subprocess.Popen(["gunicorn",

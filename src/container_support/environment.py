@@ -6,6 +6,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import pkg_resources
 
 import container_support as cs
 
@@ -104,7 +105,8 @@ class ContainerEnvironment(object):
     def start_metrics_if_enabled(self):
         if self.enable_cloudwatch_metrics:
             logger.info("starting metrics service")
-            subprocess.Popen(['telegraf', '--config', '/opt/amazon/etc/telegraf.conf'])
+            telegraf_conf = pkg_resources.resource_filename('container_support', 'etc/telegraf.conf')
+            subprocess.Popen(['telegraf', '--config', telegraf_conf])
 
     @staticmethod
     def load_framework():

@@ -10,16 +10,18 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
+PKG_NAME = 'container_support'
+
 setup(
     name='sagemaker_container_support',
     version='1.0',
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
-    packages=find_packages(where='src', exclude=('test',)),
-    package_dir={'': 'src'},
+    packages=[PKG_NAME],
+    package_dir={PKG_NAME: 'src/container_support'},
+    package_data={PKG_NAME: ['etc/*']},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
     scripts=['bin/entry.py'],
-    data_files=[('/opt/amazon/etc', ['etc/nginx.conf', 'etc/telegraf.conf', 'etc/print_gpu_info.py'])],
 
     long_description=read('README.rst'),
     author='Amazon Web Services',
