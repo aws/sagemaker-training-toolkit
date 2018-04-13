@@ -1,1 +1,7 @@
 .idea
+.cache/
+**/__pycache__/
+.coverage
+.pytest_cache/
+.tox/
+src/sagemaker_containers.egg-info/
