@@ -4,4 +4,7 @@
 .coverage
 .pytest_cache/
 .tox/
-src/sagemaker_containers.egg-info/
+htmlcov
+**/sagemaker_container_support.egg-info
+**/*.pyc
+.mypy_cache/**

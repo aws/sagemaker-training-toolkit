@@ -1,2 +1,2 @@
 [flake8]
-application_import_names = sagemaker_containers
+application_import_names = sagemaker_container_support
