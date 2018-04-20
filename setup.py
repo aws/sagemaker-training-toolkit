@@ -11,7 +11,7 @@ def read(file_name):
 
 
 setup(
-    name='sagemaker_container_support',
+    name='sagemaker_containers',
     version='2.0.0',
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
@@ -20,7 +20,7 @@ setup(
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
     long_description=read('README.md'),
     author='Amazon Web Services',
-    url='https://github.com/aws/sagemaker-container-support/',
+    url='https://github.com/aws/sagemaker-containers/',
     license='Apache License 2.0',
 
     classifiers=[

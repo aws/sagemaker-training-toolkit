@@ -21,7 +21,7 @@ import pytest
 from six import b
 from six.moves import reload_module
 
-import sagemaker_container_support.environment as environment
+import sagemaker_containers.environment as environment
 
 RESOURCE_CONFIG = dict(current_host='algo-1', hosts=['algo-1', 'algo-2', 'algo-3'])
 
@@ -140,11 +140,11 @@ def test_cpu_count():
     assert environment.cpu_count() == 2
 
 
-@patch('sagemaker_container_support.environment.read_resource_config', lambda: RESOURCE_CONFIG)
-@patch('sagemaker_container_support.environment.read_input_data_config', lambda: INPUT_DATA_CONFIG)
-@patch('sagemaker_container_support.environment.read_hyperparameters', lambda: ALL_HYPERPARAMETERS)
-@patch('sagemaker_container_support.environment.cpu_count', lambda: 8)
-@patch('sagemaker_container_support.environment.gpu_count', lambda: 4)
+@patch('sagemaker_containers.environment.read_resource_config', lambda: RESOURCE_CONFIG)
+@patch('sagemaker_containers.environment.read_input_data_config', lambda: INPUT_DATA_CONFIG)
+@patch('sagemaker_containers.environment.read_hyperparameters', lambda: ALL_HYPERPARAMETERS)
+@patch('sagemaker_containers.environment.cpu_count', lambda: 8)
+@patch('sagemaker_containers.environment.gpu_count', lambda: 4)
 def test_environment_create():
     env = environment.Environment.create(session=Mock())
 

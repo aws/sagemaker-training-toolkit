@@ -5,6 +5,6 @@
 .pytest_cache/
 .tox/
 htmlcov
-**/sagemaker_container_support.egg-info
+**/sagemaker_containers.egg-info
 **/*.pyc
 .mypy_cache/**
