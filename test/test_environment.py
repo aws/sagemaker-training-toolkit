@@ -1,14 +1,14 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
 import json
@@ -61,6 +61,7 @@ def hosting():
 
 @pytest.fixture()
 def training():
+    os.environ[TrainingEnvironment.TRAINING_JOB_ENV.upper()] = 'training_job_name'
 
     d = optml(['input/data/training', 'input/config', 'model', 'output/data'])
 
@@ -231,6 +232,11 @@ def test_user_script_name_training(training):
 def test_user_requirements_file_training(training):
     env = TrainingEnvironment(training)
     assert env.user_requirements_file == 'requirements.txt'
+
+
+def test_training_job_name(training):
+    env = TrainingEnvironment(training)
+    assert env.job_name == 'training_job_name'
 
 
 @patch('tempfile.gettempdir')

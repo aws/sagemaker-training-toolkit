@@ -1,14 +1,14 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
 import importlib
@@ -159,6 +159,7 @@ class TrainingEnvironment(ContainerEnvironment):
     RESOURCE_CONFIG_FILE = "resourceconfig.json"
     INPUT_DATA_CONFIG_FILE = "inputdataconfig.json"
     S3_URI_PARAM = 'sagemaker_s3_uri'
+    TRAINING_JOB_ENV = 'training_job_name'
 
     def __init__(self, base_dir=ContainerEnvironment.BASE_DIRECTORY):
         super(TrainingEnvironment, self).__init__(base_dir)
@@ -190,6 +191,9 @@ class TrainingEnvironment(ContainerEnvironment):
             "data",
             self.current_host if len(self.hosts) > 1 else '')
         "The dir to write non-model training artifacts (e.g. evaluation results) which will be retained by SageMaker. "
+
+        self.job_name = os.environ.get(TrainingEnvironment.TRAINING_JOB_ENV.upper(), None)
+        "The name of the current training job"
 
         # TODO validate docstring
         self.channels = self._load_config(
