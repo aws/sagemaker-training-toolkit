@@ -10,14 +10,12 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import itertools
 import json
 import logging
-from itertools import chain
 
 from mock import Mock, patch
-
 import pytest
-
 from six import b
 from six.moves import reload_module
 
@@ -44,7 +42,7 @@ SAGEMAKER_HYPERPARAMETERS = {'sagemaker_region': 'us-west-2', 'default_user_modu
                              'sagemaker_submit_directory': 'imagenet', 'sagemaker_enable_cloudwatch_metrics': True,
                              'sagemaker_container_log_level': logging.WARNING}
 
-ALL_HYPERPARAMETERS = dict(chain(USER_HYPERPARAMETERS.items(), SAGEMAKER_HYPERPARAMETERS.items()))
+ALL_HYPERPARAMETERS = dict(itertools.chain(USER_HYPERPARAMETERS.items(), SAGEMAKER_HYPERPARAMETERS.items()))
 
 
 @pytest.fixture(name='opt_ml_path')

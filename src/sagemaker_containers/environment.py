@@ -20,7 +20,6 @@ import shlex
 import subprocess
 
 import boto3
-
 from six import PY2, reraise
 
 if PY2:
@@ -28,7 +27,6 @@ if PY2:
 else:
     from json.decoder import JSONDecodeError
 
-# TODO (mvsusp): tests for how other apps will set different logger levels
 logger = logging.getLogger(__name__)
 
 BASE_PATH_ENV = 'BASE_PATH'  # type: str
@@ -98,9 +96,7 @@ def read_hyperparameters():  # type: () -> dict
         reraise(e)
 
 
-def split_hyperparameters(hyperparameters,  # type: dict
-                          keys=SAGEMAKER_HYPERPARAMETERS  # type: set
-                          ):  # type: (...) -> (dict, dict)
+def split_hyperparameters(hyperparameters, keys=SAGEMAKER_HYPERPARAMETERS):  # type: (dict, set) -> (dict, dict)
     """Split a dictionary in two by the provided keys. The default key SAGEMAKER_HYPERPARAMETERS splits user provided
     hyperparameters from SageMaker Python SDK provided hyperparameters.
 

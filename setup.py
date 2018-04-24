@@ -1,7 +1,5 @@
-import os
 from glob import glob
-from os.path import basename
-from os.path import splitext
+import os
 
 from setuptools import find_packages, setup
 
@@ -17,7 +15,7 @@ setup(
 
     packages=find_packages(where='src', exclude=('test',)),
     package_dir={'': 'src'},
-    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
+    py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob('src/*.py')],
     long_description=read('README.md'),
     author='Amazon Web Services',
     url='https://github.com/aws/sagemaker-containers/',
@@ -32,9 +30,9 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
     ],
-    install_requires=['boto3', 'six', 'typing'],
+    install_requires=['boto3', 'six', 'pip'],
 
     extras_require={
-        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'mock']
+        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'mock', 'sagemaker']
     }
 )

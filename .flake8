@@ -1,2 +1,3 @@
 [flake8]
 application_import_names = sagemaker_containers
+import-order-style = google
