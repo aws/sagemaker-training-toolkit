@@ -12,19 +12,23 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import collections
 import json
 import logging
 import multiprocessing
 import os
 import shlex
 import subprocess
+import sys
 
 import boto3
-from six import PY2, reraise
+import six
 
-if PY2:
+import sagemaker_containers as smc
+
+if six.PY2:
     JSONDecodeError = None
-else:
+elif six.PY3:
     from json.decoder import JSONDecodeError
 
 logger = logging.getLogger(__name__)
@@ -85,32 +89,15 @@ def read_hyperparameters():  # type: () -> dict
 
     try:
         return {k: json.loads(v) for k, v in hyperparameters.items()}
-    except (JSONDecodeError, TypeError):
+    except (JSONDecodeError, TypeError):  # pragma: py2 no cover
         logger.warning("Failed to parse hyperparameters' values to Json. Returning the hyperparameters instead:")
         return hyperparameters
-    except ValueError as e:
+    except ValueError as e:  # pragma: py3 no cover
         if str(e) == 'No JSON object could be decoded':
             logger.warning("Failed to parse hyperparameters' values to Json. Returning the hyperparameters instead:")
             logging.warning(hyperparameters)
             return hyperparameters
-        reraise(e)
-
-
-def split_hyperparameters(hyperparameters, keys=SAGEMAKER_HYPERPARAMETERS):  # type: (dict, set) -> (dict, dict)
-    """Split a dictionary in two by the provided keys. The default key SAGEMAKER_HYPERPARAMETERS splits user provided
-    hyperparameters from SageMaker Python SDK provided hyperparameters.
-
-    Args:
-        hyperparameters (dict[str, object]): A Python dictionary
-        keys (set[str]): Lists of keys which will be the split criteria
-
-    Returns:
-        criteria (dict[string, object]), not_criteria (dict[string, object]): the result of the split criteria.
-    """
-    dict_matching_criteria = {k: hyperparameters[k] for k in hyperparameters.keys() if k in keys}
-    dict_not_matching_criteria = {k: hyperparameters[k] for k in hyperparameters.keys() if k not in keys}
-
-    return dict_matching_criteria, dict_not_matching_criteria
+        six.reraise(*sys.exc_info())
 
 
 def read_resource_config():  # type: () -> dict
@@ -200,9 +187,15 @@ def cpu_count():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
-class Environment(object):
+class Environment(collections.Mapping):
     """Provides access to aspects of the training environment relevant to training jobs, including
     hyperparameters, system characteristics, filesystem locations, environment variables and configuration settings.
+
+    The environment is a read-only snapshot of the container environment. It does not contain any form of state.
+    It is a dictionary like object, allowing any builtin function that works with dictionary.
+
+    Example on how to print the state of the container:
+        >>> print(str(smc.Environment.create()))
 
     Example on how a script can use training environment:
         ```
@@ -231,6 +224,31 @@ class Environment(object):
         >>>model.save(os.path.join(model_dir, 'saved_model'))
         ```
     """
+
+    def properties(self):  # type: () -> list
+        """
+        Returns:
+            (list[str]) List of public properties
+        """
+        _type = type(self)
+
+        def is_property(_property):
+            return isinstance(getattr(_type, _property), property)
+
+        return [_property for _property in dir(_type) if is_property(_property)]
+
+    def __getitem__(self, k):
+        try:
+            return getattr(self, k)
+        except AttributeError:
+            six.reraise(KeyError, KeyError('Trying to access invalid key %s' % k), sys.exc_info()[2])
+
+    def __len__(self):
+        return len(self.properties())
+
+    def __iter__(self):
+        items = {_property: getattr(self, _property) for _property in self.properties()}
+        return iter(items)
 
     def __init__(self,
                  input_dir,  # type: str
@@ -356,7 +374,7 @@ class Environment(object):
         self._current_host = current_host
         self._num_gpu = num_gpu
         self._num_cpu = num_cpu
-        self._module_name = module_name
+        self._module_name = self._parse_module_name(module_name)
         self._module_dir = module_dir
         self._enable_metrics = enable_metrics
         self._log_level = log_level
@@ -568,7 +586,9 @@ class Environment(object):
 
         input_data_config = read_input_data_config()
 
-        sagemaker_hyperparameters, hyperparameters = split_hyperparameters(read_hyperparameters())
+        hyperparameters = read_hyperparameters()
+        sagemaker_hyperparameters, hyperparameters = smc.collections.split_by_criteria(hyperparameters,
+                                                                                       SAGEMAKER_HYPERPARAMETERS)
 
         sagemaker_region = sagemaker_hyperparameters.get(REGION_PARAM_NAME, session.region_name)
 
@@ -594,3 +614,19 @@ class Environment(object):
                    enable_metrics=sagemaker_hyperparameters.get(ENABLE_METRICS_PARAM, False),
                    log_level=sagemaker_hyperparameters.get(LOG_LEVEL_PARAM, logging.INFO)
                    )
+
+    @staticmethod
+    def _parse_module_name(program_param):
+        """Given a module name or a script name, Returns the module name.
+
+        This function is used for backwards compatibility.
+
+        Args:
+            program_param (str): Module or script name.
+
+        Returns:
+            (str): Module name
+        """
+        if program_param.endswith('.py'):
+            return program_param[:-3]
+        return program_param

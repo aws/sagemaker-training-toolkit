@@ -16,10 +16,10 @@ import logging
 
 from mock import Mock, patch
 import pytest
-from six import b
-from six.moves import reload_module
+import six
 
-import sagemaker_containers.environment as environment
+import sagemaker_containers as smc
+from test.conftest import json_dump
 
 RESOURCE_CONFIG = dict(current_host='algo-1', hosts=['algo-1', 'algo-2', 'algo-3'])
 
@@ -45,132 +45,145 @@ SAGEMAKER_HYPERPARAMETERS = {'sagemaker_region': 'us-west-2', 'default_user_modu
 ALL_HYPERPARAMETERS = dict(itertools.chain(USER_HYPERPARAMETERS.items(), SAGEMAKER_HYPERPARAMETERS.items()))
 
 
-@pytest.fixture(name='opt_ml_path')
-def override_opt_ml_path(tmpdir):
-    opt_ml = tmpdir.mkdir('opt').mkdir('ml')
-    with patch.dict('os.environ', {'BASE_PATH': str(opt_ml)}):
-        reload_module(environment)
-        yield opt_ml
-    reload_module(environment)
-
-
-@pytest.fixture(name='input_path')
-def override_input_path(opt_ml_path):
-    return opt_ml_path.mkdir('input')
-
-
-@pytest.fixture(name='input_config_path')
-def override_input_config_path(input_path):
-    return input_path.mkdir('config')
-
-
-@pytest.fixture(name='input_data_path')
-def override_input_data_path(input_path):
-    return input_path.mkdir('data')
-
-
 def test_read_json(tmpdir):
     path_obj = tmpdir.join('hyperparameters.json')
     json_dump(ALL_HYPERPARAMETERS, tmpdir.join('hyperparameters.json'))
 
-    assert environment.read_json(str(path_obj)) == ALL_HYPERPARAMETERS
+    assert smc.environment.read_json(str(path_obj)) == ALL_HYPERPARAMETERS
 
 
 def test_read_json_throws_exception():
     with pytest.raises(IOError):
-        environment.read_json('non-existent.json')
+        smc.environment.read_json('non-existent.json')
 
 
 def test_read_hyperparameters(input_config_path):
     json_dump(ALL_HYPERPARAMETERS, input_config_path.join('hyperparameters.json'))
 
-    assert environment.read_hyperparameters() == ALL_HYPERPARAMETERS
+    assert smc.environment.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
 def test_read_key_serialized_hyperparameters(input_config_path):
     key_serialized_hps = {k: json.dumps(v) for k, v in ALL_HYPERPARAMETERS.items()}
     json_dump(key_serialized_hps, input_config_path.join('hyperparameters.json'))
 
-    assert environment.read_hyperparameters() == ALL_HYPERPARAMETERS
+    assert smc.environment.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
-def test_split_hyperparameters_only_provided_by_user():
-    assert environment.split_hyperparameters(USER_HYPERPARAMETERS) == ({}, USER_HYPERPARAMETERS)
+@patch('sagemaker_containers.environment.read_json', lambda x: {'a': 1})
+@patch('json.loads')
+def test_read_exception(loads):
+    loads.side_effect = ValueError('Unable to read.')
 
-
-def test_split_hyperparameters_only_provided_by_sagemaker():
-    assert environment.split_hyperparameters(SAGEMAKER_HYPERPARAMETERS) == (SAGEMAKER_HYPERPARAMETERS, {})
-
-
-def test_split_hyperparameters():
-    assert environment.split_hyperparameters(ALL_HYPERPARAMETERS) == (SAGEMAKER_HYPERPARAMETERS, USER_HYPERPARAMETERS)
+    with pytest.raises(ValueError) as e:
+        smc.environment.read_hyperparameters()
+    assert 'Unable to read.' in str(e)
 
 
 def test_resource_config(input_config_path):
     json_dump(RESOURCE_CONFIG, input_config_path.join('resourceconfig.json'))
 
-    assert environment.read_resource_config() == RESOURCE_CONFIG
+    assert smc.environment.read_resource_config() == RESOURCE_CONFIG
 
 
 def test_input_data_config(input_config_path):
     json_dump(INPUT_DATA_CONFIG, input_config_path.join('inputdataconfig.json'))
 
-    assert environment.read_input_data_config() == INPUT_DATA_CONFIG
+    assert smc.environment.read_input_data_config() == INPUT_DATA_CONFIG
 
 
 def test_channel_input_dirs(input_data_path):
-    assert environment.channel_path('evaluation') == str(input_data_path.join('evaluation'))
-    assert environment.channel_path('training') == str(input_data_path.join('training'))
+    assert smc.environment.channel_path('evaluation') == str(input_data_path.join('evaluation'))
+    assert smc.environment.channel_path('training') == str(input_data_path.join('training'))
 
 
-@patch('subprocess.check_output', lambda s: b('GPU 0\nGPU 1'))
+@patch('subprocess.check_output', lambda s: six.b('GPU 0\nGPU 1'))
 def test_gpu_count_in_gpu_instance():
-    assert environment.gpu_count() == 2
+    assert smc.environment.gpu_count() == 2
 
 
 @patch('multiprocessing.cpu_count', lambda: OSError())
 def test_gpu_count_in_cpu_instance():
-    assert environment.gpu_count() == 0
+    assert smc.environment.gpu_count() == 0
 
 
 @patch('multiprocessing.cpu_count', lambda: 2)
 def test_cpu_count():
-    assert environment.cpu_count() == 2
+    assert smc.environment.cpu_count() == 2
 
 
-@patch('sagemaker_containers.environment.read_resource_config', lambda: RESOURCE_CONFIG)
-@patch('sagemaker_containers.environment.read_input_data_config', lambda: INPUT_DATA_CONFIG)
-@patch('sagemaker_containers.environment.read_hyperparameters', lambda: ALL_HYPERPARAMETERS)
-@patch('sagemaker_containers.environment.cpu_count', lambda: 8)
-@patch('sagemaker_containers.environment.gpu_count', lambda: 4)
-def test_environment_create():
-    env = environment.Environment.create(session=Mock())
-
-    assert env.num_gpu == 4
-    assert env.num_cpu == 8
-    assert env.input_dir == '/opt/ml/input'
-    assert env.input_config_dir == '/opt/ml/input/config'
-    assert env.model_dir == '/opt/ml/model'
-    assert env.output_dir == '/opt/ml/output'
-    assert env.hyperparameters == USER_HYPERPARAMETERS
-    assert env.resource_config == RESOURCE_CONFIG
-    assert env.input_data_config == INPUT_DATA_CONFIG
-    assert env.output_data_dir == '/opt/ml/output/data'
-    assert env.hosts == RESOURCE_CONFIG['hosts']
-    assert env.channel_input_dirs['train'] == '/opt/ml/input/data/train'
-    assert env.channel_input_dirs['validation'] == '/opt/ml/input/data/validation'
-    assert env.current_host == RESOURCE_CONFIG['current_host']
-    assert env.module_name == 'main.py'
-    assert env.module_dir == 'imagenet'
-    assert env.enable_metrics
-    assert env.log_level == logging.WARNING
+@pytest.fixture(name='environment')
+def create_environment():
+    with patch('sagemaker_containers.environment.read_resource_config', lambda: RESOURCE_CONFIG), \
+         patch('sagemaker_containers.environment.read_input_data_config', lambda: INPUT_DATA_CONFIG), \
+         patch('sagemaker_containers.environment.read_hyperparameters', lambda: ALL_HYPERPARAMETERS), \
+         patch('sagemaker_containers.environment.cpu_count', lambda: 8), \
+         patch('sagemaker_containers.environment.gpu_count', lambda: 4):
+        return smc.Environment.create(session=Mock())
 
 
-def json_dump(data, path_obj):  # type: (object, py.path.local) -> None
-    """Writes JSON serialized data to the local file system path
+def test_environment_create(environment):
+    assert environment.num_gpu == 4
+    assert environment.num_cpu == 8
+    assert environment.input_dir == '/opt/ml/input'
+    assert environment.input_config_dir == '/opt/ml/input/config'
+    assert environment.model_dir == '/opt/ml/model'
+    assert environment.output_dir == '/opt/ml/output'
+    assert environment.hyperparameters == USER_HYPERPARAMETERS
+    assert environment.resource_config == RESOURCE_CONFIG
+    assert environment.input_data_config == INPUT_DATA_CONFIG
+    assert environment.output_data_dir == '/opt/ml/output/data'
+    assert environment.hosts == RESOURCE_CONFIG['hosts']
+    assert environment.channel_input_dirs['train'] == '/opt/ml/input/data/train'
+    assert environment.channel_input_dirs['validation'] == '/opt/ml/input/data/validation'
+    assert environment.current_host == RESOURCE_CONFIG['current_host']
+    assert environment.module_name == 'main'
+    assert environment.module_dir == 'imagenet'
+    assert environment.enable_metrics
+    assert environment.log_level == logging.WARNING
 
-    Args:
-        data (object): object to be serialized
-        path_obj (py.path.local): path.local object of the file to be written
-    """
-    path_obj.write(json.dumps(data))
+
+def test_environment_properties(environment):
+    assert environment.properties() == ['channel_input_dirs', 'current_host', 'enable_metrics', 'hosts',
+                                        'hyperparameters', 'input_config_dir', 'input_data_config', 'input_dir',
+                                        'log_level', 'model_dir', 'module_dir', 'module_name', 'num_cpu', 'num_gpu',
+                                        'output_data_dir', 'output_dir', 'resource_config']
+
+
+def test_environment_dictionary(environment):
+    assert len(environment) == len(environment.properties())
+
+    assert environment['num_gpu'] == 4
+    assert environment['num_cpu'] == 8
+    assert environment['input_dir'] == '/opt/ml/input'
+    assert environment['input_config_dir'] == '/opt/ml/input/config'
+    assert environment['model_dir'] == '/opt/ml/model'
+    assert environment['output_dir'] == '/opt/ml/output'
+    assert environment['hyperparameters'] == USER_HYPERPARAMETERS
+    assert environment['resource_config'] == RESOURCE_CONFIG
+    assert environment['input_data_config'] == INPUT_DATA_CONFIG
+    assert environment['output_data_dir'] == '/opt/ml/output/data'
+    assert environment['hosts'] == RESOURCE_CONFIG['hosts']
+    assert environment['channel_input_dirs']['train'] == '/opt/ml/input/data/train'
+    assert environment['channel_input_dirs']['validation'] == '/opt/ml/input/data/validation'
+    assert environment['current_host'] == RESOURCE_CONFIG['current_host']
+    assert environment['module_name'] == 'main'
+    assert environment['module_dir'] == 'imagenet'
+    assert environment['enable_metrics']
+    assert environment['log_level'] == logging.WARNING
+
+
+def test_environment_dictionary_get_exception(environment):
+    with pytest.raises(KeyError) as e:
+        environment['non_existent_field']
+
+    assert str(e.value.args[0]) == 'Trying to access invalid key non_existent_field'
+
+
+@pytest.mark.parametrize('sagemaker_program', ['program.py', 'program'])
+def test_environment_module_name(sagemaker_program, environment):
+    env_dict = dict(environment)
+    del env_dict['module_name']
+
+    env = smc.environment.Environment(module_name=sagemaker_program, **env_dict)
+    assert env.module_name == 'program'

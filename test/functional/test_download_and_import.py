@@ -18,6 +18,7 @@ from sagemaker_containers import modules
 
 
 def test_download_and_import_module(upload_script, create_script):
+
     create_script('my_script.py', 'def validate(): return True')
 
     content = ['from distutils.core import setup',
@@ -33,6 +34,7 @@ def test_download_and_import_module(upload_script, create_script):
 
 
 def test_download_and_import_script(upload_script, create_script):
+
     create_script('my_script.py', 'def validate(): return True')
 
     url = upload_script('my_script.py')
