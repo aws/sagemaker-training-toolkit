@@ -12,5 +12,5 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-from sagemaker_containers import collections, modules  # noqa ignore=F401 imported but unused
+from sagemaker_containers import collections, functions, modules  # noqa ignore=F401 imported but unused
 from sagemaker_containers.environment import Environment  # noqa ignore=F401 imported but unused

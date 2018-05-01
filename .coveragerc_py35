@@ -6,8 +6,8 @@ timid = True
 exclude_lines =
     pragma: no cover
     pragma: py3 no cover
-    if six.PY3
-    elif six.PY3
+    if six.PY2
+    elif six.PY2
 
 partial_branches =
     pragma: no cover

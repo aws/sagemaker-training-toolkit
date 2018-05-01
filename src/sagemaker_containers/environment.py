@@ -616,7 +616,7 @@ class Environment(collections.Mapping):
                    )
 
     @staticmethod
-    def _parse_module_name(program_param):
+    def _parse_module_name(program_param):  # type: (str) -> str
         """Given a module name or a script name, Returns the module name.
 
         This function is used for backwards compatibility.

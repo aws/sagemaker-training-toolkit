@@ -33,6 +33,7 @@ setup(
     install_requires=['boto3', 'six', 'pip'],
 
     extras_require={
-        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'mock', 'sagemaker']
+        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'mock', 'sagemaker', 'keras==2.1.6', 'tensorflow==1.7.0',
+                 'numpy']
     }
 )
