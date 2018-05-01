@@ -56,7 +56,7 @@ def train(channel_input_dirs, hyperparameters):
 
 
 def keras_framework_training_fn():
-    env = smc.Environment.create()
+    env = smc.environment.TrainingEnvironment()
 
     mod = smc.modules.download_and_import(env.module_dir, env.module_name)
 

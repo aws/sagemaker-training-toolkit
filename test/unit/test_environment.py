@@ -13,6 +13,7 @@
 import itertools
 import json
 import logging
+import os
 
 from mock import Mock, patch
 import pytest
@@ -112,78 +113,106 @@ def test_cpu_count():
     assert smc.environment.cpu_count() == 2
 
 
-@pytest.fixture(name='environment')
-def create_environment():
+@pytest.fixture(name='training_environment')
+def create_training_environment():
     with patch('sagemaker_containers.environment.read_resource_config', lambda: RESOURCE_CONFIG), \
          patch('sagemaker_containers.environment.read_input_data_config', lambda: INPUT_DATA_CONFIG), \
          patch('sagemaker_containers.environment.read_hyperparameters', lambda: ALL_HYPERPARAMETERS), \
          patch('sagemaker_containers.environment.cpu_count', lambda: 8), \
          patch('sagemaker_containers.environment.gpu_count', lambda: 4):
-        return smc.Environment.create(session=Mock())
+        session_mock = Mock()
+        session_mock.region_name = 'us-west-2'
+        return smc.environment.TrainingEnvironment(session=session_mock)
 
 
-def test_environment_create(environment):
-    assert environment.num_gpu == 4
-    assert environment.num_cpu == 8
-    assert environment.input_dir == '/opt/ml/input'
-    assert environment.input_config_dir == '/opt/ml/input/config'
-    assert environment.model_dir == '/opt/ml/model'
-    assert environment.output_dir == '/opt/ml/output'
-    assert environment.hyperparameters == USER_HYPERPARAMETERS
-    assert environment.resource_config == RESOURCE_CONFIG
-    assert environment.input_data_config == INPUT_DATA_CONFIG
-    assert environment.output_data_dir == '/opt/ml/output/data'
-    assert environment.hosts == RESOURCE_CONFIG['hosts']
-    assert environment.channel_input_dirs['train'] == '/opt/ml/input/data/train'
-    assert environment.channel_input_dirs['validation'] == '/opt/ml/input/data/validation'
-    assert environment.current_host == RESOURCE_CONFIG['current_host']
-    assert environment.module_name == 'main'
-    assert environment.module_dir == 'imagenet'
-    assert environment.enable_metrics
-    assert environment.log_level == logging.WARNING
+@pytest.fixture(name='serving_environment')
+def create_serving_environment():
+    with patch('sagemaker_containers.environment.cpu_count', lambda: 8), \
+         patch('sagemaker_containers.environment.gpu_count', lambda: 4):
+
+        os.environ[smc.environment.USE_NGINX_ENV] = 'false'
+        os.environ[smc.environment.MODEL_SERVER_TIMEOUT_ENV] = '20'
+        os.environ[smc.environment.CURRENT_HOST_ENV] = 'algo-1'
+        os.environ[smc.environment.USER_PROGRAM_ENV] = 'main.py'
+        os.environ[smc.environment.SUBMIT_DIR_ENV] = 'my_dir'
+        os.environ[smc.environment.ENABLE_METRICS_ENV] = 'true'
+        os.environ[smc.environment.REGION_NAME_ENV] = 'us-west-2'
+        return smc.environment.ServingEnvironment(session=Mock())
 
 
-def test_environment_properties(environment):
-    assert environment.properties() == ['channel_input_dirs', 'current_host', 'enable_metrics', 'hosts',
-                                        'hyperparameters', 'input_config_dir', 'input_data_config', 'input_dir',
-                                        'log_level', 'model_dir', 'module_dir', 'module_name', 'num_cpu', 'num_gpu',
-                                        'output_data_dir', 'output_dir', 'resource_config']
+def test_train_environment_create(training_environment):
+    assert training_environment.num_gpu == 4
+    assert training_environment.num_cpu == 8
+    assert training_environment.input_dir == '/opt/ml/input'
+    assert training_environment.input_config_dir == '/opt/ml/input/config'
+    assert training_environment.model_dir == '/opt/ml/model'
+    assert training_environment.output_dir == '/opt/ml/output'
+    assert training_environment.hyperparameters == USER_HYPERPARAMETERS
+    assert training_environment.resource_config == RESOURCE_CONFIG
+    assert training_environment.input_data_config == INPUT_DATA_CONFIG
+    assert training_environment.output_data_dir == '/opt/ml/output/data'
+    assert training_environment.hosts == RESOURCE_CONFIG['hosts']
+    assert training_environment.channel_input_dirs['train'] == '/opt/ml/input/data/train'
+    assert training_environment.channel_input_dirs['validation'] == '/opt/ml/input/data/validation'
+    assert training_environment.current_host == RESOURCE_CONFIG['current_host']
+    assert training_environment.module_name == 'main'
+    assert training_environment.module_dir == 'imagenet'
+    assert training_environment.enable_metrics
+    assert training_environment.log_level == logging.WARNING
 
 
-def test_environment_dictionary(environment):
-    assert len(environment) == len(environment.properties())
-
-    assert environment['num_gpu'] == 4
-    assert environment['num_cpu'] == 8
-    assert environment['input_dir'] == '/opt/ml/input'
-    assert environment['input_config_dir'] == '/opt/ml/input/config'
-    assert environment['model_dir'] == '/opt/ml/model'
-    assert environment['output_dir'] == '/opt/ml/output'
-    assert environment['hyperparameters'] == USER_HYPERPARAMETERS
-    assert environment['resource_config'] == RESOURCE_CONFIG
-    assert environment['input_data_config'] == INPUT_DATA_CONFIG
-    assert environment['output_data_dir'] == '/opt/ml/output/data'
-    assert environment['hosts'] == RESOURCE_CONFIG['hosts']
-    assert environment['channel_input_dirs']['train'] == '/opt/ml/input/data/train'
-    assert environment['channel_input_dirs']['validation'] == '/opt/ml/input/data/validation'
-    assert environment['current_host'] == RESOURCE_CONFIG['current_host']
-    assert environment['module_name'] == 'main'
-    assert environment['module_dir'] == 'imagenet'
-    assert environment['enable_metrics']
-    assert environment['log_level'] == logging.WARNING
+def test_serve_environment_create(serving_environment):
+    assert serving_environment.num_gpu == 4
+    assert serving_environment.num_cpu == 8
+    assert serving_environment.use_nginx is False
+    assert serving_environment.model_server_timeout == 20
+    assert serving_environment.model_server_workers == 8
+    assert serving_environment.module_name == 'main'
+    assert serving_environment.enable_metrics
 
 
-def test_environment_dictionary_get_exception(environment):
+def test_train_environment_properties(training_environment):
+    assert training_environment.properties() == ['channel_input_dirs', 'current_host', 'enable_metrics', 'hosts',
+                                                 'hyperparameters', 'input_config_dir', 'input_data_config',
+                                                 'input_dir', 'log_level', 'model_dir', 'module_dir', 'module_name',
+                                                 'num_cpu', 'num_gpu', 'output_data_dir', 'output_dir',
+                                                 'resource_config']
+
+
+def test_serve_environment_properties(serving_environment):
+    assert serving_environment.properties() == ['current_host', 'enable_metrics', 'log_level', 'model_server_timeout',
+                                                'model_server_workers', 'module_dir', 'module_name', 'num_cpu',
+                                                'num_gpu', 'use_nginx']
+
+
+@patch('sagemaker_containers.environment.cpu_count', lambda: 8)
+@patch('sagemaker_containers.environment.gpu_count', lambda: 4)
+def test_environment_dictionary():
+    session_mock = Mock()
+    session_mock.region_name = 'us-west-2'
+    os.environ[smc.environment.USER_PROGRAM_ENV] = 'my_app.py'
+    env = smc.environment.Environment(session=session_mock)
+
+    assert len(env) == len(env.properties())
+
+    assert env['num_gpu'] == 4
+    assert env['num_cpu'] == 8
+    assert env['module_name'] == 'my_app'
+    assert env['enable_metrics']
+    assert env['log_level'] == logging.INFO
+
+
+def test_environment_dictionary_get_exception(serving_environment):
     with pytest.raises(KeyError) as e:
-        environment['non_existent_field']
+        serving_environment['non_existent_field']
 
     assert str(e.value.args[0]) == 'Trying to access invalid key non_existent_field'
 
 
 @pytest.mark.parametrize('sagemaker_program', ['program.py', 'program'])
-def test_environment_module_name(sagemaker_program, environment):
-    env_dict = dict(environment)
-    del env_dict['module_name']
-
-    env = smc.environment.Environment(module_name=sagemaker_program, **env_dict)
+def test_environment_module_name(sagemaker_program):
+    session_mock = Mock()
+    session_mock.region_name = 'us-west-2'
+    os.environ[smc.environment.USER_PROGRAM_ENV] = sagemaker_program
+    env = smc.environment.Environment(session=session_mock)
     assert env.module_name == 'program'
