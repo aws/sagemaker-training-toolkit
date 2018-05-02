@@ -32,8 +32,6 @@ class Trainer(object):
             env.start_metrics_if_enabled()
             base_dir = env.base_dir
 
-            env.pip_install_requirements()
-
             fw = TrainingEnvironment.load_framework()
             fw.train()
             env.write_success_file()

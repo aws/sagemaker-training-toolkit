@@ -114,6 +114,8 @@ class ContainerEnvironment(object):
             logger.info('installing requirements in {} via pip'.format(requirements_file))
             output = subprocess.check_output(['pip', 'install', '-r', requirements_file])
             logger.info(output)
+        else:
+            logger.warn('Requirements file:{} was not found'.format(requirements_file))
 
     def start_metrics_if_enabled(self):
         if self.enable_cloudwatch_metrics:
