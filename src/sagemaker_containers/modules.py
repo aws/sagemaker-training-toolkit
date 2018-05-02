@@ -16,15 +16,15 @@ import importlib
 import logging
 import os
 import shlex
-import shutil
 import subprocess
 import sys
 import tarfile
-import tempfile
 import traceback
 
 import boto3
 from six.moves.urllib.parse import urlparse
+
+import sagemaker_containers as smc
 
 logger = logging.getLogger(__name__)
 
@@ -97,19 +97,19 @@ def download_and_import(url, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> m
     Returns:
         (module): the imported module
     """
-    with tempfile.NamedTemporaryFile() as tmp:
-        s3_download(url, tmp.name)
+    with smc.environment.tmpdir() as tmpdir:
+        dst = os.path.join(tmpdir, 'tar_file')
+        s3_download(url, dst)
 
-        with open(tmp.name, 'rb') as f:
-            with tarfile.open(mode='r:gz', fileobj=f) as t:
-                tmpdir = tempfile.mkdtemp()
-                try:
-                    t.extractall(path=tmpdir)
+        module_path = os.path.join(tmpdir, 'module_dir')
 
-                    prepare(tmpdir, name)
+        os.makedirs(module_path)
 
-                    install(tmpdir)
+        with tarfile.open(name=dst, mode='r:gz') as t:
+            t.extractall(path=module_path)
 
-                    return importlib.import_module(name)
-                finally:
-                    shutil.rmtree(tmpdir)
+            prepare(module_path, name)
+
+            install(module_path)
+
+            return importlib.import_module(name)

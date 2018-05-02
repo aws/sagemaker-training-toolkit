@@ -13,14 +13,17 @@
 from __future__ import absolute_import
 
 import collections
+import contextlib
 from distutils import util
 import json
 import logging
 import multiprocessing
 import os
 import shlex
+import shutil
 import subprocess
 import sys
+import tempfile
 
 import boto3
 import six
@@ -36,7 +39,6 @@ logger = logging.getLogger(__name__)
 
 BASE_PATH_ENV = 'BASE_PATH'  # type: str
 CURRENT_HOST_ENV = 'CURRENT_HOST'  # type: str
-JOB_NAME_ENV = 'JOB_NAME'  # type: str
 
 BASE_PATH = os.environ.get(BASE_PATH_ENV, os.path.join('/opt', 'ml'))  # type: str
 
@@ -50,6 +52,10 @@ OUTPUT_DATA_PATH = os.path.join(OUTPUT_PATH, 'data')  # type: str
 HYPERPARAMETERS_FILE = 'hyperparameters.json'  # type: str
 RESOURCE_CONFIG_FILE = 'resourceconfig.json'  # type: str
 INPUT_DATA_CONFIG_FILE = 'inputdataconfig.json'  # type: str
+
+HYPERPARAMETERS_PATH = os.path.join(INPUT_CONFIG_PATH, HYPERPARAMETERS_FILE)  # type: str
+INPUT_DATA_CONFIG_FILE_PATH = os.path.join(INPUT_CONFIG_PATH, INPUT_DATA_CONFIG_FILE)  # type: str
+RESOURCE_CONFIG_PATH = os.path.join(INPUT_CONFIG_PATH, RESOURCE_CONFIG_FILE)  # type: str
 
 USER_PROGRAM_PARAM = 'sagemaker_program'  # type: str
 USER_PROGRAM_ENV = USER_PROGRAM_PARAM.upper()  # type: str
@@ -100,7 +106,7 @@ def read_hyperparameters():  # type: () -> dict
     Returns:
          (dict[string, object]): a dictionary containing the hyperparameters.
     """
-    hyperparameters = read_json(os.path.join(INPUT_CONFIG_PATH, HYPERPARAMETERS_FILE))
+    hyperparameters = read_json(HYPERPARAMETERS_PATH)
 
     try:
         return {k: json.loads(v) for k, v in hyperparameters.items()}
@@ -130,7 +136,7 @@ https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.ht
                                 sorted lexicographically. For example, `['algo-1', 'algo-2', 'algo-3']`
                                 for a three-node cluster.
     """
-    return read_json(os.path.join(INPUT_CONFIG_PATH, RESOURCE_CONFIG_FILE))
+    return read_json(RESOURCE_CONFIG_PATH)
 
 
 def read_input_data_config():  # type: () -> dict
@@ -163,7 +169,7 @@ https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.ht
     Returns:
             input_data_config (dict[string, object]): contents from /opt/ml/input/config/inputdataconfig.json.
     """
-    return read_json(os.path.join(INPUT_CONFIG_PATH, INPUT_DATA_CONFIG_FILE))
+    return read_json(INPUT_DATA_CONFIG_FILE_PATH)
 
 
 def channel_path(channel):  # type: (str) -> str
@@ -216,6 +222,7 @@ class Environment(collections.Mapping):
             module_name (str): The name of the user provided module.
             module_dir (str): The full path location of the user provided module.
     """
+
     def properties(self):  # type: () -> list
         """
         Returns:
@@ -679,3 +686,24 @@ class ServingEnvironment(Environment):
         """Returns:
             (int): Number of worker processes the model server will use"""
         return self._model_server_workers
+
+
+@contextlib.contextmanager
+def tmpdir(suffix='', prefix='tmp', dir=None):  # type: (str, str, str) -> None
+    """Create a temporary directory with a context manager. The file is deleted when the context exits.
+
+    The prefix, suffix, and dir arguments are the same as for mkstemp().
+
+    Args:
+        suffix (str):  If suffix is specified, the file name will end with that suffix, otherwise there will be no
+                        suffix.
+        prefix (str):  If prefix is specified, the file name will begin with that prefix; otherwise,
+                        a default prefix is used.
+        dir (str):  If dir is specified, the file will be created in that directory; otherwise, a default directory is
+                        used.
+    Returns:
+        (str) path to the directory
+    """
+    tmp = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
+    yield tmp
+    shutil.rmtree(tmp)
