@@ -27,11 +27,11 @@ DEFAULT_REGION = 'us-west-2'
 
 @pytest.fixture(autouse=True)
 def create_base_path():
-    import sagemaker_containers.environment as environment
+    from sagemaker_containers import env
 
-    os.makedirs(environment.MODEL_PATH)
-    os.makedirs(environment.INPUT_CONFIG_PATH)
-    os.makedirs(environment.OUTPUT_DATA_PATH)
+    os.makedirs(env.MODEL_PATH)
+    os.makedirs(env.INPUT_CONFIG_PATH)
+    os.makedirs(env.OUTPUT_DATA_PATH)
 
     yield str(os.environ['BASE_PATH'])
 

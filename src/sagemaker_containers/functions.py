@@ -16,7 +16,7 @@ import inspect
 
 import six
 
-import sagemaker_containers as smc
+from sagemaker_containers import collections
 
 
 def matching_args(fn, dictionary):  # type: (function, collections.Mapping) -> dict
@@ -43,7 +43,7 @@ def matching_args(fn, dictionary):  # type: (function, collections.Mapping) -> d
     if arg_spec.keywords:
         return dictionary
 
-    return smc.collections.split_by_criteria(dictionary, arg_spec.args).included
+    return collections.split_by_criteria(dictionary, arg_spec.args).included
 
 
 def getargspec(fn):  # type: (function) -> inspect.ArgSpec

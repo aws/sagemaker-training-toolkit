@@ -24,7 +24,8 @@ import traceback
 import boto3
 from six.moves.urllib.parse import urlparse
 
-import sagemaker_containers as smc
+from sagemaker_containers import env
+
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ def download_and_import(url, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> m
     Returns:
         (module): the imported module
     """
-    with smc.environment.tmpdir() as tmpdir:
+    with env.tmpdir() as tmpdir:
         dst = os.path.join(tmpdir, 'tar_file')
         s3_download(url, dst)
 

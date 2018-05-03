@@ -16,17 +16,15 @@ import time
 
 import urllib3
 
-import sagemaker_containers as smc
+from sagemaker_containers import env, server
 
 
 def test_server():
-    os.environ[smc.environment.FRAMEWORK_MODULE_ENV] = 'test.functional.simple_flask:app'
-    os.environ[smc.environment.USE_NGINX_ENV] = 'false'
-
-    env = smc.environment.ServingEnvironment()
+    os.environ[env.FRAMEWORK_MODULE_ENV] = 'test.functional.simple_flask:app'
+    os.environ[env.USE_NGINX_ENV] = 'false'
 
     def worker():
-        smc.server.start(env.framework_module)
+        server.start(env.ServingEnv().framework_module)
 
     t = threading.Thread(target=worker)
     t.start()

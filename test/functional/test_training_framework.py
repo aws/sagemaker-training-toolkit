@@ -17,7 +17,7 @@ import os
 import numpy as np
 import pytest
 
-import sagemaker_containers as smc
+from sagemaker_containers import env, functions, modules
 import test
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -63,17 +63,17 @@ def save(model, model_dir):
 class TestFramework(object):
     @staticmethod
     def framework_training_fn():
-        env = smc.TrainingEnvironment()
+        training_env = env.TrainingEnv()
 
-        mod = smc.modules.download_and_import(env.module_dir, env.module_name)
+        mod = modules.download_and_import(training_env.module_dir, training_env.module_name)
 
-        model = mod.train(**smc.functions.matching_args(mod.train, env))
+        model = mod.train(**functions.matching_args(mod.train, training_env))
 
         if model:
             if hasattr(mod, 'save'):
-                mod.save(model, env.model_dir)
+                mod.save(model, training_env.model_dir)
             else:
-                model_file = os.path.join(env.model_dir, 'saved_model')
+                model_file = os.path.join(training_env.model_dir, 'saved_model')
                 model.save(model_file)
 
     @pytest.mark.parametrize('user_script', [USER_SCRIPT, USER_SCRIPT_WITH_SAVE])
@@ -93,7 +93,7 @@ class TestFramework(object):
 
         self.framework_training_fn()
 
-        model = smc.environment.read_json(os.path.join(smc.environment.MODEL_PATH, 'saved_model'))
+        model = env.read_json(os.path.join(env.MODEL_PATH, 'saved_model'))
 
         assert model == dict(loss='categorical_crossentropy', y=labels, epochs=10,
                              x=features, batch_size=64, optimizer='SGD')

@@ -13,7 +13,7 @@
 
 import pytest
 
-import sagemaker_containers as smc
+from sagemaker_containers import collections
 
 
 @pytest.mark.parametrize('dictionary, keys, expected', [
@@ -23,4 +23,4 @@ import sagemaker_containers as smc
     ({'x': 1, 'y': 2}, ('x', 'y'), ({'x': 1, 'y': 2}, {}))
 ])
 def test_split_by_criteria(dictionary, keys, expected):
-    assert smc.collections.split_by_criteria(dictionary, keys) == expected
+    assert collections.split_by_criteria(dictionary, keys) == expected

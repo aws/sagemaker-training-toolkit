@@ -23,7 +23,7 @@ from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-import sagemaker_containers as smc
+from sagemaker_containers import modules
 import test
 
 builtins_open = '__builtin__.open' if PY2 else 'builtins.open'
@@ -35,7 +35,7 @@ builtins_open = '__builtin__.open' if PY2 else 'builtins.open'
     ('s3://my-bucket/my-file', 'my-bucket', 'my-file', '/tmp/my-file')
 ])
 def test_s3_download(resource, url, bucket_name, key, dst):
-    smc.modules.s3_download(url, dst)
+    modules.s3_download(url, dst)
 
     chain = call('s3').Bucket(bucket_name).download_file(key, dst)
     assert resource.mock_calls == chain.call_list()
@@ -44,7 +44,7 @@ def test_s3_download(resource, url, bucket_name, key, dst):
 @patch(builtins_open, mock_open())
 @patch('os.path.exists', lambda x: False)
 def test_prepare():
-    smc.modules.prepare('c:/path/to/', 'my-module')
+    modules.prepare('c:/path/to/', 'my-module')
     open.assert_called_with('c:/path/to/setup.py', 'w')
 
     content = os.linesep.join(['from setuptools import setup',
@@ -56,18 +56,18 @@ def test_prepare():
 @patch(builtins_open, mock_open())
 @patch('os.path.exists', lambda x: True)
 def test_prepare_already_prepared():
-    smc.modules.prepare('c:/path/to/', 'my-module')
+    modules.prepare('c:/path/to/', 'my-module')
     open.assert_not_called()
 
 
 def test_s3_download_wrong_scheme():
     with pytest.raises(ValueError, message="Expecting 's3' scheme, got: c in c://my-bucket/my-file"):
-        smc.modules.s3_download('c://my-bucket/my-file', '/tmp/file')
+        modules.s3_download('c://my-bucket/my-file', '/tmp/file')
 
 
 @patch('subprocess.check_call', autospec=True)
 def test_install(check_call):
-    smc.modules.install('c://sagemaker-pytorch-container')
+    modules.install('c://sagemaker-pytorch-container')
 
     check_call.assert_called_with([sys.executable, '-m', 'pip', 'install', 'c://sagemaker-pytorch-container', '-U'])
 
@@ -76,14 +76,14 @@ def test_install(check_call):
 def test_install_fails(check_call):
     check_call.side_effect = subprocess.CalledProcessError(1, 'returned non-zero exit status 1')
     with pytest.raises(RuntimeError) as e:
-        smc.modules.install('git://aws/container-support')
+        modules.install('git://aws/container-support')
     assert str(e.value).startswith('Failed to pip install git://aws/container-support:')
 
 
 @patch('sys.executable', None)
 def test_install_no_python_executable():
     with pytest.raises(RuntimeError) as e:
-        smc.modules.install('git://aws/container-support')
+        modules.install('git://aws/container-support')
     assert str(e.value) == 'Failed to retrieve the real path for the Python executable binary'
 
 
@@ -94,7 +94,7 @@ def patch_tmpdir():
 
 class TestDownloadAndImport(test.TestBase):
     patches = [
-        patch('sagemaker_containers.environment.tmpdir', new=patch_tmpdir),
+        patch('sagemaker_containers.env.tmpdir', new=patch_tmpdir),
         patch('sagemaker_containers.modules.prepare', autospec=True),
         patch('sagemaker_containers.modules.install', autospec=True),
         patch('sagemaker_containers.modules.s3_download', autospec=True),
@@ -104,26 +104,26 @@ class TestDownloadAndImport(test.TestBase):
 
     def test_default_name(self):
         with tarfile.open() as tar_file:
-            module = smc.modules.download_and_import('s3://bucket/my-module')
+            module = modules.download_and_import('s3://bucket/my-module')
 
-            assert module == importlib.import_module(smc.modules.DEFAULT_MODULE_NAME)
+            assert module == importlib.import_module(modules.DEFAULT_MODULE_NAME)
 
-            smc.modules.s3_download.assert_called_with('s3://bucket/my-module', '/tmp/tar_file')
+            modules.s3_download.assert_called_with('s3://bucket/my-module', '/tmp/tar_file')
             os.makedirs.assert_called_with('/tmp/module_dir')
 
             tar_file.extractall.assert_called_with(path='/tmp/module_dir')
-            smc.modules.prepare.assert_called_with('/tmp/module_dir', smc.modules.DEFAULT_MODULE_NAME)
-            smc.modules.install.assert_called_with('/tmp/module_dir')
+            modules.prepare.assert_called_with('/tmp/module_dir', modules.DEFAULT_MODULE_NAME)
+            modules.install.assert_called_with('/tmp/module_dir')
 
     def test_any_name(self):
         with tarfile.open() as tar_file:
-            module = smc.modules.download_and_import('s3://bucket/my-module', 'another_module_name')
+            module = modules.download_and_import('s3://bucket/my-module', 'another_module_name')
 
             assert module == importlib.import_module('another_module_name')
 
-            smc.modules.s3_download.assert_called_with('s3://bucket/my-module', '/tmp/tar_file')
+            modules.s3_download.assert_called_with('s3://bucket/my-module', '/tmp/tar_file')
             os.makedirs.assert_called_with('/tmp/module_dir')
 
             tar_file.extractall.assert_called_with(path='/tmp/module_dir')
-            smc.modules.prepare.assert_called_with('/tmp/module_dir', 'another_module_name')
-            smc.modules.install.assert_called_with('/tmp/module_dir')
+            modules.prepare.assert_called_with('/tmp/module_dir', 'another_module_name')
+            modules.install.assert_called_with('/tmp/module_dir')

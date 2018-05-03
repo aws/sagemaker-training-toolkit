@@ -25,10 +25,9 @@ import subprocess
 import sys
 import tempfile
 
-import boto3
 import six
 
-import sagemaker_containers as smc
+from sagemaker_containers import collections as sagemaker_collections
 
 if six.PY2:
     JSONDecodeError = None
@@ -209,11 +208,11 @@ def cpu_count():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
-class Environment(collections.Mapping):
+class Env(collections.Mapping):
     """Base Class which provides access to aspects of the environment including
     system characteristics, filesystem locations, environment variables and configuration settings.
 
-    The environment is a read-only snapshot of the container environment. It does not contain any form of state.
+    The Env is a read-only snapshot of the container environment. It does not contain any form of state.
     It is a dictionary like object, allowing any builtin function that works with dictionary.
 
     Attributes:
@@ -249,14 +248,7 @@ class Environment(collections.Mapping):
         items = {_property: getattr(self, _property) for _property in self.properties()}
         return iter(items)
 
-    def __init__(self, session=None):
-
-        """
-        Args:
-            session (boto3.Session): an optional boto session to use if required.
-        """
-        session = session or boto3.Session()
-
+    def __init__(self):
         current_host = os.environ.get(CURRENT_HOST_ENV)
         module_name = os.environ.get(USER_PROGRAM_ENV, None)
         module_dir = os.environ.get(SUBMIT_DIR_ENV, None)
@@ -350,30 +342,36 @@ class Environment(collections.Mapping):
         return program_param
 
 
-class TrainingEnvironment(Environment):
+class TrainingEnv(Env):
     """Provides access to aspects of the training environment relevant to training jobs, including
     hyperparameters, system characteristics, filesystem locations, environment variables and configuration settings.
 
-    The environment is a read-only snapshot of the container environment. It does not contain any form of state.
+    The TrainingEnv is a read-only snapshot of the container environment during training. It does not contain any form
+    of state.
+
     It is a dictionary like object, allowing any builtin function that works with dictionary.
 
     Example on how to print the state of the container:
-        >>> print(str(smc.environment.TrainingEnvironment()))
+        ```
+        >>> from sagemaker_containers import env
 
+        >>> print(str(env.TrainingEnv()))
+        ```
     Example on how a script can use training environment:
         ```
-            >>>import sagemaker_containers as smc
-            >>>env = smc.environment.TrainingEnvironment()
+            >>>from sagemaker_containers import env
+
+            >>>train_env = env.TrainingEnv()
 
             get the path of the channel 'training' from the inputdataconfig.json file
-            >>>training_dir = env.channel_input_dirs['training']
+            >>>training_dir = train_env.channel_input_dirs['training']
 
             get a the hyperparameter 'training_data_file' from hyperparameters.json file
-            >>>file_name = env.hyperparameters['training_data_file']
+            >>>file_name = train_env.hyperparameters['training_data_file']
 
             get the folder where the model should be saved
-            >>>model_dir = env.model_dir
-            >>>data = np.load(os.path.join(training_dir, training_data_file))
+            >>>model_dir = train_env.model_dir
+            >>>data = np.load(os.path.join(training_dir, file_name))
             >>>x_train, y_train = data['features'], keras.utils.to_categorical(data['labels'])
             >>>model = ResNet50(weights='imagenet')
             ...
@@ -461,23 +459,20 @@ class TrainingEnvironment(Environment):
                 - `training data path`(str) - the path to the directory where the training data is
                 saved.
     """
-    def __init__(self, session=None):
-        """
-            Args:
-                session (boto3.Session): an optional boto session to use if required.
-        """
-        super(TrainingEnvironment, self).__init__(session)
 
-        session = session or boto3.Session()
+    def __init__(self):
+        super(TrainingEnv, self).__init__()
 
         resource_config = read_resource_config()
         current_host = resource_config['current_host']
         hosts = resource_config['hosts']
         input_data_config = read_input_data_config()
-        hyperparameters = read_hyperparameters()
-        sagemaker_hyperparameters, hyperparameters = smc.collections.split_by_criteria(hyperparameters,
-                                                                                       SAGEMAKER_HYPERPARAMETERS)
-        sagemaker_region = sagemaker_hyperparameters.get(REGION_NAME_PARAM, session.region_name)
+        all_hyperparameters = read_hyperparameters()
+        split_result = sagemaker_collections.split_by_criteria(all_hyperparameters, SAGEMAKER_HYPERPARAMETERS)
+
+        sagemaker_hyperparameters = split_result.included
+
+        sagemaker_region = sagemaker_hyperparameters[REGION_NAME_PARAM]
         os.environ[JOB_NAME_ENV] = sagemaker_hyperparameters[JOB_NAME_PARAM]
         os.environ[CURRENT_HOST_ENV] = current_host
         os.environ[REGION_NAME_ENV] = sagemaker_region
@@ -487,7 +482,7 @@ class TrainingEnvironment(Environment):
         self._input_config_dir = INPUT_CONFIG_PATH
         self._model_dir = MODEL_PATH
         self._output_dir = OUTPUT_PATH
-        self._hyperparameters = hyperparameters
+        self._hyperparameters = split_result.excluded
         self._resource_config = resource_config
         self._input_data_config = input_data_config
         self._output_data_dir = OUTPUT_DATA_PATH
@@ -495,8 +490,8 @@ class TrainingEnvironment(Environment):
         self._current_host = current_host
 
         # override base class attributes
-        self._module_name = str(sagemaker_hyperparameters.get(USER_PROGRAM_PARAM))
-        self._module_dir = str(sagemaker_hyperparameters.get(SUBMIT_DIR_PARAM))
+        self._module_name = str(sagemaker_hyperparameters[USER_PROGRAM_PARAM])
+        self._module_dir = str(sagemaker_hyperparameters[SUBMIT_DIR_PARAM])
         self._enable_metrics = sagemaker_hyperparameters.get(ENABLE_METRICS_PARAM, False)
         self._log_level = sagemaker_hyperparameters.get(LOG_LEVEL_PARAM, logging.INFO)
 
@@ -633,20 +628,20 @@ class TrainingEnvironment(Environment):
         return self._channel_input_dirs
 
 
-class ServingEnvironment(Environment):
+class ServingEnv(Env):
     """Provides access to aspects of the serving environment relevant to serving containers, including
        system characteristics, environment variables and configuration settings.
 
-       The environment is a read-only snapshot of the container environment. It does not contain any form of state.
+       The ServingEnv is a read-only snapshot of the container environment. It does not contain any form of state.
+
        It is a dictionary like object, allowing any builtin function that works with dictionary.
 
        Example on how to print the state of the container:
-           >>> print(str(smc.environment.ServingEnvironment()))
+           >>> from sagemaker_containers import env
 
+           >>> print(str(env.ServingEnv()))
        Example on how a script can use training environment:
-           ```
-           >>>import sagemaker_containers as smc
-           >>>env = smc.environment.ServingEnvironment()
+           >>>serving_env = env.ServingEnv()
 
 
         Attributes:
@@ -655,12 +650,9 @@ class ServingEnvironment(Environment):
             model_server_workers (int): Number of worker processes the model server will use.
             flask_app (str): Name of the flask app to use. Default: server:app
     """
-    def __init__(self, session=None):
-        """
-            Args:
-                session (boto3.Session): an optional boto session to use if required.
-        """
-        super(ServingEnvironment, self).__init__(session)
+
+    def __init__(self):
+        super(ServingEnv, self).__init__()
 
         use_nginx = util.strtobool(os.environ.get(USE_NGINX_ENV, 'true')) == 1
         model_server_timeout = int(os.environ.get(MODEL_SERVER_TIMEOUT_ENV, '60'))

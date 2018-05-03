@@ -27,7 +27,7 @@ import six
 os.environ['BASE_PATH'] = os.path.join(tempfile.mkdtemp(), 'opt', 'ml')
 DEFAULT_REGION = 'us-west-2'
 
-import sagemaker_containers as smc  # noqa ignore=E402 module level import not at top of file
+from sagemaker_containers import env  # noqa ignore=E402 module level import not at top of file
 
 DEFAULT_CONFIG = dict(ContentType="application/x-numpy", TrainingInputMode="File",
                       S3DistributionType="FullyReplicated", RecordWrapperType="None")
@@ -75,22 +75,22 @@ def hyperparameters(**kwargs):  # type: (...) -> dict
 
 
 def create_resource_config(current_host, hosts):  # type: (str, list) -> None
-    write_json(dict(current_host=current_host, hosts=hosts), smc.environment.RESOURCE_CONFIG_PATH)
+    write_json(dict(current_host=current_host, hosts=hosts), env.RESOURCE_CONFIG_PATH)
 
 
 def create_input_data_config(channels):  # type: (list) -> None
     input_data_config = {channel.name: channel.config for channel in channels}
 
-    write_json(input_data_config, smc.environment.INPUT_DATA_CONFIG_FILE_PATH)
+    write_json(input_data_config, env.INPUT_DATA_CONFIG_FILE_PATH)
 
 
 def create_hyperparameters_config(hyperparameters, submit_dir, sagemaker_hyperparameters=None):
     # type: (dict, str, dict) -> None
-    all_hyperparameters = {smc.environment.SUBMIT_DIR_PARAM: submit_dir}
+    all_hyperparameters = {env.SUBMIT_DIR_PARAM: submit_dir}
     all_hyperparameters.update(sagemaker_hyperparameters or DEFAULT_HYPERPARAMETERS.copy())
     all_hyperparameters.update(hyperparameters)
 
-    write_json(all_hyperparameters, smc.environment.HYPERPARAMETERS_PATH)
+    write_json(all_hyperparameters, env.HYPERPARAMETERS_PATH)
 
 
 File = collections.namedtuple('File', ['name', 'content'])  # type: (str, str or list) -> File
@@ -115,7 +115,7 @@ class UserModule(object):
         return os.path.join('s3://', self.bucket, self.key)
 
     def upload(self):  # type: () -> UserModule
-        with smc.environment.tmpdir() as tmpdir:
+        with env.tmpdir() as tmpdir:
             tar_name = os.path.join(tmpdir, 'sourcedir.tar.gz')
             with tarfile.open(tar_name, mode='w:gz') as tar:
                 for _file in self._files:
@@ -151,7 +151,7 @@ class Channel(collections.namedtuple('Channel', ['name', 'config'])):  # type: (
 
     @property
     def path(self):  # type: () -> str
-        return os.path.join(smc.environment.INPUT_DATA_PATH, self.name)
+        return os.path.join(env.INPUT_DATA_PATH, self.name)
 
 
 class TestBase(object):

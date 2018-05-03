@@ -12,14 +12,13 @@
 # language governing permissions and limitations under the License.
 from mock import call, patch, PropertyMock
 
-from sagemaker_containers.environment import ServingEnvironment
-from sagemaker_containers.server import start
+from sagemaker_containers import env, server
 
 
-@patch.object(ServingEnvironment, 'model_server_workers', PropertyMock(return_value=2))
-@patch.object(ServingEnvironment, 'model_server_timeout', PropertyMock(return_value=100))
-@patch.object(ServingEnvironment, 'use_nginx', PropertyMock(return_value=False))
-@patch('sagemaker_containers.environment.gpu_count', lambda: 0)
+@patch.object(env.ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
+@patch.object(env.ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
+@patch.object(env.ServingEnv, 'use_nginx', PropertyMock(return_value=False))
+@patch('sagemaker_containers.env.gpu_count', lambda: 0)
 @patch('sys.exit', lambda x: 0)
 @patch('subprocess.Popen')
 def test_start_no_nginx(popen):
@@ -33,15 +32,15 @@ def test_start_no_nginx(popen):
                   '--log-level', 'info',
                   'my_module'])]
 
-    start('my_module')
+    server.start('my_module')
     popen.assert_has_calls(calls)
 
 
-@patch.object(ServingEnvironment, 'model_server_workers', PropertyMock(return_value=2))
-@patch.object(ServingEnvironment, 'model_server_timeout', PropertyMock(return_value=100))
-@patch.object(ServingEnvironment, 'use_nginx', PropertyMock(return_value=True))
+@patch.object(env.ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
+@patch.object(env.ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
+@patch.object(env.ServingEnv, 'use_nginx', PropertyMock(return_value=True))
 @patch('pkg_resources.resource_filename', lambda x, y: '/tmp/nginx.conf')
-@patch('sagemaker_containers.environment.gpu_count', lambda: 0)
+@patch('sagemaker_containers.env.gpu_count', lambda: 0)
 @patch('sys.exit', lambda x: 0)
 @patch('subprocess.Popen')
 def test_start_with_nginx(popen):
@@ -56,5 +55,5 @@ def test_start_with_nginx(popen):
               '--log-level', 'info',
               'my_module'])
     ]
-    start('my_module')
+    server.start('my_module')
     popen.assert_has_calls(calls)
