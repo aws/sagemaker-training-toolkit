@@ -169,6 +169,7 @@ def test_serve_environment_create(serving_environment):
     assert serving_environment.model_server_workers == 8
     assert serving_environment.module_name == 'main'
     assert serving_environment.enable_metrics
+    assert serving_environment.framework_module == 'server:app'
 
 
 def test_train_environment_properties(training_environment):
@@ -180,9 +181,9 @@ def test_train_environment_properties(training_environment):
 
 
 def test_serve_environment_properties(serving_environment):
-    assert serving_environment.properties() == ['current_host', 'enable_metrics', 'log_level', 'model_server_timeout',
-                                                'model_server_workers', 'module_dir', 'module_name', 'num_cpu',
-                                                'num_gpu', 'use_nginx']
+    assert serving_environment.properties() == ['current_host', 'enable_metrics', 'framework_module', 'log_level',
+                                                'model_server_timeout', 'model_server_workers', 'module_dir',
+                                                'module_name', 'num_cpu', 'num_gpu', 'use_nginx']
 
 
 @patch('sagemaker_containers.environment.cpu_count', lambda: 8)
