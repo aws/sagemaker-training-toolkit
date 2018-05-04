@@ -202,13 +202,6 @@ def test_env_dictionary():
     assert _env['log_level'] == logging.INFO
 
 
-def test_env_dictionary_get_exception(serving_env):
-    with pytest.raises(KeyError) as e:
-        serving_env['non_existent_field']
-
-    assert str(e.value.args[0]) == 'Trying to access invalid key non_existent_field'
-
-
 @pytest.mark.parametrize('sagemaker_program', ['program.py', 'program'])
 def test_env_module_name(sagemaker_program):
     session_mock = Mock()

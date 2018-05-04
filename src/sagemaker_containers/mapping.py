@@ -36,3 +36,32 @@ def split_by_criteria(dictionary, keys):  # type: (dict, set or list or tuple) -
     excluded_items = {k: dictionary[k] for k in dictionary.keys() if k not in keys}
 
     return SplitResultSpec(included=included_items, excluded=excluded_items)
+
+
+class MappingMixin(collections.Mapping):
+    def properties(self):  # type: () -> list
+        """
+            Returns:
+                (list[str]) List of public properties
+        """
+
+        _type = type(self)
+        return [_property for _property in dir(_type) if self._is_property(_property)]
+
+    def _is_property(self, _property):
+        return isinstance(getattr(type(self), _property), property)
+
+    def __getitem__(self, k):
+        if not self._is_property(k):
+            raise KeyError('Trying to access non property %s' % k)
+        return getattr(self, k)
+
+    def __len__(self):
+        return len(self.properties())
+
+    def __iter__(self):
+        items = {_property: getattr(self, _property) for _property in self.properties()}
+        return iter(items)
+
+    def __str__(self):
+        return str(dict(self))

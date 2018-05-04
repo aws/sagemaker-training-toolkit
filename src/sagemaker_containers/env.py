@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import collections
 import contextlib
 from distutils import util
 import json
@@ -27,7 +26,7 @@ import tempfile
 
 import six
 
-from sagemaker_containers import collections as sagemaker_collections
+from sagemaker_containers import mapping
 
 if six.PY2:
     JSONDecodeError = None
@@ -208,7 +207,7 @@ def cpu_count():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
-class Env(collections.Mapping):
+class Env(mapping.MappingMixin):
     """Base Class which provides access to aspects of the environment including
     system characteristics, filesystem locations, environment variables and configuration settings.
 
@@ -222,31 +221,6 @@ class Env(collections.Mapping):
             module_name (str): The name of the user provided module.
             module_dir (str): The full path location of the user provided module.
     """
-
-    def properties(self):  # type: () -> list
-        """
-        Returns:
-            (list[str]) List of public properties
-        """
-        _type = type(self)
-
-        def is_property(_property):
-            return isinstance(getattr(_type, _property), property)
-
-        return [_property for _property in dir(_type) if is_property(_property)]
-
-    def __getitem__(self, k):
-        try:
-            return getattr(self, k)
-        except AttributeError:
-            six.reraise(KeyError, KeyError('Trying to access invalid key %s' % k), sys.exc_info()[2])
-
-    def __len__(self):
-        return len(self.properties())
-
-    def __iter__(self):
-        items = {_property: getattr(self, _property) for _property in self.properties()}
-        return iter(items)
 
     def __init__(self):
         current_host = os.environ.get(CURRENT_HOST_ENV)
@@ -468,7 +442,7 @@ class TrainingEnv(Env):
         hosts = resource_config['hosts']
         input_data_config = read_input_data_config()
         all_hyperparameters = read_hyperparameters()
-        split_result = sagemaker_collections.split_by_criteria(all_hyperparameters, SAGEMAKER_HYPERPARAMETERS)
+        split_result = mapping.split_by_criteria(all_hyperparameters, SAGEMAKER_HYPERPARAMETERS)
 
         sagemaker_hyperparameters = split_result.included
 

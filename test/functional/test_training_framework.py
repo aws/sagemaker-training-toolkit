@@ -60,40 +60,41 @@ def save(model, model_dir):
 """
 
 
-class TestFramework(object):
-    @staticmethod
-    def framework_training_fn():
-        training_env = env.TrainingEnv()
+def framework_training_fn():
+    training_env = env.TrainingEnv()
 
-        mod = modules.download_and_import(training_env.module_dir, training_env.module_name)
+    mod = modules.download_and_import(training_env.module_dir, training_env.module_name)
 
-        model = mod.train(**functions.matching_args(mod.train, training_env))
+    model = mod.train(**functions.matching_args(mod.train, training_env))
 
-        if model:
-            if hasattr(mod, 'save'):
-                mod.save(model, training_env.model_dir)
-            else:
-                model_file = os.path.join(training_env.model_dir, 'saved_model')
-                model.save(model_file)
+    if model:
+        if hasattr(mod, 'save'):
+            mod.save(model, training_env.model_dir)
+        else:
+            model_file = os.path.join(training_env.model_dir, 'saved_model')
+            model.save(model_file)
 
-    @pytest.mark.parametrize('user_script', [USER_SCRIPT, USER_SCRIPT_WITH_SAVE])
-    def test_training_framework(self, user_script):
-        channel = test.Channel.create(name='training')
 
-        features = [1, 2, 3, 4]
-        labels = [0, 1, 0, 1]
-        np.savez(os.path.join(channel.path, 'training_data'), features=features, labels=labels)
+@pytest.mark.parametrize('user_script', [USER_SCRIPT, USER_SCRIPT_WITH_SAVE])
+def test_training_framework(user_script):
+    channel = test.Channel.create(name='training')
 
-        module = test.UserModule(test.File(name='user_script.py', content=user_script))
+    features = [1, 2, 3, 4]
+    labels = [0, 1, 0, 1]
+    np.savez(os.path.join(channel.path, 'training_data'), features=features, labels=labels)
 
-        hyperparameters = dict(training_data_file='training_data.npz', sagemaker_program='user_script.py',
-                               epochs=10, batch_size=64)
+    module = test.UserModule(test.File(name='user_script.py', content=user_script))
 
-        test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
+    hyperparameters = dict(training_data_file='training_data.npz', sagemaker_program='user_script.py',
+                           epochs=10, batch_size=64)
 
-        self.framework_training_fn()
+    test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-        model = env.read_json(os.path.join(env.MODEL_PATH, 'saved_model'))
+    framework_training_fn()
 
-        assert model == dict(loss='categorical_crossentropy', y=labels, epochs=10,
-                             x=features, batch_size=64, optimizer='SGD')
+    print(os.path.join(env.TrainingEnv().model_dir, 'saved_model'))
+
+    model = env.read_json(os.path.join(env.TrainingEnv().model_dir, 'saved_model'))
+
+    assert model == dict(loss='categorical_crossentropy', y=labels, epochs=10,
+                         x=features, batch_size=64, optimizer='SGD')

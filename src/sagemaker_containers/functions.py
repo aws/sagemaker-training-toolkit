@@ -16,10 +16,10 @@ import inspect
 
 import six
 
-from sagemaker_containers import collections
+from sagemaker_containers import mapping
 
 
-def matching_args(fn, dictionary):  # type: (function, collections.Mapping) -> dict
+def matching_args(fn, dictionary):  # type: (function, mapping.Mapping) -> dict
     """Given a function fn and a dict dictionary, returns the function arguments that match the dict keys.
 
     Example:
@@ -43,7 +43,7 @@ def matching_args(fn, dictionary):  # type: (function, collections.Mapping) -> d
     if arg_spec.keywords:
         return dictionary
 
-    return collections.split_by_criteria(dictionary, arg_spec.args).included
+    return mapping.split_by_criteria(dictionary, arg_spec.args).included
 
 
 def getargspec(fn):  # type: (function) -> inspect.ArgSpec
