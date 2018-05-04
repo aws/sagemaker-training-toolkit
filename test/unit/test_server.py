@@ -23,14 +23,14 @@ from sagemaker_containers import env, server
 @patch('subprocess.Popen')
 def test_start_no_nginx(popen):
     calls = [call(
-                 ['gunicorn',
-                  '--timeout', '100',
-                  '-k', 'gevent',
-                  '-b', '0.0.0.0:8080',
-                  '--worker-connections', '2000',
-                  '-w', '2',
-                  '--log-level', 'info',
-                  'my_module'])]
+        ['gunicorn',
+         '--timeout', '100',
+         '-k', 'gevent',
+         '-b', '0.0.0.0:8080',
+         '--worker-connections', '2000',
+         '-w', '2',
+         '--log-level', 'info',
+         'my_module'])]
 
     server.start('my_module')
     popen.assert_has_calls(calls)

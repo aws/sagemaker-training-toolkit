@@ -212,7 +212,7 @@ def test_env_module_name(sagemaker_program):
 
 @patch('tempfile.mkdtemp')
 @patch('shutil.rmtree')
-def test_temporary_directory(rmtree, mkdtemp):
+def test_tmpdir(rmtree, mkdtemp):
     with env.tmpdir():
         mkdtemp.assert_called()
     rmtree.assert_called()
@@ -220,7 +220,7 @@ def test_temporary_directory(rmtree, mkdtemp):
 
 @patch('tempfile.mkdtemp')
 @patch('shutil.rmtree')
-def test_temporary_directory_with_args(rmtree, mkdtemp):
+def test_tmpdir_with_args(rmtree, mkdtemp):
     with env.tmpdir('suffix', 'prefix', '/tmp'):
         mkdtemp.assert_called_with(dir='/tmp', prefix='prefix', suffix='suffix')
     rmtree.assert_called()

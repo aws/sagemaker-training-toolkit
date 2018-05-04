@@ -19,30 +19,37 @@ import urllib3
 from sagemaker_containers import env, server
 
 
-def test_server():
+def test_server_with_a_simple_app():
+    original_env = os.environ.copy()
+
     os.environ[env.FRAMEWORK_MODULE_ENV] = 'test.functional.simple_flask:app'
     os.environ[env.USE_NGINX_ENV] = 'false'
 
     def worker():
         server.start(env.ServingEnv().framework_module)
 
-    t = threading.Thread(target=worker)
-    t.start()
-
-    time.sleep(2)
-
-    http = urllib3.PoolManager()
     base_url = 'http://127.0.0.1:8080'
-    r = http.request('GET', '{}/ping'.format(base_url))
-    assert r.status == 200
+    http = urllib3.PoolManager()
 
-    r = http.request('GET', '{}/invocations'.format(base_url))
-    assert r.status == 200
-    assert r.data.decode('utf-8') == 'invocation'
-
-    # shut down the server or else it will go on forever.
     try:
-        http.request('GET', '{}/shutdown'.format(base_url))
-    except urllib3.exceptions.MaxRetryError:
-        # the above request will kill the server so it is expected that it fails.
-        pass
+        t = threading.Thread(target=worker)
+        t.start()
+
+        time.sleep(2)
+
+        r = http.request('GET', '{}/ping'.format(base_url))
+        assert r.status == 200
+
+        r = http.request('GET', '{}/invocations'.format(base_url))
+        assert r.status == 200
+        assert r.data.decode('utf-8') == 'invocation'
+
+    finally:
+        os.environ = original_env
+
+        # shut down the server or else it will go on forever.
+        try:
+            http.request('GET', '{}/shutdown'.format(base_url))
+        except urllib3.exceptions.MaxRetryError:
+            # the above request will kill the server so it is expected that it fails.
+            pass

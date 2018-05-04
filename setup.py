@@ -37,7 +37,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
     ],
-    install_requires=['boto3', 'six', 'pip'],
+    install_requires=['boto3', 'six', 'pip', 'flask', 'gunicorn', 'gevent'],
 
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'mock', 'sagemaker', 'numpy']
