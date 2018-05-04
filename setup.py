@@ -44,6 +44,7 @@ setup(
     },
 
     entry_points={
-          'console_scripts': ['serve=sagemaker_containers.cli.serve:main'],
+          'console_scripts': ['serve=sagemaker_containers.cli.serve:main',
+                              'train=sagemaker_containers.cli.train:main'],
     }
 )
