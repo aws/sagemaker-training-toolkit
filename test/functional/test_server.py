@@ -22,7 +22,7 @@ from sagemaker_containers import env, server
 def test_server_with_a_simple_app():
     original_env = os.environ.copy()
 
-    os.environ[env.FRAMEWORK_MODULE_ENV] = 'test.functional.simple_flask:app'
+    os.environ[env.FRAMEWORK_SERVING_MODULE_ENV] = 'test.functional.simple_flask:app'
     os.environ[env.USE_NGINX_ENV] = 'false'
 
     def worker():

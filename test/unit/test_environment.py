@@ -166,7 +166,7 @@ def test_serving_env(serving_env):
     assert serving_env.model_server_workers == 8
     assert serving_env.module_name == 'main'
     assert serving_env.enable_metrics
-    assert serving_env.framework_module == ' '
+    assert serving_env.framework_module is None
 
 
 def test_train_env_properties(training_env):
