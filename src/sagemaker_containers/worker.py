@@ -12,11 +12,9 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import collections
+import flask
 
-from flask import Flask, Response
-
-from sagemaker_containers import env, status_codes
+from sagemaker_containers import content_types, env, mapping, status_codes
 
 serving_env = env.ServingEnv()
 
@@ -45,48 +43,110 @@ def default_healthcheck_fn():  # type: () -> Response
     return Response(status=status_codes.OK)
 
 
-def run(transform_fn, initialize_fn=None, healthcheck_fn=None, module_name=None):
-    # type: (function, function or None, str or None) -> Flask
-    """Creates and Flask application from a transformer.
+class Worker(flask.Flask):
+    """Flask application that receives predictions from a Transformer ready for inferences."""
 
-    Args:
-        transform_fn (function): responsible to make predictions against the model. Follows the signature:
+    def __init__(self, transform_fn, initialize_fn=None, module_name=None, healthcheck_fn=None):
+        """Creates and Flask application from a transformer.
 
-            * Returns:
-                `sagemaker_containers.worker.TransformSpec`: named tuple with prediction data.
+        Args:
+            transform_fn (function): responsible to make predictions against the model. Follows the signature:
+
+                * Returns:
+                    `sagemaker_containers.transformers.TransformSpec`: named tuple with prediction data.
 
 
-        initialize_fn (function, optional): this function is called when the Flask application starts.
-            It doest not have return type or arguments.
+            initialize_fn (function, optional): this function is called when the Flask application starts.
+                It doest not have return type or arguments.
 
-        healthcheck_fn (function, optional): function that will be used for healthcheck calls when the containers
-            starts, if not specified, it will use ping as the default healthcheck call. Signature:
+            healthcheck_fn (function, optional): function that will be used for healthcheck calls when the containers
+                starts, if not specified, it will use ping as the default healthcheck call. Signature:
 
-            * Returns:
-                `flask.app.Response`: response object with new healthcheck response.
+                * Returns:
+                    `flask.app.Response`: response object with new healthcheck response.
 
-        module_name (str): the module name which implements the worker. If not specified, it will use
-                                sagemaker_containers.ServingEnv().module_name as the default module name.
+            module_name (str): the module name which implements the worker. If not specified, it will use
+                                    sagemaker_containers.ServingEnv().module_name as the default module name.
+        """
+        super(Worker, self).__init__(module_name or serving_env.module_name)
 
-    Returns:
-        (Flask): an instance of Flask ready for inferences.
+        if initialize_fn:
+            self.before_first_request(initialize_fn)
+
+        self.add_url_rule(rule='/invocations', endpoint='invocations', view_func=transform_fn, methods=["POST"])
+        self.add_url_rule(rule='/ping', endpoint='ping', view_func=healthcheck_fn or default_healthcheck_fn)
+
+        self.request_class = Request
+
+
+class Response(flask.Response):
+    default_mimetype = content_types.JSON
+
+    def __init__(self, response=None, accept=None, status=status_codes.OK, headers=None,
+                 mimetype=None, direct_passthrough=False):
+        headers = headers or {}
+        headers['accept'] = accept
+        super(Response, self).__init__(response, status, headers, mimetype, accept, direct_passthrough)
+
+
+class Request(flask.Request, mapping.MappingMixin):
+    """The Request object used to read request data.
+
+    Example:
+
+    POST /invocations
+    Content-Type: 'application/json'.
+    Accept: 'application/json'.
+
+    42
+
+    >>> from sagemaker_containers import env
+
+    >>> request = env.Request()
+    >>> content = request.content
+
+    >>> print(str(request))
+
+    {'content_length': '2', 'content_type': 'application/json', 'content': '42', 'accept': 'application/json', ... }
+
+
     """
-    app = Flask(import_name=module_name or serving_env.module_name)
+    default_mimetype = content_types.JSON
 
-    if initialize_fn:
-        initialize_fn()
+    def __init__(self, environ=None):
+        super(Request, self).__init__(environ=environ or flask.request.environ)
 
-    def invocations_fn():
-        transform_spec = transform_fn()
+    @property
+    def content_type(self):  # type () -> str
+        """The request's content-type.
 
-        return Response(response=transform_spec.prediction,
-                        status=status_codes.OK,
-                        mimetype=transform_spec.accept)
+        Returns:
+            (str): The value, if any, of the header 'ContentType' (used by some AWS services) and 'Content-Type'.
+                    Otherwise, returns 'Application/Json' as default.
+        """
+        # todo(mvsusp): consider a better default content-type
+        return self.headers.get('ContentType') or self.headers.get('Content-Type') or content_types.JSON
 
-    app.add_url_rule(rule='/invocations', endpoint='invocations', view_func=invocations_fn, methods=["POST"])
-    app.add_url_rule(rule='/ping', endpoint='ping', view_func=healthcheck_fn or default_healthcheck_fn)
+    @property
+    def accept(self):  # type: () -> str
+        """The content-type for the response to the client.
 
-    return app
+        Returns:
+            (str): The value of the header 'Accept' or 'Application/Json' as default
+        """
+        return self.headers.get('Accept', content_types.JSON)
 
+    @property
+    def content(self):  # type: () -> object
+        """The request incoming data.
 
-TransformSpec = collections.namedtuple('TransformSpec', 'prediction accept')
+        It automatic decodes from utf-8
+
+        Returns:
+            (obj): incoming data
+        """
+        data = self.get_data()
+        try:
+            return data.decode('utf-8')
+        except (ValueError, UnicodeDecodeError):
+            return data

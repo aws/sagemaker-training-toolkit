@@ -28,7 +28,7 @@ def matching_args(fn, dictionary):  # type: (function, mapping.Mapping) -> dict
 
         dictionary = {'channel_dirs': {}, 'model_dir': '/opt/ml/model', 'other_args': None}
 
-        args = smc.functions.matching_args(train, dictionary) # {'channel_dirs': {}, 'model_dir': '/opt/ml/model'}
+        args = functions.matching_args(train, dictionary) # {'channel_dirs': {}, 'model_dir': '/opt/ml/model'}
 
         train(**args)
     Args:

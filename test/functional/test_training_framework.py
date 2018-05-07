@@ -24,7 +24,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 USER_SCRIPT = """
 import os
-import test.miniml as miniml
+import test.fake_ml_framework as fake_ml
 import numpy as np
 
 def train(channel_input_dirs, hyperparameters):
@@ -32,7 +32,7 @@ def train(channel_input_dirs, hyperparameters):
     x_train = data['features']
     y_train = data['labels']
 
-    model = miniml.Model(loss='categorical_crossentropy', optimizer='SGD')
+    model = fake_ml.Model(loss='categorical_crossentropy', optimizer='SGD')
 
     model.fit(x=x_train, y=y_train, epochs=hyperparameters['epochs'], batch_size=hyperparameters['batch_size'])
 
@@ -41,7 +41,7 @@ def train(channel_input_dirs, hyperparameters):
 
 USER_SCRIPT_WITH_SAVE = """
 import os
-import test.miniml as miniml
+import test.fake_ml_framework as fake_ml
 import numpy as np
 
 def train(channel_input_dirs, hyperparameters):
@@ -49,7 +49,7 @@ def train(channel_input_dirs, hyperparameters):
     x_train = data['features']
     y_train = data['labels']
 
-    model = miniml.Model(loss='categorical_crossentropy', optimizer='SGD')
+    model = fake_ml.Model(loss='categorical_crossentropy', optimizer='SGD')
 
     model.fit(x=x_train, y=y_train, epochs=hyperparameters['epochs'], batch_size=hyperparameters['batch_size'])
 
@@ -92,9 +92,12 @@ def test_training_framework(user_script):
 
     framework_training_fn()
 
-    print(os.path.join(env.TrainingEnv().model_dir, 'saved_model'))
+    model_path = os.path.join(env.TrainingEnv().model_dir, 'saved_model')
+    print(model_path)
 
-    model = env.read_json(os.path.join(env.TrainingEnv().model_dir, 'saved_model'))
+    model = test.fake_ml_framework.Model.load(model_path)
 
-    assert model == dict(loss='categorical_crossentropy', y=labels, epochs=10,
-                         x=features, batch_size=64, optimizer='SGD')
+    assert model.epochs == 10
+    assert model.batch_size == 64
+    assert model.loss == 'categorical_crossentropy'
+    assert model.optimizer == 'SGD'

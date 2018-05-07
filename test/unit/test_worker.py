@@ -12,69 +12,93 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-from mock import ANY, MagicMock, patch, PropertyMock
+from mock import MagicMock, patch, PropertyMock
+import numpy as np
 import pytest
 from six.moves import range
 
-import sagemaker_containers as smc
+from sagemaker_containers import content_types, encoders, status_codes, worker
+import test
 
 
 def test_default_ping_fn():
-    assert smc.worker.default_healthcheck_fn().status_code == smc.status_codes.OK
+    assert worker.default_healthcheck_fn().status_code == status_codes.OK
 
 
 @pytest.fixture(name='flask')
 def patch_flask():
     property_mock = PropertyMock(return_value='user_program')
-    with patch('sagemaker_containers.worker.Flask') as flask, \
+    with patch('flask.Flask') as flask, \
             patch('sagemaker_containers.env.ServingEnv.module_name',
                   property_mock):
         yield flask
 
 
 @pytest.mark.parametrize('module_name, expected_name', [('test_module', 'test_module'), (None, 'user_program')])
-def test_run(flask, module_name, expected_name):
-    transformer = MagicMock()
-
-    app = smc.worker.run(transform_fn=transformer.transform, module_name=module_name)
-
-    flask.assert_called_with(import_name=expected_name)
-
-    rules = app.add_url_rule
-    rules.assert_any_call(rule='/invocations', endpoint='invocations', view_func=ANY, methods=ANY)
-
-    rules.assert_called_with(rule='/ping', endpoint='ping', view_func=smc.worker.default_healthcheck_fn)
-
-    assert rules.call_count == 2
+@patch('sagemaker_containers.env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
+def test_worker(module_name, expected_name):
+    app = worker.Worker(transform_fn=MagicMock().transform, module_name=module_name)
+    assert app.import_name == expected_name
+    assert app.before_first_request_funcs == []
+    assert app.request_class == worker.Request
 
 
-def test_run_with_initialize(flask):
-    transformer = MagicMock()
-
-    app = smc.worker.run(transform_fn=transformer.transform, initialize_fn=transformer.initialize,
-                         module_name='test_module')
-
-    flask.assert_called_with(import_name='test_module')
-
-    transformer.initialize.assert_called()
-
-    rules = app.add_url_rule
-    rules.assert_any_call(rule='/invocations', endpoint='invocations', view_func=ANY, methods=ANY)
-
-    rules.assert_called_with(rule='/ping', endpoint='ping', view_func=smc.worker.default_healthcheck_fn)
-
-    assert rules.call_count == 2
+@pytest.mark.parametrize('module_name, expected_name', [('test_module', 'test_module'), (None, 'user_program')])
+@patch('sagemaker_containers.env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
+def test_worker_with_initialize(module_name, expected_name):
+    mock = MagicMock()
+    app = worker.Worker(transform_fn=mock.transform, initialize_fn=mock.initialize, module_name=module_name)
+    assert app.import_name == expected_name
+    assert app.before_first_request_funcs == [mock.initialize]
+    assert app.request_class == worker.Request
 
 
 def test_invocations():
     def transform_fn():
-        return smc.worker.TransformSpec(prediction='fake data', accept=smc.content_types.APPLICATION_JSON)
+        return worker.Response(response='fake data', accept=content_types.JSON)
 
-    app = smc.worker.run(transform_fn=transform_fn, module_name='test_module')
+    app = worker.Worker(transform_fn=transform_fn, module_name='test_module')
 
-    with app.test_client() as worker:
+    with app.test_client() as client:
         for _ in range(9):
-            response = worker.post('/invocations')
-            assert response.status_code == smc.status_codes.OK
+            response = client.post('/invocations')
+            assert response.status_code == status_codes.OK
             assert response.get_data().decode('utf-8') == 'fake data'
-            assert response.mimetype == smc.content_types.APPLICATION_JSON
+            assert response.mimetype == content_types.JSON
+
+
+def test_ping():
+    app = worker.Worker(transform_fn=MagicMock(), module_name='test_module')
+
+    with app.test_client() as client:
+        for _ in range(9):
+            response = client.get('/ping')
+            assert response.status_code == status_codes.OK
+            assert response.mimetype == content_types.JSON
+
+
+def test_request():
+    request = test.request(data='42')
+
+    assert request.content_type == content_types.JSON
+    assert request.accept == content_types.JSON
+    assert request.content == '42'
+
+    default_encoder = encoders.DefaultEncoder()
+    request = test.request(data=default_encoder.encode([6, 9.3], content_types.NPY),
+                           content_type=content_types.NPY,
+                           accept=content_types.CSV)
+
+    assert request.content_type == content_types.NPY
+    assert request.accept == content_types.CSV
+
+    result = encoders.DefaultDecoder().decode(request.content, content_types.NPY)
+    np.testing.assert_array_equal(result, [6, 9.3])
+
+
+def test_request_content_type():
+    response = test.request(content_type=content_types.CSV)
+    assert response.content_type == content_types.CSV
+
+    response = test.request(headers={'ContentType': content_types.NPY})
+    assert response.content_type == content_types.NPY

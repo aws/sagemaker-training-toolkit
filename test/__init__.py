@@ -22,12 +22,13 @@ import boto3
 import pytest
 import sagemaker
 import six
+import werkzeug.test as werkzeug_test
 
 # loading base path before loading the environment so all the environment paths are loaded properly
 os.environ['BASE_PATH'] = os.path.join(tempfile.mkdtemp(), 'opt', 'ml')
 DEFAULT_REGION = 'us-west-2'
 
-from sagemaker_containers import env  # noqa ignore=E402 module level import not at top of file
+from sagemaker_containers import encoders, env, worker  # noqa ignore=E402 module level import not at top of file
 
 DEFAULT_CONFIG = dict(ContentType="application/x-numpy", TrainingInputMode="File",
                       S3DistributionType="FullyReplicated", RecordWrapperType="None")
@@ -74,26 +75,61 @@ def hyperparameters(**kwargs):  # type: (...) -> dict
     return default_hyperparameters
 
 
-def create_resource_config(current_host, hosts):  # type: (str, list) -> None
-    write_json(dict(current_host=current_host, hosts=hosts), env.RESOURCE_CONFIG_PATH)
+def create_resource_config(current_host='algo-1', hosts=None):  # type: (str, list) -> None
+    write_json(dict(current_host=current_host, hosts=hosts or ['algo-1']), env.RESOURCE_CONFIG_PATH)
 
 
-def create_input_data_config(channels):  # type: (list) -> None
+def create_input_data_config(channels=None):  # type: (list) -> None
+    channels = channels or []
     input_data_config = {channel.name: channel.config for channel in channels}
 
     write_json(input_data_config, env.INPUT_DATA_CONFIG_FILE_PATH)
 
 
-def create_hyperparameters_config(hyperparameters, submit_dir, sagemaker_hyperparameters=None):
+def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hyperparameters=None):
     # type: (dict, str, dict) -> None
-    all_hyperparameters = {env.SUBMIT_DIR_PARAM: submit_dir}
+
+    all_hyperparameters = {env.SUBMIT_DIR_PARAM: submit_dir or env.DEFAULT_MODULE_NAME_PARAM}
+
     all_hyperparameters.update(sagemaker_hyperparameters or DEFAULT_HYPERPARAMETERS.copy())
+
     all_hyperparameters.update(hyperparameters)
 
     write_json(all_hyperparameters, env.HYPERPARAMETERS_PATH)
 
 
 File = collections.namedtuple('File', ['name', 'content'])  # type: (str, str or list) -> File
+
+
+def request(path='/', base_url=None, query_string=None, accept=None, method='GET', input_stream=None,
+            content_type=None, content_length=None, headers=None, data=None, charset='utf-8', mimetype=None):
+
+    headers = headers or {}
+
+    if accept:
+        headers['accept'] = accept
+
+    environ_builder = werkzeug_test.EnvironBuilder(
+        path=path, base_url=base_url, query_string=query_string, method=method, input_stream=input_stream,
+        content_type=content_type, content_length=content_length, headers=headers, data=data, charset=charset,
+        mimetype=mimetype)
+
+    return worker.Request(environ_builder.get_environ())
+
+
+def environ(path='/', base_url=None, query_string=None, accept=None, method='GET', input_stream=None,
+            content_type=None, content_length=None, headers=None, data=None, charset='utf-8', mimetype=None):
+    headers = headers or {}
+
+    if accept:
+        headers['accept'] = accept
+
+    environ_builder = werkzeug_test.EnvironBuilder(
+        path=path, base_url=base_url, query_string=query_string, method=method, input_stream=input_stream,
+        content_type=content_type, content_length=content_length, headers=headers, data=data, charset=charset,
+        mimetype=mimetype)
+
+    return environ_builder.get_environ()
 
 
 class UserModule(object):

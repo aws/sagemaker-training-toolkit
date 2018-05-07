@@ -18,7 +18,7 @@ from mock import patch, PropertyMock
 import pytest
 from six.moves import range
 
-import sagemaker_containers as smc
+from sagemaker_containers import content_types, status_codes, worker
 
 
 class Transformer(object):
@@ -30,27 +30,26 @@ class Transformer(object):
 
     def transform(self):
         self.calls['transform'] += 1
-        return smc.worker.TransformSpec(json.dumps(self.calls), smc.content_types.APPLICATION_JSON)
+        return worker.Response(json.dumps(self.calls), content_types.JSON)
 
 
 def test_worker_with_initialize():
     transformer = Transformer()
 
-    worker = smc.worker.run(transform_fn=transformer.transform, initialize_fn=transformer.initialize,
-                            module_name='worker_with_initialize')
-
-    with worker.test_client() as client:
+    with worker.Worker(transform_fn=transformer.transform,
+                       initialize_fn=transformer.initialize,
+                       module_name='worker_with_initialize').test_client() as client:
         assert client.application.import_name == 'worker_with_initialize'
 
-        assert client.get('/ping').status_code == smc.status_codes.OK
+        assert client.get('/ping').status_code == status_codes.OK
 
         for _ in range(9):
             response = client.post('/invocations')
-            assert response.status_code == smc.status_codes.OK
+            assert response.status_code == status_codes.OK
 
         response = client.post('/invocations')
         assert json.loads(response.get_data().decode('utf-8')) == dict(initialize=1, transform=10)
-        assert response.mimetype == smc.content_types.APPLICATION_JSON
+        assert response.mimetype == content_types.JSON
 
 
 @patch('sagemaker_containers.env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
@@ -58,31 +57,30 @@ def test_worker_with_initialize():
 def test_worker(module_name, expected_name):
     transformer = Transformer()
 
-    worker = smc.worker.run(transform_fn=transformer.transform, module_name=module_name)
-
-    with worker.test_client() as client:
+    with worker.Worker(transform_fn=transformer.transform,
+                       module_name=module_name).test_client() as client:
         assert client.application.import_name == expected_name
 
-        assert client.get('/ping').status_code == smc.status_codes.OK
+        assert client.get('/ping').status_code == status_codes.OK
 
         for _ in range(9):
             response = client.post('/invocations')
-            assert response.status_code == smc.status_codes.OK
+            assert response.status_code == status_codes.OK
 
         response = client.post('/invocations')
         assert json.loads(response.get_data().decode('utf-8')) == dict(initialize=0, transform=10)
-        assert response.mimetype == smc.content_types.APPLICATION_JSON
+        assert response.mimetype == content_types.JSON
 
 
 def test_worker_with_custom_ping():
     transformer = Transformer()
 
     def custom_ping():
-        return 'ping', smc.status_codes.ACCEPTED
+        return 'ping', status_codes.ACCEPTED
 
-    worker = smc.worker.run(transform_fn=transformer.transform, healthcheck_fn=custom_ping, module_name='custom_ping')
-
-    with worker.test_client() as client:
+    with worker.Worker(transform_fn=transformer.transform,
+                       healthcheck_fn=custom_ping,
+                       module_name='custom_ping').test_client() as client:
         response = client.get('/ping')
-        assert response.status_code == smc.status_codes.ACCEPTED
+        assert response.status_code == status_codes.ACCEPTED
         assert response.get_data().decode('utf-8') == 'ping'

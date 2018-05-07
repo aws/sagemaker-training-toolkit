@@ -21,17 +21,9 @@ import os
 import shlex
 import shutil
 import subprocess
-import sys
 import tempfile
 
-import six
-
 from sagemaker_containers import mapping
-
-if six.PY2:
-    JSONDecodeError = None
-elif six.PY3:
-    from json.decoder import JSONDecodeError
 
 logger = logging.getLogger(__name__)
 
@@ -109,15 +101,9 @@ def read_hyperparameters():  # type: () -> dict
 
     try:
         return {k: json.loads(v) for k, v in hyperparameters.items()}
-    except (JSONDecodeError, TypeError):  # pragma: py2 no cover
+    except (ValueError, TypeError):  # pragma: py2 no cover
         logger.warning("Failed to parse hyperparameters' values to Json. Returning the hyperparameters instead:")
         return hyperparameters
-    except ValueError as e:  # pragma: py3 no cover
-        if str(e) == 'No JSON object could be decoded':
-            logger.warning("Failed to parse hyperparameters' values to Json. Returning the hyperparameters instead:")
-            logging.warning(hyperparameters)
-            return hyperparameters
-        six.reraise(*sys.exc_info())
 
 
 def read_resource_config():  # type: () -> dict
@@ -240,6 +226,13 @@ class Env(mapping.MappingMixin):
         self._enable_metrics = enable_metrics
         self._log_level = log_level
         self._framework_module = framework_module
+        self._model_dir = MODEL_PATH
+
+    @property
+    def model_dir(self):  # type: () -> str
+        """Returns:
+            (str): the directory where models should be saved, e.g., /opt/ml/model/"""
+        return self._model_dir
 
     @property
     def current_host(self):  # type: () -> str
@@ -465,7 +458,6 @@ class TrainingEnv(Env):
         self._hosts = hosts
         self._input_dir = INPUT_PATH
         self._input_config_dir = INPUT_CONFIG_PATH
-        self._model_dir = MODEL_PATH
         self._output_dir = OUTPUT_PATH
         self._hyperparameters = split_result.excluded
         self._resource_config = resource_config
@@ -516,12 +508,6 @@ class TrainingEnv(Env):
             (str): the path of the input directory, e.g. /opt/ml/input/config/
         """
         return self._input_config_dir
-
-    @property
-    def model_dir(self):  # type: () -> str
-        """Returns:
-            (str): the directory where models should be saved, e.g., /opt/ml/model/"""
-        return self._model_dir
 
     @property
     def output_dir(self):  # type: () -> str
