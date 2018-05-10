@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+1.0.dev4
+========
+
+* bug: Configuration: Change module names to string in __all__
+
 1.0.3
 =====
 
