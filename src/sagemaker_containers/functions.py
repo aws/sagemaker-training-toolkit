@@ -66,3 +66,22 @@ def getargspec(fn):  # type: (function) -> inspect.ArgSpec
     elif six.PY3:
         full_arg_spec = inspect.getfullargspec(fn)
         return inspect.ArgSpec(full_arg_spec.args, full_arg_spec.varargs, full_arg_spec.varkw, full_arg_spec.defaults)
+
+
+def error_wrapper(fn, error_class):  # type: (function or None, Exception) -> ...
+    """Wraps function fn in a try catch block that re-raises error_class.
+
+    Args:
+        fn (function): function to wrapped
+        error_class (Exception): Error class to be re-raised
+
+    Returns:
+        (object): fn wrapped in a try catch.
+    """
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            six.raise_from(error_class(e), e)
+
+    return wrapper

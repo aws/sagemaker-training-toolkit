@@ -16,17 +16,17 @@ import os
 
 import numpy as np
 
-from sagemaker_containers import content_types, encoders, env, status_codes, transformers, worker
+from sagemaker_containers import content_types, encoders, env, status_codes, transformer, worker
 import test
 from test import fake_ml_framework
 
 
-class FakeMLTransformer(transformers.BaseTransformer):
-    def predict_fn(self, model, data):
-        return model.predict(data)
+def predict_fn(model, data):
+    return model.predict(data)
 
-    def model_fn(self, model_dir):
-        return fake_ml_framework.Model.load(os.path.join(model_dir, 'fake_ml_model'))
+
+def model_fn(model_dir):
+    return fake_ml_framework.Model.load(os.path.join(model_dir, 'fake_ml_model'))
 
 
 def test_transformer_implementation():
@@ -37,13 +37,12 @@ def test_transformer_implementation():
     model_path = os.path.join(env.TrainingEnv().model_dir, 'fake_ml_model')
     fake_ml_framework.Model(weights=[6, 9, 42]).save(model_path)
 
-    transformer = FakeMLTransformer()
-    transformer.initialize()
+    transform = transformer.Transformer(model_fn=model_fn, predict_fn=predict_fn)
 
-    with worker.Worker(transformer.transform,
-                       transformer.initialize,
+    transform.initialize()
+
+    with worker.Worker(transform_fn=transform.transform,
                        module_name='fake_ml_model').test_client() as client:
-
         payload = [6, 9, 42.]
         response = post(client, payload, content_types.NPY, content_types.JSON)
 

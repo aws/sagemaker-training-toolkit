@@ -40,3 +40,13 @@ def test_getargspec(fn, expected):
 ])
 def test_matching_args(fn, env, expected):
     assert functions.matching_args(fn, env) == expected
+
+
+def test_error_wrapper():
+    assert functions.error_wrapper(lambda x: x * 10, NotImplementedError)(3) == 30
+
+
+def test_error_wrapper_exception():
+    with pytest.raises(NotImplementedError) as e:
+        functions.error_wrapper(lambda x: x, NotImplementedError)(2, 3)
+    assert type(e.value.args[0]) == TypeError
