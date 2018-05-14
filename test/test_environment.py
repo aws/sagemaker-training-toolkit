@@ -296,6 +296,7 @@ def test_deserialize_hyperparameters_for_tuning_jobs(training):
     env = TrainingEnvironment(d)
 
     assert '_tuning_objective_metric' in env.hyperparameters
+    assert env.hyperparameters['_tuning_objective_metric'] == 'loss'
 
     shutil.rmtree(d)
 

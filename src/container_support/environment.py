@@ -232,7 +232,7 @@ class TrainingEnvironment(ContainerEnvironment):
             # Tuning jobs inject a hyperparameter that does not conform to the JSON format
             if k == '_tuning_objective_metric':
                 if v.startswith('"') and v.endswith('"'):
-                    v = v[1:-1]
+                    v = v.strip('"')
                 hyperparameter_dict[k] = v
             else:
                 hyperparameter_dict[k] = json.loads(v)
