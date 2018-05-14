@@ -6,6 +6,7 @@ CHANGELOG
 ========
 
 * bug: Configuration: Change module names to string in __all__
+* bug: Environment: handle hyperparameter injected by tuning jobs
 
 1.0.3
 =====

@@ -278,6 +278,28 @@ def test_import_user_module_without_py(import_module, training):
     import_module.assert_called_with('nopy')
 
 
+def test_deserialize_hyperparameters_for_tuning_jobs(training):
+    os.environ[TrainingEnvironment.TRAINING_JOB_ENV.upper()] = 'training_job_name'
+
+    d = optml(['input/data/training', 'input/config', 'model', 'output/data'])
+
+    with open(os.path.join(d, 'input/data/training/data.csv'), 'w') as f:
+        f.write('dummy data file')
+
+    _write_resource_config(d, 'algo-1', ['algo-1'])
+    _write_config_file(d, 'inputdataconfig.json', INPUT_DATA_CONFIG)
+
+    hyperparameters = _serialize_hyperparameters(HYPERPARAMETERS)
+    hyperparameters['_tuning_objective_metric'] = 'loss'
+    _write_config_file(d, 'hyperparameters.json', hyperparameters)
+
+    env = TrainingEnvironment(d)
+
+    assert '_tuning_objective_metric' in env.hyperparameters
+
+    shutil.rmtree(d)
+
+
 def _write_config_file(training, filename, data):
     path = os.path.join(training, "input/config/%s" % filename)
     with open(path, 'w') as f:

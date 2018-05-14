@@ -226,7 +226,18 @@ class TrainingEnvironment(ContainerEnvironment):
     # TODO expecting serialized hyperparams might break containers that aren't launched by python sdk
     @staticmethod
     def _deserialize_hyperparameters(hp):
-        return {k: json.loads(v) for (k, v) in hp.items()}
+        hyperparameter_dict = {}
+
+        for (k, v) in hp.items():
+            # Tuning jobs inject a hyperparameter that does not conform to the JSON format
+            if k == '_tuning_objective_metric':
+                if v.startswith('"') and v.endswith('"'):
+                    v = v[1:-1]
+                hyperparameter_dict[k] = v
+            else:
+                hyperparameter_dict[k] = json.loads(v)
+
+        return hyperparameter_dict
 
     def write_success_file(self):
         TrainingEnvironment.ensure_directory(self.output_dir)
