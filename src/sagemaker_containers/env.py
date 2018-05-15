@@ -203,8 +203,8 @@ class Env(mapping.MappingMixin):
 
     Attributes:
             current_host (str): The name of the current container on the container network. For example, 'algo-1'.
-            num_gpu (int): The number of gpus available in the current container.
-            num_cpu (int): The number of cpus available in the current container.
+            num_gpus (int): The number of gpus available in the current container.
+            num_cpus (int): The number of cpus available in the current container.
             module_name (str): The name of the user provided module.
             module_dir (str): The full path location of the user provided module.
     """
@@ -217,8 +217,8 @@ class Env(mapping.MappingMixin):
         log_level = os.environ.get(LOG_LEVEL_ENV, logging.INFO)
 
         self._current_host = current_host
-        self._num_gpu = gpu_count()
-        self._num_cpu = cpu_count()
+        self._num_gpus = gpu_count()
+        self._num_cpus = cpu_count()
         self._module_name = module_name
         self._module_dir = module_dir
         self._enable_metrics = enable_metrics
@@ -240,22 +240,22 @@ class Env(mapping.MappingMixin):
         return self._current_host
 
     @property
-    def num_gpu(self):  # type: () -> int
+    def num_gpus(self):  # type: () -> int
         """The number of gpus available in the current container.
 
         Returns:
             (int): number of gpus available in the current container.
         """
-        return self._num_gpu
+        return self._num_gpus
 
     @property
-    def num_cpu(self):  # type: () -> int
+    def num_cpus(self):  # type: () -> int
         """The number of cpus available in the current container.
 
         Returns:
             (int): number of cpus available in the current container.
         """
-        return self._num_cpu
+        return self._num_cpus
 
     @property
     def module_name(self):  # type: () -> str

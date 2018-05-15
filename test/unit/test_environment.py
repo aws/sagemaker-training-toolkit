@@ -138,8 +138,8 @@ def create_serving_env():
 
 
 def test_train_env(training_env):
-    assert training_env.num_gpu == 4
-    assert training_env.num_cpu == 8
+    assert training_env.num_gpus == 4
+    assert training_env.num_cpus == 8
     assert training_env.input_dir.endswith('/opt/ml/input')
     assert training_env.input_config_dir.endswith('/opt/ml/input/config')
     assert training_env.model_dir.endswith('/opt/ml/model')
@@ -159,8 +159,8 @@ def test_train_env(training_env):
 
 
 def test_serving_env(serving_env):
-    assert serving_env.num_gpu == 4
-    assert serving_env.num_cpu == 8
+    assert serving_env.num_gpus == 4
+    assert serving_env.num_cpus == 8
     assert serving_env.use_nginx is False
     assert serving_env.model_server_timeout == 20
     assert serving_env.model_server_workers == 8
@@ -173,7 +173,7 @@ def test_train_env_properties(training_env):
     assert training_env.properties() == ['channel_input_dirs', 'current_host', 'enable_metrics', 'framework_module',
                                          'hosts', 'hyperparameters', 'input_config_dir', 'input_data_config',
                                          'input_dir', 'log_level', 'model_dir', 'module_dir', 'module_name',
-                                         'num_cpu', 'num_gpu', 'output_data_dir', 'output_dir',
+                                         'num_cpus', 'num_gpus', 'output_data_dir', 'output_dir',
                                          'resource_config']
 
 
@@ -181,14 +181,14 @@ def test_serving_env_properties(serving_env):
     print(serving_env.properties())
     assert serving_env.properties() == ['current_host', 'enable_metrics', 'framework_module', 'log_level', 'model_dir',
                                         'model_server_timeout', 'model_server_workers', 'module_dir', 'module_name',
-                                        'num_cpu', 'num_gpu', 'use_nginx']
+                                        'num_cpus', 'num_gpus', 'use_nginx']
 
 
 def test_request_properties(serving_env):
     print(serving_env.properties())
     assert serving_env.properties() == ['current_host', 'enable_metrics', 'framework_module', 'log_level', 'model_dir',
                                         'model_server_timeout', 'model_server_workers', 'module_dir', 'module_name',
-                                        'num_cpu', 'num_gpu', 'use_nginx']
+                                        'num_cpus', 'num_gpus', 'use_nginx']
 
 
 @patch('sagemaker_containers.env.cpu_count', lambda: 8)
@@ -201,8 +201,8 @@ def test_env_dictionary():
 
     assert len(_env) == len(_env.properties())
 
-    assert _env['num_gpu'] == 4
-    assert _env['num_cpu'] == 8
+    assert _env['num_gpus'] == 4
+    assert _env['num_cpus'] == 8
     assert _env['module_name'] == 'my_app'
     assert _env['enable_metrics']
     assert _env['log_level'] == logging.INFO
