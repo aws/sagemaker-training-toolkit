@@ -2,8 +2,8 @@
 CHANGELOG
 =========
 
-1.0.dev4
-========
+1.0.4
+=====
 
 * bug: Configuration: Change module names to string in __all__
 * bug: Environment: handle hyperparameter injected by tuning jobs
