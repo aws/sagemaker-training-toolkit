@@ -92,19 +92,59 @@ def patch_tmpdir():
     yield '/tmp'
 
 
+@patch('importlib.import_module')
+def test_exists(import_module):
+    assert modules.exists('my_module')
+
+    import_module.side_effect = ImportError()
+
+    assert not modules.exists('my_module')
+
+
 class TestDownloadAndImport(test.TestBase):
     patches = [
         patch('sagemaker_containers.env.tmpdir', new=patch_tmpdir),
         patch('sagemaker_containers.modules.prepare', autospec=True),
         patch('sagemaker_containers.modules.install', autospec=True),
         patch('sagemaker_containers.modules.s3_download', autospec=True),
+        patch('sagemaker_containers.modules.exists', autospec=True),
         patch('tarfile.open', autospec=True),
         patch('importlib.import_module', autospec=True),
         patch('os.makedirs', autospec=True)]
 
+    def test_without_cache(self):
+        with tarfile.open() as tar_file:
+            module = modules.download_and_import('s3://bucket/my-module', cache=False)
+
+            assert module == importlib.import_module(modules.DEFAULT_MODULE_NAME)
+
+            modules.s3_download.assert_called_with('s3://bucket/my-module', '/tmp/tar_file')
+            os.makedirs.assert_called_with('/tmp/module_dir')
+
+            tar_file.extractall.assert_called_with(path='/tmp/module_dir')
+            modules.prepare.assert_called_with('/tmp/module_dir', modules.DEFAULT_MODULE_NAME)
+            modules.install.assert_called_with('/tmp/module_dir')
+
+    def test_with_cache_and_module_already_installed(self):
+        with tarfile.open() as tar_file:
+            modules.exists.return_value = True
+
+            module = modules.download_and_import('s3://bucket/my-module', cache=True)
+
+            assert module == importlib.import_module(modules.DEFAULT_MODULE_NAME)
+
+            modules.s3_download.return_value.assert_not_called()
+            os.makedirs.return_value.assert_not_called()
+
+            tar_file.extractall.return_value.assert_not_called()
+            modules.prepare.return_value.assert_not_called()
+            modules.install.return_value.assert_not_called()
+
     def test_default_name(self):
         with tarfile.open() as tar_file:
-            module = modules.download_and_import('s3://bucket/my-module')
+            modules.exists.return_value = False
+
+            module = modules.download_and_import('s3://bucket/my-module', cache=True)
 
             assert module == importlib.import_module(modules.DEFAULT_MODULE_NAME)
 
@@ -117,7 +157,9 @@ class TestDownloadAndImport(test.TestBase):
 
     def test_any_name(self):
         with tarfile.open() as tar_file:
-            module = modules.download_and_import('s3://bucket/my-module', 'another_module_name')
+            modules.exists.return_value = False
+
+            module = modules.download_and_import('s3://bucket/my-module', 'another_module_name', cache=True)
 
             assert module == importlib.import_module('another_module_name')
 
