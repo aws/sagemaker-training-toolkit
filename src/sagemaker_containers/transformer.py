@@ -51,7 +51,7 @@ def default_input_fn(input_data, content_type):
     Returns:
         (obj): data ready for prediction.
     """
-    return encoders.default_decoder.decode(input_data, content_type)
+    return encoders.decode(input_data, content_type)
 
 
 def default_predict_fn(model, data):
@@ -84,7 +84,7 @@ def default_output_fn(prediction, accept):
                 response: the serialized data to return
                 accept: the content-type that the data was transformed to.
     """
-    return worker.Response(encoders.default_encoder.encode(prediction, accept), accept)
+    return worker.Response(encoders.encode(prediction, accept), accept)
 
 
 class ClientError(BaseException):
@@ -135,7 +135,7 @@ class Transformer(object):
     def initialize(self):  # type: () -> None
         """Execute any initialization necessary to start making predictions with the Transformer.
         The default implementation is used to load the model.
-        This function is called by sagemaker_containers.worker.Worker, before starting the Flask application.
+        This function is called by SageMaker_containers.worker.Worker, before starting the Flask application.
         The gunicorn server forks multiple workers, executing multiple Flask applications in parallel.
         This function will be called once per each worker.
         It does not have return type or arguments.

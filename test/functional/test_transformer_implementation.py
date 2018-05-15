@@ -58,11 +58,11 @@ def test_transformer_implementation():
         response = post(client, payload, content_types.CSV, content_types.NPY)
 
         assert response.status_code == status_codes.OK
-        response_data = encoders.NpyDecoder().decode(response.get_data())
+        response_data = encoders.npy_to_numpy(response.get_data())
 
         np.testing.assert_array_almost_equal(response_data, np.asarray([36., 81., 1764.]))
 
 
 def post(client, payload, content_type, accept):
     return client.post(path='/invocations', headers={'accept': accept},
-                       data=encoders.DefaultEncoder().encode(payload, content_type), content_type=content_type)
+                       data=encoders.encode(payload, content_type), content_type=content_type)

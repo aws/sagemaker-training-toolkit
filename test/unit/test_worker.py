@@ -84,15 +84,14 @@ def test_request():
     assert request.accept == content_types.JSON
     assert request.content == '42'
 
-    default_encoder = encoders.DefaultEncoder()
-    request = test.request(data=default_encoder.encode([6, 9.3], content_types.NPY),
+    request = test.request(data=encoders.encode([6, 9.3], content_types.NPY),
                            content_type=content_types.NPY,
                            accept=content_types.CSV)
 
     assert request.content_type == content_types.NPY
     assert request.accept == content_types.CSV
 
-    result = encoders.DefaultDecoder().decode(request.content, content_types.NPY)
+    result = encoders.decode(request.content, content_types.NPY)
     np.testing.assert_array_equal(result, [6, 9.3])
 
 

@@ -17,14 +17,14 @@ from sagemaker_containers import content_types, env, status_codes, transformer
 import test
 
 
-@patch('sagemaker_containers.encoders.DefaultDecoder.decode')
+@patch('sagemaker_containers.encoders.decode')
 def test_default_input_fn(loads):
     assert transformer.default_input_fn(42, content_types.JSON)
 
     loads.assert_called_with(42, content_types.JSON)
 
 
-@patch('sagemaker_containers.encoders.DefaultEncoder.encode', lambda self, prediction, accept: prediction ** 2)
+@patch('sagemaker_containers.encoders.encode', lambda prediction, accept: prediction ** 2)
 def test_default_output_fn():
     response = transformer.default_output_fn(2, content_types.CSV)
     assert response.response == 4
