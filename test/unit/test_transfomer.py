@@ -13,7 +13,7 @@
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_containers import content_types, env, status_codes, transformer
+from sagemaker_containers import content_types, env, errors, status_codes, transformer
 import test
 
 
@@ -57,7 +57,7 @@ def fn_with_error(*args, **kwargs):
 
 
 def test_transformer_initialize_with_client_error():
-    with pytest.raises(transformer.ClientError) as e:
+    with pytest.raises(errors.ClientError) as e:
         transformer.Transformer(model_fn=fn_with_error).initialize()
 
     assert e.value.args[0] == error_from_fn
@@ -70,7 +70,7 @@ def test_transformer_initialize_with_client_error():
 ])
 @patch('sagemaker_containers.worker.Request', lambda: request)
 def test_transformer_transform_with_client_error(input_fn, predict_fn, output_fn):
-    with pytest.raises(transformer.ClientError) as e:
+    with pytest.raises(errors.ClientError) as e:
         transform = transformer.Transformer(model_fn=MagicMock(), input_fn=input_fn,
                                             predict_fn=predict_fn, output_fn=output_fn)
 

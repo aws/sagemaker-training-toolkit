@@ -682,3 +682,18 @@ def tmpdir(suffix='', prefix='tmp', dir=None):  # type: (str, str, str) -> None
     tmp = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
     yield tmp
     shutil.rmtree(tmp)
+
+
+def write_file(path, content, mode='w'):  # type: (str, str, str) -> None
+    """Write content to a file.
+
+    Args:
+        path (str): path to the file.
+        content (str): content to be written to the file.
+        mode (str): mode which the file will be open.
+
+    Returns:
+
+    """
+    with open(path, mode) as f:
+        f.write(content)

@@ -14,7 +14,7 @@ from __future__ import absolute_import
 
 import textwrap
 
-from sagemaker_containers import encoders, env, functions, worker
+from sagemaker_containers import encoders, env, errors, functions, worker
 
 
 def default_model_fn(model_dir):
@@ -87,10 +87,6 @@ def default_output_fn(prediction, accept):
     return worker.Response(encoders.encode(prediction, accept), accept)
 
 
-class ClientError(BaseException):
-    pass
-
-
 class Transformer(object):
     """The Transformer is a proxy between the worker and the framework transformation functions.
 
@@ -114,7 +110,7 @@ class Transformer(object):
     >>>transformer.load_user_fns(mod)
     """
 
-    def __init__(self, model_fn=None, input_fn=None, predict_fn=None, output_fn=None, error_class=ClientError):
+    def __init__(self, model_fn=None, input_fn=None, predict_fn=None, output_fn=None, error_class=errors.ClientError):
         """Default constructor. Wraps the any non default framework function in an error class to isolate
         framework from user errors.
 

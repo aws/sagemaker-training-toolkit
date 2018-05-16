@@ -15,12 +15,14 @@ import json
 import logging
 import os
 
-from mock import Mock, patch
+from mock import Mock, mock_open, patch
 import pytest
 import six
 
 from sagemaker_containers import env
 import test
+
+builtins_open = '__builtin__.open' if six.PY2 else 'builtins.open'
 
 RESOURCE_CONFIG = dict(current_host='algo-1', hosts=['algo-1', 'algo-2', 'algo-3'])
 
@@ -230,3 +232,18 @@ def test_tmpdir_with_args(rmtree, mkdtemp):
     with env.tmpdir('suffix', 'prefix', '/tmp'):
         mkdtemp.assert_called_with(dir='/tmp', prefix='prefix', suffix='suffix')
     rmtree.assert_called()
+
+
+@patch(builtins_open, mock_open())
+def test_write_file():
+    env.write_file('/tmp/my-file', '42')
+
+    open.assert_called_with('/tmp/my-file', 'w')
+
+    open().write.assert_called_with('42')
+
+    env.write_file('/tmp/my-file', '42', 'x')
+
+    open.assert_called_with('/tmp/my-file', 'x')
+
+    open().write.assert_called_with('42')

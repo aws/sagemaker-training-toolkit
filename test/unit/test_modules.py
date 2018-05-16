@@ -18,12 +18,13 @@ import os
 import subprocess
 import sys
 import tarfile
+import textwrap
 
 from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-from sagemaker_containers import modules
+from sagemaker_containers import errors, modules
 import test
 
 builtins_open = '__builtin__.open' if PY2 else 'builtins.open'
@@ -45,12 +46,36 @@ def test_s3_download(resource, url, bucket_name, key, dst):
 @patch('os.path.exists', lambda x: False)
 def test_prepare():
     modules.prepare('c:/path/to/', 'my-module')
-    open.assert_called_with('c:/path/to/setup.py', 'w')
 
-    content = os.linesep.join(['from setuptools import setup',
-                               'setup(name="my-module", py_modules=["my-module"])'])
+    open.assert_any_call('c:/path/to/setup.py', 'w')
+    open.assert_any_call('c:/path/to/setup.cfg', 'w')
+    open.assert_any_call('c:/path/to/MANIFEST.in', 'w')
 
-    open().write.assert_called_with(content)
+    content = textwrap.dedent("""
+    from setuptools import setup
+
+    setup(packages=[''],
+          name="my-module",
+          version='1.0.0',
+          include_package_data=True)
+    """)
+
+    open().write.assert_any_call(content)
+
+    content = textwrap.dedent("""
+    [wheel]
+    universal = 1
+    """)
+    open().write.assert_any_call(content)
+
+    content = textwrap.dedent("""
+    recursive-include . *
+
+    recursive-exclude . __pycache__*
+    recursive-exclude . *.pyc
+    recursive-exclude . *.pyo
+    """)
+    open().write.assert_any_call(content)
 
 
 @patch(builtins_open, mock_open())
@@ -67,17 +92,24 @@ def test_s3_download_wrong_scheme():
 
 @patch('subprocess.check_call', autospec=True)
 def test_install(check_call):
-    modules.install('c://sagemaker-pytorch-container')
+    path = 'c://sagemaker-pytorch-container'
+    modules.install(path)
 
-    check_call.assert_called_with([sys.executable, '-m', 'pip', 'install', 'c://sagemaker-pytorch-container', '-U'])
+    cmd = [sys.executable, '-m', 'pip', 'install', '-U', '.']
+    check_call.assert_called_with(cmd, cwd=path)
+
+    with patch('os.path.exists', return_value=True):
+        modules.install(path)
+
+        check_call.assert_called_with(cmd + ['-r', 'requirements.txt'], cwd=path)
 
 
 @patch('subprocess.check_call')
 def test_install_fails(check_call):
     check_call.side_effect = subprocess.CalledProcessError(1, 'returned non-zero exit status 1')
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(errors.InstallModuleError) as e:
         modules.install('git://aws/container-support')
-    assert str(e.value).startswith('Failed to pip install git://aws/container-support:')
+    assert type(e.value.args[0]) == subprocess.CalledProcessError
 
 
 @patch('sys.executable', None)
@@ -110,6 +142,7 @@ class TestDownloadAndImport(test.TestBase):
         patch('sagemaker_containers.modules.exists', autospec=True),
         patch('tarfile.open', autospec=True),
         patch('importlib.import_module', autospec=True),
+        patch('six.moves.reload_module', autospec=True),
         patch('os.makedirs', autospec=True)]
 
     def test_without_cache(self):

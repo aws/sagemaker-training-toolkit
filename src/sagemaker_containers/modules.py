@@ -19,12 +19,13 @@ import shlex
 import subprocess
 import sys
 import tarfile
-import traceback
+import textwrap
 
 import boto3
+import six
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_containers import env
+from sagemaker_containers import env, errors
 
 logger = logging.getLogger(__name__)
 
@@ -58,14 +59,41 @@ def prepare(path, name):  # type: (str, str) -> None
         path (str): path to directory with the script or module.
         name (str): name of the script or module.
     """
-    if not os.path.exists(os.path.join(path, 'setup.py')):
-        logging.info('Module %s does not provide a setup.py. Generating a minimal setup.' % name)
+    setup_path = os.path.join(path, 'setup.py')
+    if not os.path.exists(setup_path):
+        content = textwrap.dedent("""
+        from setuptools import setup
 
-        with open(os.path.join(path, 'setup.py'), 'w') as f:
-            lines = ['from setuptools import setup',
-                     'setup(name="%s", py_modules=["%s"])' % (name, name)]
+        setup(packages=[''],
+              name="%s",
+              version='1.0.0',
+              include_package_data=True)
+        """ % name)
 
-            f.write(os.linesep.join(lines))
+        logging.info('Module %s does not provide a setup.py. \nGenerating setup.py' % name)
+
+        env.write_file(setup_path, content)
+
+        content = textwrap.dedent("""
+        [wheel]
+        universal = 1
+        """)
+
+        logging.info('Generating setup.cfg')
+
+        env.write_file(os.path.join(path, 'setup.cfg'), content)
+
+        content = textwrap.dedent("""
+        recursive-include . *
+
+        recursive-exclude . __pycache__*
+        recursive-exclude . *.pyc
+        recursive-exclude . *.pyo
+        """)
+
+        logging.info('Generating MANIFEST.in')
+
+        env.write_file(os.path.join(path, 'MANIFEST.in'), content)
 
 
 def install(path):  # type: (str) -> None
@@ -77,9 +105,14 @@ def install(path):  # type: (str) -> None
     if not sys.executable:
         raise RuntimeError('Failed to retrieve the real path for the Python executable binary')
     try:
-        subprocess.check_call(shlex.split('%s -m pip install %s -U' % (sys.executable, path)))
-    except subprocess.CalledProcessError:
-        raise RuntimeError('Failed to pip install %s:%s%s' % (path, os.linesep, traceback.format_exc()))
+        cmd = '%s -m pip install -U . ' % sys.executable
+
+        if os.path.exists(os.path.join(path, 'requirements.txt')):
+            cmd += '-r requirements.txt'
+
+        subprocess.check_call(shlex.split(cmd), cwd=path)
+    except subprocess.CalledProcessError as e:
+        six.raise_from(errors.InstallModuleError(e), e)
 
 
 def exists(name):  # type: (str) -> bool
@@ -133,4 +166,10 @@ def download_and_import(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (st
 
                 install(module_path)
 
-    return importlib.import_module(name)
+    try:
+        module = importlib.import_module(name)
+        six.moves.reload_module(module)
+
+        return module
+    except Exception as e:
+        six.raise_from(errors.ImportModuleError(e), e)
