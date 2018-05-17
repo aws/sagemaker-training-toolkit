@@ -43,7 +43,6 @@ def npy_to_numpy(npy_array):  # type: (object) -> np.array
 
     Args:
         npy_array (npy array): to be converted to numpy array
-
     Returns:
         (np.array): converted numpy array.
     """
@@ -72,30 +71,34 @@ def array_to_json(array_like):  # type: (np.array or Iterable or int or float) -
     return json.dumps(array_like, default=default)
 
 
-def json_to_numpy(string):  # type: (object) -> np.array
+def json_to_numpy(string_like, dtype=None):  # type: (str or unicode) -> np.array
     """Convert a JSON object to a numpy array.
 
         Args:
-            string (str): JSON string.
-
+            string_like (str): JSON string.
+            dtype (dtype, optional):  Data type of the resulting array. If None, the dtypes will be determined by the
+                                        contents of each column, individually. This argument can only be used to
+                                        'upcast' the array.  For downcasting, use the .astype(t) method.
         Returns:
             (np.array): numpy array
         """
-    data = json.loads(string)
-    return np.array(data)
+    data = json.loads(string_like)
+    return np.array(data, dtype=dtype)
 
 
-def csv_to_numpy(string):  # type: (str) -> np.array
+def csv_to_numpy(string_like, dtype=None):  # type: (str or unicode) -> np.array
     """Convert a CSV object to a numpy array.
 
     Args:
-        string (str): CSV string.
-
+        string_like (str): CSV string.
+        dtype (dtype, optional):  Data type of the resulting array. If None, the dtypes will be determined by the
+                                        contents of each column, individually. This argument can only be used to
+                                        'upcast' the array.  For downcasting, use the .astype(t) method.
     Returns:
         (np.array): numpy array
     """
-    stream = StringIO(string)
-    return np.genfromtxt(stream, dtype=np.float32, delimiter=',')
+    stream = StringIO(string_like)
+    return np.genfromtxt(stream, dtype=dtype, delimiter=',')
 
 
 def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) -> str

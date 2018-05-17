@@ -48,7 +48,7 @@ def test_worker_with_initialize():
             assert response.status_code == status_codes.OK
 
         response = client.post('/invocations')
-        assert json.loads(response.get_data().decode('utf-8')) == dict(initialize=1, transform=10)
+        assert json.loads(response.get_data(as_text=True)) == dict(initialize=1, transform=10)
         assert response.mimetype == content_types.JSON
 
 
@@ -68,7 +68,7 @@ def test_worker(module_name, expected_name):
             assert response.status_code == status_codes.OK
 
         response = client.post('/invocations')
-        assert json.loads(response.get_data().decode('utf-8')) == dict(initialize=0, transform=10)
+        assert json.loads(response.get_data(as_text=True)) == dict(initialize=0, transform=10)
         assert response.mimetype == content_types.JSON
 
 
@@ -83,4 +83,4 @@ def test_worker_with_custom_ping():
                        module_name='custom_ping').test_client() as client:
         response = client.get('/ping')
         assert response.status_code == status_codes.ACCEPTED
-        assert response.get_data().decode('utf-8') == 'ping'
+        assert response.get_data(as_text=True) == 'ping'

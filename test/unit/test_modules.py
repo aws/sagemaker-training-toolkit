@@ -51,7 +51,7 @@ def test_prepare():
     open.assert_any_call('c:/path/to/setup.cfg', 'w')
     open.assert_any_call('c:/path/to/MANIFEST.in', 'w')
 
-    content = textwrap.dedent("""
+    data = textwrap.dedent("""
     from setuptools import setup
 
     setup(packages=[''],
@@ -60,22 +60,22 @@ def test_prepare():
           include_package_data=True)
     """)
 
-    open().write.assert_any_call(content)
+    open().write.assert_any_call(data)
 
-    content = textwrap.dedent("""
+    data = textwrap.dedent("""
     [wheel]
     universal = 1
     """)
-    open().write.assert_any_call(content)
+    open().write.assert_any_call(data)
 
-    content = textwrap.dedent("""
+    data = textwrap.dedent("""
     recursive-include . *
 
     recursive-exclude . __pycache__*
     recursive-exclude . *.pyc
     recursive-exclude . *.pyo
     """)
-    open().write.assert_any_call(content)
+    open().write.assert_any_call(data)
 
 
 @patch(builtins_open, mock_open())

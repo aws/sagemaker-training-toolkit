@@ -98,7 +98,7 @@ def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hy
     write_json(all_hyperparameters, env.HYPERPARAMETERS_PATH)
 
 
-File = collections.namedtuple('File', ['name', 'content'])  # type: (str, str or list) -> File
+File = collections.namedtuple('File', ['name', 'data'])  # type: (str, str or list) -> File
 
 
 def request(path='/', base_url=None, query_string=None, accept=None, method='GET', input_stream=None,
@@ -158,12 +158,12 @@ class UserModule(object):
                     name = os.path.join(tmpdir, _file.name)
                     with open(name, 'w+') as f:
 
-                        if isinstance(_file.content, six.string_types):
-                            content = _file.content
+                        if isinstance(_file.data, six.string_types):
+                            data = _file.data
                         else:
-                            content = '\n'.join(_file.content)
+                            data = '\n'.join(_file.data)
 
-                        f.write(content)
+                        f.write(data)
                     tar.add(name=name, arcname=_file.name)
 
             self._s3.Object(self.bucket, self.key).upload_file(tar_name)

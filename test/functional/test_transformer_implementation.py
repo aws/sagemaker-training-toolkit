@@ -21,7 +21,7 @@ import test
 from test import fake_ml_framework
 
 
-def predict_fn(model, data):
+def predict_fn(data, model):
     return model.predict(data)
 
 
@@ -48,12 +48,12 @@ def test_transformer_implementation():
 
         assert response.status_code == status_codes.OK
 
-        assert response.get_data().decode('utf-8') == '[36.0, 81.0, 1764.0]'
+        assert response.get_data(as_text=True) == '[36.0, 81.0, 1764.0]'
 
         response = post(client, payload, content_types.JSON, content_types.CSV)
 
         assert response.status_code == status_codes.OK
-        assert response.get_data().decode('utf-8') == '36.0\n81.0\n1764.0\n'
+        assert response.get_data(as_text=True) == '36.0\n81.0\n1764.0\n'
 
         response = post(client, payload, content_types.CSV, content_types.NPY)
 

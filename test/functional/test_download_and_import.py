@@ -21,10 +21,10 @@ import pytest
 from sagemaker_containers import errors, modules
 import test
 
-content = ['from distutils.core import setup\n',
-           'setup(name="my_test_script", py_modules=["my_test_script"])']
+data = ['from distutils.core import setup\n',
+        'setup(name="my_test_script", py_modules=["my_test_script"])']
 
-SETUP = test.File('setup.py', content)
+SETUP = test.File('setup.py', data)
 
 USER_SCRIPT = test.File('my_test_script.py', 'def validate(): return True')
 
@@ -55,7 +55,7 @@ def test_download_and_import_script(user_module_name):
     assert module.validate()
 
 
-content = textwrap.dedent("""
+data = textwrap.dedent("""
             from pyfiglet import Figlet
 
             def say():
@@ -63,7 +63,7 @@ content = textwrap.dedent("""
 
 """)
 
-USER_SCRIPT_WITH_REQUIREMENTS = test.File('my_test_script.py', content)
+USER_SCRIPT_WITH_REQUIREMENTS = test.File('my_test_script.py', data)
 
 REQUIREMENTS_FILE = test.File('requirements.txt', 'pyfiglet')
 
@@ -83,7 +83,7 @@ def test_download_and_import_script_with_requirements(user_module_name):
 """.replace('.', ' ').strip()
 
 
-content = textwrap.dedent("""
+data = textwrap.dedent("""
             import file_2
 
 
@@ -91,7 +91,7 @@ content = textwrap.dedent("""
                 return file_2.IMPORTED
 """)
 
-USER_SCRIPT_WITH_ADDITIONAL_FILE = test.File('my_test_script.py', content)
+USER_SCRIPT_WITH_ADDITIONAL_FILE = test.File('my_test_script.py', data)
 
 ADDITIONAL_FILE = test.File('file_2.py', 'IMPORTED = True')
 
@@ -104,9 +104,9 @@ def test_download_and_import_script_with_additional_files(user_module_name):
     assert module.validate()
 
 
-content = ['raise ValueError("this script does not work")']
+data = ['raise ValueError("this script does not work")']
 
-USER_SCRIPT_WITH_ERROR = test.File('my_test_script.py', content)
+USER_SCRIPT_WITH_ERROR = test.File('my_test_script.py', data)
 
 
 def test_download_and_import_script_with_error(user_module_name):

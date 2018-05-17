@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import tempfile
 
+
 from sagemaker_containers import mapping
 
 logger = logging.getLogger(__name__)
@@ -165,7 +166,7 @@ def channel_path(channel):  # type: (str) -> str
     For more information about channels: https://docs.aws.amazon.com/sagemaker/latest/dg/API_Channel.html
 
     Returns:
-        (str) The input data directory for the specified channel.
+        str: The input data directory for the specified channel.
     """
     return os.path.join(INPUT_DATA_PATH, channel)
 
@@ -174,7 +175,7 @@ def gpu_count():  # type: () -> int
     """The number of gpus available in the current container.
 
     Returns:
-        (int): number of gpus available in the current container.
+        int: number of gpus available in the current container.
     """
     try:
         cmd = shlex.split('nvidia-smi --list-gpus')
@@ -189,7 +190,7 @@ def cpu_count():  # type: () -> int
     """The number of cpus available in the current container.
 
     Returns:
-        (int): number of cpus available in the current container.
+        int: number of cpus available in the current container.
     """
     return multiprocessing.cpu_count()
 
@@ -228,14 +229,14 @@ class Env(mapping.MappingMixin):
     @property
     def model_dir(self):  # type: () -> str
         """Returns:
-            (str): the directory where models should be saved, e.g., /opt/ml/model/"""
+            str: the directory where models should be saved, e.g., /opt/ml/model/"""
         return self._model_dir
 
     @property
     def current_host(self):  # type: () -> str
         """The name of the current container on the container network. For example, 'algo-1'.
         Returns:
-            (str): current host.
+            str: current host.
         """
         return self._current_host
 
@@ -244,7 +245,7 @@ class Env(mapping.MappingMixin):
         """The number of gpus available in the current container.
 
         Returns:
-            (int): number of gpus available in the current container.
+            int: number of gpus available in the current container.
         """
         return self._num_gpus
 
@@ -253,7 +254,7 @@ class Env(mapping.MappingMixin):
         """The number of cpus available in the current container.
 
         Returns:
-            (int): number of cpus available in the current container.
+            int: number of cpus available in the current container.
         """
         return self._num_cpus
 
@@ -262,7 +263,7 @@ class Env(mapping.MappingMixin):
         """The name of the user provided module.
 
         Returns:
-            (str): name of the user provided module
+            str: name of the user provided module
         """
         return self._parse_module_name(self._module_name)
 
@@ -271,7 +272,7 @@ class Env(mapping.MappingMixin):
         """The full path location of the user provided module.
 
         Returns:
-            (str): full path location of the user provided module.
+            str: full path location of the user provided module.
         """
         return self._module_dir
 
@@ -280,7 +281,7 @@ class Env(mapping.MappingMixin):
         """Whether metrics should be executed in the environment or not.
 
         Returns:
-            (bool): representing whether metrics should be executed or not.
+            bool: representing whether metrics should be executed or not.
         """
         return self._enable_metrics
 
@@ -289,7 +290,7 @@ class Env(mapping.MappingMixin):
         """Environment logging level.
 
         Returns:
-            (int): environment logging level.
+            int: environment logging level.
         """
         return self._log_level
 
@@ -303,7 +304,7 @@ class Env(mapping.MappingMixin):
             program_param (str): Module or script name.
 
         Returns:
-            (str): Module name
+            str: Module name
         """
         if program_param and program_param.endswith('.py'):
             return program_param[:-3]
@@ -428,6 +429,8 @@ class TrainingEnv(Env):
                 saved.
         framework_module (str):  Name of the framework module and entry point. For example:
             my_module:main
+
+        network_interface_name (str): Name of the network interface used for distributed training
     """
 
     def __init__(self):
@@ -436,7 +439,9 @@ class TrainingEnv(Env):
         resource_config = read_resource_config()
         current_host = resource_config['current_host']
         hosts = resource_config['hosts']
+        network_interface_name = resource_config.get('network_interface_name', 'ethwe')
         input_data_config = read_input_data_config()
+
         all_hyperparameters = read_hyperparameters()
         split_result = mapping.split_by_criteria(all_hyperparameters, SAGEMAKER_HYPERPARAMETERS)
 
@@ -448,13 +453,14 @@ class TrainingEnv(Env):
         os.environ[REGION_NAME_ENV] = sagemaker_region
 
         self._hosts = hosts
+        self._network_interface_name = network_interface_name
         self._input_dir = INPUT_PATH
         self._input_config_dir = INPUT_CONFIG_PATH
         self._output_dir = OUTPUT_PATH
         self._hyperparameters = split_result.excluded
         self._resource_config = resource_config
         self._input_data_config = input_data_config
-        self._output_data_dir = OUTPUT_DATA_PATH
+        self._output_data_dir = os.path.join(OUTPUT_DATA_PATH, current_host)
         self._channel_input_dirs = {channel: channel_path(channel) for channel in input_data_config}
         self._current_host = current_host
 
@@ -475,13 +481,22 @@ class TrainingEnv(Env):
         return self._hosts
 
     @property
+    def network_interface_name(self):  # type: () -> str
+        """Name of the network interface used for distributed training
+
+        Returns:
+              str: name of the network interface, for example, 'ethwe'
+        """
+        return self._network_interface_name
+
+    @property
     def input_dir(self):  # type: () -> str
         """The input_dir, e.g. /opt/ml/input/, is the directory where SageMaker saves input data
         and configuration files before and during training.
         The input data directory has the following subdirectories:
             config (`input_config_dir`) and data (`input_data_dir`)
         Returns:
-            (str): the path of the input directory, e.g. /opt/ml/input/
+            str: the path of the input directory, e.g. /opt/ml/input/
         """
         return self._input_dir
 
@@ -498,7 +513,7 @@ class TrainingEnv(Env):
         More information about this files can be find here:
             https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
         Returns:
-            (str): the path of the input directory, e.g. /opt/ml/input/config/
+            str: the path of the input directory, e.g. /opt/ml/input/config/
         """
         return self._input_config_dir
 
@@ -507,7 +522,7 @@ class TrainingEnv(Env):
         """The directory where training success/failure indications will be written, e.g. /opt/ml/output.
         To save non-model artifacts check `output_data_dir`.
         Returns:
-            (str): the path to the output directory, e.g. /opt/ml/output/.
+            str: the path to the output directory, e.g. /opt/ml/output/.
         """
         return self._output_dir
 
@@ -516,7 +531,7 @@ class TrainingEnv(Env):
         """The dict of hyperparameters that were passed to the training job.
 
         Returns:
-            hyperparameters (dict[str, object]): An instance of `HyperParameters` containing the training job
+            dict[str, object]: An instance of `HyperParameters` containing the training job
                                                     hyperparameters.
         """
         return self._hyperparameters
@@ -567,12 +582,12 @@ class TrainingEnv(Env):
     @property
     def output_data_dir(self):  # type: () -> str
         """The dir to write non-model training artifacts (e.g. evaluation results) which will be retained
-        by SageMaker, e.g. /opt/ml/output/data.
+        by SageMaker, e.g. /opt/ml/output/data/{current_host}.
         As your algorithm runs in a container, it generates output including the status of the
         training job and model and output artifacts. Your algorithm should write this information
         to the this directory.
         Returns:
-            (str): the path to output data directory, e.g. /opt/ml/output/data.
+            str: the path to output data directory, e.g. /opt/ml/output/data/algo-1.
         """
         return self._output_data_dir
 
@@ -594,7 +609,7 @@ class TrainingEnv(Env):
     @property
     def framework_module(self):  # type: () -> str
         """Returns:
-            (str): Name of the framework module and entry point. For example:
+            str: Name of the framework module and entry point. For example:
                 my_module:main"""
         return self._framework_module
 
@@ -639,26 +654,26 @@ class ServingEnv(Env):
     @property
     def use_nginx(self):  # type: () -> bool
         """Returns:
-            (bool): whether to use nginx as a reverse proxy. Default: True"""
+            bool: whether to use nginx as a reverse proxy. Default: True"""
         return self._use_nginx
 
     @property
     def model_server_timeout(self):  # type: () -> int
         """Returns:
-            (int): Timeout in seconds for the model server. This is passed over to gunicorn, from the docs:
+            int: Timeout in seconds for the model server. This is passed over to gunicorn, from the docs:
                 Workers silent for more than this many seconds are killed and restarted. Our default value is 60."""
         return self._model_server_timeout
 
     @property
     def model_server_workers(self):  # type: () -> int
         """Returns:
-            (int): Number of worker processes the model server will use"""
+            int: Number of worker processes the model server will use"""
         return self._model_server_workers
 
     @property
     def framework_module(self):  # type: () -> str
         """Returns:
-            (str): Name of the framework module and entry point. For example:
+            str: Name of the framework module and entry point. For example:
                 my_module:main"""
         return self._framework_module
 
@@ -677,23 +692,20 @@ def tmpdir(suffix='', prefix='tmp', dir=None):  # type: (str, str, str) -> None
         dir (str):  If dir is specified, the file will be created in that directory; otherwise, a default directory is
                         used.
     Returns:
-        (str) path to the directory
+        str: path to the directory
     """
     tmp = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
     yield tmp
     shutil.rmtree(tmp)
 
 
-def write_file(path, content, mode='w'):  # type: (str, str, str) -> None
-    """Write content to a file.
+def write_file(path, data, mode='w'):  # type: (str, str, str) -> None
+    """Write data to a file.
 
     Args:
         path (str): path to the file.
-        content (str): content to be written to the file.
+        data (str): data to be written to the file.
         mode (str): mode which the file will be open.
-
-    Returns:
-
     """
     with open(path, mode) as f:
-        f.write(content)
+        f.write(data)

@@ -38,10 +38,10 @@ def test_default_model_fn():
 
 def test_predict_fn():
     with pytest.raises(NotImplementedError):
-        transformer.default_predict_fn('model', 'data')
+        transformer.default_predict_fn('data', 'model')
 
 
-request = test.request(data='42')
+request = test.request(data='42', content_type=content_types.JSON)
 
 
 def test_transformer_initialize_with_default_model_fn():
@@ -89,7 +89,7 @@ def test_initialize():
 
     transformer.Transformer(model_fn=model_fn).initialize()
 
-    model_fn.assert_called_with(model_dir=env.MODEL_PATH)
+    model_fn.assert_called_with(env.MODEL_PATH)
 
 
 @patch('sagemaker_containers.worker.Request', lambda: request)
@@ -102,12 +102,11 @@ def test_transformer_transform(response):
                                         predict_fn=predict_fn, output_fn=output_fn)
 
     transform.initialize()
-
     assert transform.transform() == response
 
-    input_fn.assert_called_with(input_data=request.content, content_type=request.content_type)
-    predict_fn.assert_called_with(model=model_fn(), data=input_fn())
-    output_fn.assert_called_with(prediction=predict_fn(), accept=request.accept)
+    input_fn.assert_called_with(request.content, request.content_type)
+    predict_fn.assert_called_with(input_fn(), model_fn())
+    output_fn.assert_called_with(predict_fn(), request.accept)
 
 
 @patch('sagemaker_containers.worker.Request', lambda: request)
@@ -121,6 +120,6 @@ def test_transformer_transform_backwards_compatibility():
 
     assert transform.transform().status_code == status_codes.OK
 
-    input_fn.assert_called_with(input_data=request.content, content_type=request.content_type)
-    predict_fn.assert_called_with(model=model_fn(), data=input_fn())
-    output_fn.assert_called_with(prediction=predict_fn(), accept=request.accept)
+    input_fn.assert_called_with(request.content, request.content_type)
+    predict_fn.assert_called_with(input_fn(), model_fn())
+    output_fn.assert_called_with(predict_fn(), request.accept)

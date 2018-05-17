@@ -61,7 +61,7 @@ def prepare(path, name):  # type: (str, str) -> None
     """
     setup_path = os.path.join(path, 'setup.py')
     if not os.path.exists(setup_path):
-        content = textwrap.dedent("""
+        data = textwrap.dedent("""
         from setuptools import setup
 
         setup(packages=[''],
@@ -72,18 +72,18 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logging.info('Module %s does not provide a setup.py. \nGenerating setup.py' % name)
 
-        env.write_file(setup_path, content)
+        env.write_file(setup_path, data)
 
-        content = textwrap.dedent("""
+        data = textwrap.dedent("""
         [wheel]
         universal = 1
         """)
 
         logging.info('Generating setup.cfg')
 
-        env.write_file(os.path.join(path, 'setup.cfg'), content)
+        env.write_file(os.path.join(path, 'setup.cfg'), data)
 
-        content = textwrap.dedent("""
+        data = textwrap.dedent("""
         recursive-include . *
 
         recursive-exclude . __pycache__*
@@ -93,7 +93,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logging.info('Generating MANIFEST.in')
 
-        env.write_file(os.path.join(path, 'MANIFEST.in'), content)
+        env.write_file(os.path.join(path, 'MANIFEST.in'), data)
 
 
 def install(path):  # type: (str) -> None

@@ -83,7 +83,7 @@ def test_training_framework(user_script):
     labels = [0, 1, 0, 1]
     np.savez(os.path.join(channel.path, 'training_data'), features=features, labels=labels)
 
-    module = test.UserModule(test.File(name='user_script.py', content=user_script))
+    module = test.UserModule(test.File(name='user_script.py', data=user_script))
 
     hyperparameters = dict(training_data_file='training_data.npz', sagemaker_program='user_script.py',
                            epochs=10, batch_size=64)

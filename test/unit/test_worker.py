@@ -91,8 +91,8 @@ def test_request():
     assert request.content_type == content_types.NPY
     assert request.accept == content_types.CSV
 
-    result = encoders.decode(request.content, content_types.NPY)
-    np.testing.assert_array_equal(result, [6, 9.3])
+    result = encoders.decode(request.data, content_types.NPY)
+    np.testing.assert_array_equal(result, np.array([6, 9.3]))
 
 
 def test_request_content_type():

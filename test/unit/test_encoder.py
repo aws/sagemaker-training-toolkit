@@ -13,55 +13,92 @@
 from mock import Mock, patch
 import numpy as np
 import pytest
+from six import BytesIO
 
 from sagemaker_containers import content_types, encoders
 
 
-@patch('numpy.load', lambda x: 'loaded %s' % x)
-@patch('sagemaker_containers.encoders.BytesIO', lambda x: 'byte io %s' % x)
-def test_npy_to_numpy():
-    assert encoders.npy_to_numpy(42) == 'loaded byte io 42'
+@pytest.mark.parametrize('target', ([42, 6, 9], [42., 6., 9.], ['42', '6', '9'], [u'42', u'6', u'9'], {42: {'6': 9.}}))
+def test_npy_to_numpy(target):
+    buffer = BytesIO()
+    np.save(buffer, target)
+    input_data = buffer.getvalue()
+
+    actual = encoders.npy_to_numpy(input_data)
+
+    np.testing.assert_equal(actual, np.array(target))
 
 
-@patch('numpy.save', autospec=True)
-@patch('sagemaker_containers.encoders.BytesIO', autospec=True)
-def array_to_npy(bytes_io, save):
-    encoders.array_to_npy(42)
+@pytest.mark.parametrize('target', ([42, 6, 9], [42., 6., 9.], ['42', '6', '9'], [u'42', u'6', u'9'], {42: {'6': 9.}}))
+def test_array_to_npy(target):
+    input_data = np.array(target)
 
-    bytes_io.return_value.getvalue.assert_called()
-    save.assert_called_with(bytes_io(), 42)
+    actual = encoders.array_to_npy(input_data)
+
+    np.testing.assert_equal(np.load(BytesIO(actual)), np.array(target))
+
+    actual = encoders.array_to_npy(target)
+
+    np.testing.assert_equal(np.load(BytesIO(actual)), np.array(target))
 
 
-@patch('json.loads', lambda x: 'loaded %s' % x)
-def test_json_to_numpy():
-    assert encoders.json_to_numpy(42) == 'loaded 42'
+@pytest.mark.parametrize(
+    'target, expected', [('[42, 6, 9]', np.array([42, 6, 9])),
+                         ('[42.0, 6.0, 9.0]', np.array([42., 6., 9.])),
+                         ('["42", "6", "9"]', np.array(['42', '6', '9'])),
+                         (u'["42", "6", "9"]', np.array([u'42', u'6', u'9']))]
+)
+def test_json_to_numpy(target, expected):
+    actual = encoders.json_to_numpy(target)
+    np.testing.assert_equal(actual, expected)
+
+    np.testing.assert_equal(encoders.json_to_numpy(target, dtype=int), expected.astype(int))
+
+    np.testing.assert_equal(encoders.json_to_numpy(target, dtype=float), expected.astype(float))
 
 
-def test_array_to_json():
-    assert encoders.array_to_json(42) == '42'
+@pytest.mark.parametrize(
+    'target, expected', [([42, 6, 9], '[42, 6, 9]'),
+                         ([42., 6., 9.], '[42.0, 6.0, 9.0]'),
+                         (['42', '6', '9'], '["42", "6", "9"]'),
+                         ({42: {'6': 9.}}, '{"42": {"6": 9.0}}')]
+)
+def test_array_to_json(target, expected):
+    actual = encoders.array_to_json(target)
+    np.testing.assert_equal(actual, expected)
 
-    assert encoders.array_to_json(np.asarray([42])) == '[42]'
+    actual = encoders.array_to_json(np.array(target))
+    np.testing.assert_equal(actual, expected)
 
+
+def test_array_to_json_exception():
     with pytest.raises(TypeError):
         encoders.array_to_json(lambda x: 3)
 
 
-@patch('numpy.genfromtxt', autospec=True)
-@patch('sagemaker_containers.encoders.StringIO', autospec=True)
-def test_csv_to_numpy(string_io, genfromtxt):
-    encoders.csv_to_numpy('42')
+@pytest.mark.parametrize(
+    'target, expected', [('42\n6\n9\n', np.array([42, 6, 9])),
+                         ('42.0\n6.0\n9.0\n', np.array([42., 6., 9.])),
+                         ('42\n6\n9\n', np.array([42, 6, 9]))]
+)
+def test_csv_to_numpy(target, expected):
+    actual = encoders.csv_to_numpy(target)
+    np.testing.assert_equal(actual, expected)
 
-    string_io.assert_called_with('42')
-    genfromtxt.assert_called_with(string_io(), dtype=np.float32, delimiter=',')
+    actual = encoders.csv_to_numpy(target)
+    np.testing.assert_equal(actual, expected)
 
 
-@patch('numpy.savetxt', autospec=True)
-@patch('sagemaker_containers.encoders.StringIO', autospec=True)
-def test_array_to_csv(string_io, savetxt):
-    encoders.array_to_csv(42)
+@pytest.mark.parametrize(
+    'target, expected', [([42, 6, 9], '42\n6\n9\n'),
+                         ([42., 6., 9.], '42.0\n6.0\n9.0\n'),
+                         (['42', '6', '9'], '42\n6\n9\n')])
+def test_array_to_csv(target, expected):
+    actual = encoders.array_to_csv(target)
+    np.testing.assert_equal(actual, expected)
 
-    string_io.return_value.getvalue.assert_called()
-    savetxt.assert_called_with(string_io(), 42, delimiter=',', fmt='%s')
+    actual = encoders.array_to_csv(np.array(target))
+    np.testing.assert_equal(actual, expected)
 
 
 @pytest.mark.parametrize(

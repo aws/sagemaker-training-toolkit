@@ -103,11 +103,11 @@ class Request(flask.Request, mapping.MappingMixin):
     >>> from sagemaker_containers import env
 
     >>> request = env.Request()
-    >>> content = request.content
+    >>> data = request.data
 
     >>> print(str(request))
 
-    {'content_length': '2', 'content_type': 'application/json', 'content': '42', 'accept': 'application/json', ... }
+    {'content_length': '2', 'content_type': 'application/json', 'data': '42', 'accept': 'application/json', ... }
 
 
     """
@@ -145,8 +145,6 @@ class Request(flask.Request, mapping.MappingMixin):
         Returns:
             (obj): incoming data
         """
-        data = self.get_data()
-        try:
-            return data.decode('utf-8')
-        except (ValueError, UnicodeDecodeError):
-            return data
+        as_text = self.content_type in content_types.UTF8_TYPES
+
+        return self.get_data(as_text=as_text)
