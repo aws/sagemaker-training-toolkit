@@ -130,7 +130,7 @@ def decode(obj, content_type):  # type: (np.array or Iterable or int or float) -
         content_type (str): content type to be used.
 
     Returns:
-        object: decoded object.
+        np.array: decoded object.
     """
     try:
         decoder = _decoders_map[content_type]
