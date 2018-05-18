@@ -613,6 +613,25 @@ class TrainingEnv(Env):
                 my_module:main"""
         return self._framework_module
 
+    def write_success_file(self):  # type: () -> None
+        """Create a file 'success' when training is successful. This file doesn't need to have any content.
+        See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
+        """
+        file_path = os.path.join(self._output_dir, 'success')
+        empty_content = ''
+        write_file(file_path, empty_content)
+
+    def write_failure_file(self, failure_msg):  # type: (str) -> None
+        """Create a file 'failure' if training fails after all algorithm output (for example, logging) completes,
+        the failure description should be written to this file. In a DescribeTrainingJob response, Amazon SageMaker
+        returns the first 1024 characters from this file as FailureReason.
+        See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
+        Args:
+            failure_msg: The description of failure
+        """
+        file_path = os.path.join(self._output_dir, 'failure')
+        write_file(file_path, failure_msg)
+
 
 class ServingEnv(Env):
     """Provides access to aspects of the serving environment relevant to serving containers, including

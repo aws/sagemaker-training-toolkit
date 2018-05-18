@@ -59,7 +59,6 @@ def fn_with_error(*args, **kwargs):
 def test_transformer_initialize_with_client_error():
     with pytest.raises(errors.ClientError) as e:
         transformer.Transformer(model_fn=fn_with_error).initialize()
-
     assert e.value.args[0] == error_from_fn
 
 
