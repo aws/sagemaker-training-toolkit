@@ -23,3 +23,7 @@ class InstallModuleError(ClientError):
 
 class ImportModuleError(ClientError):
     pass
+
+
+class ExecuteUserScriptError(BaseException):
+    pass

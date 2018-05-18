@@ -147,7 +147,7 @@ class TestDownloadAndImport(test.TestBase):
 
     def test_without_cache(self):
         with tarfile.open() as tar_file:
-            module = modules.download_and_import('s3://bucket/my-module', cache=False)
+            module = modules.import_module_from_s3('s3://bucket/my-module', cache=False)
 
             assert module == importlib.import_module(modules.DEFAULT_MODULE_NAME)
 
@@ -162,7 +162,7 @@ class TestDownloadAndImport(test.TestBase):
         with tarfile.open() as tar_file:
             modules.exists.return_value = True
 
-            module = modules.download_and_import('s3://bucket/my-module', cache=True)
+            module = modules.import_module_from_s3('s3://bucket/my-module', cache=True)
 
             assert module == importlib.import_module(modules.DEFAULT_MODULE_NAME)
 
@@ -177,7 +177,7 @@ class TestDownloadAndImport(test.TestBase):
         with tarfile.open() as tar_file:
             modules.exists.return_value = False
 
-            module = modules.download_and_import('s3://bucket/my-module', cache=True)
+            module = modules.import_module_from_s3('s3://bucket/my-module', cache=True)
 
             assert module == importlib.import_module(modules.DEFAULT_MODULE_NAME)
 
@@ -192,7 +192,7 @@ class TestDownloadAndImport(test.TestBase):
         with tarfile.open() as tar_file:
             modules.exists.return_value = False
 
-            module = modules.download_and_import('s3://bucket/my-module', 'another_module_name', cache=True)
+            module = modules.import_module_from_s3('s3://bucket/my-module', 'another_module_name', cache=True)
 
             assert module == importlib.import_module('another_module_name')
 

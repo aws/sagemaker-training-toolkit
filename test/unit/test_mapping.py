@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 
 import pytest
+import six
 
 from sagemaker_containers import mapping
 
@@ -54,10 +55,41 @@ def test_mapping_mixin():
 @pytest.mark.parametrize('property, error, msg', [
     ('c', AttributeError, "type object 'ProcessEnvironment' has no attribute 'c'"),
     ('d', KeyError, 'Trying to access non property d'),
-    ('non_existent_field', AttributeError, "type object 'ProcessEnvironment' has no attribute 'non_existent_field'")
+    ('non_existent_field', AttributeError,
+     "type object 'ProcessEnvironment' has no attribute 'non_existent_field'")
 ])
 def test_mapping_throws_exception_trying_to_access_non_properties(property, error, msg):
     with pytest.raises(error) as e:
         ProcessEnvironment()[property]
 
     assert str(e.value.args[0]) == msg
+
+
+@pytest.mark.parametrize(
+    'target, expected',
+    [({'da-sh': '1', 'un_der': '2', 'un-sh': '3', 'da_der': '2'},
+      ['--da-sh', '1', '--un_der', '2', '--un-sh', '3', '--da_der', '2']),
+
+     ({},
+      []),
+
+     ({'': ''},
+      ['', '']),
+
+     ({'unicode': u'1', 'bytes': b'2', 'floats': 4., 'int': 2},
+      ['--unicode', '1', '--bytes', "b'2'" if six.PY3 else '2', '--floats', '4.0', '--int', '2']),
+
+     ({'U': u'1', 'b': b'2', 'T': '', '': '42'},
+      ['-U', '1', '-b', "b'2'" if six.PY3 else '2', '-T', '', '', '42']),
+
+     ({'nested': ['1', ['2', '3', [['6']]]]},
+      ['--nested', "['1', ['2', '3', [['6']]]]"]),
+
+     ({'truthy': True, 'falsy': False},
+      ['--truthy', 'True', '--falsy', 'False'])
+
+     ])
+def test_to_cmd_args(target, expected):
+    actual = mapping.to_cmd_args(target)
+
+    assert sorted(actual) == sorted(expected)

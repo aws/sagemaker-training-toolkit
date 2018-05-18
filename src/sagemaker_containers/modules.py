@@ -105,7 +105,7 @@ def install(path):  # type: (str) -> None
     if not sys.executable:
         raise RuntimeError('Failed to retrieve the real path for the Python executable binary')
     try:
-        cmd = '%s -m pip install -U . ' % sys.executable
+        cmd = '%s -m pip install -U . ' % python_executable()
 
         if os.path.exists(os.path.join(path, 'requirements.txt')):
             cmd += '-r requirements.txt'
@@ -132,7 +132,8 @@ def exists(name):  # type: (str) -> bool
         return True
 
 
-def download_and_import(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (str, str, bool) -> module
+def download_and_install(url, name=DEFAULT_MODULE_NAME, cache=True):
+    # type: (str, str, bool) -> module
     """Download, prepare and install a compressed tar file from S3 as a module.
 
     SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
@@ -166,6 +167,68 @@ def download_and_import(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (st
 
                 install(module_path)
 
+
+def run(module_name, args):  # type: (str, list) -> None
+    """Run Python module as a script.
+
+    Search sys.path for the named module and execute its contents as the __main__ module.
+
+    Since the argument is a module name, you must not give a file extension (.py). The module name should be a valid
+    absolute Python module name, but the implementation may not always enforce this (e.g. it may allow you to use a name
+    that includes a hyphen).
+
+    Package names (including namespace packages) are also permitted. When a package name is supplied instead of a
+    normal module, the interpreter will execute <pkg>.__main__ as the main module. This behaviour is deliberately
+    similar to the handling of directories and zipfiles that are passed to the interpreter as the script argument.
+
+    Note This option cannot be used with built-in modules and extension modules written in C, since they do not have
+    Python module files. However, it can still be used for precompiled modules, even if the original source file is
+    not available. If this option is given, the first element of sys.argv will be the full path to the module file (
+    while the module file is being located, the first element will be set to "-m"). As with the -c option,
+    the current directory will be added to the start of sys.path.
+
+    You can find more information at https://docs.python.org/3/using/cmdline.html#cmdoption-m
+
+    Example:
+
+        >>>from sagemaker_containers import env, mapping, modules
+
+        >>>hyperparameters = env.TrainingEnv().hyperparameters
+        {'batch-size': 128, 'model_dir': '/opt/ml/model'}
+
+        >>>args = mapping.to_cmd_args(hyperparameters)
+        ['--batch-size', '128', '--model_dir', '/opt/ml/model']
+
+        >>>modules.run('user_script')
+        python -m user_script --batch-size 128 --model_dir /opt/ml/model
+
+    Args:
+        module_name (str): module name in the same format required by python -m <module-name> cli command.
+        args (list):  A list of program arguments.
+    """
+    args = args or []
+
+    try:
+        subprocess.check_call([python_executable(), '-m', module_name] + args)
+    except subprocess.CalledProcessError as e:
+        six.raise_from(errors.ExecuteUserScriptError(e), e)
+
+
+def python_executable():
+    """Returns the real path for the Python executable, if it exists. Returns RuntimeError otherwise.
+
+    Returns:
+        (str): the real path of the current Python executable
+    """
+    if not sys.executable:
+        raise RuntimeError(
+            'Failed to retrieve the real path for the Python executable binary')
+    return sys.executable
+
+
+def import_module_from_s3(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (str, str) -> module
+    download_and_install(url, name, cache)
+
     try:
         module = importlib.import_module(name)
         six.moves.reload_module(module)
@@ -173,3 +236,9 @@ def download_and_import(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (st
         return module
     except Exception as e:
         six.raise_from(errors.ImportModuleError(e), e)
+
+
+def run_module_from_s3(url, args, name=DEFAULT_MODULE_NAME, cache=True):
+    # type: (str, list, str) -> None
+    download_and_install(url, name, cache)
+    return run(name, args)

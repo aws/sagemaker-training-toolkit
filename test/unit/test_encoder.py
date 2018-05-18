@@ -85,9 +85,6 @@ def test_csv_to_numpy(target, expected):
     actual = encoders.csv_to_numpy(target)
     np.testing.assert_equal(actual, expected)
 
-    actual = encoders.csv_to_numpy(target)
-    np.testing.assert_equal(actual, expected)
-
 
 @pytest.mark.parametrize(
     'target, expected', [([42, 6, 9], '42\n6\n9\n'),
