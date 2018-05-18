@@ -85,6 +85,9 @@ def test_mapping_throws_exception_trying_to_access_non_properties(property, erro
      ({'nested': ['1', ['2', '3', [['6']]]]},
       ['--nested', "['1', ['2', '3', [['6']]]]"]),
 
+     ({'map': {'a': [1, 3, 4]}, 'channel_dirs': {'train': 'foo', 'eval': 'bar'}},
+      ['--map', "a=[1, 3, 4]", '--channel_dirs', 'train=foo,eval=bar']),
+
      ({'truthy': True, 'falsy': False},
       ['--truthy', 'True', '--falsy', 'False'])
 

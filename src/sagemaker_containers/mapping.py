@@ -44,7 +44,12 @@ def to_cmd_args(mapping):  # type: (dict) -> list
 
     arg_names = [dasherize(argument) for argument in mapping.keys()]
 
-    arg_values = [str(value) for value in mapping.values()]
+    def to_str(value):
+        if hasattr(value, 'items'):
+            return ','.join(['%s=%s' % (str(k), v) for k, v in value.items()])
+        return str(value)
+
+    arg_values = [to_str(value) for value in mapping.values()]
 
     items = zip(arg_names, arg_values)
 
