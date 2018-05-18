@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tarfile
 import textwrap
+import traceback
 
 import boto3
 import six
@@ -210,8 +211,30 @@ def run(module_name, args):  # type: (str, list) -> None
 
     try:
         subprocess.check_call([python_executable(), '-m', module_name] + args)
+
+        write_success_file(env.TrainingEnv().output_dir)
+        os._exit(0)
+
     except subprocess.CalledProcessError as e:
-        six.raise_from(errors.ExecuteUserScriptError(e), e)
+        # six.raise_from(errors.ExecuteUserScriptError(e), e)
+        trc = traceback.format_exc()
+        message = 'uncaught exception during training: {}\n{}\n'.format(e, trc)
+        logger.error(message)
+        write_failure_file(message, env.TrainingEnv().output_dir)
+        os._exit(1)
+
+
+# TODO: this should come from sagemaker_containers, once it's implemented there
+def write_success_file(output_dir):
+    success_file = os.path.join(output_dir, 'success')
+    open(success_file, 'w').close()
+
+
+# TODO: this should come from sagemaker_containers, once it's implemented there
+def write_failure_file(message, output_dir):
+    failure_file = os.path.join(output_dir, 'failure')
+    with open(failure_file, 'a') as fd:
+        fd.write(message)
 
 
 def python_executable():
