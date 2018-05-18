@@ -13,7 +13,7 @@
 from __future__ import absolute_import
 
 
-class ClientError(BaseException):
+class ClientError(Exception):
     pass
 
 

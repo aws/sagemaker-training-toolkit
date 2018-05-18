@@ -238,13 +238,27 @@ def test_tmpdir_with_args(rmtree, mkdtemp):
 @patch(builtins_open, mock_open())
 def test_write_file():
     env.write_file('/tmp/my-file', '42')
-
     open.assert_called_with('/tmp/my-file', 'w')
-
     open().write.assert_called_with('42')
 
-    env.write_file('/tmp/my-file', '42', 'x')
-
-    open.assert_called_with('/tmp/my-file', 'x')
-
+    env.write_file('/tmp/my-file', '42', 'a')
+    open.assert_called_with('/tmp/my-file', 'a')
     open().write.assert_called_with('42')
+
+
+@patch(builtins_open, mock_open())
+def test_write_success_file(training_env):
+    file_path = os.path.join(training_env.output_dir, 'success')
+    empty_msg = ''
+    training_env.write_success_file()
+    open.assert_called_with(file_path, 'w')
+    open().write.assert_called_with(empty_msg)
+
+
+@patch(builtins_open, mock_open())
+def test_write_failure_file(training_env):
+    file_path = os.path.join(training_env.output_dir, 'failure')
+    failure_msg = 'This is a failure'
+    training_env.write_failure_file(failure_msg)
+    open.assert_called_with(file_path, 'w')
+    open().write.assert_called_with(failure_msg)
