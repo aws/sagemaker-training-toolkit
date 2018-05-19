@@ -76,8 +76,8 @@ def test_mapping_throws_exception_trying_to_access_non_properties(property, erro
      ({'': ''},
       ['', '']),
 
-     ({'unicode': u'1', 'bytes': b'2', 'floats': 4., 'int': 2},
-      ['--unicode', '1', '--bytes', "b'2'" if six.PY3 else '2', '--floats', '4.0', '--int', '2']),
+     ({'unicode': u'¡ø'},
+      ['--unicode', '¡ø']), #'--bytes', "b'2'" if six.PY3 else '2', '--floats', '4.0', '--int', '2']),
 
      ({'U': u'1', 'b': b'2', 'T': '', '': '42'},
       ['-U', '1', '-b', "b'2'" if six.PY3 else '2', '-T', '', '', '42']),

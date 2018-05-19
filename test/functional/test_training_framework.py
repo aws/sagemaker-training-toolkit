@@ -180,10 +180,7 @@ def test_trainer_report_success(user_script):
 
     os.environ['SAGEMAKER_TRAINING_MODULE'] = 'test.functional.simple_framework:train'
 
-    p = Process(target=trainer.train)
-    p.start()
-    p.join()
-    assert p.exitcode == 0
+    assert execute(trainer.train) == 0
 
     model_path = os.path.join(env.TrainingEnv().model_dir, 'saved_model')
     print(model_path)
@@ -214,10 +211,7 @@ def test_trainer_report_failure():
 
     os.environ['SAGEMAKER_TRAINING_MODULE'] = 'test.functional.simple_framework:train'
 
-    p = Process(target=trainer.train)
-    p.start()
-    p.join()
-    assert p.exitcode == os.errno.ENOENT
+    assert execute(trainer.train) == os.errno.ENOENT
 
     failure_file = os.path.join(env.TrainingEnv().output_dir, 'failure')
     assert os.path.exists(failure_file)
@@ -249,7 +243,7 @@ def test_script_mode(user_script):
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    framework_training_with_script_mode_fn()
+    assert execute(framework_training_with_script_mode_fn) == os.errno.ENOENT
 
     model_path = os.path.join(env.MODEL_PATH, 'saved_model')
 
@@ -259,6 +253,13 @@ def test_script_mode(user_script):
     assert model.batch_size == 64
     assert model.loss == 'elastic'
     assert model.optimizer == 'SGD'
+
+
+def execute(fn=framework_training_with_script_mode_fn):
+    p = Process(target=fn)
+    p.start()
+    p.join()
+    return p.exitcode
 
 
 USER_MODE_SCRIPT_WITH_ERROR = """
@@ -276,9 +277,13 @@ def test_script_mode_client_error():
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    with pytest.raises(errors.ExecuteUserScriptError) as error:
-        framework_training_with_script_mode_fn()
-    assert type(error.value.args[0]) == subprocess.CalledProcessError
+    assert execute(framework_training_with_script_mode_fn) == os.errno.ENOENT
+
+    with open(env.TrainingEnv().output_dir) as f:
+        assert f.read() == ''
+
+    # with pytest.raises(errors.ExecuteUserScriptError) as error:
+    # assert type(error.value.args[0]) == subprocess.CalledProcessError
 
 
 def test_script_mode_client_import_error():
