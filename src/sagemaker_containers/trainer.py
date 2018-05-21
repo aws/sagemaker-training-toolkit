@@ -10,52 +10,54 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-from functools import wraps
 import importlib
 import os
-import sys
 import traceback
 
-import six
-
-from sagemaker_containers import env, errors, functions
-
+from sagemaker_containers import env, errors
 
 SUCCESS_CODE = 0
 DEFAULT_FAILURE_CODE = 1
 
 
-def report_training_status(train_func):
-    @wraps(train_func)
-    def train_and_report(*args, **kwargs):
-        training_env = env.TrainingEnv()
-        exit_code = SUCCESS_CODE
+def _exit_processes(exit_code):  # type:
+    """Exit main thread and child processes.
 
-        try:
-            wrapped_train = functions.error_wrapper(train_func, errors.ClientError)
-            wrapped_train(*args, **kwargs)
-            training_env.write_success_file()
-        except Exception as e:
-            sub_e = e.args[0]
-            exit_code = DEFAULT_FAILURE_CODE if not hasattr(sub_e, 'errno') or sub_e.errno is None else sub_e.errno
-            failure_msg = 'Exception caught in training: {}\n{}\n'.format(e, traceback.format_exc())
-            training_env.write_failure_file(failure_msg)
-            six.reraise(*sys.exc_info())
-        finally:
-            # This may apply to child process after fork(), so we use os._exit instead of sys.exit
-            # https://docs.python.org/2/library/os.html#process-management
-            # https://docs.python.org/3/library/os.html#process-management
-            os._exit(exit_code)
+    For more information:
+        https://docs.python.org/2/library/os.html#process-management
+        https://docs.python.org/3/library/os.html#process-management
 
-    return train_and_report
+    Args:
+        exit_code (int): exit code
+    """
+    os._exit(exit_code)
 
 
 def train():
-    training_env = env.TrainingEnv()
+    try:
+        training_env = env.TrainingEnv()
 
-    # TODO: iquintero - add error handling for ImportError to let the user know
-    # if the framework module is not defined.
-    framework_name, entry_point = training_env.framework_module.split(':')
-    framework = importlib.import_module(framework_name)
-    entry = getattr(framework, entry_point)
-    entry()
+        # TODO: iquintero - add error handling for ImportError to let the user know
+        # if the framework module is not defined.
+        framework_name, entry_point_name = training_env.framework_module.split(':')
+        framework = importlib.import_module(framework_name)
+
+        entry_point = getattr(framework, entry_point_name)
+
+        entry_point()
+
+        env.write_success_file()
+        _exit_processes(SUCCESS_CODE)
+
+    except errors.ClientError as e:
+
+        env.write_failure_file(str(e))
+
+        _exit_processes(DEFAULT_FAILURE_CODE)
+    except Exception as e:
+        failure_msg = 'framework error: \n%s\n%s' % (traceback.format_exc(), str(e))
+
+        env.write_failure_file(failure_msg)
+
+        exit_code = getattr(e, 'errno', DEFAULT_FAILURE_CODE)
+        _exit_processes(exit_code)

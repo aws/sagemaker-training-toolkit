@@ -14,6 +14,7 @@ import logging
 import os
 import shutil
 
+from mock import patch
 import pytest
 
 logger = logging.getLogger(__name__)
@@ -36,3 +37,13 @@ def create_base_path():
     yield str(os.environ['BASE_PATH'])
 
     shutil.rmtree(os.environ['BASE_PATH'])
+
+
+@pytest.fixture(autouse=True)
+def patch_exit_process():
+    def _exit(error_code):
+        if error_code:
+            raise ValueError(error_code)
+
+    with patch('sagemaker_containers.trainer._exit_processes', _exit):
+        yield _exit

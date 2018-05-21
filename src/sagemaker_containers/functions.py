@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 
 import inspect
+import sys
 
 import six
 
@@ -82,6 +83,6 @@ def error_wrapper(fn, error_class):  # type: (function or None, Exception) -> ..
         try:
             return fn(*args, **kwargs)
         except Exception as e:
-            six.raise_from(error_class(e), e)
+            six.reraise(error_class, error_class(e), sys.exc_info()[2])
 
     return wrapper

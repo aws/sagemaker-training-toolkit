@@ -23,7 +23,6 @@ import shutil
 import subprocess
 import tempfile
 
-
 from sagemaker_containers import mapping
 
 logger = logging.getLogger(__name__)
@@ -104,7 +103,7 @@ def read_hyperparameters():  # type: () -> dict
     try:
         return {k: json.loads(v) for k, v in hyperparameters.items()}
     except (ValueError, TypeError):  # pragma: py2 no cover
-        logger.warning("Failed to parse hyperparameters' values to Json. Returning the hyperparameters instead:")
+        logger.info("Failed to parse hyperparameters' values to Json. Returning the hyperparameters instead:")
         return hyperparameters
 
 
@@ -182,7 +181,7 @@ def gpu_count():  # type: () -> int
         output = subprocess.check_output(cmd).decode('utf-8')
         return sum([1 for x in output.split('\n') if x.startswith('GPU ')])
     except (OSError, subprocess.CalledProcessError):
-        logger.warning('No GPUs detected (normal if no gpus installed)')
+        logger.info('No GPUs detected (normal if no gpus installed)')
         return 0
 
 
@@ -613,24 +612,26 @@ class TrainingEnv(Env):
                 my_module:main"""
         return self._framework_module
 
-    def write_success_file(self):  # type: () -> None
-        """Create a file 'success' when training is successful. This file doesn't need to have any content.
-        See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
-        """
-        file_path = os.path.join(self._output_dir, 'success')
-        empty_content = ''
-        write_file(file_path, empty_content)
 
-    def write_failure_file(self, failure_msg):  # type: (str) -> None
-        """Create a file 'failure' if training fails after all algorithm output (for example, logging) completes,
-        the failure description should be written to this file. In a DescribeTrainingJob response, Amazon SageMaker
-        returns the first 1024 characters from this file as FailureReason.
-        See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
-        Args:
-            failure_msg: The description of failure
-        """
-        file_path = os.path.join(self._output_dir, 'failure')
-        write_file(file_path, failure_msg)
+def write_success_file():  # type: () -> None
+    """Create a file 'success' when training is successful. This file doesn't need to have any content.
+    See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
+    """
+    file_path = os.path.join(OUTPUT_PATH, 'success')
+    empty_content = ''
+    write_file(file_path, empty_content)
+
+
+def write_failure_file(failure_msg):  # type: (str) -> None
+    """Create a file 'failure' if training fails after all algorithm output (for example, logging) completes,
+    the failure description should be written to this file. In a DescribeTrainingJob response, Amazon SageMaker
+    returns the first 1024 characters from this file as FailureReason.
+    See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
+    Args:
+        failure_msg: The description of failure
+    """
+    file_path = os.path.join(OUTPUT_PATH, 'failure')
+    write_file(file_path, failure_msg)
 
 
 class ServingEnv(Env):

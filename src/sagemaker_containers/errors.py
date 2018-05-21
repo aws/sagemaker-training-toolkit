@@ -12,14 +12,39 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import six
+
 
 class ClientError(Exception):
     pass
 
 
-class InstallModuleError(ClientError):
+class _CalledProcessError(Exception):
+    """This exception is raised when a process run by check_call() or
+    check_output() returns a non-zero exit status.
+
+    Attributes:
+      cmd, return_code, output
+    """
+
+    def __init__(self, cmd, return_code=None, output=None):
+        self.return_code = return_code
+        self.cmd = cmd
+        self.output = output
+
+    def __str__(self):
+        error = self.output.decode('latin1') if six.PY3 else self.output
+        message = '%s:\nCommand "%s"\n%s' % (type(self).__name__, self.cmd, error)
+        return message.strip()
+
+
+class InstallModuleError(_CalledProcessError):
     pass
 
 
 class ImportModuleError(ClientError):
+    pass
+
+
+class ExecuteUserScriptError(_CalledProcessError):
     pass

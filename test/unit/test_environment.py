@@ -247,18 +247,18 @@ def test_write_file():
 
 
 @patch(builtins_open, mock_open())
-def test_write_success_file(training_env):
-    file_path = os.path.join(training_env.output_dir, 'success')
+def test_write_success_file():
+    file_path = os.path.join(env.OUTPUT_PATH, 'success')
     empty_msg = ''
-    training_env.write_success_file()
+    env.write_success_file()
     open.assert_called_with(file_path, 'w')
     open().write.assert_called_with(empty_msg)
 
 
 @patch(builtins_open, mock_open())
-def test_write_failure_file(training_env):
-    file_path = os.path.join(training_env.output_dir, 'failure')
+def test_write_failure_file():
+    file_path = os.path.join(env.OUTPUT_PATH, 'failure')
     failure_msg = 'This is a failure'
-    training_env.write_failure_file(failure_msg)
+    env.write_failure_file(failure_msg)
     open.assert_called_with(file_path, 'w')
     open().write.assert_called_with(failure_msg)
