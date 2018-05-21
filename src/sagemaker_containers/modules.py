@@ -166,7 +166,7 @@ def download_and_install(url, name=DEFAULT_MODULE_NAME, cache=True):
                 install(module_path)
 
 
-def run(module_name, args):  # type: (str, list) -> None
+def run(module_name, args=None):  # type: (str, list) -> None
     """Run Python module as a script.
 
     Search sys.path for the named module and execute its contents as the __main__ module.

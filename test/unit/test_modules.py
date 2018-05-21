@@ -30,10 +30,9 @@ builtins_open = '__builtin__.open' if PY2 else 'builtins.open'
 
 
 @patch('boto3.resource', autospec=True)
-@pytest.mark.parametrize('url,bucket_name,key,dst', [
-    ('S3://my-bucket/path/to/my-file', 'my-bucket', 'path/to/my-file', '/tmp/my-file'),
-    ('s3://my-bucket/my-file', 'my-bucket', 'my-file', '/tmp/my-file')
-])
+@pytest.mark.parametrize('url,bucket_name,key,dst',
+                         [('S3://my-bucket/path/to/my-file', 'my-bucket', 'path/to/my-file', '/tmp/my-file'),
+                          ('s3://my-bucket/my-file', 'my-bucket', 'my-file', '/tmp/my-file')])
 def test_s3_download(resource, url, bucket_name, key, dst):
     modules.s3_download(url, dst)
 
@@ -131,17 +130,36 @@ def test_exists(import_module):
     assert not modules.exists('my_module')
 
 
+def test_run_error():
+    with pytest.raises(errors.ExecuteUserScriptError) as e:
+        modules.run('wrong module')
+
+    message = str(e.value)
+    assert 'ExecuteUserScriptError:' in message
+    assert ' No module named wrong module' in message
+
+
+def test_run():
+    modules.run('pytest', ['--version'])
+
+
+def test_run_module_from_s3():
+    with patch('sagemaker_containers.modules.download_and_install') as download_and_install:
+        with patch('sagemaker_containers.modules.run') as run:
+            modules.run_module_from_s3('s3://url', [42], cache=True)
+
+            download_and_install.assert_called_with('s3://url', 'default_user_module_name', True)
+            run.assert_called_with('default_user_module_name', [42])
+
+
 class TestDownloadAndImport(test.TestBase):
-    patches = [
-        patch('sagemaker_containers.env.tmpdir', new=patch_tmpdir),
-        patch('sagemaker_containers.modules.prepare', autospec=True),
-        patch('sagemaker_containers.modules.install', autospec=True),
-        patch('sagemaker_containers.modules.s3_download', autospec=True),
-        patch('sagemaker_containers.modules.exists', autospec=True),
-        patch('tarfile.open', autospec=True),
-        patch('importlib.import_module', autospec=True),
-        patch('six.moves.reload_module', autospec=True),
-        patch('os.makedirs', autospec=True)]
+    patches = [patch('sagemaker_containers.env.tmpdir', new=patch_tmpdir),
+               patch('sagemaker_containers.modules.prepare', autospec=True),
+               patch('sagemaker_containers.modules.install', autospec=True),
+               patch('sagemaker_containers.modules.s3_download', autospec=True),
+               patch('sagemaker_containers.modules.exists', autospec=True), patch('tarfile.open', autospec=True),
+               patch('importlib.import_module', autospec=True), patch('six.moves.reload_module', autospec=True),
+               patch('os.makedirs', autospec=True)]
 
     def test_without_cache(self):
         with tarfile.open() as tar_file:

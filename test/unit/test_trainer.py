@@ -15,7 +15,7 @@ import os
 
 from mock import Mock, patch
 
-from sagemaker_containers import trainer
+from sagemaker_containers import errors, trainer
 
 
 class TrainingEnv(Mock):
@@ -68,3 +68,19 @@ def test_train_fails(_exit, import_module):
     trainer.train()
 
     _exit.assert_called_with(errno.ENOENT)
+
+
+@patch('importlib.import_module')
+@patch('sagemaker_containers.env.TrainingEnv', TrainingEnv)
+@patch('sagemaker_containers.trainer._exit_processes')
+def test_train_with_client_error(_exit, import_module):
+
+    def fail():
+        raise errors.ClientError(os.errno.ENOENT, 'No such file or directory')
+
+    framework = Mock(entry_point=fail)
+    import_module.return_value = framework
+
+    trainer.train()
+
+    _exit.assert_called_with(trainer.DEFAULT_FAILURE_CODE)
