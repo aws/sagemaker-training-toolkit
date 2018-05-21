@@ -74,12 +74,13 @@ def decode(object):
         return str(object).decode('utf-8')
 
 
-def split_by_criteria(dictionary, keys):  # type: (dict, set or list or tuple) -> SplitResultSpec
+def split_by_criteria(dictionary, keys=None, prefix=None):  # type: (dict, set or list or tuple) -> SplitResultSpec
     """Split a dictionary in two by the provided keys.
 
     Args:
         dictionary (dict[str, object]): A Python dictionary
-        keys (sequence [str]): A sequence of keys which will be the split criteria
+        keys (sequence [str]): A sequence of keys which will be added the split criteria
+        prefix (str): A prefix which will be added the split criteria
 
     Returns:
         `SplitResultSpec` : A collections.namedtuple with the following attributes:
@@ -88,9 +89,11 @@ def split_by_criteria(dictionary, keys):  # type: (dict, set or list or tuple) -
                 included (dict[str, object]: A dictionary with the keys included in the criteria.
                 excluded (dict[str, object]: A dictionary with the keys not included in the criteria.
     """
+    keys = keys or []
     keys = set(keys)
-    included_items = {k: dictionary[k] for k in dictionary.keys() if k in keys}
-    excluded_items = {k: dictionary[k] for k in dictionary.keys() if k not in keys}
+
+    included_items = {k: dictionary[k] for k in dictionary.keys() if k in keys or (prefix and k.startswith(prefix))}
+    excluded_items = {k: dictionary[k] for k in dictionary.keys() if k not in included_items}
 
     return SplitResultSpec(included=included_items, excluded=excluded_items)
 

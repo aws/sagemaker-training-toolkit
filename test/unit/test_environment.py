@@ -167,11 +167,8 @@ def test_serving_env(serving_env):
 
 
 def test_env_mapping_properties(training_env):
-    env_mapping = env.environment_mapping(training_env)
 
-    print(sorted(env_mapping.keys()))
-
-    assert sorted(env_mapping.keys()) == sorted(
+    assert sorted(training_env.properties()) == sorted(
         ['channel_input_dirs', 'current_host', 'framework_module', 'hosts', 'hyperparameters', 'input_config_dir',
          'input_data_config', 'input_dir', 'log_level', 'model_dir', 'module_dir', 'module_name',
          'network_interface_name', 'num_cpus', 'num_gpus', 'output_data_dir', 'output_dir', 'resource_config'])

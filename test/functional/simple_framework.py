@@ -20,7 +20,7 @@ def train():
 
     script = modules.import_module_from_s3(training_env.module_dir, training_env.module_name, False)
 
-    model = script.train(**functions.matching_args(script.train, env.environment_mapping()))
+    model = script.train(**functions.matching_args(script.train, training_env))
 
     if model:
         if hasattr(script, 'save'):

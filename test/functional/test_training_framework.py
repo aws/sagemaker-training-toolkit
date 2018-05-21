@@ -118,7 +118,7 @@ def framework_training_fn():
 
     mod = modules.import_module_from_s3(training_env.module_dir, training_env.module_name, False)
 
-    model = mod.train(**functions.matching_args(mod.train, env.environment_mapping()))
+    model = mod.train(**functions.matching_args(mod.train, training_env))
 
     if model:
         if hasattr(mod, 'save'):

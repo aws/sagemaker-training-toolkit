@@ -427,7 +427,8 @@ class _TrainingEnv(_Env):
         input_data_config = read_input_data_config()
 
         all_hyperparameters = read_hyperparameters()
-        split_result = mapping.split_by_criteria(all_hyperparameters, _params.SAGEMAKER_HYPERPARAMETERS)
+        split_result = mapping.split_by_criteria(all_hyperparameters, keys=_params.SAGEMAKER_HYPERPARAMETERS,
+                                                 prefix=_params.SAGEMAKER_PREFIX)
 
         sagemaker_hyperparameters = split_result.included
 
@@ -442,7 +443,7 @@ class _TrainingEnv(_Env):
         self._resource_config = resource_config
         self._input_data_config = input_data_config
         self._output_data_dir = os.path.join(_output_data_dir, current_host)
-        self._channels = set(channel for channel in input_data_config)
+        self._channel_input_dirs = {channel: channel_path(channel) for channel in input_data_config}
         self._current_host = current_host
 
         # override base class attributes
@@ -462,7 +463,7 @@ class _TrainingEnv(_Env):
         Returns:
            str: channel path
         """
-        if channel_name in self._channels:
+        if channel_name in self._channel_input_dirs:
             return channel_path(channel_name)
         raise errors.ChannelDoesNotExistException(channel_name)
 
@@ -474,6 +475,21 @@ class _TrainingEnv(_Env):
               list[str]: all the hosts in the training network.
         """
         return self._hosts
+
+    @property
+    def channel_input_dirs(self):  # type: () -> dict
+        """A dict[str, str] containing the data channels and the directories where the training
+        data was saved.
+        When you run training, you can partition your training data into different logical "channels".
+        Depending on your problem, some common channel ideas are: "train", "test", "evaluation"
+            or "images',"labels".
+        The format of channel_input_dir is as follows:
+            - `channel`[key](str) - the name of the channel defined in the input_data_config.
+            - `training data path`[value](str) - the path to the directory where the training data is saved.
+        Returns:
+            dict[str, str] with the information about the channels.
+        """
+        return self._channel_input_dirs
 
     @property
     def network_interface_name(self):  # type: () -> str
@@ -658,18 +674,3 @@ class _ServingEnv(_Env):
             str: Name of the framework module and entry point. For example:
                 my_module:main"""
         return self._framework_module
-
-
-def environment_mapping(_training_env=None):
-    _env = _training_env or training_env()
-
-    return {
-        'hosts': _env.hosts, 'model_dir': model_dir, 'network_interface_name': _env.network_interface_name,
-        'input_dir': input_dir, 'input_config_dir': input_config_dir, 'output_dir': output_dir,
-        'hyperparameters': _env.hyperparameters, 'resource_config': _env.resource_config,
-        'input_data_config': _env.input_data_config, 'output_data_dir': _env.output_data_dir,
-        'channel_input_dirs': {channel: channel_path(channel) for channel in _env.input_data_config},
-        'current_host': _env.current_host, 'module_name': _env.module_name, 'module_dir': _env.module_dir,
-        'log_level': _env.log_level, 'framework_module': _env.framework_module, 'num_gpus': num_gpus(),
-        'num_cpus': num_cpus()
-    }
