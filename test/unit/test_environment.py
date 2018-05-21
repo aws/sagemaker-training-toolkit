@@ -144,16 +144,13 @@ def test_training_env(training_env):
     assert training_env.input_data_config == INPUT_DATA_CONFIG
     assert training_env.output_data_dir.endswith('/opt/ml/output/data/algo-1')
     assert training_env.hosts == RESOURCE_CONFIG['hosts']
-    assert training_env.channel_path('train').endswith('/opt/ml/input/data/train')
-    assert training_env.channel_path('validation').endswith('/opt/ml/input/data/validation')
+    assert training_env.channel_input_dirs['train'].endswith('/opt/ml/input/data/train')
+    assert training_env.channel_input_dirs['validation'].endswith('/opt/ml/input/data/validation')
     assert training_env.current_host == RESOURCE_CONFIG['current_host']
     assert training_env.module_name == 'main'
     assert training_env.module_dir == 'imagenet'
     assert training_env.log_level == logging.WARNING
     assert training_env.network_interface_name == 'ethwe'
-
-    with pytest.raises(errors.ChannelDoesNotExistException):
-        training_env.channel_path('this channel does not exist')
 
 
 def test_serving_env(serving_env):

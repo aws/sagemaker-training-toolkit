@@ -317,7 +317,7 @@ class _TrainingEnv(_Env):
             >>>env = sagemaker_containers.training_env()
 
             get the path of the channel 'training' from the inputdataconfig.json file
-            >>>training_dir = env.channel_path('training')
+            >>>training_dir = env.channel_input_dirs['training']
 
             get a the hyperparameter 'training_data_file' from hyperparameters.json file
             >>>file_name = env.hyperparameters['training_data_file']
@@ -455,17 +455,6 @@ class _TrainingEnv(_Env):
         self._input_dir = input_dir
         self._input_config_dir = input_config_dir
         self._output_dir = output_dir
-
-    def channel_path(self, channel_name):
-        """Return the channel path by a given channel name. Raise ChannelDoesNotExistException if the channel does
-        not exist.
-
-        Returns:
-           str: channel path
-        """
-        if channel_name in self._channel_input_dirs:
-            return channel_path(channel_name)
-        raise errors.ChannelDoesNotExistException(channel_name)
 
     @property
     def hosts(self):  # type: () -> list
