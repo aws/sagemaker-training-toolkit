@@ -34,7 +34,7 @@ def add_terminate_signal(process):
 
 def start(module_app):
 
-    serving_env = env.ServingEnv()
+    serving_env = env.serving_env()
     gunicorn_bind_address = HTTP_BIND
 
     nginx = None

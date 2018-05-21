@@ -16,7 +16,7 @@ import flask
 
 from sagemaker_containers import content_types, env, mapping, status_codes
 
-serving_env = env.ServingEnv()
+serving_env = env.serving_env()
 
 
 def default_healthcheck_fn():  # type: () -> Response
@@ -66,7 +66,7 @@ class Worker(flask.Flask):
                     `flask.app.Response`: response object with new healthcheck response.
 
             module_name (str): the module name which implements the worker. If not specified, it will use
-                                    sagemaker_containers.ServingEnv().module_name as the default module name.
+                                    sagemaker_containers._ServingEnv().module_name as the default module name.
         """
         super(Worker, self).__init__(module_name or serving_env.module_name)
 
@@ -102,7 +102,7 @@ class Request(flask.Request, mapping.MappingMixin):
 
     >>> from sagemaker_containers import env
 
-    >>> request = env.Request()
+    >>> request = Request()
     >>> data = request.data
 
     >>> print(str(request))

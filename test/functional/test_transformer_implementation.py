@@ -34,7 +34,7 @@ def test_transformer_implementation():
     test.create_input_data_config()
     test.create_hyperparameters_config({'sagemaker_program': 'user_script.py'})
 
-    model_path = os.path.join(env.TrainingEnv().model_dir, 'fake_ml_model')
+    model_path = os.path.join(env.model_dir, 'fake_ml_model')
     fake_ml_framework.Model(weights=[6, 9, 42]).save(model_path)
 
     transform = transformer.Transformer(model_fn=model_fn, predict_fn=predict_fn)

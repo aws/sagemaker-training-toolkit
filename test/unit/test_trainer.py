@@ -29,7 +29,7 @@ class TrainingEnv(Mock):
 
 
 @patch('importlib.import_module')
-@patch('sagemaker_containers.env.TrainingEnv', TrainingEnv)
+@patch('sagemaker_containers.env.training_env', TrainingEnv)
 def test_train(import_module):
     framework = Mock()
     import_module.return_value = framework
@@ -40,7 +40,7 @@ def test_train(import_module):
 
 
 @patch('importlib.import_module')
-@patch('sagemaker_containers.env.TrainingEnv', TrainingEnv)
+@patch('sagemaker_containers.env.training_env', TrainingEnv)
 @patch('sagemaker_containers.trainer._exit_processes')
 def test_train_with_success(_exit, import_module):
     def success():
@@ -55,7 +55,7 @@ def test_train_with_success(_exit, import_module):
 
 
 @patch('importlib.import_module')
-@patch('sagemaker_containers.env.TrainingEnv', TrainingEnv)
+@patch('sagemaker_containers.env.training_env', TrainingEnv)
 @patch('sagemaker_containers.trainer._exit_processes')
 def test_train_fails(_exit, import_module):
 
@@ -71,7 +71,7 @@ def test_train_fails(_exit, import_module):
 
 
 @patch('importlib.import_module')
-@patch('sagemaker_containers.env.TrainingEnv', TrainingEnv)
+@patch('sagemaker_containers.env.training_env', TrainingEnv)
 @patch('sagemaker_containers.trainer._exit_processes')
 def test_train_with_client_error(_exit, import_module):
 

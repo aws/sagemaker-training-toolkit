@@ -52,7 +52,7 @@ def test_worker_with_initialize():
         assert response.mimetype == content_types.JSON
 
 
-@patch('sagemaker_containers.env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
+@patch('sagemaker_containers.env._ServingEnv.module_name', PropertyMock(return_value='user_program'))
 @pytest.mark.parametrize('module_name,expected_name', [('my_module', 'my_module'), (None, 'user_program')])
 def test_worker(module_name, expected_name):
     transformer = Transformer()

@@ -96,7 +96,7 @@ class Transformer(object):
     >>>import os
     >>>from sagemaker_containers import env, modules, transformer
     >>>import Keras
-    >>>serving_env = env.ServingEnv()
+    >>>serving_env = env._ServingEnv()
     >>>
     >>>def predict_fn(model, data):
     >>>     return model.predict(data)
@@ -136,7 +136,7 @@ class Transformer(object):
         This function will be called once per each worker.
         It does not have return type or arguments.
         """
-        self._model = self._model_fn(env.ServingEnv().model_dir)
+        self._model = self._model_fn(env.model_dir)
 
     def transform(self):  # type: () -> worker.Response
         """Responsible to make predictions against the model.

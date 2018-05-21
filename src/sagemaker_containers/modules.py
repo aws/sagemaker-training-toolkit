@@ -25,7 +25,7 @@ import boto3
 import six
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_containers import env, errors
+from sagemaker_containers import _files, errors
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logging.info('Module %s does not provide a setup.py. \nGenerating setup.py' % name)
 
-        env.write_file(setup_path, data)
+        _files.write_file(setup_path, data)
 
         data = textwrap.dedent("""
         [wheel]
@@ -81,7 +81,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logging.info('Generating setup.cfg')
 
-        env.write_file(os.path.join(path, 'setup.cfg'), data)
+        _files.write_file(os.path.join(path, 'setup.cfg'), data)
 
         data = textwrap.dedent("""
         recursive-include . *
@@ -93,7 +93,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logging.info('Generating MANIFEST.in')
 
-        env.write_file(os.path.join(path, 'MANIFEST.in'), data)
+        _files.write_file(os.path.join(path, 'MANIFEST.in'), data)
 
 
 def install(path):  # type: (str) -> None
@@ -150,7 +150,7 @@ def download_and_install(url, name=DEFAULT_MODULE_NAME, cache=True):
     should_use_cache = cache and exists(name)
 
     if not should_use_cache:
-        with env.tmpdir() as tmpdir:
+        with _files.tmpdir() as tmpdir:
             dst = os.path.join(tmpdir, 'tar_file')
             s3_download(url, dst)
 
@@ -191,7 +191,7 @@ def run(module_name, args=None):  # type: (str, list) -> None
 
         >>>from sagemaker_containers import env, mapping, modules
 
-        >>>hyperparameters = env.TrainingEnv().hyperparameters
+        >>>hyperparameters = env.training_env().hyperparameters
         {'batch-size': 128, 'model_dir': '/opt/ml/model'}
 
         >>>args = mapping.to_cmd_args(hyperparameters)

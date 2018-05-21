@@ -29,13 +29,13 @@ def test_default_ping_fn():
 def patch_flask():
     property_mock = PropertyMock(return_value='user_program')
     with patch('flask.Flask') as flask, \
-            patch('sagemaker_containers.env.ServingEnv.module_name',
+            patch('sagemaker_containers.env._ServingEnv.module_name',
                   property_mock):
         yield flask
 
 
 @pytest.mark.parametrize('module_name, expected_name', [('test_module', 'test_module'), (None, 'user_program')])
-@patch('sagemaker_containers.env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
+@patch('sagemaker_containers.env._ServingEnv.module_name', PropertyMock(return_value='user_program'))
 def test_worker(module_name, expected_name):
     app = worker.Worker(transform_fn=MagicMock().transform, module_name=module_name)
     assert app.import_name == expected_name
@@ -44,7 +44,7 @@ def test_worker(module_name, expected_name):
 
 
 @pytest.mark.parametrize('module_name, expected_name', [('test_module', 'test_module'), (None, 'user_program')])
-@patch('sagemaker_containers.env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
+@patch('sagemaker_containers.env._ServingEnv.module_name', PropertyMock(return_value='user_program'))
 def test_worker_with_initialize(module_name, expected_name):
     mock = MagicMock()
     app = worker.Worker(transform_fn=mock.transform, initialize_fn=mock.initialize, module_name=module_name)
