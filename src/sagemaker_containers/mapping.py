@@ -15,6 +15,8 @@ from __future__ import absolute_import
 import collections
 import itertools
 
+import six
+
 SplitResultSpec = collections.namedtuple('SplitResultSpec', 'included excluded')
 
 
@@ -35,25 +37,41 @@ def to_cmd_args(mapping):  # type: (dict) -> list
         (list): List of cmd arguments
     """
 
-    def dasherize(string):
+    sorted_keys = sorted(mapping.keys())
+
+    def arg_name(obj):
+        string = decode(obj)
         if not string:
-            return ''
+            return u''
         if len(string) > 1:
-            return '--%s' % string
-        return '-%s' % string
+            return u'--%s' % string
+        else:
+            return u'-%s' % string
 
-    arg_names = [dasherize(argument) for argument in mapping.keys()]
+    arg_names = [arg_name(argument) for argument in sorted_keys]
 
-    def to_str(value):
+    def arg_value(value):
         if hasattr(value, 'items'):
-            return ','.join(['%s=%s' % (str(k), v) for k, v in value.items()])
-        return str(value)
+            map_items = ['%s=%s' % (k, v) for k, v in sorted(value.items())]
+            return ','.join(map_items)
+        return decode(value)
 
-    arg_values = [to_str(value) for value in mapping.values()]
+    arg_values = [arg_value(mapping[key]) for key in sorted_keys]
 
     items = zip(arg_names, arg_values)
 
-    return list(itertools.chain.from_iterable(items))
+    return [item for item in itertools.chain.from_iterable(items)]
+
+
+def decode(object):
+    if six.PY3 and isinstance(object, six.binary_type):
+        return object.decode('latin1')
+    elif six.PY3:
+        return str(object)
+    elif isinstance(object, six.text_type):
+        return object
+    else:
+        return str(object).decode('utf-8')
 
 
 def split_by_criteria(dictionary, keys):  # type: (dict, set or list or tuple) -> SplitResultSpec

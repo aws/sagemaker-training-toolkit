@@ -25,7 +25,7 @@ import boto3
 import six
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_containers import env, errors, trainer
+from sagemaker_containers import env, errors
 
 logger = logging.getLogger(__name__)
 
@@ -104,15 +104,13 @@ def install(path):  # type: (str) -> None
     """
     if not sys.executable:
         raise RuntimeError('Failed to retrieve the real path for the Python executable binary')
-    try:
-        cmd = '%s -m pip install -U . ' % python_executable()
 
-        if os.path.exists(os.path.join(path, 'requirements.txt')):
-            cmd += '-r requirements.txt'
+    cmd = '%s -m pip install -U . ' % python_executable()
 
-        subprocess.check_call(shlex.split(cmd), cwd=path)
-    except subprocess.CalledProcessError as e:
-        six.raise_from(errors.InstallModuleError(e), e)
+    if os.path.exists(os.path.join(path, 'requirements.txt')):
+        cmd += '-r requirements.txt'
+
+    _check_error(shlex.split(cmd), errors.InstallModuleError, cwd=path)
 
 
 def exists(name):  # type: (str) -> bool
@@ -168,7 +166,6 @@ def download_and_install(url, name=DEFAULT_MODULE_NAME, cache=True):
                 install(module_path)
 
 
-@trainer.report_training_status
 def run(module_name, args):  # type: (str, list) -> None
     """Run Python module as a script.
 
@@ -209,7 +206,16 @@ def run(module_name, args):  # type: (str, list) -> None
     """
     args = args or []
 
-    subprocess.check_call([python_executable(), '-m', module_name] + args)
+    _check_error([python_executable(), '-m', module_name] + args, errors.ExecuteUserScriptError)
+
+
+def _check_error(cmd, error_class, **kwargs):
+    process = subprocess.Popen(cmd, stderr=subprocess.PIPE, **kwargs)
+    stdout, stderr = process.communicate()
+
+    return_code = process.poll()
+    if return_code:
+        raise error_class(return_code, ''.join(cmd), output=stderr)
 
 
 def python_executable():
@@ -219,8 +225,7 @@ def python_executable():
         (str): the real path of the current Python executable
     """
     if not sys.executable:
-        raise RuntimeError(
-            'Failed to retrieve the real path for the Python executable binary')
+        raise RuntimeError('Failed to retrieve the real path for the Python executable binary')
     return sys.executable
 
 
@@ -233,7 +238,7 @@ def import_module_from_s3(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (
 
         return module
     except Exception as e:
-        six.raise_from(errors.ImportModuleError(e), e)
+        six.reraise(errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2])
 
 
 def run_module_from_s3(url, args, name=DEFAULT_MODULE_NAME, cache=True):

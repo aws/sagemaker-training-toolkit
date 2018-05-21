@@ -15,7 +15,6 @@ from __future__ import absolute_import
 import contextlib
 import importlib
 import os
-import subprocess
 import sys
 import tarfile
 import textwrap
@@ -90,26 +89,25 @@ def test_s3_download_wrong_scheme():
         modules.s3_download('c://my-bucket/my-file', '/tmp/file')
 
 
-@patch('subprocess.check_call', autospec=True)
-def test_install(check_call):
+@patch('sagemaker_containers.modules._check_error', autospec=True)
+def test_install(check_error):
     path = 'c://sagemaker-pytorch-container'
     modules.install(path)
 
     cmd = [sys.executable, '-m', 'pip', 'install', '-U', '.']
-    check_call.assert_called_with(cmd, cwd=path)
+    check_error.assert_called_with(cmd, errors.InstallModuleError, cwd=path)
 
     with patch('os.path.exists', return_value=True):
         modules.install(path)
 
-        check_call.assert_called_with(cmd + ['-r', 'requirements.txt'], cwd=path)
+        check_error.assert_called_with(cmd + ['-r', 'requirements.txt'], errors.InstallModuleError, cwd=path)
 
 
-@patch('subprocess.check_call')
-def test_install_fails(check_call):
-    check_call.side_effect = subprocess.CalledProcessError(1, 'returned non-zero exit status 1')
-    with pytest.raises(errors.InstallModuleError) as e:
+@patch('sagemaker_containers.modules._check_error', autospec=True)
+def test_install_fails(check_error):
+    check_error.side_effect = errors.ClientError()
+    with pytest.raises(errors.ClientError):
         modules.install('git://aws/container-support')
-    assert type(e.value.args[0]) == subprocess.CalledProcessError
 
 
 @patch('sys.executable', None)

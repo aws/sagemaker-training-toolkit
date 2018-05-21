@@ -12,8 +12,8 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import errno
 import importlib
-from multiprocessing import Process
 import os
 import shlex
 import subprocess
@@ -141,17 +141,14 @@ def test_training_framework(user_script):
 
     module = test.UserModule(test.File(name='user_script.py', data=user_script))
 
-    hyperparameters = dict(training_data_file='training_data.npz',
-                           sagemaker_program='user_script.py',
-                           epochs=10, batch_size=64, optimizer='Adam')
+    hyperparameters = dict(training_data_file='training_data.npz', sagemaker_program='user_script.py', epochs=10,
+                           batch_size=64, optimizer='Adam')
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    framework_training_fn()
+    assert execute_an_wrap_exit(framework_training_fn) == trainer.SUCCESS_CODE
 
     model_path = os.path.join(env.TrainingEnv().model_dir, 'saved_model')
-    print(model_path)
-
     model = fake_ml_framework.Model.load(model_path)
 
     assert model.epochs == 10
@@ -172,24 +169,21 @@ def test_trainer_report_success(user_script):
 
     module = test.UserModule(test.File(name='user_script.py', data=user_script))
 
-    hyperparameters = dict(training_data_file='training_data.npz',
-                           sagemaker_program='user_script.py',
-                           epochs=10, batch_size=64, optimizer='SGD')
+    hyperparameters = dict(training_data_file='training_data.npz', sagemaker_program='user_script.py', epochs=10,
+                           batch_size=64, optimizer='SGD')
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
     os.environ['SAGEMAKER_TRAINING_MODULE'] = 'test.functional.simple_framework:train'
 
-    assert execute(trainer.train) == 0
+    assert execute_an_wrap_exit(trainer.train) == trainer.SUCCESS_CODE
 
     model_path = os.path.join(env.TrainingEnv().model_dir, 'saved_model')
-    print(model_path)
 
     model = fake_ml_framework.Model.load(model_path)
 
     assert model.epochs == 10
     assert model.batch_size == 64
-    assert model.loss == 'elastic'
     assert model.optimizer == 'SGD'
     assert os.path.exists(os.path.join(env.TrainingEnv().output_dir, 'success'))
 
@@ -203,20 +197,22 @@ def test_trainer_report_failure():
 
     module = test.UserModule(test.File(name='user_script.py', data=USER_SCRIPT_WITH_EXCEPTION))
 
-    hyperparameters = dict(training_data_file='training_data.npz',
-                           sagemaker_program='user_script.py',
-                           epochs=10, batch_size=64)
+    hyperparameters = dict(training_data_file='training_data.npz', sagemaker_program='user_script.py', epochs=10,
+                           batch_size=64)
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
     os.environ['SAGEMAKER_TRAINING_MODULE'] = 'test.functional.simple_framework:train'
 
-    assert execute(trainer.train) == os.errno.ENOENT
+    assert execute_an_wrap_exit(trainer.train) == errno.ENOENT
 
     failure_file = os.path.join(env.TrainingEnv().output_dir, 'failure')
     assert os.path.exists(failure_file)
-    with open(failure_file, 'r') as f:
-        assert f.read().startswith('Exception caught in training:')
+
+    message = failure_message()
+
+    assert message.startswith('framework error:')
+    assert 'No such file or directory' in message
 
 
 def framework_training_with_script_mode_fn():
@@ -238,12 +234,11 @@ def test_script_mode(user_script):
     module = test.UserModule(test.File(name='user_script.py', data=user_script))
 
     hyperparameters = dict(training_data_file=os.path.join(channel.path, 'training_data.npz'),
-                           sagemaker_program='user_script.py',
-                           epochs=10, batch_size=64, model_dir=env.MODEL_PATH)
+                           sagemaker_program='user_script.py', epochs=10, batch_size=64, model_dir=env.MODEL_PATH)
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    assert execute(framework_training_with_script_mode_fn) == os.errno.ENOENT
+    assert execute_an_wrap_exit(framework_training_with_script_mode_fn) == trainer.SUCCESS_CODE
 
     model_path = os.path.join(env.MODEL_PATH, 'saved_model')
 
@@ -253,13 +248,6 @@ def test_script_mode(user_script):
     assert model.batch_size == 64
     assert model.loss == 'elastic'
     assert model.optimizer == 'SGD'
-
-
-def execute(fn=framework_training_with_script_mode_fn):
-    p = Process(target=fn)
-    p.start()
-    p.join()
-    return p.exitcode
 
 
 USER_MODE_SCRIPT_WITH_ERROR = """
@@ -277,13 +265,12 @@ def test_script_mode_client_error():
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    assert execute(framework_training_with_script_mode_fn) == os.errno.ENOENT
+    with pytest.raises(errors.ExecuteUserScriptError) as e:
+        framework_training_with_script_mode_fn()
 
-    with open(env.TrainingEnv().output_dir) as f:
-        assert f.read() == ''
-
-    # with pytest.raises(errors.ExecuteUserScriptError) as error:
-    # assert type(error.value.args[0]) == subprocess.CalledProcessError
+    message = str(e.value)
+    assert 'ExecuteUserScriptError' in message
+    assert 'ZeroDivisionError' in message
 
 
 def test_script_mode_client_import_error():
@@ -298,6 +285,23 @@ def test_script_mode_client_import_error():
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    with pytest.raises(errors.InstallModuleError) as error:
+    with pytest.raises(errors.InstallModuleError) as e:
         framework_training_with_script_mode_fn()
-    assert type(error.value.args[0]) == subprocess.CalledProcessError
+
+    message = str(e.value)
+    assert 'InstallModuleError:' in message
+    assert "Invalid requirement: \'42/0\'" in message
+    assert "It looks like a path. File \'42/0\' does not exist." in message
+
+
+def failure_message():
+    with open(os.path.join(env.TrainingEnv().output_dir, 'failure')) as f:
+        return f.read()
+
+
+def execute_an_wrap_exit(fn):
+    try:
+        fn()
+        return trainer.SUCCESS_CODE
+    except ValueError as e:
+        return int(str(e))
