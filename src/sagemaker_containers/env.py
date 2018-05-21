@@ -20,7 +20,7 @@ import os
 import shlex
 import subprocess
 
-from sagemaker_containers import _params, mapping
+from sagemaker_containers import _params, errors, mapping
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +211,6 @@ class _Env(mapping.MappingMixin):
             module_name (str): The name of the user provided module.
             module_dir (str): The full path location of the user provided module.
     """
-
     def __init__(self):
         current_host = os.environ.get(_params.CURRENT_HOST_ENV)
         module_name = os.environ.get(_params.USER_PROGRAM_ENV, None)
@@ -219,9 +218,18 @@ class _Env(mapping.MappingMixin):
         log_level = os.environ.get(_params.LOG_LEVEL_ENV, logging.INFO)
 
         self._current_host = current_host
+        self._num_gpus = num_gpus()
+        self._num_cpus = num_cpus()
         self._module_name = module_name
         self._module_dir = module_dir
         self._log_level = log_level
+        self._model_dir = model_dir
+
+    @property
+    def model_dir(self):  # type: () -> str
+        """Returns:
+            str: the directory where models should be saved, e.g., /opt/ml/model/"""
+        return self._model_dir
 
     @property
     def current_host(self):  # type: () -> str
@@ -232,9 +240,24 @@ class _Env(mapping.MappingMixin):
         return self._current_host
 
     @property
+    def num_gpus(self):  # type: () -> int
+        """The number of gpus available in the current container.
+        Returns:
+            int: number of gpus available in the current container.
+        """
+        return self._num_gpus
+
+    @property
+    def num_cpus(self):  # type: () -> int
+        """The number of cpus available in the current container.
+        Returns:
+            int: number of cpus available in the current container.
+        """
+        return self._num_cpus
+
+    @property
     def module_name(self):  # type: () -> str
         """The name of the user provided module.
-
         Returns:
             str: name of the user provided module
         """
@@ -243,7 +266,6 @@ class _Env(mapping.MappingMixin):
     @property
     def module_dir(self):  # type: () -> str
         """The full path location of the user provided module.
-
         Returns:
             str: full path location of the user provided module.
         """
@@ -252,7 +274,6 @@ class _Env(mapping.MappingMixin):
     @property
     def log_level(self):  # type: () -> int
         """Environment logging level.
-
         Returns:
             int: environment logging level.
         """
@@ -261,12 +282,9 @@ class _Env(mapping.MappingMixin):
     @staticmethod
     def _parse_module_name(program_param):
         """Given a module name or a script name, Returns the module name.
-
         This function is used for backwards compatibility.
-
         Args:
             program_param (str): Module or script name.
-
         Returns:
             str: Module name
         """
@@ -294,15 +312,15 @@ class _TrainingEnv(_Env):
     It is a dictionary like object, allowing any builtin function that works with dictionary.
 
     Example on how a script can use training environment:
-            >>>from sagemaker_containers import env
+            >>>import sagemaker_containers
 
-            >>>train_env = env.training_env()
+            >>>env = sagemaker_containers.training_env()
 
             get the path of the channel 'training' from the inputdataconfig.json file
             >>>training_dir = env.channel_path('training')
 
             get a the hyperparameter 'training_data_file' from hyperparameters.json file
-            >>>file_name = train_env.hyperparameters['training_data_file']
+            >>>file_name = env.hyperparameters['training_data_file']
 
             get the folder where the model should be saved
             >>>model_dir = env.model_dir
@@ -424,7 +442,7 @@ class _TrainingEnv(_Env):
         self._resource_config = resource_config
         self._input_data_config = input_data_config
         self._output_data_dir = os.path.join(_output_data_dir, current_host)
-        self._channel_input_dirs = {channel: channel_path(channel) for channel in input_data_config}
+        self._channels = set(channel for channel in input_data_config)
         self._current_host = current_host
 
         # override base class attributes
@@ -432,6 +450,21 @@ class _TrainingEnv(_Env):
         self._module_dir = str(sagemaker_hyperparameters[_params.SUBMIT_DIR_PARAM])
         self._log_level = sagemaker_hyperparameters.get(_params.LOG_LEVEL_PARAM, logging.INFO)
         self._framework_module = os.environ.get(_params.FRAMEWORK_TRAINING_MODULE_ENV, None)
+
+        self._input_dir = input_dir
+        self._input_config_dir = input_config_dir
+        self._output_dir = output_dir
+
+    def channel_path(self, channel_name):
+        """Return the channel path by a given channel name. Raise ChannelDoesNotExistException if the channel does
+        not exist.
+
+        Returns:
+           str: channel path
+        """
+        if channel_name in self._channels:
+            return channel_path(channel_name)
+        raise errors.ChannelDoesNotExistException(channel_name)
 
     @property
     def hosts(self):  # type: () -> list
@@ -445,16 +478,51 @@ class _TrainingEnv(_Env):
     @property
     def network_interface_name(self):  # type: () -> str
         """Name of the network interface used for distributed training
-
         Returns:
               str: name of the network interface, for example, 'ethwe'
         """
         return self._network_interface_name
 
     @property
+    def input_dir(self):  # type: () -> str
+        """The input_dir, e.g. /opt/ml/input/, is the directory where SageMaker saves input data
+        and configuration files before and during training.
+        The input data directory has the following subdirectories:
+            config (`input_config_dir`) and data (`input_data_dir`)
+        Returns:
+            str: the path of the input directory, e.g. /opt/ml/input/
+        """
+        return self._input_dir
+
+    @property
+    def input_config_dir(self):  # type: () -> str
+        """The directory where standard SageMaker configuration files are located, e.g. /opt/ml/input/config/.
+        SageMaker training creates the following files in this folder when training starts:
+            - `hyperparameters.json`: Amazon SageMaker makes the hyperparameters in a CreateTrainingJob
+                request available in this file.
+            - `inputdataconfig.json`: You specify data channel information in the InputDataConfig parameter
+                in a CreateTrainingJob request. Amazon SageMaker makes this information available
+                in this file.
+            - `resourceconfig.json`: name of the current host and all host containers in the training
+        More information about this files can be find here:
+            https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
+        Returns:
+            str: the path of the input directory, e.g. /opt/ml/input/config/
+        """
+        return self._input_config_dir
+
+    @property
+    def output_dir(self):  # type: () -> str
+        """The directory where training success/failure indications will be written, e.g. /opt/ml/output.
+        To save non-model artifacts check `output_data_dir`.
+        Returns:
+            str: the path to the output directory, e.g. /opt/ml/output/.
+        """
+        return self._output_dir
+
+    @property
     def hyperparameters(self):  # type: () -> dict
         """The dict of hyperparameters that were passed to the training job.
-
         Returns:
             dict[str, object]: An instance of `HyperParameters` containing the training job
                                                     hyperparameters.
@@ -515,21 +583,6 @@ class _TrainingEnv(_Env):
             str: the path to output data directory, e.g. /opt/ml/output/data/algo-1.
         """
         return self._output_data_dir
-
-    @property
-    def channel_input_dirs(self):  # type: () -> dict
-        """A dict[str, str] containing the data channels and the directories where the training
-        data was saved.
-        When you run training, you can partition your training data into different logical "channels".
-        Depending on your problem, some common channel ideas are: "train", "test", "evaluation"
-            or "images',"labels".
-        The format of channel_input_dir is as follows:
-            - `channel`[key](str) - the name of the channel defined in the input_data_config.
-            - `training data path`[value](str) - the path to the directory where the training data is saved.
-        Returns:
-            dict[str, str] with the information about the channels.
-        """
-        return self._channel_input_dirs
 
     @property
     def framework_module(self):  # type: () -> str
@@ -615,7 +668,8 @@ def environment_mapping(_training_env=None):
         'input_dir': input_dir, 'input_config_dir': input_config_dir, 'output_dir': output_dir,
         'hyperparameters': _env.hyperparameters, 'resource_config': _env.resource_config,
         'input_data_config': _env.input_data_config, 'output_data_dir': _env.output_data_dir,
-        'channel_input_dirs': _env.channel_input_dirs, 'current_host': _env.current_host,
-        'module_name': _env.module_name, 'module_dir': _env.module_dir, 'log_level': _env.log_level,
-        'framework_module': _env.framework_module, 'num_gpus': num_gpus(), 'num_cpus': num_cpus()
+        'channel_input_dirs': {channel: channel_path(channel) for channel in _env.input_data_config},
+        'current_host': _env.current_host, 'module_name': _env.module_name, 'module_dir': _env.module_dir,
+        'log_level': _env.log_level, 'framework_module': _env.framework_module, 'num_gpus': num_gpus(),
+        'num_cpus': num_cpus()
     }

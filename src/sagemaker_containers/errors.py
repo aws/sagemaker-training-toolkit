@@ -48,3 +48,8 @@ class ImportModuleError(ClientError):
 
 class ExecuteUserScriptError(_CalledProcessError):
     pass
+
+
+class ChannelDoesNotExistException(Exception):
+    def __init__(self, channel_name):
+        super(ChannelDoesNotExistException, self).__init__('Channel %s is not a valid channel' % channel_name)

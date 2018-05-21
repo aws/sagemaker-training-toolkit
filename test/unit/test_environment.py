@@ -19,7 +19,7 @@ from mock import Mock, patch
 import pytest
 import six
 
-from sagemaker_containers import _params, env
+from sagemaker_containers import _params, env, errors
 import test
 
 builtins_open = '__builtin__.open' if six.PY2 else 'builtins.open'
@@ -103,7 +103,9 @@ def test_cpu_count():
 def create_training_env():
     with patch('sagemaker_containers.env.read_resource_config', lambda: RESOURCE_CONFIG), \
          patch('sagemaker_containers.env.read_input_data_config', lambda: INPUT_DATA_CONFIG), \
-         patch('sagemaker_containers.env.read_hyperparameters', lambda: ALL_HYPERPARAMETERS):
+         patch('sagemaker_containers.env.read_hyperparameters', lambda: ALL_HYPERPARAMETERS), \
+         patch('sagemaker_containers.env.num_cpus', lambda: 8), \
+         patch('sagemaker_containers.env.num_gpus', lambda: 4):
         session_mock = Mock()
         session_mock.region_name = 'us-west-2'
         return env.training_env()
@@ -111,14 +113,16 @@ def create_training_env():
 
 @pytest.fixture(name='serving_env')
 def create_serving_env():
-    os.environ[_params.USE_NGINX_ENV] = 'false'
-    os.environ[_params.MODEL_SERVER_TIMEOUT_ENV] = '20'
-    os.environ[_params.CURRENT_HOST_ENV] = 'algo-1'
-    os.environ[_params.USER_PROGRAM_ENV] = 'main.py'
-    os.environ[_params.SUBMIT_DIR_ENV] = 'my_dir'
-    os.environ[_params.ENABLE_METRICS_ENV] = 'true'
-    os.environ[_params.REGION_NAME_ENV] = 'us-west-2'
-    return env.serving_env()
+    with patch('sagemaker_containers.env.num_cpus', lambda: 8), \
+         patch('sagemaker_containers.env.num_gpus', lambda: 4):
+        os.environ[_params.USE_NGINX_ENV] = 'false'
+        os.environ[_params.MODEL_SERVER_TIMEOUT_ENV] = '20'
+        os.environ[_params.CURRENT_HOST_ENV] = 'algo-1'
+        os.environ[_params.USER_PROGRAM_ENV] = 'main.py'
+        os.environ[_params.SUBMIT_DIR_ENV] = 'my_dir'
+        os.environ[_params.ENABLE_METRICS_ENV] = 'true'
+        os.environ[_params.REGION_NAME_ENV] = 'us-west-2'
+        return env.serving_env()
 
 
 def test_env():
@@ -129,47 +133,60 @@ def test_env():
 
 
 def test_training_env(training_env):
+    assert training_env.num_gpus == 4
+    assert training_env.num_cpus == 8
+    assert training_env.input_dir.endswith('/opt/ml/input')
+    assert training_env.input_config_dir.endswith('/opt/ml/input/config')
+    assert training_env.model_dir.endswith('/opt/ml/model')
+    assert training_env.output_dir.endswith('/opt/ml/output')
     assert training_env.hyperparameters == USER_HYPERPARAMETERS
     assert training_env.resource_config == RESOURCE_CONFIG
     assert training_env.input_data_config == INPUT_DATA_CONFIG
     assert training_env.output_data_dir.endswith('/opt/ml/output/data/algo-1')
     assert training_env.hosts == RESOURCE_CONFIG['hosts']
-    assert training_env.channel_input_dirs['train'].endswith('/opt/ml/input/data/train')
-    assert training_env.channel_input_dirs['validation'].endswith('/opt/ml/input/data/validation')
+    assert training_env.channel_path('train').endswith('/opt/ml/input/data/train')
+    assert training_env.channel_path('validation').endswith('/opt/ml/input/data/validation')
     assert training_env.current_host == RESOURCE_CONFIG['current_host']
     assert training_env.module_name == 'main'
     assert training_env.module_dir == 'imagenet'
     assert training_env.log_level == logging.WARNING
     assert training_env.network_interface_name == 'ethwe'
 
+    with pytest.raises(errors.ChannelDoesNotExistException):
+        training_env.channel_path('this channel does not exist')
+
 
 def test_serving_env(serving_env):
+    assert serving_env.num_gpus == 4
+    assert serving_env.num_cpus == 8
     assert serving_env.use_nginx is False
     assert serving_env.model_server_timeout == 20
-    assert serving_env.model_server_workers == 4
+    assert serving_env.model_server_workers == 8
     assert serving_env.module_name == 'main'
     assert serving_env.framework_module is None
 
 
-def test_training_env_properties(training_env):
+def test_env_mapping_properties(training_env):
     env_mapping = env.environment_mapping(training_env)
 
     print(sorted(env_mapping.keys()))
 
     assert sorted(env_mapping.keys()) == sorted(
-        ['channel_input_dirs', 'current_host', 'framework_module', 'hosts', 'hyperparameters',
-         'input_config_dir', 'input_data_config', 'input_dir', 'log_level', 'model_dir', 'module_dir', 'module_name',
+        ['channel_input_dirs', 'current_host', 'framework_module', 'hosts', 'hyperparameters', 'input_config_dir',
+         'input_data_config', 'input_dir', 'log_level', 'model_dir', 'module_dir', 'module_name',
          'network_interface_name', 'num_cpus', 'num_gpus', 'output_data_dir', 'output_dir', 'resource_config'])
 
 
 def test_serving_env_properties(serving_env):
-    assert serving_env.properties() == ['current_host', 'framework_module', 'log_level', 'model_server_timeout',
-                                        'model_server_workers', 'module_dir', 'module_name', 'use_nginx']
+    assert serving_env.properties() == ['current_host', 'framework_module', 'log_level', 'model_dir',
+                                        'model_server_timeout', 'model_server_workers', 'module_dir', 'module_name',
+                                        'num_cpus', 'num_gpus', 'use_nginx']
 
 
 def test_request_properties(serving_env):
-    assert serving_env.properties() == ['current_host', 'framework_module', 'log_level', 'model_server_timeout',
-                                        'model_server_workers', 'module_dir', 'module_name', 'use_nginx']
+    assert serving_env.properties() == ['current_host', 'framework_module', 'log_level', 'model_dir',
+                                        'model_server_timeout', 'model_server_workers', 'module_dir', 'module_name',
+                                        'num_cpus', 'num_gpus', 'use_nginx']
 
 
 @patch('sagemaker_containers.env.num_cpus', lambda: 8)

@@ -139,6 +139,12 @@ def test_run_error():
     assert ' No module named wrong module' in message
 
 
+def test_python_executable_exception():
+    with patch('sys.executable', None):
+        with pytest.raises(RuntimeError):
+            modules.python_executable()
+
+
 def test_run():
     modules.run('pytest', ['--version'])
 
