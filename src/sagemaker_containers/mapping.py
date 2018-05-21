@@ -40,13 +40,11 @@ def to_cmd_args(mapping):  # type: (dict) -> list
     sorted_keys = sorted(mapping.keys())
 
     def arg_name(obj):
-        string = decode(obj)
-        if not string:
-            return u''
-        if len(string) > 1:
-            return u'--%s' % string
+        string = _decode(obj)
+        if string:
+            return u'--%s' % string if len(string) > 1 else u'-%s' % string
         else:
-            return u'-%s' % string
+            return u''
 
     arg_names = [arg_name(argument) for argument in sorted_keys]
 
@@ -54,7 +52,7 @@ def to_cmd_args(mapping):  # type: (dict) -> list
         if hasattr(value, 'items'):
             map_items = ['%s=%s' % (k, v) for k, v in sorted(value.items())]
             return ','.join(map_items)
-        return decode(value)
+        return _decode(value)
 
     arg_values = [arg_value(mapping[key]) for key in sorted_keys]
 
@@ -63,15 +61,27 @@ def to_cmd_args(mapping):  # type: (dict) -> list
     return [item for item in itertools.chain.from_iterable(items)]
 
 
-def decode(object):
-    if six.PY3 and isinstance(object, six.binary_type):
-        return object.decode('latin1')
+def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode
+    """Decode an object to unicode.
+
+    Args:
+        obj (bytes or str or unicode or anything serializable): object to be decoded
+
+    Returns:
+        object decoded in unicode.
+    """
+    if six.PY3 and isinstance(obj, six.binary_type):
+        # transforms a byte string (b'') in unicode
+        return obj.decode('latin1')
     elif six.PY3:
-        return str(object)
-    elif isinstance(object, six.text_type):
-        return object
+        # PY3 strings are unicode.
+        return str(obj)
+    elif isinstance(obj, six.text_type):
+        # returns itself if it is unicode
+        return obj
     else:
-        return str(object).decode('utf-8')
+        # decodes pY2 string to unicode
+        return str(obj).decode('utf-8')
 
 
 def split_by_criteria(dictionary, keys):  # type: (dict, set or list or tuple) -> SplitResultSpec

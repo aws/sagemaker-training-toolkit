@@ -215,7 +215,7 @@ def _check_error(cmd, error_class, **kwargs):
 
     return_code = process.poll()
     if return_code:
-        raise error_class(return_code, ''.join(cmd), output=stderr)
+        raise error_class(return_code, ' '.join(cmd), output=stderr)
 
 
 def python_executable():
