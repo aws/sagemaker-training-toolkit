@@ -25,10 +25,11 @@ import six
 import werkzeug.test as werkzeug_test
 
 # loading base path before loading the environment so all the environment paths are loaded properly
-os.environ['BASE_PATH'] = os.path.join(tempfile.mkdtemp(), 'opt', 'ml')
+
+os.environ['base_dir'] = os.path.join(tempfile.mkdtemp(), 'opt', 'ml')
 DEFAULT_REGION = 'us-west-2'
 
-from sagemaker_containers import encoders, env, worker  # noqa ignore=E402 module level import not at top of file
+from sagemaker_containers import encoders, env, _files, _params, worker  # noqa ignore=E402 module level import not at top of file
 
 DEFAULT_CONFIG = dict(ContentType="application/x-numpy", TrainingInputMode="File",
                       S3DistributionType="FullyReplicated", RecordWrapperType="None")
@@ -76,26 +77,28 @@ def hyperparameters(**kwargs):  # type: (...) -> dict
 
 
 def create_resource_config(current_host='algo-1', hosts=None):  # type: (str, list) -> None
-    write_json(dict(current_host=current_host, hosts=hosts or ['algo-1']), env.RESOURCE_CONFIG_PATH)
+    write_json(dict(current_host=current_host, hosts=hosts or ['algo-1']), env.resource_config_file_dir)
 
 
 def create_input_data_config(channels=None):  # type: (list) -> None
     channels = channels or []
     input_data_config = {channel.name: channel.config for channel in channels}
 
-    write_json(input_data_config, env.INPUT_DATA_CONFIG_FILE_PATH)
+    write_json(input_data_config, env.input_data_config_file_dir)
 
 
 def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hyperparameters=None):
     # type: (dict, str, dict) -> None
 
-    all_hyperparameters = {env.SUBMIT_DIR_PARAM: submit_dir or env.DEFAULT_MODULE_NAME_PARAM}
+    all_hyperparameters = {
+        _params.SUBMIT_DIR_PARAM: submit_dir or _params.DEFAULT_MODULE_NAME_PARAM
+    }
 
     all_hyperparameters.update(sagemaker_hyperparameters or DEFAULT_HYPERPARAMETERS.copy())
 
     all_hyperparameters.update(hyperparameters)
 
-    write_json(all_hyperparameters, env.HYPERPARAMETERS_PATH)
+    write_json(all_hyperparameters, env.hyperparameters_file_dir)
 
 
 File = collections.namedtuple('File', ['name', 'data'])  # type: (str, str or list) -> File
@@ -151,7 +154,7 @@ class UserModule(object):
         return os.path.join('s3://', self.bucket, self.key)
 
     def upload(self):  # type: () -> UserModule
-        with env.tmpdir() as tmpdir:
+        with _files.tmpdir() as tmpdir:
             tar_name = os.path.join(tmpdir, 'sourcedir.tar.gz')
             with tarfile.open(tar_name, mode='w:gz') as tar:
                 for _file in self._files:
@@ -187,7 +190,7 @@ class Channel(collections.namedtuple('Channel', ['name', 'config'])):  # type: (
 
     @property
     def path(self):  # type: () -> str
-        return os.path.join(env.INPUT_DATA_PATH, self.name)
+        return os.path.join(env._input_data_dir, self.name)
 
 
 class TestBase(object):

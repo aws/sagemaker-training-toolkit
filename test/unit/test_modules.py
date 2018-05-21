@@ -139,6 +139,12 @@ def test_run_error():
     assert ' No module named wrong module' in message
 
 
+def test_python_executable_exception():
+    with patch('sys.executable', None):
+        with pytest.raises(RuntimeError):
+            modules.python_executable()
+
+
 def test_run():
     modules.run('pytest', ['--version'])
 
@@ -153,7 +159,7 @@ def test_run_module_from_s3():
 
 
 class TestDownloadAndImport(test.TestBase):
-    patches = [patch('sagemaker_containers.env.tmpdir', new=patch_tmpdir),
+    patches = [patch('sagemaker_containers._files.tmpdir', new=patch_tmpdir),
                patch('sagemaker_containers.modules.prepare', autospec=True),
                patch('sagemaker_containers.modules.install', autospec=True),
                patch('sagemaker_containers.modules.s3_download', autospec=True),

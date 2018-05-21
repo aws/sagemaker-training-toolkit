@@ -14,7 +14,7 @@ from sagemaker_containers import env, server
 
 
 def main():
-    server.start(env.ServingEnv().framework_module)
+    server.start(env.serving_env().framework_module)
 
 
 if __name__ == "__main__":

@@ -114,7 +114,7 @@ model.save(model_file)
 
 
 def framework_training_fn():
-    training_env = env.TrainingEnv()
+    training_env = env.training_env()
 
     mod = modules.import_module_from_s3(training_env.module_dir, training_env.module_name, False)
 
@@ -122,9 +122,9 @@ def framework_training_fn():
 
     if model:
         if hasattr(mod, 'save'):
-            mod.save(model, training_env.model_dir)
+            mod.save(model, env.model_dir)
         else:
-            model_file = os.path.join(training_env.model_dir, 'saved_model')
+            model_file = os.path.join(env.model_dir, 'saved_model')
             model.save(model_file)
 
 
@@ -148,7 +148,7 @@ def test_training_framework(user_script):
 
     assert execute_an_wrap_exit(framework_training_fn) == trainer.SUCCESS_CODE
 
-    model_path = os.path.join(env.TrainingEnv().model_dir, 'saved_model')
+    model_path = os.path.join(env.model_dir, 'saved_model')
     model = fake_ml_framework.Model.load(model_path)
 
     assert model.epochs == 10
@@ -178,14 +178,14 @@ def test_trainer_report_success(user_script):
 
     assert execute_an_wrap_exit(trainer.train) == trainer.SUCCESS_CODE
 
-    model_path = os.path.join(env.TrainingEnv().model_dir, 'saved_model')
+    model_path = os.path.join(env.model_dir, 'saved_model')
 
     model = fake_ml_framework.Model.load(model_path)
 
     assert model.epochs == 10
     assert model.batch_size == 64
     assert model.optimizer == 'SGD'
-    assert os.path.exists(os.path.join(env.TrainingEnv().output_dir, 'success'))
+    assert os.path.exists(os.path.join(env.output_dir, 'success'))
 
 
 def test_trainer_report_failure():
@@ -206,7 +206,7 @@ def test_trainer_report_failure():
 
     assert execute_an_wrap_exit(trainer.train) == errno.ENOENT
 
-    failure_file = os.path.join(env.TrainingEnv().output_dir, 'failure')
+    failure_file = os.path.join(env.output_dir, 'failure')
     assert os.path.exists(failure_file)
 
     message = failure_message()
@@ -216,7 +216,7 @@ def test_trainer_report_failure():
 
 
 def framework_training_with_script_mode_fn():
-    training_env = env.TrainingEnv()
+    training_env = env.training_env()
 
     args = mapping.to_cmd_args(training_env.hyperparameters)
 
@@ -234,13 +234,13 @@ def test_script_mode(user_script):
     module = test.UserModule(test.File(name='user_script.py', data=user_script))
 
     hyperparameters = dict(training_data_file=os.path.join(channel.path, 'training_data.npz'),
-                           sagemaker_program='user_script.py', epochs=10, batch_size=64, model_dir=env.MODEL_PATH)
+                           sagemaker_program='user_script.py', epochs=10, batch_size=64, model_dir=env.model_dir)
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
     assert execute_an_wrap_exit(framework_training_with_script_mode_fn) == trainer.SUCCESS_CODE
 
-    model_path = os.path.join(env.MODEL_PATH, 'saved_model')
+    model_path = os.path.join(env.model_dir, 'saved_model')
 
     model = fake_ml_framework.Model.load(model_path)
 
@@ -295,7 +295,7 @@ def test_script_mode_client_import_error():
 
 
 def failure_message():
-    with open(os.path.join(env.TrainingEnv().output_dir, 'failure')) as f:
+    with open(os.path.join(env.output_dir, 'failure')) as f:
         return f.read()
 
 

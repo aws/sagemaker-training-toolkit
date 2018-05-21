@@ -24,8 +24,25 @@ from sagemaker_containers import mapping
     ({'x': 1, 'y': 2}, (), ({}, {'x': 1, 'y': 2})),
     ({'x': 1, 'y': 2}, ('x', 'y'), ({'x': 1, 'y': 2}, {}))
 ])
-def test_split_by_criteria(dictionary, keys, expected):
-    assert mapping.split_by_criteria(dictionary, keys) == expected
+def test_split_by_criteria_with_keys(dictionary, keys, expected):
+    assert mapping.split_by_criteria(dictionary, keys=keys) == expected
+
+
+@pytest.mark.parametrize('dictionary, keys, prefix, expected', [
+    ({'x': 1, 'y': 2}, 'y', 'x', ({'x': 1, 'y': 2}, {}))
+])
+def test_split_by_criteria_with_keys_and_criteria(dictionary, keys, prefix, expected):
+    assert mapping.split_by_criteria(dictionary, keys=keys, prefix=prefix) == expected
+
+
+@pytest.mark.parametrize('dictionary, prefix, expected', [
+    ({}, (), ({}, {})),
+    ({'sagemaker_x': 1, 'y': 2}, ('sagemaker',), ({'sagemaker_x': 1}, {'y': 2})),
+    ({'sagemaker_x': 1, 'y': 2}, ('something_else',), ({}, {'sagemaker_x': 1, 'y': 2})),
+    ({'sagemaker_x': 1, 'y': 2}, ('y',), ({'y': 2}, {'sagemaker_x': 1}))
+])
+def test_split_by_criteria_with_prefix(dictionary, prefix, expected):
+    assert mapping.split_by_criteria(dictionary, prefix=prefix) == expected
 
 
 class ProcessEnvironment(mapping.MappingMixin):

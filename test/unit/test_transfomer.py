@@ -88,7 +88,7 @@ def test_initialize():
 
     transformer.Transformer(model_fn=model_fn).initialize()
 
-    model_fn.assert_called_with(env.MODEL_PATH)
+    model_fn.assert_called_with(env.model_dir)
 
 
 @patch('sagemaker_containers.worker.Request', lambda: request)

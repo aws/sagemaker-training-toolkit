@@ -22,17 +22,13 @@ SplitResultSpec = collections.namedtuple('SplitResultSpec', 'included excluded')
 
 def to_cmd_args(mapping):  # type: (dict) -> list
     """Transform a dictionary in a list of cmd arguments.
-
     Example:
-
         >>>args = mapping.to_cmd_args({'model_dir': '/opt/ml/model', 'batch_size': 25})
         >>>
         >>>print(args)
         ['--model_dir', '/opt/ml/model', '--batch_size', 25]
-
     Args:
         mapping (dict[str, object]): A Python mapping.
-
     Returns:
         (list): List of cmd arguments
     """
@@ -63,10 +59,8 @@ def to_cmd_args(mapping):  # type: (dict) -> list
 
 def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode
     """Decode an object to unicode.
-
     Args:
         obj (bytes or str or unicode or anything serializable): object to be decoded
-
     Returns:
         object decoded in unicode.
     """
@@ -84,12 +78,13 @@ def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode
         return str(obj).decode('utf-8')
 
 
-def split_by_criteria(dictionary, keys):  # type: (dict, set or list or tuple) -> SplitResultSpec
+def split_by_criteria(dictionary, keys=None, prefix=None):  # type: (dict, set or list or tuple) -> SplitResultSpec
     """Split a dictionary in two by the provided keys.
 
     Args:
         dictionary (dict[str, object]): A Python dictionary
-        keys (sequence [str]): A sequence of keys which will be the split criteria
+        keys (sequence [str]): A sequence of keys which will be added the split criteria
+        prefix (str): A prefix which will be added the split criteria
 
     Returns:
         `SplitResultSpec` : A collections.namedtuple with the following attributes:
@@ -98,9 +93,11 @@ def split_by_criteria(dictionary, keys):  # type: (dict, set or list or tuple) -
                 included (dict[str, object]: A dictionary with the keys included in the criteria.
                 excluded (dict[str, object]: A dictionary with the keys not included in the criteria.
     """
+    keys = keys or []
     keys = set(keys)
-    included_items = {k: dictionary[k] for k in dictionary.keys() if k in keys}
-    excluded_items = {k: dictionary[k] for k in dictionary.keys() if k not in keys}
+
+    included_items = {k: dictionary[k] for k in dictionary.keys() if k in keys or (prefix and k.startswith(prefix))}
+    excluded_items = {k: dictionary[k] for k in dictionary.keys() if k not in included_items}
 
     return SplitResultSpec(included=included_items, excluded=excluded_items)
 

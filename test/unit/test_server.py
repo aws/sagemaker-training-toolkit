@@ -15,10 +15,10 @@ from mock import call, patch, PropertyMock
 from sagemaker_containers import env, server
 
 
-@patch.object(env.ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
-@patch.object(env.ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
-@patch.object(env.ServingEnv, 'use_nginx', PropertyMock(return_value=False))
-@patch('sagemaker_containers.env.gpu_count', lambda: 0)
+@patch.object(env._ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
+@patch.object(env._ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
+@patch.object(env._ServingEnv, 'use_nginx', PropertyMock(return_value=False))
+@patch('sagemaker_containers.env.num_gpus', lambda: 0)
 @patch('sys.exit', lambda x: 0)
 @patch('subprocess.Popen')
 def test_start_no_nginx(popen):
@@ -36,11 +36,11 @@ def test_start_no_nginx(popen):
     popen.assert_has_calls(calls)
 
 
-@patch.object(env.ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
-@patch.object(env.ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
-@patch.object(env.ServingEnv, 'use_nginx', PropertyMock(return_value=True))
+@patch.object(env._ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
+@patch.object(env._ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
+@patch.object(env._ServingEnv, 'use_nginx', PropertyMock(return_value=True))
 @patch('pkg_resources.resource_filename', lambda x, y: '/tmp/nginx.conf')
-@patch('sagemaker_containers.env.gpu_count', lambda: 0)
+@patch('sagemaker_containers.env.num_gpus', lambda: 0)
 @patch('sys.exit', lambda x: 0)
 @patch('subprocess.Popen')
 def test_start_with_nginx(popen):
