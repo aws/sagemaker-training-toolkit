@@ -15,7 +15,7 @@ import os
 
 from mock import Mock, patch
 
-from sagemaker_containers import errors, trainer
+from sagemaker_containers import _errors, _trainer
 
 
 class TrainingEnv(Mock):
@@ -29,19 +29,19 @@ class TrainingEnv(Mock):
 
 
 @patch('importlib.import_module')
-@patch('sagemaker_containers.env.training_env', TrainingEnv)
+@patch('sagemaker_containers.training_env', TrainingEnv)
 def test_train(import_module):
     framework = Mock()
     import_module.return_value = framework
-    trainer.train()
+    _trainer.train()
 
     import_module.assert_called_with('my_framework')
     framework.entry_point.assert_called()
 
 
 @patch('importlib.import_module')
-@patch('sagemaker_containers.env.training_env', TrainingEnv)
-@patch('sagemaker_containers.trainer._exit_processes')
+@patch('sagemaker_containers.training_env', TrainingEnv)
+@patch('sagemaker_containers._trainer._exit_processes')
 def test_train_with_success(_exit, import_module):
     def success():
         pass
@@ -49,14 +49,14 @@ def test_train_with_success(_exit, import_module):
     framework = Mock(entry_point=success)
     import_module.return_value = framework
 
-    trainer.train()
+    _trainer.train()
 
-    _exit.assert_called_with(trainer.SUCCESS_CODE)
+    _exit.assert_called_with(_trainer.SUCCESS_CODE)
 
 
 @patch('importlib.import_module')
-@patch('sagemaker_containers.env.training_env', TrainingEnv)
-@patch('sagemaker_containers.trainer._exit_processes')
+@patch('sagemaker_containers.training_env', TrainingEnv)
+@patch('sagemaker_containers._trainer._exit_processes')
 def test_train_fails(_exit, import_module):
 
     def fail():
@@ -65,22 +65,22 @@ def test_train_fails(_exit, import_module):
     framework = Mock(entry_point=fail)
     import_module.return_value = framework
 
-    trainer.train()
+    _trainer.train()
 
     _exit.assert_called_with(errno.ENOENT)
 
 
 @patch('importlib.import_module')
-@patch('sagemaker_containers.env.training_env', TrainingEnv)
-@patch('sagemaker_containers.trainer._exit_processes')
+@patch('sagemaker_containers.training_env', TrainingEnv)
+@patch('sagemaker_containers._trainer._exit_processes')
 def test_train_with_client_error(_exit, import_module):
 
     def fail():
-        raise errors.ClientError(os.errno.ENOENT, 'No such file or directory')
+        raise _errors.ClientError(os.errno.ENOENT, 'No such file or directory')
 
     framework = Mock(entry_point=fail)
     import_module.return_value = framework
 
-    trainer.train()
+    _trainer.train()
 
-    _exit.assert_called_with(trainer.DEFAULT_FAILURE_CODE)
+    _exit.assert_called_with(_trainer.DEFAULT_FAILURE_CODE)

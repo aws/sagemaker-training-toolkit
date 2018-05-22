@@ -28,11 +28,11 @@ DEFAULT_REGION = 'us-west-2'
 
 @pytest.fixture(autouse=True)
 def create_base_path():
-    from sagemaker_containers import env
+    from sagemaker_containers import _env
 
-    os.makedirs(env.model_dir)
-    os.makedirs(env.input_config_dir)
-    os.makedirs(env._output_data_dir)
+    os.makedirs(_env.model_dir)
+    os.makedirs(_env.input_config_dir)
+    os.makedirs(_env._output_data_dir)
 
     yield str(os.environ['base_dir'])
 
@@ -45,5 +45,5 @@ def patch_exit_process():
         if error_code:
             raise ValueError(error_code)
 
-    with patch('sagemaker_containers.trainer._exit_processes', _exit):
+    with patch('sagemaker_containers._trainer._exit_processes', _exit):
         yield _exit

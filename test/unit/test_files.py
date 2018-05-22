@@ -18,7 +18,7 @@ from mock import mock_open, patch
 import pytest
 import six
 
-from sagemaker_containers import _files, env
+from sagemaker_containers import _env, _files
 import test
 
 builtins_open = '__builtin__.open' if six.PY2 else 'builtins.open'
@@ -48,9 +48,9 @@ ALL_HYPERPARAMETERS = dict(itertools.chain(USER_HYPERPARAMETERS.items(), SAGEMAK
 
 
 def test_read_json():
-    test.write_json(ALL_HYPERPARAMETERS, env.hyperparameters_file_dir)
+    test.write_json(ALL_HYPERPARAMETERS, _env.hyperparameters_file_dir)
 
-    assert _files.read_json(env.hyperparameters_file_dir) == ALL_HYPERPARAMETERS
+    assert _files.read_json(_env.hyperparameters_file_dir) == ALL_HYPERPARAMETERS
 
 
 def test_read_json_throws_exception():
@@ -87,7 +87,7 @@ def test_write_file():
 
 @patch(builtins_open, mock_open())
 def test_write_success_file():
-    file_path = os.path.join(env.output_dir, 'success')
+    file_path = os.path.join(_env.output_dir, 'success')
     empty_msg = ''
     _files.write_success_file()
     open.assert_called_with(file_path, 'w')
@@ -96,7 +96,7 @@ def test_write_success_file():
 
 @patch(builtins_open, mock_open())
 def test_write_failure_file():
-    file_path = os.path.join(env.output_dir, 'failure')
+    file_path = os.path.join(_env.output_dir, 'failure')
     failure_msg = 'This is a failure'
     _files.write_failure_file(failure_msg)
     open.assert_called_with(file_path, 'w')

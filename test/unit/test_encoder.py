@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 from six import BytesIO
 
-from sagemaker_containers import content_types, encoders
+from sagemaker_containers import _content_types, _encoders
 
 
 @pytest.mark.parametrize('target', ([42, 6, 9], [42., 6., 9.], ['42', '6', '9'], [u'42', u'6', u'9'], {42: {'6': 9.}}))
@@ -24,7 +24,7 @@ def test_npy_to_numpy(target):
     np.save(buffer, target)
     input_data = buffer.getvalue()
 
-    actual = encoders.npy_to_numpy(input_data)
+    actual = _encoders.npy_to_numpy(input_data)
 
     np.testing.assert_equal(actual, np.array(target))
 
@@ -33,11 +33,11 @@ def test_npy_to_numpy(target):
 def test_array_to_npy(target):
     input_data = np.array(target)
 
-    actual = encoders.array_to_npy(input_data)
+    actual = _encoders.array_to_npy(input_data)
 
     np.testing.assert_equal(np.load(BytesIO(actual)), np.array(target))
 
-    actual = encoders.array_to_npy(target)
+    actual = _encoders.array_to_npy(target)
 
     np.testing.assert_equal(np.load(BytesIO(actual)), np.array(target))
 
@@ -49,12 +49,12 @@ def test_array_to_npy(target):
                          (u'["42", "6", "9"]', np.array([u'42', u'6', u'9']))]
 )
 def test_json_to_numpy(target, expected):
-    actual = encoders.json_to_numpy(target)
+    actual = _encoders.json_to_numpy(target)
     np.testing.assert_equal(actual, expected)
 
-    np.testing.assert_equal(encoders.json_to_numpy(target, dtype=int), expected.astype(int))
+    np.testing.assert_equal(_encoders.json_to_numpy(target, dtype=int), expected.astype(int))
 
-    np.testing.assert_equal(encoders.json_to_numpy(target, dtype=float), expected.astype(float))
+    np.testing.assert_equal(_encoders.json_to_numpy(target, dtype=float), expected.astype(float))
 
 
 @pytest.mark.parametrize(
@@ -64,16 +64,16 @@ def test_json_to_numpy(target, expected):
                          ({42: {'6': 9.}}, '{"42": {"6": 9.0}}')]
 )
 def test_array_to_json(target, expected):
-    actual = encoders.array_to_json(target)
+    actual = _encoders.array_to_json(target)
     np.testing.assert_equal(actual, expected)
 
-    actual = encoders.array_to_json(np.array(target))
+    actual = _encoders.array_to_json(np.array(target))
     np.testing.assert_equal(actual, expected)
 
 
 def test_array_to_json_exception():
     with pytest.raises(TypeError):
-        encoders.array_to_json(lambda x: 3)
+        _encoders.array_to_json(lambda x: 3)
 
 
 @pytest.mark.parametrize(
@@ -82,7 +82,7 @@ def test_array_to_json_exception():
                          ('42\n6\n9\n', np.array([42, 6, 9]))]
 )
 def test_csv_to_numpy(target, expected):
-    actual = encoders.csv_to_numpy(target)
+    actual = _encoders.csv_to_numpy(target)
     np.testing.assert_equal(actual, expected)
 
 
@@ -91,40 +91,40 @@ def test_csv_to_numpy(target, expected):
                          ([42., 6., 9.], '42.0\n6.0\n9.0\n'),
                          (['42', '6', '9'], '42\n6\n9\n')])
 def test_array_to_csv(target, expected):
-    actual = encoders.array_to_csv(target)
+    actual = _encoders.array_to_csv(target)
     np.testing.assert_equal(actual, expected)
 
-    actual = encoders.array_to_csv(np.array(target))
+    actual = _encoders.array_to_csv(np.array(target))
     np.testing.assert_equal(actual, expected)
 
 
 @pytest.mark.parametrize(
-    'content_type', [content_types.JSON, content_types.CSV, content_types.NPY]
+    'content_type', [_content_types.JSON, _content_types.CSV, _content_types.NPY]
 )
 def test_encode(content_type):
     encoder = Mock()
-    with patch.dict(encoders._encoders_map, {content_type: encoder}, clear=True):
-        encoders.encode(42, content_type)
+    with patch.dict(_encoders._encoders_map, {content_type: encoder}, clear=True):
+        _encoders.encode(42, content_type)
 
         encoder.assert_called_once_with(42)
 
 
 def test_encode_error():
-    with pytest.raises(encoders.UnsupportedFormatError):
-        encoders.encode(42, content_types.OCTET_STREAM)
+    with pytest.raises(_encoders.UnsupportedFormatError):
+        _encoders.encode(42, _content_types.OCTET_STREAM)
 
 
 def test_decode_error():
-    with pytest.raises(encoders.UnsupportedFormatError):
-        encoders.decode(42, content_types.OCTET_STREAM)
+    with pytest.raises(_encoders.UnsupportedFormatError):
+        _encoders.decode(42, _content_types.OCTET_STREAM)
 
 
 @pytest.mark.parametrize(
-    'content_type', [content_types.JSON, content_types.CSV, content_types.NPY]
+    'content_type', [_content_types.JSON, _content_types.CSV, _content_types.NPY]
 )
 def test_decode(content_type):
     decoder = Mock()
-    with patch.dict(encoders._decoders_map, {content_type: decoder}, clear=True):
-        encoders.decode(42, content_type)
+    with patch.dict(_encoders._decoders_map, {content_type: decoder}, clear=True):
+        _encoders.decode(42, content_type)
 
         decoder.assert_called_once_with(42)

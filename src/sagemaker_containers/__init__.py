@@ -12,9 +12,13 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-# flake8: noqa ignore=F401 imported but unused
-from .env import training_env
 
-# flake8: noqa ignore=F401 imported but unused
-from .encoders import array_to_csv, array_to_json, array_to_npy, \
-    csv_to_numpy, decode, encode, json_to_numpy, npy_to_numpy
+def training_env():
+    """Create a TrainingEnv.
+
+    Returns:
+        TrainingEnv: an instance of TrainingEnv
+    """
+    from sagemaker_containers import _env
+
+    return _env.TrainingEnv()

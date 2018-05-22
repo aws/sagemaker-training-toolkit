@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import flask
 
-from sagemaker_containers import content_types, env, mapping, status_codes
+from sagemaker_containers import _content_types, _env, _mapping, _status_codes
 
-serving_env = env.serving_env()
+ServingEnv = _env.ServingEnv()
 
 
 def default_healthcheck_fn():  # type: () -> Response
@@ -40,7 +40,7 @@ def default_healthcheck_fn():  # type: () -> Response
     Returns:
         (flask.Response): with status code 200
     """
-    return Response(status=status_codes.OK)
+    return Response(status=_status_codes.OK)
 
 
 class Worker(flask.Flask):
@@ -66,9 +66,9 @@ class Worker(flask.Flask):
                     `flask.app.Response`: response object with new healthcheck response.
 
             module_name (str): the module name which implements the worker. If not specified, it will use
-                                    sagemaker_containers._ServingEnv().module_name as the default module name.
+                                    sagemaker_containers.ServingEnv().module_name as the default module name.
         """
-        super(Worker, self).__init__(module_name or serving_env.module_name)
+        super(Worker, self).__init__(module_name or ServingEnv.module_name)
 
         if initialize_fn:
             self.before_first_request(initialize_fn)
@@ -80,16 +80,16 @@ class Worker(flask.Flask):
 
 
 class Response(flask.Response):
-    default_mimetype = content_types.JSON
+    default_mimetype = _content_types.JSON
 
-    def __init__(self, response=None, accept=None, status=status_codes.OK, headers=None,
+    def __init__(self, response=None, accept=None, status=_status_codes.OK, headers=None,
                  mimetype=None, direct_passthrough=False):
         headers = headers or {}
         headers['accept'] = accept
         super(Response, self).__init__(response, status, headers, mimetype, accept, direct_passthrough)
 
 
-class Request(flask.Request, mapping.MappingMixin):
+class Request(flask.Request, _mapping.MappingMixin):
     """The Request object used to read request data.
 
     Example:
@@ -100,7 +100,7 @@ class Request(flask.Request, mapping.MappingMixin):
 
     42
 
-    >>> from sagemaker_containers import env
+    >>> from sagemaker_containers import _env
 
     >>> request = Request()
     >>> data = request.data
@@ -111,7 +111,7 @@ class Request(flask.Request, mapping.MappingMixin):
 
 
     """
-    default_mimetype = content_types.JSON
+    default_mimetype = _content_types.JSON
 
     def __init__(self, environ=None):
         super(Request, self).__init__(environ=environ or flask.request.environ)
@@ -125,7 +125,7 @@ class Request(flask.Request, mapping.MappingMixin):
                     Otherwise, returns 'Application/Json' as default.
         """
         # todo(mvsusp): consider a better default content-type
-        return self.headers.get('ContentType') or self.headers.get('Content-Type') or content_types.JSON
+        return self.headers.get('ContentType') or self.headers.get('Content-Type') or _content_types.JSON
 
     @property
     def accept(self):  # type: () -> str
@@ -134,7 +134,7 @@ class Request(flask.Request, mapping.MappingMixin):
         Returns:
             (str): The value of the header 'Accept' or 'Application/Json' as default
         """
-        return self.headers.get('Accept', content_types.JSON)
+        return self.headers.get('Accept', _content_types.JSON)
 
     @property
     def content(self):  # type: () -> object
@@ -145,6 +145,6 @@ class Request(flask.Request, mapping.MappingMixin):
         Returns:
             (obj): incoming data
         """
-        as_text = self.content_type in content_types.UTF8_TYPES
+        as_text = self.content_type in _content_types.UTF8_TYPES
 
         return self.get_data(as_text=as_text)

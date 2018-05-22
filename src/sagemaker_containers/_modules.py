@@ -25,7 +25,7 @@ import boto3
 import six
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_containers import _files, errors
+from sagemaker_containers import _errors, _files
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ def install(path):  # type: (str) -> None
     if os.path.exists(os.path.join(path, 'requirements.txt')):
         cmd += '-r requirements.txt'
 
-    _check_error(shlex.split(cmd), errors.InstallModuleError, cwd=path)
+    _check_error(shlex.split(cmd), _errors.InstallModuleError, cwd=path)
 
 
 def exists(name):  # type: (str) -> bool
@@ -189,15 +189,15 @@ def run(module_name, args=None):  # type: (str, list) -> None
 
     Example:
 
-        >>>from sagemaker_containers import env, mapping, modules
+        >>>from sagemaker_containers import _env, _mapping, _modules
 
-        >>>hyperparameters = env.training_env().hyperparameters
+        >>>hyperparameters = sagemaker_containers.training_env().hyperparameters
         {'batch-size': 128, 'model_dir': '/opt/ml/model'}
 
-        >>>args = mapping.to_cmd_args(hyperparameters)
+        >>>args = _mapping.to_cmd_args(hyperparameters)
         ['--batch-size', '128', '--model_dir', '/opt/ml/model']
 
-        >>>modules.run('user_script')
+        >>>_modules.run('user_script')
         python -m user_script --batch-size 128 --model_dir /opt/ml/model
 
     Args:
@@ -206,7 +206,7 @@ def run(module_name, args=None):  # type: (str, list) -> None
     """
     args = args or []
 
-    _check_error([python_executable(), '-m', module_name] + args, errors.ExecuteUserScriptError)
+    _check_error([python_executable(), '-m', module_name] + args, _errors.ExecuteUserScriptError)
 
 
 def _check_error(cmd, error_class, **kwargs):
@@ -238,7 +238,7 @@ def import_module_from_s3(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (
 
         return module
     except Exception as e:
-        six.reraise(errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2])
+        six.reraise(_errors.ImportModuleError, _errors.ImportModuleError(e), sys.exc_info()[2])
 
 
 def run_module_from_s3(url, args, name=DEFAULT_MODULE_NAME, cache=True):

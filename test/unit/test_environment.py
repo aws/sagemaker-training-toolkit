@@ -19,7 +19,8 @@ from mock import Mock, patch
 import pytest
 import six
 
-from sagemaker_containers import _params, env
+import sagemaker_containers
+from sagemaker_containers import _env, _params
 import test
 
 builtins_open = '__builtin__.open' if six.PY2 else 'builtins.open'
@@ -46,75 +47,75 @@ ALL_HYPERPARAMETERS = dict(itertools.chain(USER_HYPERPARAMETERS.items(), SAGEMAK
 
 
 def test_read_hyperparameters():
-    test.write_json(ALL_HYPERPARAMETERS, env.hyperparameters_file_dir)
+    test.write_json(ALL_HYPERPARAMETERS, _env.hyperparameters_file_dir)
 
-    assert env.read_hyperparameters() == ALL_HYPERPARAMETERS
+    assert _env.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
 def test_read_key_serialized_hyperparameters():
     key_serialized_hps = {k: json.dumps(v) for k, v in ALL_HYPERPARAMETERS.items()}
-    test.write_json(key_serialized_hps, env.hyperparameters_file_dir)
+    test.write_json(key_serialized_hps, _env.hyperparameters_file_dir)
 
-    assert env.read_hyperparameters() == ALL_HYPERPARAMETERS
+    assert _env.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
-@patch('sagemaker_containers.env._read_json', lambda x: {'a': 1})
+@patch('sagemaker_containers._env._read_json', lambda x: {'a': 1})
 @patch('json.loads')
 def test_read_exception(loads):
     loads.side_effect = ValueError('Unable to read.')
 
-    assert env.read_hyperparameters() == {'a': 1}
+    assert _env.read_hyperparameters() == {'a': 1}
 
 
 def test_resource_config():
-    test.write_json(RESOURCE_CONFIG, env.resource_config_file_dir)
+    test.write_json(RESOURCE_CONFIG, _env.resource_config_file_dir)
 
-    assert env.read_resource_config() == RESOURCE_CONFIG
+    assert _env.read_resource_config() == RESOURCE_CONFIG
 
 
 def test_input_data_config():
-    test.write_json(INPUT_DATA_CONFIG, env.input_data_config_file_dir)
+    test.write_json(INPUT_DATA_CONFIG, _env.input_data_config_file_dir)
 
-    assert env.read_input_data_config() == INPUT_DATA_CONFIG
+    assert _env.read_input_data_config() == INPUT_DATA_CONFIG
 
 
 def test_channel_input_dirs():
-    input_data_path = env._input_data_dir
-    assert env.channel_path('evaluation') == os.path.join(input_data_path, 'evaluation')
-    assert env.channel_path('training') == os.path.join(input_data_path, 'training')
+    input_data_path = _env._input_data_dir
+    assert _env.channel_path('evaluation') == os.path.join(input_data_path, 'evaluation')
+    assert _env.channel_path('training') == os.path.join(input_data_path, 'training')
 
 
 @patch('subprocess.check_output', lambda s: b'GPU 0\nGPU 1')
 def test_gpu_count_in_gpu_instance():
-    assert env.num_gpus() == 2
+    assert _env.num_gpus() == 2
 
 
 @patch('multiprocessing.cpu_count', lambda: OSError())
 def test_gpu_count_in_cpu_instance():
-    assert env.num_gpus() == 0
+    assert _env.num_gpus() == 0
 
 
 @patch('multiprocessing.cpu_count', lambda: 2)
 def test_cpu_count():
-    assert env.num_cpus() == 2
+    assert _env.num_cpus() == 2
 
 
 @pytest.fixture(name='training_env')
 def create_training_env():
-    with patch('sagemaker_containers.env.read_resource_config', lambda: RESOURCE_CONFIG), \
-         patch('sagemaker_containers.env.read_input_data_config', lambda: INPUT_DATA_CONFIG), \
-         patch('sagemaker_containers.env.read_hyperparameters', lambda: ALL_HYPERPARAMETERS), \
-         patch('sagemaker_containers.env.num_cpus', lambda: 8), \
-         patch('sagemaker_containers.env.num_gpus', lambda: 4):
+    with patch('sagemaker_containers._env.read_resource_config', lambda: RESOURCE_CONFIG), \
+         patch('sagemaker_containers._env.read_input_data_config', lambda: INPUT_DATA_CONFIG), \
+         patch('sagemaker_containers._env.read_hyperparameters', lambda: ALL_HYPERPARAMETERS), \
+         patch('sagemaker_containers._env.num_cpus', lambda: 8), \
+         patch('sagemaker_containers._env.num_gpus', lambda: 4):
         session_mock = Mock()
         session_mock.region_name = 'us-west-2'
-        return env.training_env()
+        return sagemaker_containers.training_env()
 
 
 @pytest.fixture(name='serving_env')
 def create_serving_env():
-    with patch('sagemaker_containers.env.num_cpus', lambda: 8), \
-         patch('sagemaker_containers.env.num_gpus', lambda: 4):
+    with patch('sagemaker_containers._env.num_cpus', lambda: 8), \
+         patch('sagemaker_containers._env.num_gpus', lambda: 4):
         os.environ[_params.USE_NGINX_ENV] = 'false'
         os.environ[_params.MODEL_SERVER_TIMEOUT_ENV] = '20'
         os.environ[_params.CURRENT_HOST_ENV] = 'algo-1'
@@ -122,14 +123,14 @@ def create_serving_env():
         os.environ[_params.SUBMIT_DIR_ENV] = 'my_dir'
         os.environ[_params.ENABLE_METRICS_ENV] = 'true'
         os.environ[_params.REGION_NAME_ENV] = 'us-west-2'
-        return env.serving_env()
+        return _env.ServingEnv()
 
 
 def test_env():
-    assert env.input_dir.endswith('/opt/ml/input')
-    assert env.input_config_dir.endswith('/opt/ml/input/config')
-    assert env.model_dir.endswith('/opt/ml/model')
-    assert env.output_dir.endswith('/opt/ml/output')
+    assert _env.input_dir.endswith('/opt/ml/input')
+    assert _env.input_config_dir.endswith('/opt/ml/input/config')
+    assert _env.model_dir.endswith('/opt/ml/model')
+    assert _env.output_dir.endswith('/opt/ml/output')
 
 
 def test_training_env(training_env):
@@ -183,18 +184,18 @@ def test_request_properties(serving_env):
                                         'num_cpus', 'num_gpus', 'use_nginx']
 
 
-@patch('sagemaker_containers.env.num_cpus', lambda: 8)
-@patch('sagemaker_containers.env.num_gpus', lambda: 4)
+@patch('sagemaker_containers._env.num_cpus', lambda: 8)
+@patch('sagemaker_containers._env.num_gpus', lambda: 4)
 def test_env_dictionary():
     session_mock = Mock()
     session_mock.region_name = 'us-west-2'
     os.environ[_params.USER_PROGRAM_ENV] = 'my_app.py'
-    _env = env._Env()
+    env = _env._Env()
 
-    assert len(_env) == len(_env.properties())
+    assert len(env) == len(env.properties())
 
-    assert _env['module_name'] == 'my_app'
-    assert _env['log_level'] == logging.INFO
+    assert env['module_name'] == 'my_app'
+    assert env['log_level'] == logging.INFO
 
 
 @pytest.mark.parametrize('sagemaker_program', ['program.py', 'program'])
@@ -202,4 +203,4 @@ def test_env_module_name(sagemaker_program):
     session_mock = Mock()
     session_mock.region_name = 'us-west-2'
     os.environ[_params.USER_PROGRAM_ENV] = sagemaker_program
-    assert env._Env().module_name == 'program'
+    assert _env._Env().module_name == 'program'
