@@ -409,16 +409,16 @@ class TrainingEnv(_Env):
         network_interface_name (str): Name of the network interface used for distributed training
     """
 
-    def __init__(self):
+    def __init__(self, resource_config=None, input_data_config=None, hyperparameters=None):
         super(TrainingEnv, self).__init__()
 
-        resource_config = read_resource_config()
+        resource_config = resource_config or read_resource_config()
         current_host = resource_config['current_host']
         hosts = resource_config['hosts']
         network_interface_name = resource_config.get('network_interface_name', 'ethwe')
-        input_data_config = read_input_data_config()
+        input_data_config = input_data_config or read_input_data_config()
 
-        all_hyperparameters = read_hyperparameters()
+        all_hyperparameters = hyperparameters or read_hyperparameters()
         split_result = _mapping.split_by_criteria(all_hyperparameters, keys=_params.SAGEMAKER_HYPERPARAMETERS,
                                                   prefix=_params.SAGEMAKER_PREFIX)
 

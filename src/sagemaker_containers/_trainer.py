@@ -11,11 +11,15 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import importlib
+import logging
 import os
 import traceback
 
 import sagemaker_containers
 from sagemaker_containers import _errors, _files
+
+logger = logging.getLogger(__name__)
+
 
 SUCCESS_CODE = 0
 DEFAULT_FAILURE_CODE = 1
@@ -50,13 +54,16 @@ def train():
 
     except _errors.ClientError as e:
 
-        _files.write_failure_file(str(e))
+        failure_message = str(e)
+        _files.write_failure_file(failure_message)
 
+        logger.error(failure_message)
         _exit_processes(DEFAULT_FAILURE_CODE)
     except Exception as e:
         failure_msg = 'framework error: \n%s\n%s' % (traceback.format_exc(), str(e))
 
         _files.write_failure_file(failure_msg)
+        logger.error(failure_msg)
 
         exit_code = getattr(e, 'errno', DEFAULT_FAILURE_CODE)
         _exit_processes(exit_code)
