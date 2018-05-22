@@ -16,7 +16,7 @@ import time
 
 import urllib3
 
-from sagemaker_containers import _params, env, server
+from sagemaker_containers import _env, _params, _server
 
 
 def test_server_with_a_simple_app():
@@ -26,7 +26,7 @@ def test_server_with_a_simple_app():
     os.environ[_params.USE_NGINX_ENV] = 'false'
 
     def worker():
-        server.start(env.serving_env().framework_module)
+        _server.start(_env.ServingEnv().framework_module)
 
     base_url = 'http://127.0.0.1:8080'
     http = urllib3.PoolManager()

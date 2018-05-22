@@ -18,7 +18,7 @@ from mock import patch, PropertyMock
 import pytest
 from six.moves import range
 
-from sagemaker_containers import content_types, status_codes, worker
+from sagemaker_containers import _content_types, _status_codes, _worker
 
 
 class Transformer(object):
@@ -30,57 +30,57 @@ class Transformer(object):
 
     def transform(self):
         self.calls['transform'] += 1
-        return worker.Response(json.dumps(self.calls), content_types.JSON)
+        return _worker.Response(json.dumps(self.calls), _content_types.JSON)
 
 
 def test_worker_with_initialize():
     transformer = Transformer()
 
-    with worker.Worker(transform_fn=transformer.transform,
-                       initialize_fn=transformer.initialize,
-                       module_name='worker_with_initialize').test_client() as client:
+    with _worker.Worker(transform_fn=transformer.transform,
+                        initialize_fn=transformer.initialize,
+                        module_name='worker_with_initialize').test_client() as client:
         assert client.application.import_name == 'worker_with_initialize'
 
-        assert client.get('/ping').status_code == status_codes.OK
+        assert client.get('/ping').status_code == _status_codes.OK
 
         for _ in range(9):
             response = client.post('/invocations')
-            assert response.status_code == status_codes.OK
+            assert response.status_code == _status_codes.OK
 
         response = client.post('/invocations')
         assert json.loads(response.get_data(as_text=True)) == dict(initialize=1, transform=10)
-        assert response.mimetype == content_types.JSON
+        assert response.mimetype == _content_types.JSON
 
 
-@patch('sagemaker_containers.env._ServingEnv.module_name', PropertyMock(return_value='user_program'))
+@patch('sagemaker_containers._env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
 @pytest.mark.parametrize('module_name,expected_name', [('my_module', 'my_module'), (None, 'user_program')])
 def test_worker(module_name, expected_name):
     transformer = Transformer()
 
-    with worker.Worker(transform_fn=transformer.transform,
-                       module_name=module_name).test_client() as client:
+    with _worker.Worker(transform_fn=transformer.transform,
+                        module_name=module_name).test_client() as client:
         assert client.application.import_name == expected_name
 
-        assert client.get('/ping').status_code == status_codes.OK
+        assert client.get('/ping').status_code == _status_codes.OK
 
         for _ in range(9):
             response = client.post('/invocations')
-            assert response.status_code == status_codes.OK
+            assert response.status_code == _status_codes.OK
 
         response = client.post('/invocations')
         assert json.loads(response.get_data(as_text=True)) == dict(initialize=0, transform=10)
-        assert response.mimetype == content_types.JSON
+        assert response.mimetype == _content_types.JSON
 
 
 def test_worker_with_custom_ping():
     transformer = Transformer()
 
     def custom_ping():
-        return 'ping', status_codes.ACCEPTED
+        return 'ping', _status_codes.ACCEPTED
 
-    with worker.Worker(transform_fn=transformer.transform,
-                       healthcheck_fn=custom_ping,
-                       module_name='custom_ping').test_client() as client:
+    with _worker.Worker(transform_fn=transformer.transform,
+                        healthcheck_fn=custom_ping,
+                        module_name='custom_ping').test_client() as client:
         response = client.get('/ping')
-        assert response.status_code == status_codes.ACCEPTED
+        assert response.status_code == _status_codes.ACCEPTED
         assert response.get_data(as_text=True) == 'ping'

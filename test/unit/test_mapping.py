@@ -15,7 +15,7 @@ from __future__ import absolute_import
 
 import pytest
 
-from sagemaker_containers import mapping
+from sagemaker_containers import _mapping
 
 
 @pytest.mark.parametrize('dictionary, keys, expected', [
@@ -25,14 +25,14 @@ from sagemaker_containers import mapping
     ({'x': 1, 'y': 2}, ('x', 'y'), ({'x': 1, 'y': 2}, {}))
 ])
 def test_split_by_criteria_with_keys(dictionary, keys, expected):
-    assert mapping.split_by_criteria(dictionary, keys=keys) == expected
+    assert _mapping.split_by_criteria(dictionary, keys=keys) == expected
 
 
 @pytest.mark.parametrize('dictionary, keys, prefix, expected', [
     ({'x': 1, 'y': 2}, 'y', 'x', ({'x': 1, 'y': 2}, {}))
 ])
 def test_split_by_criteria_with_keys_and_criteria(dictionary, keys, prefix, expected):
-    assert mapping.split_by_criteria(dictionary, keys=keys, prefix=prefix) == expected
+    assert _mapping.split_by_criteria(dictionary, keys=keys, prefix=prefix) == expected
 
 
 @pytest.mark.parametrize('dictionary, prefix, expected', [
@@ -42,10 +42,10 @@ def test_split_by_criteria_with_keys_and_criteria(dictionary, keys, prefix, expe
     ({'sagemaker_x': 1, 'y': 2}, ('y',), ({'y': 2}, {'sagemaker_x': 1}))
 ])
 def test_split_by_criteria_with_prefix(dictionary, prefix, expected):
-    assert mapping.split_by_criteria(dictionary, prefix=prefix) == expected
+    assert _mapping.split_by_criteria(dictionary, prefix=prefix) == expected
 
 
-class ProcessEnvironment(mapping.MappingMixin):
+class ProcessEnvironment(_mapping.MappingMixin):
     @property
     def a(self):
         return 1
@@ -111,6 +111,6 @@ def test_mapping_throws_exception_trying_to_access_non_properties(property, erro
 
      ])
 def test_to_cmd_args(target, expected):
-    actual = mapping.to_cmd_args(target)
+    actual = _mapping.to_cmd_args(target)
 
     assert actual == expected

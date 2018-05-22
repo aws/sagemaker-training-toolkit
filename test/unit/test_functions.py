@@ -16,7 +16,7 @@ import inspect
 
 import pytest as pytest
 
-from sagemaker_containers import functions
+from sagemaker_containers import _functions
 
 
 @pytest.mark.parametrize('fn, expected', [
@@ -27,7 +27,7 @@ from sagemaker_containers import functions
     (lambda x, y, *args, **kwargs: None, inspect.ArgSpec(['x', 'y'], 'args', 'kwargs', None))
 ])
 def test_getargspec(fn, expected):
-    assert functions.getargspec(fn) == expected
+    assert _functions.getargspec(fn) == expected
 
 
 @pytest.mark.parametrize('fn, env, expected', [
@@ -39,14 +39,14 @@ def test_getargspec(fn, expected):
     (lambda **kwargs: None, dict(x='x', y=None, t=3), dict(x='x', y=None, t=3))
 ])
 def test_matching_args(fn, env, expected):
-    assert functions.matching_args(fn, env) == expected
+    assert _functions.matching_args(fn, env) == expected
 
 
 def test_error_wrapper():
-    assert functions.error_wrapper(lambda x: x * 10, NotImplementedError)(3) == 30
+    assert _functions.error_wrapper(lambda x: x * 10, NotImplementedError)(3) == 30
 
 
 def test_error_wrapper_exception():
     with pytest.raises(NotImplementedError) as e:
-        functions.error_wrapper(lambda x: x, NotImplementedError)(2, 3)
+        _functions.error_wrapper(lambda x: x, NotImplementedError)(2, 3)
     assert type(e.value.args[0]) == TypeError

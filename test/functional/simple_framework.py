@@ -12,19 +12,20 @@
 # language governing permissions and limitations under the License.
 import os
 
-from sagemaker_containers import env, functions, modules
+import sagemaker_containers
+from sagemaker_containers import _functions, _modules
 
 
 def train():
-    training_env = env.training_env()
+    training_env = sagemaker_containers.training_env()
 
-    script = modules.import_module_from_s3(training_env.module_dir, training_env.module_name, False)
+    script = _modules.import_module_from_s3(training_env.module_dir, training_env.module_name, False)
 
-    model = script.train(**functions.matching_args(script.train, training_env))
+    model = script.train(**_functions.matching_args(script.train, training_env))
 
     if model:
         if hasattr(script, 'save'):
-            script.save(model, env.model_dir)
+            script.save(model, training_env.model_dir)
         else:
-            model_file = os.path.join(env.model_dir, 'saved_model')
+            model_file = os.path.join(training_env.model_dir, 'saved_model')
             model.save(model_file)

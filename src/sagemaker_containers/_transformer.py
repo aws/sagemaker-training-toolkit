@@ -14,7 +14,7 @@ from __future__ import absolute_import
 
 import textwrap
 
-from sagemaker_containers import encoders, env, errors, functions, worker
+from sagemaker_containers import _encoders, _env, _errors, _functions, _worker
 
 
 def default_model_fn(model_dir):
@@ -51,7 +51,7 @@ def default_input_fn(input_data, content_type):
     Returns:
         (obj): data ready for prediction.
     """
-    return encoders.decode(input_data, content_type)
+    return _encoders.decode(input_data, content_type)
 
 
 def default_predict_fn(data, model):
@@ -84,7 +84,7 @@ def default_output_fn(prediction, accept):
                 response: the serialized data to return
                 accept: the content-type that the data was transformed to.
     """
-    return worker.Response(encoders.encode(prediction, accept), accept)
+    return _worker.Response(_encoders.encode(prediction, accept), accept)
 
 
 class Transformer(object):
@@ -94,9 +94,9 @@ class Transformer(object):
 
     Examples:
     >>>import os
-    >>>from sagemaker_containers import env, modules, transformer
+    >>>from sagemaker_containers import _env, _modules, _transformer
     >>>import Keras
-    >>>serving_env = env._ServingEnv()
+    >>>ServingEnv = _env.ServingEnv()
     >>>
     >>>def predict_fn(model, data):
     >>>     return model.predict(data)
@@ -104,13 +104,13 @@ class Transformer(object):
     >>>def model_fn(model_dir):
     >>>     return Keras.models.load_model(os.path.join(model_dir, 'minimlmodel'))
     >>>
-    >>>transformer = transformer.Transformer(predict_fn=predict_fn, model_fn=model_fn)
+    >>>transformer = _transformer.Transformer(predict_fn=predict_fn, model_fn=model_fn)
     >>>
-    >>>mod = modules.download_and_import(serving_env.module_dir, serving_env.module_name)
+    >>>mod = _modules.download_and_import(ServingEnv.module_dir, ServingEnv.module_name)
     >>>transformer.load_user_fns(mod)
     """
 
-    def __init__(self, model_fn=None, input_fn=None, predict_fn=None, output_fn=None, error_class=errors.ClientError):
+    def __init__(self, model_fn=None, input_fn=None, predict_fn=None, output_fn=None, error_class=_errors.ClientError):
         """Default constructor. Wraps the any non default framework function in an error class to isolate
         framework from user errors.
 
@@ -122,10 +122,10 @@ class Transformer(object):
             error_class (Exception): Error class used to separate framework and user errors.
         """
         self._model = None
-        self._model_fn = functions.error_wrapper(model_fn, error_class) if model_fn else default_model_fn
-        self._input_fn = functions.error_wrapper(input_fn, error_class) if input_fn else default_input_fn
-        self._predict_fn = functions.error_wrapper(predict_fn, error_class) if predict_fn else default_predict_fn
-        self._output_fn = functions.error_wrapper(output_fn, error_class) if output_fn else default_output_fn
+        self._model_fn = _functions.error_wrapper(model_fn, error_class) if model_fn else default_model_fn
+        self._input_fn = _functions.error_wrapper(input_fn, error_class) if input_fn else default_input_fn
+        self._predict_fn = _functions.error_wrapper(predict_fn, error_class) if predict_fn else default_predict_fn
+        self._output_fn = _functions.error_wrapper(output_fn, error_class) if output_fn else default_output_fn
         self._error_class = error_class
 
     def initialize(self):  # type: () -> None
@@ -136,9 +136,9 @@ class Transformer(object):
         This function will be called once per each worker.
         It does not have return type or arguments.
         """
-        self._model = self._model_fn(env.model_dir)
+        self._model = self._model_fn(_env.model_dir)
 
-    def transform(self):  # type: () -> worker.Response
+    def transform(self):  # type: () -> _worker.Response
         """Responsible to make predictions against the model.
 
         Returns:
@@ -148,7 +148,7 @@ class Transformer(object):
                     response: the serialized data to return
                     accept: the content-type that the data was transformed to.
         """
-        request = worker.Request()
+        request = _worker.Request()
 
         data = self._input_fn(request.content, request.content_type)
         prediction = self._predict_fn(data, self._model)
@@ -156,6 +156,6 @@ class Transformer(object):
 
         if isinstance(result, tuple):
             # transforms tuple in Response for backwards compatibility
-            return worker.Response(response=result[0], accept=result[1])
+            return _worker.Response(response=result[0], accept=result[1])
 
         return result

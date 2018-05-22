@@ -20,7 +20,7 @@ import os
 import shlex
 import subprocess
 
-from sagemaker_containers import _params, mapping
+from sagemaker_containers import _mapping, _params
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +199,7 @@ def num_cpus():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
-class _Env(mapping.MappingMixin):
+class _Env(_mapping.MappingMixin):
     """Base Class which provides access to aspects of the environment including
     system characteristics, filesystem locations, environment variables and configuration settings.
 
@@ -211,6 +211,7 @@ class _Env(mapping.MappingMixin):
             module_name (str): The name of the user provided module.
             module_dir (str): The full path location of the user provided module.
     """
+
     def __init__(self):
         current_host = os.environ.get(_params.CURRENT_HOST_ENV)
         module_name = os.environ.get(_params.USER_PROGRAM_ENV, None)
@@ -293,16 +294,7 @@ class _Env(mapping.MappingMixin):
         return program_param
 
 
-def training_env():
-    """Create a TrainingEnv.
-
-    Returns:
-        _TrainingEnv: an instance of TrainingEnv
-    """
-    return _TrainingEnv()
-
-
-class _TrainingEnv(_Env):
+class TrainingEnv(_Env):
     """Provides access to aspects of the training environment relevant to training jobs, including
     hyperparameters, system characteristics, filesystem locations, environment variables and configuration settings.
 
@@ -418,7 +410,7 @@ class _TrainingEnv(_Env):
     """
 
     def __init__(self):
-        super(_TrainingEnv, self).__init__()
+        super(TrainingEnv, self).__init__()
 
         resource_config = read_resource_config()
         current_host = resource_config['current_host']
@@ -427,8 +419,8 @@ class _TrainingEnv(_Env):
         input_data_config = read_input_data_config()
 
         all_hyperparameters = read_hyperparameters()
-        split_result = mapping.split_by_criteria(all_hyperparameters, keys=_params.SAGEMAKER_HYPERPARAMETERS,
-                                                 prefix=_params.SAGEMAKER_PREFIX)
+        split_result = _mapping.split_by_criteria(all_hyperparameters, keys=_params.SAGEMAKER_HYPERPARAMETERS,
+                                                  prefix=_params.SAGEMAKER_PREFIX)
 
         sagemaker_hyperparameters = split_result.included
 
@@ -597,11 +589,7 @@ class _TrainingEnv(_Env):
         return self._framework_module
 
 
-def serving_env():
-    return _ServingEnv()
-
-
-class _ServingEnv(_Env):
+class ServingEnv(_Env):
     """Provides access to aspects of the serving environment relevant to serving containers, including
        system characteristics, environment variables and configuration settings.
 
@@ -610,11 +598,11 @@ class _ServingEnv(_Env):
        It is a dictionary like object, allowing any builtin function that works with dictionary.
 
        Example on how to print the state of the container:
-           >>> from sagemaker_containers import env
+           >>> from sagemaker_containers import _env
 
-           >>> print(str(env.serving_env()))
+           >>> print(str(_env.ServingEnv()))
        Example on how a script can use training environment:
-           >>>serving_env = env.serving_env()
+           >>>ServingEnv = _env.ServingEnv()
 
 
         Attributes:
@@ -626,7 +614,7 @@ class _ServingEnv(_Env):
     """
 
     def __init__(self):
-        super(_ServingEnv, self).__init__()
+        super(ServingEnv, self).__init__()
 
         use_nginx = util.strtobool(os.environ.get(_params.USE_NGINX_ENV, 'true')) == 1
         model_server_timeout = int(os.environ.get(_params.MODEL_SERVER_TIMEOUT_ENV, '60'))

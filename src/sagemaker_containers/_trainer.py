@@ -14,7 +14,8 @@ import importlib
 import os
 import traceback
 
-from sagemaker_containers import _files, env, errors
+import sagemaker_containers
+from sagemaker_containers import _errors, _files
 
 SUCCESS_CODE = 0
 DEFAULT_FAILURE_CODE = 1
@@ -37,7 +38,7 @@ def train():
     try:
         # TODO: iquintero - add error handling for ImportError to let the user know
         # if the framework module is not defined.
-        framework_name, entry_point_name = env.training_env().framework_module.split(':')
+        framework_name, entry_point_name = sagemaker_containers.training_env().framework_module.split(':')
         framework = importlib.import_module(framework_name)
 
         entry_point = getattr(framework, entry_point_name)
@@ -47,7 +48,7 @@ def train():
         _files.write_success_file()
         _exit_processes(SUCCESS_CODE)
 
-    except errors.ClientError as e:
+    except _errors.ClientError as e:
 
         _files.write_failure_file(str(e))
 

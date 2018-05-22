@@ -10,11 +10,11 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-from sagemaker_containers import env, server
+from sagemaker_containers import _env, _server
 
 
 def main():
-    server.start(env.serving_env().framework_module)
+    _server.start(_env.ServingEnv().framework_module)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ import textwrap
 import numpy as np
 from six import BytesIO, StringIO
 
-from sagemaker_containers import content_types
+from sagemaker_containers import _content_types
 
 
 def array_to_npy(array_like):  # type: (np.array or Iterable or int or float) -> object
@@ -118,8 +118,8 @@ def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) ->
     return stream.getvalue()
 
 
-_encoders_map = {content_types.NPY: array_to_npy, content_types.CSV: array_to_csv, content_types.JSON: array_to_json}
-_decoders_map = {content_types.NPY: npy_to_numpy, content_types.CSV: csv_to_numpy, content_types.JSON: json_to_numpy}
+_encoders_map = {_content_types.NPY: array_to_npy, _content_types.CSV: array_to_csv, _content_types.JSON: array_to_json}
+_decoders_map = {_content_types.NPY: npy_to_numpy, _content_types.CSV: csv_to_numpy, _content_types.JSON: json_to_numpy}
 
 
 def decode(obj, content_type):  # type: (np.array or Iterable or int or float) -> np.array

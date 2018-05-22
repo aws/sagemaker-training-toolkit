@@ -12,13 +12,13 @@
 # language governing permissions and limitations under the License.
 from mock import call, patch, PropertyMock
 
-from sagemaker_containers import env, server
+from sagemaker_containers import _env, _server
 
 
-@patch.object(env._ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
-@patch.object(env._ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
-@patch.object(env._ServingEnv, 'use_nginx', PropertyMock(return_value=False))
-@patch('sagemaker_containers.env.num_gpus', lambda: 0)
+@patch.object(_env.ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
+@patch.object(_env.ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
+@patch.object(_env.ServingEnv, 'use_nginx', PropertyMock(return_value=False))
+@patch('sagemaker_containers._env.num_gpus', lambda: 0)
 @patch('sys.exit', lambda x: 0)
 @patch('subprocess.Popen')
 def test_start_no_nginx(popen):
@@ -32,15 +32,15 @@ def test_start_no_nginx(popen):
          '--log-level', 'info',
          'my_module'])]
 
-    server.start('my_module')
+    _server.start('my_module')
     popen.assert_has_calls(calls)
 
 
-@patch.object(env._ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
-@patch.object(env._ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
-@patch.object(env._ServingEnv, 'use_nginx', PropertyMock(return_value=True))
+@patch.object(_env.ServingEnv, 'model_server_workers', PropertyMock(return_value=2))
+@patch.object(_env.ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
+@patch.object(_env.ServingEnv, 'use_nginx', PropertyMock(return_value=True))
 @patch('pkg_resources.resource_filename', lambda x, y: '/tmp/nginx.conf')
-@patch('sagemaker_containers.env.num_gpus', lambda: 0)
+@patch('sagemaker_containers._env.num_gpus', lambda: 0)
 @patch('sys.exit', lambda x: 0)
 @patch('subprocess.Popen')
 def test_start_with_nginx(popen):
@@ -55,5 +55,5 @@ def test_start_with_nginx(popen):
               '--log-level', 'info',
               'my_module'])
     ]
-    server.start('my_module')
+    _server.start('my_module')
     popen.assert_has_calls(calls)

@@ -18,14 +18,14 @@ import os
 import shutil
 import tempfile
 
-from sagemaker_containers import env
+from sagemaker_containers import _env
 
 
 def write_success_file():  # type: () -> None
     """Create a file 'success' when training is successful. This file doesn't need to have any content.
     See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
     """
-    file_path = os.path.join(env.output_dir, 'success')
+    file_path = os.path.join(_env.output_dir, 'success')
     empty_content = ''
     write_file(file_path, empty_content)
 
@@ -38,7 +38,7 @@ def write_failure_file(failure_msg):  # type: (str) -> None
     Args:
         failure_msg: The description of failure
     """
-    file_path = os.path.join(env.output_dir, 'failure')
+    file_path = os.path.join(_env.output_dir, 'failure')
     write_file(file_path, failure_msg)
 
 
