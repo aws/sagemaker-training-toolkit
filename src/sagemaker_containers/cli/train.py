@@ -10,11 +10,11 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-from sagemaker_containers import _trainer
+from sagemaker_containers.beta.framework import trainer
 
 
 def main():
-    _trainer.train()
+    trainer.train()
 
 
 if __name__ == "__main__":

@@ -21,4 +21,6 @@ def training_env():
     """
     from sagemaker_containers import _env
 
-    return _env.TrainingEnv()
+    return _env.TrainingEnv(resource_config=_env.read_resource_config(),
+                            input_data_config=_env.read_input_data_config(),
+                            hyperparameters=_env.read_hyperparameters())

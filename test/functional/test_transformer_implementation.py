@@ -16,7 +16,7 @@ import os
 
 import numpy as np
 
-from sagemaker_containers import _content_types, _encoders, _env, _status_codes, _transformer, _worker
+from sagemaker_containers.beta.framework import content_types, encoders, env, status_codes, transformer, worker
 import test
 from test import fake_ml_framework
 
@@ -34,35 +34,34 @@ def test_transformer_implementation():
     test.create_input_data_config()
     test.create_hyperparameters_config({'sagemaker_program': 'user_script.py'})
 
-    model_path = os.path.join(_env.model_dir, 'fake_ml_model')
+    model_path = os.path.join(env.model_dir, 'fake_ml_model')
     fake_ml_framework.Model(weights=[6, 9, 42]).save(model_path)
 
-    transform = _transformer.Transformer(model_fn=model_fn, predict_fn=predict_fn)
+    transform = transformer.Transformer(model_fn=model_fn, predict_fn=predict_fn)
 
     transform.initialize()
 
-    with _worker.Worker(transform_fn=transform.transform,
-                        module_name='fake_ml_model').test_client() as client:
+    with worker.Worker(transform_fn=transform.transform, module_name='fake_ml_model').test_client() as client:
         payload = [6, 9, 42.]
-        response = post(client, payload, _content_types.NPY, _content_types.JSON)
+        response = post(client, payload, content_types.NPY, content_types.JSON)
 
-        assert response.status_code == _status_codes.OK
+        assert response.status_code == status_codes.OK
 
         assert response.get_data(as_text=True) == '[36.0, 81.0, 1764.0]'
 
-        response = post(client, payload, _content_types.JSON, _content_types.CSV)
+        response = post(client, payload, content_types.JSON, content_types.CSV)
 
-        assert response.status_code == _status_codes.OK
+        assert response.status_code == status_codes.OK
         assert response.get_data(as_text=True) == '36.0\n81.0\n1764.0\n'
 
-        response = post(client, payload, _content_types.CSV, _content_types.NPY)
+        response = post(client, payload, content_types.CSV, content_types.NPY)
 
-        assert response.status_code == _status_codes.OK
-        response_data = _encoders.npy_to_numpy(response.get_data())
+        assert response.status_code == status_codes.OK
+        response_data = encoders.npy_to_numpy(response.get_data())
 
         np.testing.assert_array_almost_equal(response_data, np.asarray([36., 81., 1764.]))
 
 
 def post(client, payload, content_type, accept):
-    return client.post(path='/invocations', headers={'accept': accept},
-                       data=_encoders.encode(payload, content_type), content_type=content_type)
+    return client.post(path='/invocations', headers={'accept': accept}, data=encoders.encode(payload, content_type),
+                       content_type=content_type)
