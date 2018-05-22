@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 
 import sagemaker_containers
-from sagemaker_containers import _env, _errors, _functions, _mapping, _modules, _trainer
+from sagemaker_containers.beta.framework import env, errors, functions, mapping, modules, trainer
 import test
 from test import fake_ml_framework
 
@@ -33,7 +33,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 def erase_user_module():
     yield
     try:
-        cmd = shlex.split('pip uninstall -y --quiet %s' % _modules.DEFAULT_MODULE_NAME)
+        cmd = shlex.split('pip uninstall -y --quiet %s' % modules.DEFAULT_MODULE_NAME)
         subprocess.check_call(cmd)
     except subprocess.CalledProcessError:
         pass
@@ -115,24 +115,24 @@ model.save(model_file)
 
 
 def framework_training_fn():
-    env = sagemaker_containers.training_env()
+    training_env = sagemaker_containers.training_env()
 
-    mod = _modules.import_module_from_s3(env.module_dir, env.module_name, False)
+    mod = modules.import_module_from_s3(training_env.module_dir, training_env.module_name, False)
 
-    model = mod.train(**_functions.matching_args(mod.train, env))
+    model = mod.train(**functions.matching_args(mod.train, training_env))
 
     if model:
         if hasattr(mod, 'save'):
-            mod.save(model, _env.model_dir)
+            mod.save(model, training_env.model_dir)
         else:
-            model_file = os.path.join(_env.model_dir, 'saved_model')
+            model_file = os.path.join(training_env.model_dir, 'saved_model')
             model.save(model_file)
 
 
 @pytest.mark.parametrize('user_script', [USER_SCRIPT_WITH_SAVE, USER_SCRIPT_WITH_SAVE])
 def test_training_framework(user_script):
     with pytest.raises(ImportError):
-        importlib.import_module(_modules.DEFAULT_MODULE_NAME)
+        importlib.import_module(modules.DEFAULT_MODULE_NAME)
 
     channel = test.Channel.create(name='training')
 
@@ -147,9 +147,9 @@ def test_training_framework(user_script):
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    assert execute_an_wrap_exit(framework_training_fn) == _trainer.SUCCESS_CODE
+    assert execute_an_wrap_exit(framework_training_fn) == trainer.SUCCESS_CODE
 
-    model_path = os.path.join(_env.model_dir, 'saved_model')
+    model_path = os.path.join(env.model_dir, 'saved_model')
     model = fake_ml_framework.Model.load(model_path)
 
     assert model.epochs == 10
@@ -160,7 +160,7 @@ def test_training_framework(user_script):
 @pytest.mark.parametrize('user_script', [USER_SCRIPT, USER_SCRIPT_WITH_SAVE])
 def test_trainer_report_success(user_script):
     with pytest.raises(ImportError):
-        importlib.import_module(_modules.DEFAULT_MODULE_NAME)
+        importlib.import_module(modules.DEFAULT_MODULE_NAME)
 
     channel = test.Channel.create(name='training')
 
@@ -177,16 +177,16 @@ def test_trainer_report_success(user_script):
 
     os.environ['SAGEMAKER_TRAINING_MODULE'] = 'test.functional.simple_framework:train'
 
-    assert execute_an_wrap_exit(_trainer.train) == _trainer.SUCCESS_CODE
+    assert execute_an_wrap_exit(trainer.train) == trainer.SUCCESS_CODE
 
-    model_path = os.path.join(_env.model_dir, 'saved_model')
+    model_path = os.path.join(env.model_dir, 'saved_model')
 
     model = fake_ml_framework.Model.load(model_path)
 
     assert model.epochs == 10
     assert model.batch_size == 64
     assert model.optimizer == 'SGD'
-    assert os.path.exists(os.path.join(_env.output_dir, 'success'))
+    assert os.path.exists(os.path.join(env.output_dir, 'success'))
 
 
 def test_trainer_report_failure():
@@ -205,9 +205,9 @@ def test_trainer_report_failure():
 
     os.environ['SAGEMAKER_TRAINING_MODULE'] = 'test.functional.simple_framework:train'
 
-    assert execute_an_wrap_exit(_trainer.train) == errno.ENOENT
+    assert execute_an_wrap_exit(trainer.train) == errno.ENOENT
 
-    failure_file = os.path.join(_env.output_dir, 'failure')
+    failure_file = os.path.join(env.output_dir, 'failure')
     assert os.path.exists(failure_file)
 
     message = failure_message()
@@ -217,11 +217,11 @@ def test_trainer_report_failure():
 
 
 def framework_training_with_script_mode_fn():
-    env = sagemaker_containers.training_env()
+    training_env = sagemaker_containers.training_env()
 
-    args = _mapping.to_cmd_args(env.hyperparameters)
+    args = mapping.to_cmd_args(training_env.hyperparameters)
 
-    _modules.run_module_from_s3(env.module_dir, args, env.module_name, cache=False)
+    modules.run_module_from_s3(training_env.module_dir, args, training_env.module_name, cache=False)
 
 
 @pytest.mark.parametrize('user_script', [USER_MODE_SCRIPT])
@@ -235,13 +235,13 @@ def test_script_mode(user_script):
     module = test.UserModule(test.File(name='user_script.py', data=user_script))
 
     hyperparameters = dict(training_data_file=os.path.join(channel.path, 'training_data.npz'),
-                           sagemaker_program='user_script.py', epochs=10, batch_size=64, model_dir=_env.model_dir)
+                           sagemaker_program='user_script.py', epochs=10, batch_size=64, model_dir=env.model_dir)
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    assert execute_an_wrap_exit(framework_training_with_script_mode_fn) == _trainer.SUCCESS_CODE
+    assert execute_an_wrap_exit(framework_training_with_script_mode_fn) == trainer.SUCCESS_CODE
 
-    model_path = os.path.join(_env.model_dir, 'saved_model')
+    model_path = os.path.join(env.model_dir, 'saved_model')
 
     model = fake_ml_framework.Model.load(model_path)
 
@@ -266,7 +266,7 @@ def test_script_mode_client_error():
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    with pytest.raises(_errors.ExecuteUserScriptError) as e:
+    with pytest.raises(errors.ExecuteUserScriptError) as e:
         framework_training_with_script_mode_fn()
 
     message = str(e.value)
@@ -286,7 +286,7 @@ def test_script_mode_client_import_error():
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    with pytest.raises(_errors.InstallModuleError) as e:
+    with pytest.raises(errors.InstallModuleError) as e:
         framework_training_with_script_mode_fn()
 
     message = str(e.value)
@@ -296,13 +296,13 @@ def test_script_mode_client_import_error():
 
 
 def failure_message():
-    with open(os.path.join(_env.output_dir, 'failure')) as f:
+    with open(os.path.join(env.output_dir, 'failure')) as f:
         return f.read()
 
 
 def execute_an_wrap_exit(fn):
     try:
         fn()
-        return _trainer.SUCCESS_CODE
+        return trainer.SUCCESS_CODE
     except ValueError as e:
         return int(str(e))

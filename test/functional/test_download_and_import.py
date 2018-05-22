@@ -18,7 +18,7 @@ import textwrap
 
 import pytest
 
-from sagemaker_containers import _errors, _modules
+from sagemaker_containers.beta.framework import errors, modules
 import test
 
 data = ['from distutils.core import setup\n',
@@ -42,7 +42,7 @@ def erase_user_module():
 def test_import_module_from_s3_module(user_module_name):
     user_module = test.UserModule(USER_SCRIPT).add_file(SETUP).upload()
 
-    module = _modules.import_module_from_s3(user_module.url, user_module_name, cache=False)
+    module = modules.import_module_from_s3(user_module.url, user_module_name, cache=False)
 
     assert module.validate()
 
@@ -50,7 +50,7 @@ def test_import_module_from_s3_module(user_module_name):
 def test_import_module_from_s3_script(user_module_name):
     user_module = test.UserModule(USER_SCRIPT).upload()
 
-    module = _modules.import_module_from_s3(user_module.url, user_module_name, cache=False)
+    module = modules.import_module_from_s3(user_module.url, user_module_name, cache=False)
 
     assert module.validate()
 
@@ -71,7 +71,7 @@ REQUIREMENTS_FILE = test.File('requirements.txt', 'pyfiglet')
 def test_import_module_from_s3_script_with_requirements(user_module_name):
     user_module = test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(REQUIREMENTS_FILE).upload()
 
-    module = _modules.import_module_from_s3(user_module.url, user_module_name, cache=False)
+    module = modules.import_module_from_s3(user_module.url, user_module_name, cache=False)
 
     assert module.say() == """
  ____                   __  __       _.............
@@ -99,7 +99,7 @@ ADDITIONAL_FILE = test.File('file_2.py', 'IMPORTED = True')
 def test_import_module_from_s3_script_with_additional_files(user_module_name):
     user_module = test.UserModule(USER_SCRIPT_WITH_ADDITIONAL_FILE).add_file(ADDITIONAL_FILE).upload()
 
-    module = _modules.import_module_from_s3(user_module.url, user_module_name, cache=False)
+    module = modules.import_module_from_s3(user_module.url, user_module_name, cache=False)
 
     assert module.validate()
 
@@ -112,5 +112,5 @@ USER_SCRIPT_WITH_ERROR = test.File('my_test_script.py', data)
 def test_import_module_from_s3_script_with_error(user_module_name):
     user_module = test.UserModule(USER_SCRIPT_WITH_ERROR).upload()
 
-    with pytest.raises(_errors.ImportModuleError):
-        _modules.import_module_from_s3(user_module.url, user_module_name, cache=False)
+    with pytest.raises(errors.ImportModuleError):
+        modules.import_module_from_s3(user_module.url, user_module_name, cache=False)

@@ -10,18 +10,20 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from __future__ import absolute_import
+
 import os
 
 import sagemaker_containers
-from sagemaker_containers import _functions, _modules
+from sagemaker_containers.beta.framework import functions, modules
 
 
 def train():
     training_env = sagemaker_containers.training_env()
 
-    script = _modules.import_module_from_s3(training_env.module_dir, training_env.module_name, False)
+    script = modules.import_module_from_s3(training_env.module_dir, training_env.module_name, False)
 
-    model = script.train(**_functions.matching_args(script.train, training_env))
+    model = script.train(**functions.matching_args(script.train, training_env))
 
     if model:
         if hasattr(script, 'save'):
