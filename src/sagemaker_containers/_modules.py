@@ -27,8 +27,6 @@ from six.moves.urllib.parse import urlparse
 
 from sagemaker_containers import _errors, _files
 
-logger = logging.getLogger(__name__)
-
 DEFAULT_MODULE_NAME = 'default_user_module_name'
 
 
@@ -110,6 +108,8 @@ def install(path):  # type: (str) -> None
     if os.path.exists(os.path.join(path, 'requirements.txt')):
         cmd += '-r requirements.txt'
 
+    logging.info('Installing module with the following command:\n%s', cmd)
+
     _check_error(shlex.split(cmd), _errors.InstallModuleError, cwd=path)
 
 
@@ -166,7 +166,7 @@ def download_and_install(url, name=DEFAULT_MODULE_NAME, cache=True):
                 install(module_path)
 
 
-def run(module_name, args=None):  # type: (str, list) -> None
+def run(module_name, args=None, env_vars=None):  # type: (str, list, dict) -> None
     """Run Python module as a script.
 
     Search sys.path for the named module and execute its contents as the __main__ module.
@@ -189,33 +189,52 @@ def run(module_name, args=None):  # type: (str, list) -> None
 
     Example:
 
-        >>>from sagemaker_containers import _env, _mapping, _modules
+        >>>import sagemaker_containers
+        >>>from sagemaker_containers.beta.framework import mapping, modules
 
-        >>>hyperparameters = sagemaker_containers.training_env().hyperparameters
+        >>>env = sagemaker_containers.training_env()
+        {'channel-input-dirs': {'training': '/opt/ml/input/training'}, 'model_dir': '/opt/ml/model', ...}
+
+
+        >>>hyperparameters = env.hyperparameters
         {'batch-size': 128, 'model_dir': '/opt/ml/model'}
 
-        >>>args = _mapping.to_cmd_args(hyperparameters)
+        >>>args = mapping.to_cmd_args(hyperparameters)
         ['--batch-size', '128', '--model_dir', '/opt/ml/model']
 
-        >>>_modules.run('user_script')
-        python -m user_script --batch-size 128 --model_dir /opt/ml/model
+        >>>env_vars = mapping.to_env_vars()
+        ['SAGEMAKER_CHANNELS':'training', 'SAGEMAKER_CHANNEL_TRAINING':'/opt/ml/input/training',
+        'MODEL_DIR':'/opt/ml/model', ...}
+
+        >>>modules.run('user_script', args, env_vars)
+        SAGEMAKER_CHANNELS=training SAGEMAKER_CHANNEL_TRAINING=/opt/ml/input/training \
+        SAGEMAKER_MODEL_DIR=/opt/ml/model python -m user_script --batch-size 128 --model_dir /opt/ml/model
 
     Args:
         module_name (str): module name in the same format required by python -m <module-name> cli command.
         args (list):  A list of program arguments.
+        env_vars (dict): A map containing the environment variables to be written.
     """
     args = args or []
+    env_vars = env_vars or {}
 
-    _check_error([python_executable(), '-m', module_name] + args, _errors.ExecuteUserScriptError)
+    prefix = ['%s=%s' % (key.upper(), value) for key, value in env_vars.items()]
+
+    cmd = [python_executable(), '-m', module_name] + args
+
+    logging.info('Invoking user script with the following command:')
+    print(' '.join(prefix + cmd))
+
+    _check_error(cmd, _errors.ExecuteUserScriptError)
 
 
 def _check_error(cmd, error_class, **kwargs):
-    process = subprocess.Popen(cmd, stderr=subprocess.PIPE, **kwargs)
+    process = subprocess.Popen(cmd, stderr=subprocess.PIPE, env=os.environ, **kwargs)
     stdout, stderr = process.communicate()
 
     return_code = process.poll()
     if return_code:
-        raise error_class(return_code, ''.join(cmd), output=stderr)
+        raise error_class(return_code=return_code, cmd=' '.join(cmd), output=stderr)
 
 
 def python_executable():
@@ -229,7 +248,18 @@ def python_executable():
     return sys.executable
 
 
-def import_module_from_s3(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (str, str) -> module
+def import_module_from_s3(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (str, str, bool) -> module
+    """Download, prepare and install a compressed tar file from S3 as a module.
+    SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
+    https://github.com/aws/sagemaker-python-sdk.
+    This function downloads this compressed file, transforms it as a module, and installs it.
+    Args:
+        name (str): name of the script or module.
+        url (str): the s3 url of the file.
+        cache (bool): default True. It will not download and install the module again if it is already installed.
+    Returns:
+        (module): the imported module
+    """
     download_and_install(url, name, cache)
 
     try:
@@ -241,7 +271,42 @@ def import_module_from_s3(url, name=DEFAULT_MODULE_NAME, cache=True):  # type: (
         six.reraise(_errors.ImportModuleError, _errors.ImportModuleError(e), sys.exc_info()[2])
 
 
-def run_module_from_s3(url, args, name=DEFAULT_MODULE_NAME, cache=True):
-    # type: (str, list, str) -> None
+def run_module_from_s3(url, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=True):
+    # type: (str, list, dict, str) -> None
+    """Download, prepare and executes a compressed tar file from S3 as a module.
+
+    SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
+    https://github.com/aws/sagemaker-python-sdk.
+    This function downloads this compressed file, transforms it as a module, and executes it.
+    Args:
+        url (str): the s3 url of the file.
+        args (list):  A list of program arguments.
+        env_vars (dict): A map containing the environment variables to be written.
+        name (str): name of the script or module.
+        cache (bool): if True it will avoid downloading the module again, if already installed.
+    """
+    env_vars = env_vars or {}
+    env_vars = env_vars.copy()
+
+    env_vars['SM_USER_ARGS'] = ' '.join(args)
+
     download_and_install(url, name, cache)
-    return run(name, args)
+
+    write_env_vars(env_vars)
+
+    return run(name, args, env_vars)
+
+
+def write_env_vars(env_vars=None):  # type: (dict) -> None
+    """Write the dictionary env_vars in the system, as environment variables.
+
+    Args:
+        env_vars ():
+
+    Returns:
+
+    """
+    env_vars = env_vars or {}
+
+    for name, value in env_vars.items():
+        os.environ[name] = value

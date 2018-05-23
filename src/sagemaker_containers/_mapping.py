@@ -14,10 +14,46 @@ from __future__ import absolute_import
 
 import collections
 import itertools
+import json
 
 import six
 
 SplitResultSpec = collections.namedtuple('SplitResultSpec', 'included excluded')
+
+
+def to_env_vars(mapping):  # type: (dict) -> dict
+    """Transform a dictionary in a dictionary of env vars.
+     Example:
+         >>>env_vars = mapping.to_env_vars({'model_dir': '/opt/ml/model', 'batch_size': 25})
+         >>>
+         >>>print(args)
+         ['MODEL_DIR', '/opt/ml/model', 'BATCH_SIZE', 25]
+     Args:
+         mapping (dict[str, object]): A Python mapping.
+     Returns:
+         (dict): Dictionary of env vars
+     """
+
+    def format_key(key):
+        """Decode a key, adds a SM_ prefix to the key and upper case it"""
+        if key:
+            decoded_name = 'SM_%s' % str(key).upper()
+            return decoded_name
+        else:
+            return ''
+
+    def format_value(_mapping):
+        if hasattr(_mapping, 'items'):
+            return json.dumps(_mapping, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
+        elif six.PY3 and isinstance(_mapping, six.binary_type):
+            # transforms a byte string (b'') in unicode
+            return _mapping.decode('latin1')
+        elif _mapping is None:
+            return ''
+        else:
+            return str(_mapping)
+
+    return {format_key(k): format_value(v) for k, v in mapping.items()}
 
 
 def to_cmd_args(mapping):  # type: (dict) -> list
@@ -64,6 +100,8 @@ def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode
     Returns:
         object decoded in unicode.
     """
+    if obj is None:
+        return u''
     if six.PY3 and isinstance(obj, six.binary_type):
         # transforms a byte string (b'') in unicode
         return obj.decode('latin1')

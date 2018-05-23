@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 
 import sagemaker_containers
-from sagemaker_containers.beta.framework import env, errors, functions, mapping, modules, trainer
+from sagemaker_containers.beta.framework import env, errors, functions, modules, trainer
 import test
 from test import fake_ml_framework
 
@@ -219,9 +219,8 @@ def test_trainer_report_failure():
 def framework_training_with_script_mode_fn():
     training_env = sagemaker_containers.training_env()
 
-    args = mapping.to_cmd_args(training_env.hyperparameters)
-
-    modules.run_module_from_s3(training_env.module_dir, args, training_env.module_name, cache=False)
+    modules.run_module_from_s3(training_env.module_dir, training_env.to_cmd_args(), training_env.to_env_vars(),
+                               training_env.module_name, cache=False)
 
 
 @pytest.mark.parametrize('user_script', [USER_MODE_SCRIPT])

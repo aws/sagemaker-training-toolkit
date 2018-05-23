@@ -28,19 +28,28 @@ builtins_open = '__builtin__.open' if six.PY2 else 'builtins.open'
 RESOURCE_CONFIG = dict(current_host='algo-1', hosts=['algo-1', 'algo-2', 'algo-3'])
 
 INPUT_DATA_CONFIG = {
-    'train': {
-        'ContentType': 'trainingContentType', 'TrainingInputMode': 'File', 'S3DistributionType': 'FullyReplicated',
-        'RecordWrapperType': 'None'
-    }, 'validation': {
-        'TrainingInputMode': 'File', 'S3DistributionType': 'FullyReplicated', 'RecordWrapperType': 'None'
+    'train':      {
+        'ContentType':        'trainingContentType',
+        'TrainingInputMode':  'File',
+        'S3DistributionType': 'FullyReplicated',
+        'RecordWrapperType':  'None'
+    },
+    'validation': {
+        'TrainingInputMode':  'File',
+        'S3DistributionType': 'FullyReplicated',
+        'RecordWrapperType':  'None'
     }
 }
 
 USER_HYPERPARAMETERS = dict(batch_size=32, learning_rate=.001)
 SAGEMAKER_HYPERPARAMETERS = {
-    'sagemaker_region': 'us-west-2', 'default_user_module_name': 'net', 'sagemaker_job_name': 'sagemaker-training-job',
-    'sagemaker_program': 'main.py', 'sagemaker_submit_directory': 'imagenet',
-    'sagemaker_enable_cloudwatch_metrics': True, 'sagemaker_container_log_level': logging.WARNING
+    'sagemaker_region':                    'us-west-2',
+    'default_user_module_name':            'net',
+    'sagemaker_job_name':                  'sagemaker-training-job',
+    'sagemaker_program':                   'main.py',
+    'sagemaker_submit_directory':          'imagenet',
+    'sagemaker_enable_cloudwatch_metrics': True,
+    'sagemaker_container_log_level':       logging.WARNING
 }
 
 ALL_HYPERPARAMETERS = dict(itertools.chain(USER_HYPERPARAMETERS.items(), SAGEMAKER_HYPERPARAMETERS.items()))
@@ -59,12 +68,14 @@ def test_read_key_serialized_hyperparameters():
     assert _env.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
-@patch('sagemaker_containers._env._read_json', lambda x: {'a': 1})
+@patch('sagemaker_containers._env._read_json', lambda x: {
+    'a': 1})
 @patch('json.loads')
 def test_read_exception(loads):
     loads.side_effect = ValueError('Unable to read.')
 
-    assert _env.read_hyperparameters() == {'a': 1}
+    assert _env.read_hyperparameters() == {
+        'a': 1}
 
 
 def test_resource_config():
@@ -114,8 +125,7 @@ def create_training_env():
 
 @pytest.fixture(name='serving_env')
 def create_serving_env():
-    with patch('sagemaker_containers._env.num_cpus', lambda: 8), \
-         patch('sagemaker_containers._env.num_gpus', lambda: 4):
+    with patch('sagemaker_containers._env.num_cpus', lambda: 8), patch('sagemaker_containers._env.num_gpus', lambda: 4):
         os.environ[_params.USE_NGINX_ENV] = 'false'
         os.environ[_params.MODEL_SERVER_TIMEOUT_ENV] = '20'
         os.environ[_params.CURRENT_HOST_ENV] = 'algo-1'
@@ -165,7 +175,6 @@ def test_serving_env(serving_env):
 
 
 def test_env_mapping_properties(training_env):
-
     assert sorted(training_env.properties()) == sorted(
         ['channel_input_dirs', 'current_host', 'framework_module', 'hosts', 'hyperparameters', 'input_config_dir',
          'input_data_config', 'input_dir', 'log_level', 'model_dir', 'module_dir', 'module_name',

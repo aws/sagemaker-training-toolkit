@@ -13,9 +13,11 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import os
+
 import pytest
 
-from sagemaker_containers import _mapping
+import sagemaker_containers.beta.framework as framework
 
 
 @pytest.mark.parametrize('dictionary, keys, expected', [
@@ -25,14 +27,14 @@ from sagemaker_containers import _mapping
     ({'x': 1, 'y': 2}, ('x', 'y'), ({'x': 1, 'y': 2}, {}))
 ])
 def test_split_by_criteria_with_keys(dictionary, keys, expected):
-    assert _mapping.split_by_criteria(dictionary, keys=keys) == expected
+    assert framework.mapping.split_by_criteria(dictionary, keys=keys) == expected
 
 
 @pytest.mark.parametrize('dictionary, keys, prefix, expected', [
     ({'x': 1, 'y': 2}, 'y', 'x', ({'x': 1, 'y': 2}, {}))
 ])
 def test_split_by_criteria_with_keys_and_criteria(dictionary, keys, prefix, expected):
-    assert _mapping.split_by_criteria(dictionary, keys=keys, prefix=prefix) == expected
+    assert framework.mapping.split_by_criteria(dictionary, keys=keys, prefix=prefix) == expected
 
 
 @pytest.mark.parametrize('dictionary, prefix, expected', [
@@ -42,10 +44,10 @@ def test_split_by_criteria_with_keys_and_criteria(dictionary, keys, prefix, expe
     ({'sagemaker_x': 1, 'y': 2}, ('y',), ({'y': 2}, {'sagemaker_x': 1}))
 ])
 def test_split_by_criteria_with_prefix(dictionary, prefix, expected):
-    assert _mapping.split_by_criteria(dictionary, prefix=prefix) == expected
+    assert framework.mapping.split_by_criteria(dictionary, prefix=prefix) == expected
 
 
-class ProcessEnvironment(_mapping.MappingMixin):
+class ProcessEnvironment(framework.mapping.MappingMixin):
     @property
     def a(self):
         return 1
@@ -111,6 +113,108 @@ def test_mapping_throws_exception_trying_to_access_non_properties(property, erro
 
      ])
 def test_to_cmd_args(target, expected):
-    actual = _mapping.to_cmd_args(target)
+    actual = framework.mapping.to_cmd_args(target)
 
     assert actual == expected
+
+
+@pytest.mark.parametrize('target, expected', [
+    ({'model_dir': '/opt/ml/model', 'OUTPUT_DIR': '/opt/ml/output'},
+     {u'SM_MODEL_DIR': u'/opt/ml/model', u'SM_OUTPUT_DIR': u'/opt/ml/output'}),
+
+    ({}, {}),
+
+    ({'': None}, {u'': u''}),
+
+    ({'bytes': b'2', 'floats': 4.0, 'int': 2, 'unicode': '¡ø'},
+     {'SM_BYTES': '2', 'SM_FLOATS': '4.0', 'SM_INT': '2', 'SM_UNICODE': '¡ø'}),
+
+    ({'nested': ['1', ['2', '3', [['6']]]]},
+     {'SM_NESTED': "['1', ['2', '3', [['6']]]]"}),
+
+    ({'channel_dirs': {'eval': 'bar', 'train': 'foo'}, 'map': {'a': [1, 3, 4]}},
+     {'SM_CHANNEL_DIRS': '{"eval":"bar","train":"foo"}', 'SM_MAP': '{"a":[1,3,4]}'}),
+
+    ({'truthy': True, 'falsy': False},
+     {u'SM_FALSY': u'False', u'SM_TRUTHY': u'True'})
+])
+def test_to_env_vars(target, expected):
+    actual = framework.mapping.to_env_vars(target)
+
+    assert actual == expected
+
+
+def test_env_vars_round_trip():
+    hyperparameters = {
+        'loss': 'SGD',
+        'sagemaker_program': 'user_script.py',
+        'epochs': 10,
+        'batch_size': 64,
+        'precision': 5.434322,
+        'sagemaker_region': 'us-west-2',
+        'sagemaker_job_name': 'horovod-training-job',
+        'sagemaker_submit_directory': 's3/something'
+    }
+
+    resource_config = {
+        'current_host': 'algo-1',
+        'hosts': ['algo-1', 'algo-2', 'algo-3']
+    }
+
+    input_data_config = {
+        'train': {
+            'ContentType': 'trainingContentType',
+            'TrainingInputMode': 'File',
+            'S3DistributionType': 'FullyReplicated',
+            'RecordWrapperType': 'None'
+        },
+        'validation': {
+            'TrainingInputMode': 'File',
+            'S3DistributionType': 'FullyReplicated',
+            'RecordWrapperType': 'None'
+        }
+    }
+
+    os.environ[framework.params.FRAMEWORK_TRAINING_MODULE_ENV] = 'test.functional.simple_framework:train'
+
+    training_env = framework.training_env(resource_config=resource_config,
+                                          input_data_config=input_data_config,
+                                          hyperparameters=hyperparameters)
+
+    os.environ[framework.params.FRAMEWORK_TRAINING_MODULE_ENV] = ''
+
+    args = framework.mapping.to_cmd_args(training_env.hyperparameters)
+
+    env_vars = training_env.to_env_vars()
+    env_vars['SM_USER_ARGS'] = ' '.join(args)
+
+    assert env_vars['SM_OUTPUT_DATA_DIR'] == training_env.output_data_dir
+    assert env_vars['SM_INPUT_DATA_CONFIG'] == '{"train":{"ContentType":"trainingContentType",' \
+                                               '"RecordWrapperType":"None","S3DistributionType":"FullyReplicated",' \
+                                               '"TrainingInputMode":"File"},"validation":{"RecordWrapperType":"None",' \
+                                               '"S3DistributionType":"FullyReplicated","TrainingInputMode":"File"}}'
+    assert env_vars['SM_NETWORK_INTERFACE_NAME'] == 'ethwe'
+    assert env_vars['SM_LOG_LEVEL'] == '20'
+    assert env_vars['SM_INPUT_DIR'].endswith('/opt/ml/input')
+    assert env_vars['SM_NUM_CPUS'] == str(training_env.num_cpus)
+    assert env_vars['SM_HP_BATCH_SIZE'] == '64'
+    assert env_vars['SM_CHANNEL_TRAIN'].endswith('/opt/ml/input/data/train')
+    assert env_vars['SM_CHANNEL_VALIDATION'].endswith('/opt/ml/input/data/validation')
+    assert env_vars['SM_HP_EPOCHS'] == '10'
+    assert env_vars['SM_HPS'] == '{"batch_size":64,"epochs":10,"loss":"SGD","precision":5.434322}'
+    assert env_vars['SM_HP_PRECISION'] == '5.434322'
+    assert env_vars['SM_RESOURCE_CONFIG'] == '{"current_host":"algo-1","hosts":["algo-1","algo-2","algo-3"]}'
+    assert env_vars['SM_MODULE_NAME'] == 'user_script'
+    assert env_vars['SM_INPUT_CONFIG_DIR'].endswith('/opt/ml/input/config')
+    assert env_vars['SM_USER_ARGS'] == '--batch_size 64 --epochs 10 --loss SGD --precision 5.434322'
+    assert env_vars['SM_OUTPUT_DIR'].endswith('/opt/ml/output')
+    assert env_vars['SM_MODEL_DIR'].endswith('/opt/ml/model')
+    assert env_vars['SM_HOSTS'] == "['algo-1', 'algo-2', 'algo-3']"
+    assert env_vars['SM_NUM_GPUS'] == str(training_env.num_gpus)
+    assert env_vars['SM_MODULE_DIR'] == 's3/something'
+    assert env_vars['SM_CURRENT_HOST'] == 'algo-1'
+    assert env_vars['SM_CHANNELS'] == "['train', 'validation']"
+    assert env_vars['SM_HP_LOSS'] == 'SGD'
+    assert env_vars['SM_FRAMEWORK_MODULE'] == 'test.functional.simple_framework:train'
+
+    assert all(x in env_vars['SM_TRAINING_ENV'] for x in (training_env.properties()))

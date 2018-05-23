@@ -17,8 +17,6 @@ import shutil
 from mock import patch
 import pytest
 
-logger = logging.getLogger(__name__)
-
 logging.getLogger('boto3').setLevel(logging.INFO)
 logging.getLogger('s3transfer').setLevel(logging.INFO)
 logging.getLogger('botocore').setLevel(logging.WARN)

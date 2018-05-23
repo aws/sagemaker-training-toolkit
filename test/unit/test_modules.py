@@ -152,10 +152,10 @@ def test_run():
 def test_run_module_from_s3():
     with patch('sagemaker_containers._modules.download_and_install') as download_and_install:
         with patch('sagemaker_containers._modules.run') as run:
-            _modules.run_module_from_s3('s3://url', [42], cache=True)
+            _modules.run_module_from_s3(url='s3://url', args=['42'], cache=True)
 
             download_and_install.assert_called_with('s3://url', 'default_user_module_name', True)
-            run.assert_called_with('default_user_module_name', [42])
+            run.assert_called_with('default_user_module_name', ['42'], {'SM_USER_ARGS': '42'})
 
 
 class TestDownloadAndImport(test.TestBase):
