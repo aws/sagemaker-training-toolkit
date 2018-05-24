@@ -468,7 +468,8 @@ class TrainingEnv(_Env):
             'current_host': self.current_host, 'module_name': self.module_name, 'log_level': self.log_level,
             'framework_module': self.framework_module, 'input_dir': self.input_dir,
             'input_config_dir': self.input_config_dir, 'output_dir': self.output_dir, 'num_cpus': self.num_cpus,
-            'num_gpus': self.num_gpus, 'model_dir': self.model_dir, 'module_dir': self.module_dir
+            'num_gpus': self.num_gpus, 'model_dir': self.model_dir, 'module_dir': self.module_dir,
+            'training_env': dict(self), 'user_args': self.to_cmd_args()
         }
 
         for name, path in self.channel_input_dirs.items():
@@ -476,8 +477,6 @@ class TrainingEnv(_Env):
 
         for key, value in self.hyperparameters.items():
             env['hp_%s' % key] = value
-
-        env['training_env'] = dict(self)
 
         return _mapping.to_env_vars(env)
 

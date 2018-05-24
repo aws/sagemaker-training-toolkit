@@ -155,7 +155,7 @@ def test_run_module_from_s3():
             _modules.run_module_from_s3(url='s3://url', args=['42'], cache=True)
 
             download_and_install.assert_called_with('s3://url', 'default_user_module_name', True)
-            run.assert_called_with('default_user_module_name', ['42'], {'SM_USER_ARGS': '42'})
+            run.assert_called_with('default_user_module_name', ['42'], {})
 
 
 class TestDownloadAndImport(test.TestBase):

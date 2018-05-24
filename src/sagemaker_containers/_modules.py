@@ -288,8 +288,6 @@ def run_module_from_s3(url, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    env_vars['SM_USER_ARGS'] = ' '.join(args)
-
     download_and_install(url, name, cache)
 
     write_env_vars(env_vars)
