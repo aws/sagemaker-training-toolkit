@@ -43,15 +43,15 @@ def to_env_vars(mapping):  # type: (dict) -> dict
             return ''
 
     def format_value(_mapping):
-        if hasattr(_mapping, 'items'):
-            return json.dumps(_mapping, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
-        elif six.PY3 and isinstance(_mapping, six.binary_type):
+        if six.PY3 and isinstance(_mapping, six.binary_type):
             # transforms a byte string (b'') in unicode
             return _mapping.decode('latin1')
         elif _mapping is None:
             return ''
-        else:
+        elif isinstance(_mapping, six.string_types):
             return str(_mapping)
+        else:
+            return json.dumps(_mapping, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
 
     return {format_key(k): format_value(v) for k, v in mapping.items()}
 

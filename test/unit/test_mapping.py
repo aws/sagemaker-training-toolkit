@@ -120,7 +120,7 @@ def test_to_cmd_args(target, expected):
 
 @pytest.mark.parametrize('target, expected', [
     ({'model_dir': '/opt/ml/model', 'OUTPUT_DIR': '/opt/ml/output'},
-     {u'SM_MODEL_DIR': u'/opt/ml/model', u'SM_OUTPUT_DIR': u'/opt/ml/output'}),
+     {'SM_MODEL_DIR': '/opt/ml/model', 'SM_OUTPUT_DIR': '/opt/ml/output'}),
 
     ({}, {}),
 
@@ -130,13 +130,13 @@ def test_to_cmd_args(target, expected):
      {'SM_BYTES': '2', 'SM_FLOATS': '4.0', 'SM_INT': '2', 'SM_UNICODE': '¡ø'}),
 
     ({'nested': ['1', ['2', '3', [['6']]]]},
-     {'SM_NESTED': "['1', ['2', '3', [['6']]]]"}),
+     {'SM_NESTED': '["1",["2","3",[["6"]]]]'}),
 
     ({'channel_dirs': {'eval': 'bar', 'train': 'foo'}, 'map': {'a': [1, 3, 4]}},
      {'SM_CHANNEL_DIRS': '{"eval":"bar","train":"foo"}', 'SM_MAP': '{"a":[1,3,4]}'}),
 
     ({'truthy': True, 'falsy': False},
-     {u'SM_FALSY': u'False', u'SM_TRUTHY': u'True'})
+     {'SM_FALSY': 'false', 'SM_TRUTHY': 'true'})
 ])
 def test_to_env_vars(target, expected):
     actual = framework.mapping.to_env_vars(target)
@@ -209,11 +209,11 @@ def test_env_vars_round_trip():
     assert env_vars['SM_USER_ARGS'] == '--batch_size 64 --epochs 10 --loss SGD --precision 5.434322'
     assert env_vars['SM_OUTPUT_DIR'].endswith('/opt/ml/output')
     assert env_vars['SM_MODEL_DIR'].endswith('/opt/ml/model')
-    assert env_vars['SM_HOSTS'] == "['algo-1', 'algo-2', 'algo-3']"
+    assert env_vars['SM_HOSTS'] == '["algo-1","algo-2","algo-3"]'
     assert env_vars['SM_NUM_GPUS'] == str(training_env.num_gpus)
     assert env_vars['SM_MODULE_DIR'] == 's3/something'
     assert env_vars['SM_CURRENT_HOST'] == 'algo-1'
-    assert env_vars['SM_CHANNELS'] == "['train', 'validation']"
+    assert env_vars['SM_CHANNELS'] == '["train","validation"]'
     assert env_vars['SM_HP_LOSS'] == 'SGD'
     assert env_vars['SM_FRAMEWORK_MODULE'] == 'test.functional.simple_framework:train'
 
