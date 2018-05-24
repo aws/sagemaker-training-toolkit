@@ -16,7 +16,7 @@ import os
 import traceback
 
 import sagemaker_containers
-from sagemaker_containers import _errors, _files
+from sagemaker_containers import _errors, _files, _logging
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +41,16 @@ def train():
     try:
         # TODO: iquintero - add error handling for ImportError to let the user know
         # if the framework module is not defined.
-        framework_name, entry_point_name = sagemaker_containers.training_env().framework_module.split(':')
+        env = sagemaker_containers.training_env()
+
+        framework_name, entry_point_name = env.framework_module.split(':')
 
         framework = importlib.import_module(framework_name)
+
+        # the logger is configured after importing the framework library, allowing the framework to
+        # configure logging at import time.
+        _logging.configure_logger(env.log_level)
+
         logger.info('Imported framework %s', framework_name)
 
         entry_point = getattr(framework, entry_point_name)

@@ -223,7 +223,7 @@ class _Env(_mapping.MappingMixin):
         current_host = os.environ.get(_params.CURRENT_HOST_ENV)
         module_name = os.environ.get(_params.USER_PROGRAM_ENV, None)
         module_dir = os.environ.get(_params.SUBMIT_DIR_ENV, None)
-        log_level = os.environ.get(_params.LOG_LEVEL_ENV, logging.INFO)
+        log_level = int(os.environ.get(_params.LOG_LEVEL_ENV, logging.INFO))
 
         self._current_host = current_host
         self._num_gpus = num_gpus()

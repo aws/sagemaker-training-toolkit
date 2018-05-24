@@ -24,7 +24,9 @@ import textwrap
 import boto3
 import six
 from six.moves.urllib.parse import urlparse
+import yaml
 
+import sagemaker_containers
 from sagemaker_containers import _errors, _files
 
 logger = logging.getLogger(__name__)
@@ -220,17 +222,27 @@ def run(module_name, args=None, env_vars=None):  # type: (str, list, dict) -> No
     args = args or []
     env_vars = env_vars or {}
 
-    prefix = ['%s=%s' % (key.upper(), value) for key, value in env_vars.items()]
-
     cmd = [python_executable(), '-m', module_name] + args
 
-    separator = '=' * 50
-    logger.info('%sInvoking user script %s\n\n', separator, separator)
-    logger.info('%sEnvironment variables%s\n\n', separator, separator)
-    logger.info(' '.join(prefix))
+    env = sagemaker_containers.training_env()
+    message = """Invoking user script
 
-    logger.info('%sInvoking interpreter:%s\n\n', separator, separator)
-    logger.info(' '.join(cmd))
+Training Env:
+
+%s
+
+Environment variables:
+
+%s
+
+Invoking script with the following command:
+
+%s
+
+""" % (yaml.dump(env, default_flow_style=False), yaml.dump(env_vars, default_flow_style=False),
+       yaml.dump(cmd, default_flow_style=False))
+
+    logger.info(message)
 
     _check_error(cmd, _errors.ExecuteUserScriptError)
 
