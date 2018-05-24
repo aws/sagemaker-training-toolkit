@@ -22,6 +22,8 @@ import subprocess
 
 from sagemaker_containers import _mapping, _params
 
+logger = logging.getLogger(__name__)
+
 _BASE_PATH_ENV = 'base_dir'  # type: str
 
 base_dir = os.environ.get(_BASE_PATH_ENV, os.path.join('/opt', 'ml'))  # type: str
@@ -109,8 +111,8 @@ def read_hyperparameters():  # type: () -> dict
         try:
             v = json.loads(v)
         except (ValueError, TypeError):
-            logging.info("Failed to parse hyperparameter %s value %s to Json.\n"
-                         "Returning the value itself", k, v)
+            logger.info("Failed to parse hyperparameter %s value %s to Json.\n"
+                        "Returning the value itself", k, v)
 
         deserialized_hps[k] = v
 
@@ -191,7 +193,7 @@ def num_gpus():  # type: () -> int
         output = subprocess.check_output(cmd).decode('utf-8')
         return sum([1 for x in output.split('\n') if x.startswith('GPU ')])
     except (OSError, subprocess.CalledProcessError):
-        logging.info('No GPUs detected (normal if no gpus installed)')
+        logger.info('No GPUs detected (normal if no gpus installed)')
         return 0
 
 
@@ -481,14 +483,15 @@ class TrainingEnv(_Env):
         """
 
         env = {
-            'hosts': self.hosts, 'network_interface_name': self.network_interface_name, 'hps': self.hyperparameters,
-            'resource_config': self.resource_config, 'input_data_config': self.input_data_config,
-            'output_data_dir': self.output_data_dir, 'channels': sorted(self.channel_input_dirs.keys()),
-            'current_host': self.current_host, 'module_name': self.module_name, 'log_level': self.log_level,
+            'hosts':            self.hosts, 'network_interface_name': self.network_interface_name,
+            'hps':              self.hyperparameters,
+            'resource_config':  self.resource_config, 'input_data_config': self.input_data_config,
+            'output_data_dir':  self.output_data_dir, 'channels': sorted(self.channel_input_dirs.keys()),
+            'current_host':     self.current_host, 'module_name': self.module_name, 'log_level': self.log_level,
             'framework_module': self.framework_module, 'input_dir': self.input_dir,
             'input_config_dir': self.input_config_dir, 'output_dir': self.output_dir, 'num_cpus': self.num_cpus,
-            'num_gpus': self.num_gpus, 'model_dir': self.model_dir, 'module_dir': self.module_dir,
-            'training_env': dict(self), 'user_args': self.to_cmd_args()
+            'num_gpus':         self.num_gpus, 'model_dir': self.model_dir, 'module_dir': self.module_dir,
+            'training_env':     dict(self), 'user_args': self.to_cmd_args()
         }
 
         for name, path in self.channel_input_dirs.items():

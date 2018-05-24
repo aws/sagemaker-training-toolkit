@@ -27,6 +27,8 @@ from six.moves.urllib.parse import urlparse
 
 from sagemaker_containers import _errors, _files
 
+logger = logging.getLogger(__name__)
+
 DEFAULT_MODULE_NAME = 'default_user_module_name'
 
 
@@ -68,7 +70,7 @@ def prepare(path, name):  # type: (str, str) -> None
               include_package_data=True)
         """ % name)
 
-        logging.info('Module %s does not provide a setup.py. \nGenerating setup.py' % name)
+        logger.info('Module %s does not provide a setup.py. \nGenerating setup.py' % name)
 
         _files.write_file(setup_path, data)
 
@@ -77,7 +79,7 @@ def prepare(path, name):  # type: (str, str) -> None
         universal = 1
         """)
 
-        logging.info('Generating setup.cfg')
+        logger.info('Generating setup.cfg')
 
         _files.write_file(os.path.join(path, 'setup.cfg'), data)
 
@@ -89,7 +91,7 @@ def prepare(path, name):  # type: (str, str) -> None
         recursive-exclude . *.pyo
         """)
 
-        logging.info('Generating MANIFEST.in')
+        logger.info('Generating MANIFEST.in')
 
         _files.write_file(os.path.join(path, 'MANIFEST.in'), data)
 
@@ -108,7 +110,7 @@ def install(path):  # type: (str) -> None
     if os.path.exists(os.path.join(path, 'requirements.txt')):
         cmd += '-r requirements.txt'
 
-    logging.info('Installing module with the following command:\n%s', cmd)
+    logger.info('Installing module with the following command:\n%s', cmd)
 
     _check_error(shlex.split(cmd), _errors.InstallModuleError, cwd=path)
 
@@ -222,8 +224,13 @@ def run(module_name, args=None, env_vars=None):  # type: (str, list, dict) -> No
 
     cmd = [python_executable(), '-m', module_name] + args
 
-    logging.info('Invoking user script with the following command:')
-    print(' '.join(prefix + cmd))
+    separator = '=' * 50
+    logger.info('%sInvoking user script %s\n\n', separator, separator)
+    logger.info('%sEnvironment variables%s\n\n', separator, separator)
+    logger.info(' '.join(prefix))
+
+    logger.info('%sInvoking interpreter:%s\n\n', separator, separator)
+    logger.info(' '.join(cmd))
 
     _check_error(cmd, _errors.ExecuteUserScriptError)
 
