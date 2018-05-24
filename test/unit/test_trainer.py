@@ -20,12 +20,7 @@ from sagemaker_containers import _errors, _trainer
 
 class TrainingEnv(Mock):
     framework_module = 'my_framework:entry_point'
-
-    def write_success_file(self):
-        pass
-
-    def write_failure_file(self, failure_msg):
-        pass
+    log_level = 20
 
 
 @patch('importlib.import_module')
