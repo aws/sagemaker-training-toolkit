@@ -103,11 +103,18 @@ def read_hyperparameters():  # type: () -> dict
     """
     hyperparameters = _read_json(hyperparameters_file_dir)
 
-    try:
-        return {k: json.loads(v) for k, v in hyperparameters.items()}
-    except (ValueError, TypeError):  # pragma: py2 no cover
-        logging.info("Failed to parse hyperparameters' values to Json. Returning the hyperparameters instead:")
-        return hyperparameters
+    deserialized_hps = {}
+
+    for k, v in hyperparameters.items():
+        try:
+            v = json.loads(v)
+        except (ValueError, TypeError):
+            logging.info("Failed to parse hyperparameter %s value %s to Json.\n"
+                         "Returning the value itself", k, v)
+
+        deserialized_hps[k] = v
+
+    return deserialized_hps
 
 
 def read_resource_config():  # type: () -> dict
@@ -405,6 +412,8 @@ class TrainingEnv(_Env):
             my_module:main
 
         network_interface_name (str): Name of the network interface used for distributed training
+
+        job_name (str): The name of the current training job
     """
 
     def __init__(self, resource_config=None, input_data_config=None, hyperparameters=None):
@@ -445,6 +454,16 @@ class TrainingEnv(_Env):
         self._input_dir = input_dir
         self._input_config_dir = input_config_dir
         self._output_dir = output_dir
+        self._job_name = os.environ.get(_params.TRAINING_JOB_ENV.upper(), None)
+
+    @property
+    def job_name(self):  # type: () -> str
+        """The name of the current training job.
+
+        Returns:
+            str: the training job name.
+        """
+        return self._job_name
 
     def to_cmd_args(self):
         """Command line arguments representation of the training environment.

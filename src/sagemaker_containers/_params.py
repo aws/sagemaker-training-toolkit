@@ -16,6 +16,7 @@ SAGEMAKER_PREFIX = 'sagemaker_'  # type: str
 CURRENT_HOST_ENV = 'CURRENT_HOST'  # type: str
 USER_PROGRAM_PARAM = 'sagemaker_program'  # type: str
 USER_PROGRAM_ENV = USER_PROGRAM_PARAM.upper()  # type: str
+TRAINING_JOB_ENV = 'TRAINING_JOB_NAME'  # type: str
 SUBMIT_DIR_PARAM = 'sagemaker_submit_directory'  # type: str
 SUBMIT_DIR_ENV = SUBMIT_DIR_PARAM.upper()  # type: str
 ENABLE_METRICS_PARAM = 'sagemaker_enable_cloudwatch_metrics'  # type: str
@@ -24,6 +25,7 @@ LOG_LEVEL_PARAM = 'sagemaker_container_log_level'  # type: str
 LOG_LEVEL_ENV = LOG_LEVEL_PARAM.upper()  # type: str
 JOB_NAME_PARAM = 'sagemaker_job_name'  # type: str
 JOB_NAME_ENV = JOB_NAME_PARAM.upper()  # type: str
+TUNING_METRIC_PARAM = '_tuning_objective_metric'  # type: str
 DEFAULT_MODULE_NAME_PARAM = 'default_user_module_name'  # type: str
 REGION_NAME_PARAM = 'sagemaker_region'  # type: str
 REGION_NAME_ENV = REGION_NAME_PARAM.upper()  # type: str
@@ -34,4 +36,4 @@ FRAMEWORK_SERVING_MODULE_ENV = 'SAGEMAKER_SERVING_MODULE'  # type: str
 FRAMEWORK_TRAINING_MODULE_ENV = 'SAGEMAKER_TRAINING_MODULE'  # type: str
 SAGEMAKER_HYPERPARAMETERS = (
     USER_PROGRAM_PARAM, SUBMIT_DIR_PARAM, ENABLE_METRICS_PARAM, REGION_NAME_PARAM, LOG_LEVEL_PARAM, JOB_NAME_PARAM,
-    DEFAULT_MODULE_NAME_PARAM)  # type: set
+    DEFAULT_MODULE_NAME_PARAM, TUNING_METRIC_PARAM)  # type: set

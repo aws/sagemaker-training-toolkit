@@ -41,7 +41,12 @@ INPUT_DATA_CONFIG = {
     }
 }
 
-USER_HYPERPARAMETERS = dict(batch_size=32, learning_rate=.001)
+USER_HYPERPARAMETERS = {
+    'batch_size':    32,
+    'learning_rate': .001,
+    'hosts':         ['algo-1', 'algo-2'],
+}
+
 SAGEMAKER_HYPERPARAMETERS = {
     'sagemaker_region':                    'us-west-2',
     'default_user_module_name':            'net',
@@ -49,7 +54,9 @@ SAGEMAKER_HYPERPARAMETERS = {
     'sagemaker_program':                   'main.py',
     'sagemaker_submit_directory':          'imagenet',
     'sagemaker_enable_cloudwatch_metrics': True,
-    'sagemaker_container_log_level':       logging.WARNING
+    'sagemaker_container_log_level':       logging.WARNING,
+    '_tuning_objective_metric':            'loss:3.4',
+    'sagemaker_channels':                  {'train': '/opt/input/data/train', 'eval': '/opt/input/data/eva/', },
 }
 
 ALL_HYPERPARAMETERS = dict(itertools.chain(USER_HYPERPARAMETERS.items(), SAGEMAKER_HYPERPARAMETERS.items()))
@@ -61,9 +68,19 @@ def test_read_hyperparameters():
     assert _env.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
-def test_read_key_serialized_hyperparameters():
-    key_serialized_hps = {k: json.dumps(v) for k, v in ALL_HYPERPARAMETERS.items()}
-    test.write_json(key_serialized_hps, _env.hyperparameters_file_dir)
+def test_read_value_serialized_hyperparameters():
+    serialized_hps = {k: json.dumps(v) for k, v in ALL_HYPERPARAMETERS.items()}
+    test.write_json(serialized_hps, _env.hyperparameters_file_dir)
+
+    assert _env.read_hyperparameters() == ALL_HYPERPARAMETERS
+
+
+def test_read_value_serialized_and_non_value_serialized_hyperparameters():
+    hyperparameters = {k: json.dumps(v) for k, v in SAGEMAKER_HYPERPARAMETERS.items()}
+
+    hyperparameters.update(USER_HYPERPARAMETERS)
+
+    test.write_json(hyperparameters, _env.hyperparameters_file_dir)
 
     assert _env.read_hyperparameters() == ALL_HYPERPARAMETERS
 
@@ -120,12 +137,18 @@ def create_training_env():
          patch('sagemaker_containers._env.num_gpus', lambda: 4):
         session_mock = Mock()
         session_mock.region_name = 'us-west-2'
-        return sagemaker_containers.training_env()
+        old_environ = os.environ.copy()
+        os.environ[_params.TRAINING_JOB_ENV] = 'training-job-42'
+
+        yield sagemaker_containers.training_env()
+
+        os.environ = old_environ
 
 
 @pytest.fixture(name='serving_env')
 def create_serving_env():
     with patch('sagemaker_containers._env.num_cpus', lambda: 8), patch('sagemaker_containers._env.num_gpus', lambda: 4):
+        old_environ = os.environ.copy()
         os.environ[_params.USE_NGINX_ENV] = 'false'
         os.environ[_params.MODEL_SERVER_TIMEOUT_ENV] = '20'
         os.environ[_params.CURRENT_HOST_ENV] = 'algo-1'
@@ -133,7 +156,10 @@ def create_serving_env():
         os.environ[_params.SUBMIT_DIR_ENV] = 'my_dir'
         os.environ[_params.ENABLE_METRICS_ENV] = 'true'
         os.environ[_params.REGION_NAME_ENV] = 'us-west-2'
-        return _env.ServingEnv()
+
+        yield _env.ServingEnv()
+
+        os.environ = old_environ
 
 
 def test_env():
@@ -162,6 +188,7 @@ def test_training_env(training_env):
     assert training_env.module_dir == 'imagenet'
     assert training_env.log_level == logging.WARNING
     assert training_env.network_interface_name == 'ethwe'
+    assert training_env.job_name == 'training-job-42'
 
 
 def test_serving_env(serving_env):
@@ -178,7 +205,8 @@ def test_env_mapping_properties(training_env):
     assert sorted(training_env.properties()) == sorted(
         ['channel_input_dirs', 'current_host', 'framework_module', 'hosts', 'hyperparameters', 'input_config_dir',
          'input_data_config', 'input_dir', 'log_level', 'model_dir', 'module_dir', 'module_name',
-         'network_interface_name', 'num_cpus', 'num_gpus', 'output_data_dir', 'output_dir', 'resource_config'])
+         'network_interface_name', 'num_cpus', 'num_gpus', 'output_data_dir', 'output_dir', 'resource_config',
+         'job_name'])
 
 
 def test_serving_env_properties(serving_env):
