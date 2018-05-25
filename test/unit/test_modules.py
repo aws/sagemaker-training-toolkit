@@ -130,6 +130,7 @@ def test_exists(import_module):
     assert not _modules.exists('my_module')
 
 
+@patch('sagemaker_containers.training_env', lambda: {})
 def test_run_error():
     with pytest.raises(_errors.ExecuteUserScriptError) as e:
         _modules.run('wrong module')
@@ -145,6 +146,7 @@ def test_python_executable_exception():
             _modules.python_executable()
 
 
+@patch('sagemaker_containers.training_env', lambda: {})
 def test_run():
     _modules.run('pytest', ['--version'])
 

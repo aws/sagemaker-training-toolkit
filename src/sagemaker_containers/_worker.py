@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import flask
 
-from sagemaker_containers import _content_types, _env, _mapping, _status_codes
+from sagemaker_containers import _content_types, _env, _logging, _mapping, _status_codes
 
-ServingEnv = _env.ServingEnv()
+env = _env.ServingEnv()
 
 
 def default_healthcheck_fn():  # type: () -> Response
@@ -68,7 +68,11 @@ class Worker(flask.Flask):
             module_name (str): the module name which implements the worker. If not specified, it will use
                                     sagemaker_containers.ServingEnv().module_name as the default module name.
         """
-        super(Worker, self).__init__(module_name or ServingEnv.module_name)
+        super(Worker, self).__init__(module_name or env.module_name)
+
+        # the logger is configured after importing the framework library, allowing the framework to
+        # configure logging at import time.
+        _logging.configure_logger(env.log_level)
 
         if initialize_fn:
             self.before_first_request(initialize_fn)

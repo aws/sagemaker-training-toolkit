@@ -19,6 +19,7 @@ from sagemaker_containers import _encoders as encoders
 from sagemaker_containers import _errors as errors
 from sagemaker_containers import _env as env
 from sagemaker_containers import _functions as functions
+from sagemaker_containers import _logging as logging
 from sagemaker_containers import _mapping as mapping
 from sagemaker_containers import _modules as modules
 from sagemaker_containers import _params as params

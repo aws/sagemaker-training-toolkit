@@ -13,7 +13,6 @@
 from __future__ import absolute_import
 
 import importlib
-import logging
 import os
 import shlex
 import subprocess
@@ -25,9 +24,9 @@ import boto3
 import six
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_containers import _errors, _files
+from sagemaker_containers import _errors, _files, _logging
 
-logger = logging.getLogger(__name__)
+logger = _logging.get_logger()
 
 DEFAULT_MODULE_NAME = 'default_user_module_name'
 
@@ -220,17 +219,9 @@ def run(module_name, args=None, env_vars=None):  # type: (str, list, dict) -> No
     args = args or []
     env_vars = env_vars or {}
 
-    prefix = ['%s=%s' % (key.upper(), value) for key, value in env_vars.items()]
-
     cmd = [python_executable(), '-m', module_name] + args
 
-    separator = '=' * 50
-    logger.info('%sInvoking user script %s\n\n', separator, separator)
-    logger.info('%sEnvironment variables%s\n\n', separator, separator)
-    logger.info(' '.join(prefix))
-
-    logger.info('%sInvoking interpreter:%s\n\n', separator, separator)
-    logger.info(' '.join(cmd))
+    _logging.log_script_invocation(cmd, env_vars)
 
     _check_error(cmd, _errors.ExecuteUserScriptError)
 

@@ -20,9 +20,9 @@ import os
 import shlex
 import subprocess
 
-from sagemaker_containers import _mapping, _params
+from sagemaker_containers import _logging, _mapping, _params
 
-logger = logging.getLogger(__name__)
+logger = _logging.get_logger()
 
 _BASE_PATH_ENV = 'base_dir'  # type: str
 
@@ -223,7 +223,7 @@ class _Env(_mapping.MappingMixin):
         current_host = os.environ.get(_params.CURRENT_HOST_ENV)
         module_name = os.environ.get(_params.USER_PROGRAM_ENV, None)
         module_dir = os.environ.get(_params.SUBMIT_DIR_ENV, None)
-        log_level = os.environ.get(_params.LOG_LEVEL_ENV, logging.INFO)
+        log_level = int(os.environ.get(_params.LOG_LEVEL_ENV, logging.INFO))
 
         self._current_host = current_host
         self._num_gpus = num_gpus()
