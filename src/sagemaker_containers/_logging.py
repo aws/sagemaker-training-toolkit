@@ -41,7 +41,7 @@ def configure_logger(level, format='%(asctime)s %(name)-12s %(levelname)-8s %(me
 def log_script_invocation(cmd, env_vars, logger=None):
     logger = logger or get_logger()
 
-    prefix = '\n'.join(['%s=%s' % (key, json.loads(value)) for key, value in env_vars.items()])
+    prefix = '\n'.join(['%s=%s' % (key, value) for key, value in env_vars.items()])
     env = sagemaker_containers.training_env()
     message = """Invoking user script
 
