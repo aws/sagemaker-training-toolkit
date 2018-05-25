@@ -20,9 +20,9 @@ import os
 import shlex
 import subprocess
 
-from sagemaker_containers import _mapping, _params
+from sagemaker_containers import _logging, _mapping, _params
 
-logger = logging.getLogger(__name__)
+logger = _logging.get_logger()
 
 _BASE_PATH_ENV = 'base_dir'  # type: str
 

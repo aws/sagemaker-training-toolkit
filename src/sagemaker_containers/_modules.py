@@ -13,7 +13,6 @@
 from __future__ import absolute_import
 
 import importlib
-import logging
 import os
 import shlex
 import subprocess
@@ -24,12 +23,10 @@ import textwrap
 import boto3
 import six
 from six.moves.urllib.parse import urlparse
-import yaml
 
-import sagemaker_containers
-from sagemaker_containers import _errors, _files
+from sagemaker_containers import _errors, _files, _logging
 
-logger = logging.getLogger(__name__)
+logger = _logging.get_logger()
 
 DEFAULT_MODULE_NAME = 'default_user_module_name'
 
@@ -224,25 +221,7 @@ def run(module_name, args=None, env_vars=None):  # type: (str, list, dict) -> No
 
     cmd = [python_executable(), '-m', module_name] + args
 
-    env = sagemaker_containers.training_env()
-    message = """Invoking user script
-
-Training Env:
-
-%s
-
-Environment variables:
-
-%s
-
-Invoking script with the following command:
-
-%s
-
-""" % (yaml.dump(env, default_flow_style=False), yaml.dump(env_vars, default_flow_style=False),
-       yaml.dump(cmd, default_flow_style=False))
-
-    logger.info(message)
+    _logging.log_script_invocation(cmd, env_vars)
 
     _check_error(cmd, _errors.ExecuteUserScriptError)
 

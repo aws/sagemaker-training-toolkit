@@ -11,14 +11,13 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import importlib
-import logging
 import os
 import traceback
 
 import sagemaker_containers
 from sagemaker_containers import _errors, _files, _logging
 
-logger = logging.getLogger(__name__)
+logger = _logging.get_logger()
 
 SUCCESS_CODE = 0
 DEFAULT_FAILURE_CODE = 1
