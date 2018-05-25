@@ -15,8 +15,6 @@ from __future__ import absolute_import
 import json
 import logging
 
-import yaml
-
 import sagemaker_containers
 
 
@@ -43,7 +41,7 @@ def configure_logger(level, format='%(asctime)s %(name)-12s %(levelname)-8s %(me
 def log_script_invocation(cmd, env_vars, logger=None):
     logger = logger or get_logger()
 
-    prefix = '\n'.join(['%s=%s' % (key, json.dumps(value, indent=4)) for key, value in env_vars.items()])
+    prefix = '\n'.join(['%s=%s' % (key, json.loads(value)) for key, value in env_vars.items()])
     env = sagemaker_containers.training_env()
     message = """Invoking user script
 
@@ -59,5 +57,5 @@ Invoking script with the following command:
 
 %s
 
-""" % (yaml.dump(dict(env), default_flow_style=False), prefix, ' '.join(cmd))
+""" % (json.dumps(dict(env), indent=4), prefix, ' '.join(cmd))
     logger.info(message)
