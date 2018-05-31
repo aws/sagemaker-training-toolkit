@@ -19,7 +19,7 @@ class ClientError(Exception):
     pass
 
 
-class _CalledProcessError(Exception):
+class _CalledProcessError(ClientError):
     """This exception is raised when a process run by check_call() or
     check_output() returns a non-zero exit status.
 
