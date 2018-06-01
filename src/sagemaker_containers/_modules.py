@@ -41,7 +41,7 @@ def s3_download(url, dst):  # type: (str, str) -> None
     url = urlparse(url)
 
     if url.scheme != 's3':
-        raise ValueError("Expecting 's3' scheme, got: %s in %s" % (url.scheme, dst))
+        raise ValueError("Expecting 's3' scheme, got: %s in %s" % (url.scheme, url))
 
     bucket, key = url.netloc, url.path.lstrip('/')
 
