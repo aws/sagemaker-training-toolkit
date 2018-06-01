@@ -2,6 +2,19 @@
 CHANGELOG
 =========
 
+2.0.2
+=====
+
+* Improve logging
+* Support for hyperparameters with JSON serialized and non serialized keys altogether
+* Training Environment transforms to env vars
+* Created beta framework entrypoint
+* Filter SageMaker provided hyperparameters and user provided hyperparameters
+* Script mode
+* Cache module installation
+* Support to requirements.txt
+* Decoder/Encoder support for numpy, JSON, and CSV
+
 1.0.4
 =====
 

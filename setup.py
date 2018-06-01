@@ -1,31 +1,31 @@
-import os
 from glob import glob
-from os.path import basename
-from os.path import splitext
+import os
 
-from setuptools import setup, find_packages
-
-
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+from setuptools import find_packages, setup
 
 
-PKG_NAME = 'container_support'
+def read(file_name):
+    return open(os.path.join(os.path.dirname(__file__), file_name)).read()
+
+
+packages = find_packages(where='src', exclude=('test',))
+packages.append('sagemaker_containers.etc')
 
 setup(
-    name='sagemaker_container_support',
-    version='1.0.4',
+    name='sagemaker_containers',
+    version='2.0.2',
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
-    packages=[PKG_NAME],
-    package_dir={PKG_NAME: 'src/container_support'},
-    package_data={PKG_NAME: ['etc/*']},
-    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
-    scripts=['bin/entry.py'],
-
-    long_description=read('README.rst'),
+    packages=packages,
+    package_dir={
+        'sagemaker_containers': 'src/sagemaker_containers',
+        'sagemaker_containers.etc': 'etc'
+    },
+    package_data={'sagemaker_containers.etc': ['*']},
+    py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob('src/*.py')],
+    long_description=read('README.md'),
     author='Amazon Web Services',
-    url='https://github.com/aws/sagemaker-container-support/',
+    url='https://github.com/aws/sagemaker-containers/',
     license='Apache License 2.0',
 
     classifiers=[
@@ -37,10 +37,14 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
     ],
+    install_requires=['boto3', 'six', 'pip', 'flask', 'gunicorn', 'gevent', 'werkzeug'],
 
-    install_requires=['Flask >=0.12.2, <1', 'boto3 >=1.6.18, <2', 'six >=1.11.0, <2',
-                      'gunicorn >=19.7.1, <20', 'gevent >=1.2.2, <2'],
     extras_require={
-        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock']
+        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'mock', 'sagemaker', 'numpy']
     },
+
+    entry_points={
+          'console_scripts': ['serve=sagemaker_containers.cli.serve:main',
+                              'train=sagemaker_containers.cli.train:main'],
+    }
 )
