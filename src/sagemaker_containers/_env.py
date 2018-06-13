@@ -443,7 +443,7 @@ class TrainingEnv(_Env):
         self._hyperparameters = split_result.excluded
         self._resource_config = resource_config
         self._input_data_config = input_data_config
-        self._output_data_dir = os.path.join(_output_data_dir, current_host)
+        self._output_data_dir = _output_data_dir
         self._channel_input_dirs = {channel: channel_path(channel) for channel in input_data_config}
         self._current_host = current_host
 

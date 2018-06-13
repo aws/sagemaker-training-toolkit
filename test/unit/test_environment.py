@@ -179,7 +179,7 @@ def test_training_env(training_env):
     assert training_env.hyperparameters == USER_HYPERPARAMETERS
     assert training_env.resource_config == RESOURCE_CONFIG
     assert training_env.input_data_config == INPUT_DATA_CONFIG
-    assert training_env.output_data_dir.endswith('/opt/ml/output/data/algo-1')
+    assert training_env.output_data_dir.endswith('/opt/ml/output/data')
     assert training_env.hosts == RESOURCE_CONFIG['hosts']
     assert training_env.channel_input_dirs['train'].endswith('/opt/ml/input/data/train')
     assert training_env.channel_input_dirs['validation'].endswith('/opt/ml/input/data/validation')
