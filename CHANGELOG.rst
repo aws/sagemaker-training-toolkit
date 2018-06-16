@@ -2,6 +2,19 @@
 CHANGELOG
 =========
 
+2.0.4
+=====
+
+* Fix output_data_dir to reference an existing directory.
+* Fix error message.
+* Make pip install verbose. 
+
+2.0.3
+=====
+
+* Fix error class for user script errors.
+* Adding Readme.
+
 2.0.2
 =====
 
