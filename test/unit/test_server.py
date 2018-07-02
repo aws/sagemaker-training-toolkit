@@ -19,9 +19,10 @@ from sagemaker_containers import _env, _server
 @patch.object(_env.ServingEnv, 'model_server_timeout', PropertyMock(return_value=100))
 @patch.object(_env.ServingEnv, 'use_nginx', PropertyMock(return_value=False))
 @patch('sagemaker_containers._env.num_gpus', lambda: 0)
-@patch('sys.exit', lambda x: 0)
+@patch('os.wait', lambda: (-1, 0))
 @patch('subprocess.Popen')
 def test_start_no_nginx(popen):
+    popen.return_value.pid = -1
     calls = [call(
         ['gunicorn',
          '--timeout', '100',
@@ -41,9 +42,10 @@ def test_start_no_nginx(popen):
 @patch.object(_env.ServingEnv, 'use_nginx', PropertyMock(return_value=True))
 @patch('pkg_resources.resource_filename', lambda x, y: '/tmp/nginx.conf')
 @patch('sagemaker_containers._env.num_gpus', lambda: 0)
-@patch('sys.exit', lambda x: 0)
+@patch('os.wait', lambda: (-1, 0))
 @patch('subprocess.Popen')
 def test_start_with_nginx(popen):
+    popen.return_value.pid = -1
     calls = [
         call(['nginx', '-c', '/tmp/nginx.conf']),
         call(['gunicorn',

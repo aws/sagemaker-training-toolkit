@@ -12,9 +12,9 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import os
 import signal
 import subprocess
-import sys
 
 import pkg_resources
 
@@ -25,15 +25,23 @@ UNIX_SOCKET_BIND = 'unix:/tmp/gunicorn.sock'
 HTTP_BIND = '0.0.0.0:8080'
 
 
-def add_terminate_signal(process):
-    def terminate(signal_number, stack_frame):
-        process.terminate()
+def _add_sigterm_handler(nginx, gunicorn):
+    def _terminate(signo, frame):
+        if nginx:
+            try:
+                os.kill(nginx.pid, signal.SIGQUIT)
+            except OSError:
+                pass
 
-    signal.signal(signal.SIGTERM, terminate)
+        try:
+            os.kill(gunicorn.pid, signal.SIGTERM)
+        except OSError:
+            pass
+
+    signal.signal(signal.SIGTERM, _terminate)
 
 
 def start(module_app):
-
     env = _env.ServingEnv()
     gunicorn_bind_address = HTTP_BIND
 
@@ -41,10 +49,9 @@ def start(module_app):
 
     if env.use_nginx:
         gunicorn_bind_address = UNIX_SOCKET_BIND
-        nginx_config_file = pkg_resources.resource_filename(sagemaker_containers.__name__, '/etc/nginx.conf')
+        nginx_config_file = pkg_resources.resource_filename(sagemaker_containers.__name__,
+                                                            '/etc/nginx.conf')
         nginx = subprocess.Popen(['nginx', '-c', nginx_config_file])
-
-        add_terminate_signal(nginx)
 
     gunicorn = subprocess.Popen(['gunicorn',
                                  '--timeout', str(env.model_server_timeout),
@@ -55,14 +62,11 @@ def start(module_app):
                                  '--log-level', 'info',
                                  module_app])
 
-    add_terminate_signal(gunicorn)
+    _add_sigterm_handler(nginx, gunicorn)
 
+    # wait for child processes. if either exit, so do we.
+    pids = {c.pid for c in [nginx, gunicorn] if c}
     while True:
-        if nginx and nginx.poll():
-            nginx.terminate()
+        pid, _ = os.wait()
+        if pid in pids:
             break
-        elif gunicorn.poll():
-            gunicorn.terminate()
-            break
-
-    sys.exit(0)
