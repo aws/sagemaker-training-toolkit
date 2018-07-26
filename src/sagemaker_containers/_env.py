@@ -28,6 +28,9 @@ _BASE_PATH_ENV = 'base_dir'  # type: str
 
 base_dir = os.environ.get(_BASE_PATH_ENV, os.path.join('/opt', 'ml'))  # type: str
 
+code_dir = os.path.join(base_dir, 'code')
+"""str: the path of the user's code directory, e.g., /opt/ml/code/"""
+
 model_dir = os.path.join(base_dir, 'model')  # type: str
 """str: the directory where models should be saved, e.g., /opt/ml/model/"""
 
@@ -222,7 +225,7 @@ class _Env(_mapping.MappingMixin):
     def __init__(self):
         current_host = os.environ.get(_params.CURRENT_HOST_ENV)
         module_name = os.environ.get(_params.USER_PROGRAM_ENV, None)
-        module_dir = os.environ.get(_params.SUBMIT_DIR_ENV, None)
+        module_dir = os.environ.get(_params.SUBMIT_DIR_ENV, code_dir)
         log_level = int(os.environ.get(_params.LOG_LEVEL_ENV, logging.INFO))
 
         self._current_host = current_host
@@ -448,8 +451,9 @@ class TrainingEnv(_Env):
         self._current_host = current_host
 
         # override base class attributes
-        self._module_name = str(sagemaker_hyperparameters[_params.USER_PROGRAM_PARAM])
-        self._module_dir = str(sagemaker_hyperparameters[_params.SUBMIT_DIR_PARAM])
+        if self._module_name is None:
+            self._module_name = str(sagemaker_hyperparameters[_params.USER_PROGRAM_PARAM])
+        self._module_dir = str(sagemaker_hyperparameters.get(_params.SUBMIT_DIR_PARAM, code_dir))
         self._log_level = sagemaker_hyperparameters.get(_params.LOG_LEVEL_PARAM, logging.INFO)
         self._framework_module = os.environ.get(_params.FRAMEWORK_TRAINING_MODULE_ENV, None)
 

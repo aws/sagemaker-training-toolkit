@@ -117,7 +117,7 @@ model.save(model_file)
 def framework_training_fn():
     training_env = sagemaker_containers.training_env()
 
-    mod = modules.import_module_from_s3(training_env.module_dir, training_env.module_name, False)
+    mod = modules.import_module(training_env.module_dir, training_env.module_name, False)
 
     model = mod.train(**functions.matching_args(mod.train, training_env))
 
@@ -219,8 +219,8 @@ def test_trainer_report_failure():
 def framework_training_with_script_mode_fn():
     training_env = sagemaker_containers.training_env()
 
-    modules.run_module_from_s3(training_env.module_dir, training_env.to_cmd_args(), training_env.to_env_vars(),
-                               training_env.module_name, cache=False)
+    modules.run_module(training_env.module_dir, training_env.to_cmd_args(), training_env.to_env_vars(),
+                       training_env.module_name, cache=False)
 
 
 @pytest.mark.parametrize('user_script', [USER_MODE_SCRIPT])
@@ -237,6 +237,37 @@ def test_script_mode(user_script):
                            sagemaker_program='user_script.py', epochs=10, batch_size=64, model_dir=env.model_dir)
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
+
+    assert execute_an_wrap_exit(framework_training_with_script_mode_fn) == trainer.SUCCESS_CODE
+
+    model_path = os.path.join(env.model_dir, 'saved_model')
+
+    model = fake_ml_framework.Model.load(model_path)
+
+    assert model.epochs == 10
+    assert model.batch_size == 64
+    assert model.loss == 'elastic'
+    assert model.optimizer == 'SGD'
+
+
+@pytest.mark.parametrize('user_script', [USER_MODE_SCRIPT])
+def test_script_mode_local_directory(user_script, tmpdir):
+    channel = test.Channel.create(name='training')
+
+    features = [1, 2, 3, 4]
+    labels = [0, 1, 0, 1]
+    np.savez(os.path.join(channel.path, 'training_data'), features=features, labels=labels)
+
+    tmp_code_dir = str(tmpdir)
+
+    module = test.UserModule(test.File(name='user_script.py', data=user_script))
+    module.create_tmp_dir_with_files(tmp_code_dir)
+
+    hyperparameters = dict(training_data_file=os.path.join(channel.path, 'training_data.npz'),
+                           sagemaker_program='user_script.py', sagemaker_submit_directory=tmp_code_dir,
+                           epochs=10, batch_size=64, model_dir=env.model_dir)
+
+    test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel], local=True)
 
     assert execute_an_wrap_exit(framework_training_with_script_mode_fn) == trainer.SUCCESS_CODE
 

@@ -240,4 +240,8 @@ def test_env_module_name(sagemaker_program):
     session_mock = Mock()
     session_mock.region_name = 'us-west-2'
     os.environ[_params.USER_PROGRAM_ENV] = sagemaker_program
-    assert _env._Env().module_name == 'program'
+    module_name = _env._Env().module_name
+
+    del os.environ[_params.USER_PROGRAM_ENV]
+
+    assert module_name == 'program'
