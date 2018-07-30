@@ -15,7 +15,6 @@ import json
 import logging
 import os
 import tarfile
-import tempfile
 import time
 
 import boto3
@@ -26,10 +25,9 @@ import werkzeug.test as werkzeug_test
 
 # loading base path before loading the environment so all the environment paths are loaded properly
 
-os.environ['base_dir'] = os.path.join(tempfile.mkdtemp(), 'opt', 'ml')
 DEFAULT_REGION = 'us-west-2'
 
-from sagemaker_containers import _encoders, _env, _files, _params, _worker  # noqa ignore=E402 module level import not at top of file
+from sagemaker_containers import _env, _files, _params, _worker  # noqa ignore=E402 module level import not at top of file
 
 DEFAULT_CONFIG = dict(ContentType="application/x-numpy", TrainingInputMode="File",
                       S3DistributionType="FullyReplicated", RecordWrapperType="None")

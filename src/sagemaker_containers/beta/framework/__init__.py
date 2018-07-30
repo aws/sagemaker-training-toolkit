@@ -14,6 +14,7 @@
 from __future__ import absolute_import
 
 # flake8: noqa ignore=F401 imported but unused
+import sagemaker_containers
 from sagemaker_containers import _content_types as content_types
 from sagemaker_containers import _encoders as encoders
 from sagemaker_containers import _errors as errors

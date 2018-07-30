@@ -14,6 +14,7 @@ import itertools
 import json
 import logging
 import os
+import socket
 
 from mock import Mock, patch
 import pytest
@@ -160,6 +161,13 @@ def create_serving_env():
         yield _env.ServingEnv()
 
         os.environ = old_environ
+
+
+def test_create_training_env_without_training_files_and_directories_should_not_fail():
+    training_env = sagemaker_containers.training_env()
+    hostname = socket.gethostname()
+    assert training_env.current_host == hostname
+    assert training_env.hosts == [hostname]
 
 
 def test_env():

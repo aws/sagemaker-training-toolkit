@@ -18,15 +18,68 @@ import logging
 import multiprocessing
 import os
 import shlex
+import socket
 import subprocess
+import time
+
+import boto3
 
 from sagemaker_containers import _logging, _mapping, _params
 
 logger = _logging.get_logger()
 
-_BASE_PATH_ENV = 'base_dir'  # type: str
+SAGEMAKER_BASE_PATH = os.path.join('/opt', 'ml')  # type: str
+BASE_PATH_ENV = 'SAGEMAKER_BASE_DIR'  # type: str
 
-base_dir = os.environ.get(_BASE_PATH_ENV, os.path.join('/opt', 'ml'))  # type: str
+
+def _write_json(obj, path):  # type: (object, str) -> None
+    """Writes a serializeable object as a JSON file"""
+    with open(path, 'w') as f:
+        json.dump(obj, f)
+
+
+def _is_training_path_configured():  # type: () -> bool
+    """Check if the tree structure with data and configuration files used for training
+    exists.
+
+    When a SageMaker Training Job is created, the Docker container that will be used for
+    training is executed with the folder /opt/ml attached. The /opt/ml folder contains
+    data and configurations files necessary for training.
+
+    Outside SageMaker, the environment variable SAGEMAKER_BASE_DIR defines the location
+    of the base folder.
+
+    This function checks wheter /opt/ml exists or if the base folder variable exists
+
+    Returns:
+        (bool): indicating whether the training path is configured or not.
+
+    """
+    return os.path.exists(SAGEMAKER_BASE_PATH) or BASE_PATH_ENV in os.environ
+
+
+def _set_base_path_env():  # type: () -> None
+    """Sets the environment variable SAGEMAKER_BASE_DIR as
+    ~/sagemaker_local/{timestamp}/opt/ml
+
+    Returns:
+        (bool): indicating whe
+    """
+
+    local_config_dir = os.path.join(os.path.expanduser('~'), 'sagemaker_local', 'jobs',
+                                    str(time.time()), 'opt', 'ml')
+
+    logger.info('Setting environment variable SAGEMAKER_BASE_DIR as %s .' % local_config_dir)
+    os.environ[BASE_PATH_ENV] = local_config_dir
+
+
+_is_path_configured = _is_training_path_configured()
+
+if not _is_path_configured:
+    logger.info('Directory /opt/ml does not exist.')
+    _set_base_path_env()
+
+base_dir = os.environ.get(BASE_PATH_ENV, SAGEMAKER_BASE_PATH)  # type: str
 
 code_dir = os.path.join(base_dir, 'code')
 """str: the path of the user's code directory, e.g., /opt/ml/code/"""
@@ -73,7 +126,7 @@ Returns:
     str: the path to the output directory, e.g. /opt/ml/output/.
 """
 
-_output_data_dir = os.path.join(output_dir, 'data')  # type: str
+output_data_dir = os.path.join(output_dir, 'data')  # type: str
 
 HYPERPARAMETERS_FILE = 'hyperparameters.json'  # type: str
 RESOURCE_CONFIG_FILE = 'resourceconfig.json'  # type: str
@@ -82,6 +135,31 @@ INPUT_DATA_CONFIG_FILE = 'inputdataconfig.json'  # type: str
 hyperparameters_file_dir = os.path.join(input_config_dir, HYPERPARAMETERS_FILE)  # type: str
 input_data_config_file_dir = os.path.join(input_config_dir, INPUT_DATA_CONFIG_FILE)  # type: str
 resource_config_file_dir = os.path.join(input_config_dir, RESOURCE_CONFIG_FILE)  # type: str
+
+
+def _create_training_directories():
+    """Creates the directory structure and files necessary for training under the base path
+    """
+    logger.info('Creating a new training folder under %s .' % base_dir)
+
+    os.makedirs(model_dir)
+    os.makedirs(input_config_dir)
+    os.makedirs(output_data_dir)
+
+    _write_json({}, hyperparameters_file_dir)
+    _write_json({}, input_data_config_file_dir)
+
+    host_name = socket.gethostname()
+
+    resources_dict = {
+        "current_host": host_name,
+        "hosts":        [host_name]
+    }
+    _write_json(resources_dict, resource_config_file_dir)
+
+
+if not _is_path_configured:
+    _create_training_directories()
 
 
 def _read_json(path):  # type: (str) -> dict
@@ -436,23 +514,24 @@ class TrainingEnv(_Env):
 
         sagemaker_hyperparameters = split_result.included
 
-        sagemaker_region = sagemaker_hyperparameters[_params.REGION_NAME_PARAM]
-        os.environ[_params.JOB_NAME_ENV] = sagemaker_hyperparameters[_params.JOB_NAME_PARAM]
+        sagemaker_region = sagemaker_hyperparameters.get(_params.REGION_NAME_PARAM, boto3.session.Session().region_name)
+
+        os.environ[_params.JOB_NAME_ENV] = sagemaker_hyperparameters.get(_params.JOB_NAME_PARAM, '')
         os.environ[_params.CURRENT_HOST_ENV] = current_host
-        os.environ[_params.REGION_NAME_ENV] = sagemaker_region
+        os.environ[_params.REGION_NAME_ENV] = sagemaker_region or ''
 
         self._hosts = hosts
         self._network_interface_name = network_interface_name
         self._hyperparameters = split_result.excluded
         self._resource_config = resource_config
         self._input_data_config = input_data_config
-        self._output_data_dir = _output_data_dir
+        self._output_data_dir = output_data_dir
         self._channel_input_dirs = {channel: channel_path(channel) for channel in input_data_config}
         self._current_host = current_host
 
         # override base class attributes
         if self._module_name is None:
-            self._module_name = str(sagemaker_hyperparameters[_params.USER_PROGRAM_PARAM])
+            self._module_name = str(sagemaker_hyperparameters.get(_params.USER_PROGRAM_PARAM, None))
         self._module_dir = str(sagemaker_hyperparameters.get(_params.SUBMIT_DIR_PARAM, code_dir))
         self._log_level = sagemaker_hyperparameters.get(_params.LOG_LEVEL_PARAM, logging.INFO)
         self._framework_module = os.environ.get(_params.FRAMEWORK_TRAINING_MODULE_ENV, None)

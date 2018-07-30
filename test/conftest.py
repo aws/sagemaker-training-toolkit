@@ -12,12 +12,16 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import json
 import logging
 import os
 import shutil
+import socket
 
 from mock import patch
 import pytest
+
+from sagemaker_containers import _env
 
 logging.getLogger('boto3').setLevel(logging.INFO)
 logging.getLogger('s3transfer').setLevel(logging.INFO)
@@ -26,17 +30,31 @@ logging.getLogger('botocore').setLevel(logging.WARN)
 DEFAULT_REGION = 'us-west-2'
 
 
+def _write_json(obj, path):  # type: (object, str) -> None
+    with open(path, 'w') as f:
+        json.dump(obj, f)
+
+
 @pytest.fixture(autouse=True)
 def create_base_path():
-    from sagemaker_containers import _env
+
+    yield str(os.environ[_env.BASE_PATH_ENV])
+
+    shutil.rmtree(os.environ[_env.BASE_PATH_ENV])
 
     os.makedirs(_env.model_dir)
     os.makedirs(_env.input_config_dir)
-    os.makedirs(_env._output_data_dir)
+    os.makedirs(_env.output_data_dir)
 
-    yield str(os.environ['base_dir'])
+    _write_json({}, _env.hyperparameters_file_dir)
+    _write_json({}, _env.input_data_config_file_dir)
+    host_name = socket.gethostname()
 
-    shutil.rmtree(os.environ['base_dir'])
+    resources_dict = {
+        "current_host": host_name,
+        "hosts":        [host_name]
+    }
+    _write_json(resources_dict, _env.resource_config_file_dir)
 
 
 @pytest.fixture(autouse=True)
