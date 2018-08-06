@@ -2,12 +2,18 @@
 CHANGELOG
 =========
 
+2.1.0
+=====
+* Allow for local modules to work with AWS SageMaker framework containers.
+* Support for training outside of AWS SageMaker Training.
+
+
 2.0.4
 =====
 
 * Fix output_data_dir to reference an existing directory.
 * Fix error message.
-* Make pip install verbose. 
+* Make pip install verbose.
 
 2.0.3
 =====
