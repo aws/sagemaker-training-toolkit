@@ -2,11 +2,18 @@
 CHANGELOG
 =========
 
+2.2.0
+=====
+
+* [breaking change] Remove ``UnsupportedFormatError``
+* Add ``UnsupportedContentTypeError`` and ``UnsupportedAcceptTypeError``
+* Return 4XX status codes for errors raised during transform()
+
 2.1.0
 =====
+
 * Allow for local modules to work with AWS SageMaker framework containers.
 * Support for training outside of AWS SageMaker Training.
-
 
 2.0.4
 =====

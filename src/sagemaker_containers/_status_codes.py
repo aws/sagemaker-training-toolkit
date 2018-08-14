@@ -12,3 +12,7 @@
 # language governing permissions and limitations under the License.
 OK = 200
 ACCEPTED = 202
+
+BAD_REQUEST = 400
+NOT_ACCEPTABLE = 406
+UNSUPPORTED_MEDIA_TYPE = 415
