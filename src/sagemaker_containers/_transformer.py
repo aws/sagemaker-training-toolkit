@@ -15,7 +15,9 @@ from __future__ import absolute_import
 import json
 import textwrap
 
-from sagemaker_containers import _encoders, _env, _errors, _functions, _status_codes, _worker
+from six.moves import http_client
+
+from sagemaker_containers import _encoders, _env, _errors, _functions, _worker
 
 
 def default_model_fn(model_dir):
@@ -156,11 +158,11 @@ class Transformer(object):
             prediction = self._predict_fn(data, self._model)
             result = self._output_fn(prediction, request.accept)
         except _errors.ClientError as e:
-            return self._error_response(e, _status_codes.BAD_REQUEST)
+            return self._error_response(e, http_client.BAD_REQUEST)
         except _errors.UnsupportedContentTypeError as e:
-            return self._error_response(e, _status_codes.UNSUPPORTED_MEDIA_TYPE)
+            return self._error_response(e, http_client.UNSUPPORTED_MEDIA_TYPE)
         except _errors.UnsupportedAcceptTypeError as e:
-            return self._error_response(e, _status_codes.NOT_ACCEPTABLE)
+            return self._error_response(e, http_client.NOT_ACCEPTABLE)
 
         if isinstance(result, tuple):
             # transforms tuple in Response for backwards compatibility

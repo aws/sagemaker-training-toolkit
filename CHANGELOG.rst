@@ -5,6 +5,7 @@ CHANGELOG
 2.2.0
 =====
 
+* [breaking change] Remove ``status_codes`` module and use ``six.moves.http_client`` instead
 * [breaking change] Remove ``UnsupportedFormatError``
 * Add ``UnsupportedContentTypeError`` and ``UnsupportedAcceptTypeError``
 * Return 4XX status codes for errors raised during transform()

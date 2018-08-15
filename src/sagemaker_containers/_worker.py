@@ -13,8 +13,9 @@
 from __future__ import absolute_import
 
 import flask
+from six.moves import http_client
 
-from sagemaker_containers import _content_types, _env, _logging, _mapping, _status_codes
+from sagemaker_containers import _content_types, _env, _logging, _mapping
 
 env = _env.ServingEnv()
 
@@ -40,7 +41,7 @@ def default_healthcheck_fn():  # type: () -> Response
     Returns:
         (flask.Response): with status code 200
     """
-    return Response(status=_status_codes.OK)
+    return Response(status=http_client.OK)
 
 
 class Worker(flask.Flask):
@@ -86,7 +87,7 @@ class Worker(flask.Flask):
 class Response(flask.Response):
     default_mimetype = _content_types.JSON
 
-    def __init__(self, response=None, accept=None, status=_status_codes.OK, headers=None,
+    def __init__(self, response=None, accept=None, status=http_client.OK, headers=None,
                  mimetype=None, direct_passthrough=False):
         headers = headers or {}
         headers['accept'] = accept

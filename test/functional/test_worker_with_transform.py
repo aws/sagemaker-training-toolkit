@@ -16,9 +16,9 @@ import json
 
 from mock import patch, PropertyMock
 import pytest
-from six.moves import range
+from six.moves import http_client, range
 
-from sagemaker_containers import _content_types, _status_codes, _worker
+from sagemaker_containers import _content_types, _worker
 
 
 class Transformer(object):
@@ -41,11 +41,11 @@ def test_worker_with_initialize():
                         module_name='worker_with_initialize').test_client() as client:
         assert client.application.import_name == 'worker_with_initialize'
 
-        assert client.get('/ping').status_code == _status_codes.OK
+        assert client.get('/ping').status_code == http_client.OK
 
         for _ in range(9):
             response = client.post('/invocations')
-            assert response.status_code == _status_codes.OK
+            assert response.status_code == http_client.OK
 
         response = client.post('/invocations')
         assert json.loads(response.get_data(as_text=True)) == dict(initialize=1, transform=10)
@@ -61,11 +61,11 @@ def test_worker(module_name, expected_name):
                         module_name=module_name).test_client() as client:
         assert client.application.import_name == expected_name
 
-        assert client.get('/ping').status_code == _status_codes.OK
+        assert client.get('/ping').status_code == http_client.OK
 
         for _ in range(9):
             response = client.post('/invocations')
-            assert response.status_code == _status_codes.OK
+            assert response.status_code == http_client.OK
 
         response = client.post('/invocations')
         assert json.loads(response.get_data(as_text=True)) == dict(initialize=0, transform=10)
@@ -76,11 +76,11 @@ def test_worker_with_custom_ping():
     transformer = Transformer()
 
     def custom_ping():
-        return 'ping', _status_codes.ACCEPTED
+        return 'ping', http_client.ACCEPTED
 
     with _worker.Worker(transform_fn=transformer.transform,
                         healthcheck_fn=custom_ping,
                         module_name='custom_ping').test_client() as client:
         response = client.get('/ping')
-        assert response.status_code == _status_codes.ACCEPTED
+        assert response.status_code == http_client.ACCEPTED
         assert response.get_data(as_text=True) == 'ping'

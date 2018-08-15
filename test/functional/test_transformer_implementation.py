@@ -15,8 +15,9 @@ from __future__ import absolute_import
 import os
 
 import numpy as np
+from six.moves import http_client
 
-from sagemaker_containers.beta.framework import content_types, encoders, env, status_codes, transformer, worker
+from sagemaker_containers.beta.framework import content_types, encoders, env, transformer, worker
 import test
 from test import fake_ml_framework
 
@@ -45,18 +46,18 @@ def test_transformer_implementation():
         payload = [6, 9, 42.]
         response = post(client, payload, content_types.NPY, content_types.JSON)
 
-        assert response.status_code == status_codes.OK
+        assert response.status_code == http_client.OK
 
         assert response.get_data(as_text=True) == '[36.0, 81.0, 1764.0]'
 
         response = post(client, payload, content_types.JSON, content_types.CSV)
 
-        assert response.status_code == status_codes.OK
+        assert response.status_code == http_client.OK
         assert response.get_data(as_text=True) == '36.0\n81.0\n1764.0\n'
 
         response = post(client, payload, content_types.CSV, content_types.NPY)
 
-        assert response.status_code == status_codes.OK
+        assert response.status_code == http_client.OK
         response_data = encoders.npy_to_numpy(response.get_data())
 
         np.testing.assert_array_almost_equal(response_data, np.asarray([36., 81., 1764.]))

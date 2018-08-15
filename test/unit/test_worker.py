@@ -15,14 +15,14 @@ from __future__ import absolute_import
 from mock import MagicMock, patch, PropertyMock
 import numpy as np
 import pytest
-from six.moves import range
+from six.moves import http_client, range
 
-from sagemaker_containers import _content_types, _encoders, _status_codes, _worker
+from sagemaker_containers import _content_types, _encoders, _worker
 import test
 
 
 def test_default_ping_fn():
-    assert _worker.default_healthcheck_fn().status_code == _status_codes.OK
+    assert _worker.default_healthcheck_fn().status_code == http_client.OK
 
 
 @pytest.fixture(name='flask')
@@ -62,7 +62,7 @@ def test_invocations():
     with app.test_client() as client:
         for _ in range(9):
             response = client.post('/invocations')
-            assert response.status_code == _status_codes.OK
+            assert response.status_code == http_client.OK
             assert response.get_data().decode('utf-8') == 'fake data'
             assert response.mimetype == _content_types.JSON
 
@@ -73,7 +73,7 @@ def test_ping():
     with app.test_client() as client:
         for _ in range(9):
             response = client.get('/ping')
-            assert response.status_code == _status_codes.OK
+            assert response.status_code == http_client.OK
             assert response.mimetype == _content_types.JSON
 
 

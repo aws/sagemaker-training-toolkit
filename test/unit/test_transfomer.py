@@ -14,8 +14,9 @@ import json
 
 from mock import MagicMock, patch
 import pytest
+from six.moves import http_client
 
-from sagemaker_containers import _content_types, _env, _errors, _status_codes, _transformer
+from sagemaker_containers import _content_types, _env, _errors, _transformer
 import test
 
 
@@ -75,7 +76,7 @@ def test_transformer_transform_with_client_error(input_fn, predict_fn, output_fn
                                          predict_fn=predict_fn, output_fn=output_fn)
 
     response = transform.transform()
-    assert response.status_code == _status_codes.BAD_REQUEST
+    assert response.status_code == http_client.BAD_REQUEST
     assert json.loads(response.response[0].decode('utf-8'))['error'] == str(error_from_fn)
 
 
@@ -84,7 +85,7 @@ def test_transformer_transform_with_unsupported_content_type():
     with patch('sagemaker_containers._worker.Request', lambda: bad_request):
         response = _transformer.Transformer().transform()
 
-    assert response.status_code == _status_codes.UNSUPPORTED_MEDIA_TYPE
+    assert response.status_code == http_client.UNSUPPORTED_MEDIA_TYPE
 
 
 def test_transformer_transform_with_unsupported_accept_type():
@@ -95,7 +96,7 @@ def test_transformer_transform_with_unsupported_accept_type():
     with patch('sagemaker_containers._worker.Request', lambda: bad_request):
         response = _transformer.Transformer(model_fn=empty_fn, input_fn=empty_fn, predict_fn=empty_fn).transform()
 
-    assert response.status_code == _status_codes.NOT_ACCEPTABLE
+    assert response.status_code == http_client.NOT_ACCEPTABLE
 
 
 @patch('sagemaker_containers._worker.Request', lambda: request)
@@ -138,7 +139,7 @@ def test_transformer_transform_backwards_compatibility():
 
     transform.initialize()
 
-    assert transform.transform().status_code == _status_codes.OK
+    assert transform.transform().status_code == http_client.OK
 
     input_fn.assert_called_with(request.content, request.content_type)
     predict_fn.assert_called_with(input_fn(), model_fn())

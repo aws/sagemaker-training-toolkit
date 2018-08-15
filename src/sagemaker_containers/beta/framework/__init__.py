@@ -25,7 +25,6 @@ from sagemaker_containers import _mapping as mapping
 from sagemaker_containers import _modules as modules
 from sagemaker_containers import _params as params
 from sagemaker_containers import _server as server
-from sagemaker_containers import _status_codes as status_codes
 from sagemaker_containers import _trainer as trainer
 from sagemaker_containers import _transformer as transformer
 from sagemaker_containers import _worker as worker
