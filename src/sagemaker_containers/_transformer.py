@@ -12,10 +12,7 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import json
 import textwrap
-
-from six.moves import http_client
 
 from sagemaker_containers import _encoders, _env, _errors, _functions, _worker
 
@@ -153,23 +150,12 @@ class Transformer(object):
         """
         request = _worker.Request()
 
-        try:
-            data = self._input_fn(request.content, request.content_type)
-            prediction = self._predict_fn(data, self._model)
-            result = self._output_fn(prediction, request.accept)
-        except _errors.ClientError as e:
-            return self._error_response(e, http_client.BAD_REQUEST)
-        except _errors.UnsupportedContentTypeError as e:
-            return self._error_response(e, http_client.UNSUPPORTED_MEDIA_TYPE)
-        except _errors.UnsupportedAcceptTypeError as e:
-            return self._error_response(e, http_client.NOT_ACCEPTABLE)
+        data = self._input_fn(request.content, request.content_type)
+        prediction = self._predict_fn(data, self._model)
+        result = self._output_fn(prediction, request.accept)
 
         if isinstance(result, tuple):
             # transforms tuple in Response for backwards compatibility
             return _worker.Response(response=result[0], accept=result[1])
 
         return result
-
-    def _error_response(self, error, status_code):
-        body = json.dumps({'error': str(error)})
-        return _worker.Response(response=body, status=status_code)

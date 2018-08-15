@@ -12,8 +12,6 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import textwrap
-
 import six
 
 
@@ -56,25 +54,3 @@ class ExecuteUserScriptError(_CalledProcessError):
 class ChannelDoesNotExistException(Exception):
     def __init__(self, channel_name):
         super(ChannelDoesNotExistException, self).__init__('Channel %s is not a valid channel' % channel_name)
-
-
-class UnsupportedContentTypeError(Exception):
-    def __init__(self, content_type, **kwargs):
-        super(Exception, self).__init__(**kwargs)
-        self.message = textwrap.dedent(
-            """Content type %s is not supported by this framework.
-
-            Please implement input_fn to to deserialize the request data.
-            For more, see the SageMaker Python SDK README."""
-            % content_type)
-
-
-class UnsupportedAcceptTypeError(Exception):
-    def __init__(self, content_type, **kwargs):
-        super(Exception, self).__init__(**kwargs)
-        self.message = textwrap.dedent(
-            """Content type %s is not supported by this framework.
-
-            Please implement output_fn to serialize the response.
-            For more, see the SageMaker Python SDK README."""
-            % content_type)
