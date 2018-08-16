@@ -161,10 +161,10 @@ def encode(array_like, content_type):  # type: (np.array or Iterable or int or f
 
 class UnsupportedFormatError(Exception):
     def __init__(self, content_type, **kwargs):
-        super(Exception, self).__init__(**kwargs)
         self.message = textwrap.dedent(
             """Content type %s is not supported by this framework.
 
-               Please implement input_fn to to deserialize the request data or an output_fn to serialize the
-               response. For more information: https://github.com/aws/sagemaker-python-sdk#input-processing"""
+            Please implement input_fn to to deserialize the request data or an output_fn to
+            serialize the response. For more information, see the SageMaker Python SDK README."""
             % content_type)
+        super(Exception, self).__init__(self.message, **kwargs)

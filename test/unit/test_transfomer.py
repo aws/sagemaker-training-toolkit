@@ -10,6 +10,8 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import json
+
 from mock import MagicMock, patch
 import pytest
 from six.moves import http_client
@@ -85,6 +87,10 @@ def test_transformer_transform_with_unsupported_content_type():
 
     assert response.status_code == http_client.UNSUPPORTED_MEDIA_TYPE
 
+    response_body = json.loads(response.response[0].decode('utf-8'))
+    assert response_body['error'] == 'UnsupportedFormatError'
+    assert bad_request.content_type in response_body['error-message']
+
 
 def test_transformer_transform_with_unsupported_accept_type():
     def empty_fn(*args):
@@ -96,6 +102,10 @@ def test_transformer_transform_with_unsupported_accept_type():
         response = t.transform()
 
     assert response.status_code == http_client.NOT_ACCEPTABLE
+
+    response_body = json.loads(response.response[0].decode('utf-8'))
+    assert response_body['error'] == 'UnsupportedFormatError'
+    assert bad_request.accept in response_body['error-message']
 
 
 @patch('sagemaker_containers._worker.Request', lambda: request)
