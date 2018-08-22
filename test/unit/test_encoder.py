@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 from six import BytesIO
 
-from sagemaker_containers import _content_types, _encoders
+from sagemaker_containers import _content_types, _encoders, _errors
 
 
 @pytest.mark.parametrize('target', ([42, 6, 9], [42., 6., 9.], ['42', '6', '9'], [u'42', u'6', u'9'], {42: {'6': 9.}}))
@@ -110,12 +110,12 @@ def test_encode(content_type):
 
 
 def test_encode_error():
-    with pytest.raises(_encoders.UnsupportedFormatError):
+    with pytest.raises(_errors.UnsupportedFormatError):
         _encoders.encode(42, _content_types.OCTET_STREAM)
 
 
 def test_decode_error():
-    with pytest.raises(_encoders.UnsupportedFormatError):
+    with pytest.raises(_errors.UnsupportedFormatError):
         _encoders.decode(42, _content_types.OCTET_STREAM)
 
 

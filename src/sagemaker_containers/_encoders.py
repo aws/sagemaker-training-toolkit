@@ -13,12 +13,11 @@
 from __future__ import absolute_import
 
 import json
-import textwrap
 
 import numpy as np
 from six import BytesIO, StringIO
 
-from sagemaker_containers import _content_types
+from sagemaker_containers import _content_types, _errors
 
 
 def array_to_npy(array_like):  # type: (np.array or Iterable or int or float) -> object
@@ -136,7 +135,7 @@ def decode(obj, content_type):  # type: (np.array or Iterable or int or float) -
         decoder = _decoders_map[content_type]
         return decoder(obj)
     except KeyError:
-        raise UnsupportedFormatError(content_type)
+        raise _errors.UnsupportedFormatError(content_type)
 
 
 def encode(array_like, content_type):  # type: (np.array or Iterable or int or float) -> np.array
@@ -156,15 +155,4 @@ def encode(array_like, content_type):  # type: (np.array or Iterable or int or f
         encoder = _encoders_map[content_type]
         return encoder(array_like)
     except KeyError:
-        raise UnsupportedFormatError(content_type)
-
-
-class UnsupportedFormatError(Exception):
-    def __init__(self, content_type, **kwargs):
-        self.message = textwrap.dedent(
-            """Content type %s is not supported by this framework.
-
-            Please implement input_fn to to deserialize the request data or an output_fn to
-            serialize the response. For more information, see the SageMaker Python SDK README."""
-            % content_type)
-        super(Exception, self).__init__(self.message, **kwargs)
+        raise _errors.UnsupportedFormatError(content_type)

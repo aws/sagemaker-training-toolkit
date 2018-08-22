@@ -6,6 +6,7 @@ CHANGELOG
 =====
 
 * [breaking change] Remove ``status_codes`` module and use ``six.moves.http_client`` instead
+* [breaking change] Move ``UnsupportedFormatError`` from ``encoders`` module to ``errors`` module
 * Return 4XX status codes for ``UnsupportedFormatError`` from default input/output handlers
 
 2.1.0

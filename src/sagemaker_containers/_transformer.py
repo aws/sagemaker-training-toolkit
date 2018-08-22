@@ -156,14 +156,14 @@ class Transformer(object):
 
         try:
             data = self._input_fn(request.content, request.content_type)
-        except _encoders.UnsupportedFormatError as e:
+        except _errors.UnsupportedFormatError as e:
             return self._error_response(e, http_client.UNSUPPORTED_MEDIA_TYPE)
 
         prediction = self._predict_fn(data, self._model)
 
         try:
             result = self._output_fn(prediction, request.accept)
-        except _encoders.UnsupportedFormatError as e:
+        except _errors.UnsupportedFormatError as e:
             return self._error_response(e, http_client.NOT_ACCEPTABLE)
 
         if isinstance(result, tuple):
