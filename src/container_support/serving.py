@@ -1,26 +1,28 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
-import os
-import logging
-import signal
-import sys
 import json
-from flask import Flask, request, Response
-import container_support as cs
-import subprocess
-import shutil
+import logging
+import os
 import pkg_resources
+import shutil
+import signal
+import subprocess
+import sys
+
+from flask import Flask, request, Response
+
+import container_support as cs
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +191,7 @@ class Server(object):
                         mimetype=output_content_type)
 
     def _handle_invoke_exception(self, e):
-        data = json.dumps(e.message)
+        data = json.dumps(str(e))
         if isinstance(e, UnsupportedContentTypeError):
             # Unsupported Media Type
             return 415, data
@@ -248,17 +250,17 @@ class Transformer(object):
 
 class UnsupportedContentTypeError(Exception):
     def __init__(self, *args, **kwargs):
-        super(Exception, self).__init__(args[1:], **kwargs)
         self.message = 'Requested unsupported ContentType: ' + args[0]
+        super(Exception, self).__init__(self.message, *args, **kwargs)
 
 
 class UnsupportedAcceptTypeError(Exception):
     def __init__(self, *args, **kwargs):
-        super(Exception, self).__init__(args[1:], **kwargs)
         self.message = 'Requested unsupported ContentType in Accept: ' + args[0]
+        super(Exception, self).__init__(self.message, *args, **kwargs)
 
 
 class UnsupportedInputShapeError(Exception):
     def __init__(self, *args, **kwargs):
-        super(Exception, self).__init__(args[1:], **kwargs)
         self.message = 'Model can have only 1 input data, but it has: ' + str(args[0])
+        super(Exception, self).__init__(self.message, *args, **kwargs)
