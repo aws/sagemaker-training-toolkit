@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+1.0.5
+=====
+
+* bug-fix: Serving: Change error message retrieval to use str(e)
+
 1.0.4
 =====
 
