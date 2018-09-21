@@ -11,6 +11,7 @@
 #  express or implied. See the License for the specific language governing 
 #  permissions and limitations under the License.
 
+import os
 import tarfile
 
 import boto3
@@ -30,7 +31,7 @@ def download_s3_resource(source, target):
     """ Downloads the s3 object source and stores in a new file with path target.
     """
     print("Downloading {} to {}".format(source, target))
-    s3 = boto3.resource('s3')
+    s3 = boto3.resource('s3', region_name=os.environ.get('AWS_REGION'))
 
     script_bucket_name, script_key_name = parse_s3_url(source)
     script_bucket = s3.Bucket(script_bucket_name)

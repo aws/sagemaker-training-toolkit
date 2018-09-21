@@ -11,6 +11,8 @@
 #  express or implied. See the License for the specific language governing 
 #  permissions and limitations under the License.
 
+import os
+
 import pytest
 from mock import patch, call
 
@@ -32,10 +34,11 @@ def test_parse_s3_url_no_key():
 
 def test_download_s3():
     with patch('boto3.resource') as patched:
-        assert cs.download_s3_resource("s3://bucket/key", "target") == "target"
-        assert [call('s3'),
-                call().Bucket('bucket'),
-                call().Bucket().download_file('key', 'target')] == patched.mock_calls
+        with patch.dict(os.environ, {'AWS_REGION': 'us-west-2'}):
+            assert cs.download_s3_resource("s3://bucket/key", "target") == "target"
+            assert [call('s3', region_name='us-west-2'),
+                    call().Bucket('bucket'),
+                    call().Bucket().download_file('key', 'target')] == patched.mock_calls
 
 
 def test_untar_directory():

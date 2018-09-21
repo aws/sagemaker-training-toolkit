@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+1.0.6
+=====
+
+* enhancement: Utils: Specify region name in boto call
+
 1.0.5
 =====
 
