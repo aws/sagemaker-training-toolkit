@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.2.1
+=====
+
+* bug-fix: Use regional endpoint for S3 clients
+
 2.2.0
 =====
 
