@@ -36,7 +36,7 @@ builtins_open = '__builtin__.open' if PY2 else 'builtins.open'
 def test_s3_download(resource, url, bucket_name, key, dst):
     _modules.s3_download(url, dst)
 
-    chain = call('s3').Bucket(bucket_name).download_file(key, dst)
+    chain = call('s3', region_name=os.environ.get('AWS_REGION')).Bucket(bucket_name).download_file(key, dst)
     assert resource.mock_calls == chain.call_list()
 
 
