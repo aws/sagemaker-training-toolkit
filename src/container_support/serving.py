@@ -54,8 +54,6 @@ class Server(object):
         logger.info("creating Server instance")
         env = cs.HostingEnvironment()
 
-        env.pip_install_requirements()
-        logger.info("importing user module")
         user_module = env.import_user_module() if env.user_script_name else None
 
         framework = cs.ContainerEnvironment.load_framework()
@@ -76,7 +74,9 @@ class Server(object):
 
         if env.user_script_name:
             Server._download_user_module(env)
+            env.pip_install_requirements()
 
+        logger.info("importing user module")
         logger.info('loading framework-specific dependencies')
         framework = cs.ContainerEnvironment.load_framework()
         framework.load_dependencies()

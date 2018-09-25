@@ -11,10 +11,13 @@
 #  express or implied. See the License for the specific language governing 
 #  permissions and limitations under the License.
 
-import pytest
+import os
 import json
 import signal
+
 from mock import patch
+import pytest
+
 from container_support.serving import (Server,
                                        Transformer,
                                        UnsupportedContentTypeError,
@@ -175,6 +178,21 @@ def test_sigterm_hander(exit, kill):
     kill.assert_called_with(1, signal.SIGQUIT)
     kill.assert_called_with(2, signal.SIGTERM)
     exit.assert_called_with(0)
+
+
+@patch('container_support.Server._download_user_module')
+@patch('subprocess.check_call')
+@patch('subprocess.Popen')
+@patch('signal.signal')
+@patch('container_support.HostingEnvironment')
+@patch.dict(os.environ, {'SAGEMAKER_CONTAINER_LOG_LEVEL': '20', 'SAGEMAKER_REGION': 'us-west-2'})
+def test_server_start(HostingEnvironment, signal, Popen, check_call, _download_user_module):
+    with pytest.raises(OSError):
+        Server.start()
+
+    env = HostingEnvironment()
+    env.start_metrics_if_enabled.assert_called()
+    env.pip_install_requirements.assert_called()
 
 
 @patch('os.kill')
