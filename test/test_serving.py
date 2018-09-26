@@ -185,14 +185,16 @@ def test_sigterm_hander(exit, kill):
 @patch('subprocess.Popen')
 @patch('signal.signal')
 @patch('container_support.HostingEnvironment')
+@patch('container_support.ContainerEnvironment')
 @patch.dict(os.environ, {'SAGEMAKER_CONTAINER_LOG_LEVEL': '20', 'SAGEMAKER_REGION': 'us-west-2'})
-def test_server_start(HostingEnvironment, signal, Popen, check_call, _download_user_module):
+def test_server_start(ContainerEnvironment, HostingEnvironment, signal, Popen, check_call, _download_user_module):
     with pytest.raises(OSError):
         Server.start()
 
     env = HostingEnvironment()
     env.start_metrics_if_enabled.assert_called()
     env.pip_install_requirements.assert_called()
+    ContainerEnvironment.load_framework().load_dependencies.assert_called()
 
 
 @patch('os.kill')
