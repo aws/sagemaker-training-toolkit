@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.2.2
+=====
+
+* bug-fix: Fix choosing region for S3 client
+
 2.2.1
 =====
 

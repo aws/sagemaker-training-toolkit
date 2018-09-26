@@ -23,7 +23,7 @@ from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-from sagemaker_containers import _errors, _modules
+from sagemaker_containers import _errors, _modules, _params
 import test
 
 builtins_open = '__builtin__.open' if PY2 else 'builtins.open'
@@ -34,9 +34,12 @@ builtins_open = '__builtin__.open' if PY2 else 'builtins.open'
                          [('S3://my-bucket/path/to/my-file', 'my-bucket', 'path/to/my-file', '/tmp/my-file'),
                           ('s3://my-bucket/my-file', 'my-bucket', 'my-file', '/tmp/my-file')])
 def test_s3_download(resource, url, bucket_name, key, dst):
+    region = 'us-west-2'
+    os.environ[_params.REGION_NAME_ENV] = region
+
     _modules.s3_download(url, dst)
 
-    chain = call('s3', region_name=os.environ.get('AWS_REGION')).Bucket(bucket_name).download_file(key, dst)
+    chain = call('s3', region_name=region).Bucket(bucket_name).download_file(key, dst)
     assert resource.mock_calls == chain.call_list()
 
 

@@ -24,7 +24,7 @@ import boto3
 import six
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_containers import _errors, _files, _logging
+from sagemaker_containers import _errors, _files, _logging, _params
 
 logger = _logging.get_logger()
 
@@ -45,7 +45,9 @@ def s3_download(url, dst):  # type: (str, str) -> None
 
     bucket, key = url.netloc, url.path.lstrip('/')
 
-    s3 = boto3.resource('s3', region_name=os.environ.get('AWS_REGION'))
+    region = os.environ.get('AWS_REGION', os.environ.get(_params.REGION_NAME_ENV))
+    s3 = boto3.resource('s3', region_name=region)
+
     s3.Bucket(bucket).download_file(key, dst)
 
 
