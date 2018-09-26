@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+1.0.7
+=====
+
+* bug-fix: Utils: Fix region-choosing when making S3 client
+
 1.0.6
 =====
 

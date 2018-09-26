@@ -1,14 +1,14 @@
 #  Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  
+#
 #  Licensed under the Apache License, Version 2.0 (the "License").
 #  You may not use this file except in compliance with the License.
 #  A copy of the License is located at
-#  
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  or in the "license" file accompanying this file. This file is distributed 
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-#  express or implied. See the License for the specific language governing 
+#
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
 #  permissions and limitations under the License.
 
 import os
@@ -35,6 +35,15 @@ def test_parse_s3_url_no_key():
 def test_download_s3():
     with patch('boto3.resource') as patched:
         with patch.dict(os.environ, {'AWS_REGION': 'us-west-2'}):
+            assert cs.download_s3_resource("s3://bucket/key", "target") == "target"
+            assert [call('s3', region_name='us-west-2'),
+                    call().Bucket('bucket'),
+                    call().Bucket().download_file('key', 'target')] == patched.mock_calls
+
+
+def test_download_s3_with_alternate_region_env_var():
+    with patch('boto3.resource') as patched:
+        with patch.dict(os.environ, {'SAGEMAKER_REGION': 'us-west-2'}):
             assert cs.download_s3_resource("s3://bucket/key", "target") == "target"
             assert [call('s3', region_name='us-west-2'),
                     call().Bucket('bucket'),
