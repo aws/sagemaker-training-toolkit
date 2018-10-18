@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.2.3
+=====
+
+* enhancement: remove request size limit
+
 2.2.2
 =====
 
