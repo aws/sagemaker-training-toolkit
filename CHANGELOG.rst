@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+1.0.9
+=====
+
+* bug-fix: remove request size limit correctly
+
 1.0.8
 =====
 
