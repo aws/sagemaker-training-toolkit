@@ -13,7 +13,7 @@ packages.append('sagemaker_containers.etc')
 
 setup(
     name='sagemaker_containers',
-    version='2.2.4',
+    version='2.2.5',
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
     packages=packages,
