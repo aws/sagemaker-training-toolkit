@@ -153,3 +153,27 @@ def test_transformer_transform_backwards_compatibility():
     input_fn.assert_called_with(request.content, request.content_type)
     predict_fn.assert_called_with(input_fn(), model_fn())
     output_fn.assert_called_with(predict_fn(), request.accept)
+
+
+@patch('sagemaker_containers._worker.Request', lambda: request)
+def test_transformer_with_custom_transform_fn():
+    model = MagicMock()
+
+    def model_fn(model_dir):
+        return model
+
+    transform_fn = MagicMock()
+
+    transform = _transformer.Transformer(model_fn=model_fn, transform_fn=transform_fn)
+    transform.initialize()
+    transform.transform()
+
+    transform_fn.assert_called_with(model, request.content, request.content_type, request.accept)
+
+
+def test_transformer_too_many_custom_methods():
+    with pytest.raises(ValueError) as e:
+        _transformer.Transformer(input_fn=MagicMock(), predict_fn=MagicMock(),
+                                 output_fn=MagicMock(), transform_fn=MagicMock())
+
+    assert 'Cannot use transform_fn implementation with input_fn, predict_fn, and/or output_fn' in str(e)

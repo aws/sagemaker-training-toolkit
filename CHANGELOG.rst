@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.2.5dev
+=====
+
+* feature: Transformer: support user-supplied ``transform_fn``
+
 2.2.4
 =====
 
