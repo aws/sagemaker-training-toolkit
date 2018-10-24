@@ -2,11 +2,11 @@
 CHANGELOG
 =========
 
-2.2.6dev
-========
+2.2.6
+=====
 
 * feature: Make it optional for run_module method to wait for the subprocess to exit
-* feature: Allow addtional sagemaker hyperparameters to be stored in TrainingEnv
+* feature: Allow additional sagemaker hyperparameters to be stored in TrainingEnv
 
 2.2.5
 =====
