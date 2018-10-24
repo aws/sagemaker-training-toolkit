@@ -171,7 +171,7 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
             install(module_path)
 
 
-def run(module_name, args=None, env_vars=None):  # type: (str, list, dict) -> None
+def run(module_name, args=None, env_vars=None, wait=True):  # type: (str, list, dict, bool) -> Popen
     """Run Python module as a script.
 
     Search sys.path for the named module and execute its contents as the __main__ module.
@@ -227,16 +227,24 @@ def run(module_name, args=None, env_vars=None):  # type: (str, list, dict) -> No
 
     _logging.log_script_invocation(cmd, env_vars)
 
-    _check_error(cmd, _errors.ExecuteUserScriptError)
+    if wait:
+        return _check_error(cmd, _errors.ExecuteUserScriptError)
+    else:
+        return _make_process(cmd)
+
+
+def _make_process(cmd, **kwargs):
+    return subprocess.Popen(cmd, stderr=subprocess.PIPE, env=os.environ, **kwargs)
 
 
 def _check_error(cmd, error_class, **kwargs):
-    process = subprocess.Popen(cmd, stderr=subprocess.PIPE, env=os.environ, **kwargs)
+    process = _make_process(cmd, **kwargs)
     stdout, stderr = process.communicate()
 
     return_code = process.poll()
     if return_code:
         raise error_class(return_code=return_code, cmd=' '.join(cmd), output=stderr)
+    return process
 
 
 def python_executable():
@@ -273,8 +281,8 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=True):  # type: (str, str
         six.reraise(_errors.ImportModuleError, _errors.ImportModuleError(e), sys.exc_info()[2])
 
 
-def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=True):
-    # type: (str, list, dict, str) -> None
+def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=True, wait=True):
+    # type: (str, list, dict, str, bool, bool) -> Popen
     """Download, prepare and executes a compressed tar file from S3 or provided directory as a module.
 
     SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
@@ -285,7 +293,9 @@ def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=True):
         args (list):  A list of program arguments.
         env_vars (dict): A map containing the environment variables to be written.
         name (str): name of the script or module.
-        cache (bool): if True it will avoid downloading the module again, if already installed.
+        cache (bool): If True it will avoid downloading the module again, if already installed.
+        wait (bool): If True run_module will wait for the user module to exit and check the exit code,
+                     otherwise it will launch the user module with subprocess and return the process object.
     """
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
@@ -294,7 +304,7 @@ def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=True):
 
     write_env_vars(env_vars)
 
-    return run(name, args, env_vars)
+    return run(name, args, env_vars, wait)
 
 
 def write_env_vars(env_vars=None):  # type: (dict) -> None

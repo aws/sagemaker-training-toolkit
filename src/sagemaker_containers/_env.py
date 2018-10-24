@@ -513,6 +513,10 @@ class TrainingEnv(_Env):
                                                   prefix=_params.SAGEMAKER_PREFIX)
 
         sagemaker_hyperparameters = split_result.included
+        additional_framework_parameters = {
+            k: sagemaker_hyperparameters[k] for k in sagemaker_hyperparameters.keys()
+            if k not in _params.SAGEMAKER_HYPERPARAMETERS
+        }
 
         sagemaker_region = sagemaker_hyperparameters.get(_params.REGION_NAME_PARAM, boto3.session.Session().region_name)
 
@@ -523,6 +527,7 @@ class TrainingEnv(_Env):
         self._hosts = hosts
         self._network_interface_name = network_interface_name
         self._hyperparameters = split_result.excluded
+        self._additional_framework_parameters = additional_framework_parameters
         self._resource_config = resource_config
         self._input_data_config = input_data_config
         self._output_data_dir = output_data_dir
@@ -550,6 +555,18 @@ class TrainingEnv(_Env):
         """
         return self._job_name
 
+    @property
+    def additional_framework_parameters(self):  # type: () -> dict
+        """The dict of additional framework hyperparameters. All the hyperparameters prefixed with 'sagemaker_' but
+            not in SAGEMAKER_HYPERPARAMETERS will be included here.
+
+        Returns:
+            dict: additional framework hyperparameters, SageMaker Python SDK adds hyperparameters with a prefix
+            **sagemaker_** during training. These hyperparameters are framework independent settings and are not
+            defined by the user.
+        """
+        return self._additional_framework_parameters
+
     def to_cmd_args(self):
         """Command line arguments representation of the training environment.
 
@@ -568,6 +585,7 @@ class TrainingEnv(_Env):
         env = {
             'hosts':            self.hosts, 'network_interface_name': self.network_interface_name,
             'hps':              self.hyperparameters,
+            'framework_params': self.additional_framework_parameters,
             'resource_config':  self.resource_config, 'input_data_config': self.input_data_config,
             'output_data_dir':  self.output_data_dir, 'channels': sorted(self.channel_input_dirs.keys()),
             'current_host':     self.current_host, 'module_name': self.module_name, 'log_level': self.log_level,

@@ -113,6 +113,14 @@ model_file = os.path.join(args.model_dir, 'saved_model')
 model.save(model_file)
 """
 
+PARAMETER_SERVER_SCRIPT = """
+from time import sleep
+
+while True:
+    print('Running parameter server')
+    sleep(1)
+"""
+
 
 def framework_training_fn():
     training_env = sagemaker_containers.training_env()
@@ -221,6 +229,19 @@ def framework_training_with_script_mode_fn():
 
     modules.run_module(training_env.module_dir, training_env.to_cmd_args(), training_env.to_env_vars(),
                        training_env.module_name, cache=False)
+
+
+def test_parameter_server():
+    module = test.UserModule(test.File(name='user_script.py', data=PARAMETER_SERVER_SCRIPT))
+    hyperparameters = dict(sagemaker_program='user_script.py')
+
+    test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[test.Channel.create(name='training')])
+    training_env = sagemaker_containers.training_env()
+    process = modules.run_module(training_env.module_dir, training_env.to_cmd_args(), training_env.to_env_vars(),
+                                 training_env.module_name, cache=False, wait=False)
+    # confirm the ps process is still hanging
+    assert process.poll() is None
+    process.kill()
 
 
 @pytest.mark.parametrize('user_script', [USER_MODE_SCRIPT])
