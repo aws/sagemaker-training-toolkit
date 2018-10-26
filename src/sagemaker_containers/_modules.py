@@ -106,7 +106,7 @@ def install(path):  # type: (str) -> None
     if not sys.executable:
         raise RuntimeError('Failed to retrieve the real path for the Python executable binary')
 
-    cmd = '%s -m pip install -vvv -U . ' % python_executable()
+    cmd = '%s -m pip install -U . ' % python_executable()
 
     if os.path.exists(os.path.join(path, 'requirements.txt')):
         cmd += '-r requirements.txt'
