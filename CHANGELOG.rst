@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.2.7
+=====
+* feature: Making pip install less noisy
+* bug-fix: Stream stderr instead of capturing it when running user script
+
 2.2.6
 =====
 

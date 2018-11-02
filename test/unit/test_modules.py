@@ -140,7 +140,6 @@ def test_run_error():
 
     message = str(e.value)
     assert 'ExecuteUserScriptError:' in message
-    assert ' No module named wrong module' in message
 
 
 def test_python_executable_exception():

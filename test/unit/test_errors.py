@@ -16,16 +16,12 @@ from sagemaker_containers import _errors
 
 
 def test_install_module_error():
-    error = _errors.InstallModuleError(['python', '-m', '42'], return_code=42, output=b'42')
+    error = _errors.InstallModuleError(['python', '-m', '42'], return_code=42)
 
-    assert str(error) == """InstallModuleError:
-Command "['python', '-m', '42']"
-42"""
+    assert str(error) == 'InstallModuleError:\nCommand "[\'python\', \'-m\', \'42\']"'
 
 
 def test_execute_user_script_error():
-    error = _errors.ExecuteUserScriptError(['python', '-m', '42'], return_code=42, output=b'42')
+    error = _errors.ExecuteUserScriptError(['python', '-m', '42'], return_code=42)
 
-    assert str(error) == """ExecuteUserScriptError:
-Command "['python', '-m', '42']"
-42"""
+    assert str(error) == 'ExecuteUserScriptError:\nCommand "[\'python\', \'-m\', \'42\']"'

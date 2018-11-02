@@ -229,21 +229,21 @@ def run(module_name, args=None, env_vars=None, wait=True):  # type: (str, list, 
 
     if wait:
         return _check_error(cmd, _errors.ExecuteUserScriptError)
+
     else:
         return _make_process(cmd)
 
 
 def _make_process(cmd, **kwargs):
-    return subprocess.Popen(cmd, stderr=subprocess.PIPE, env=os.environ, **kwargs)
+    return subprocess.Popen(cmd, env=os.environ, **kwargs)
 
 
 def _check_error(cmd, error_class, **kwargs):
     process = _make_process(cmd, **kwargs)
-    stdout, stderr = process.communicate()
+    return_code = process.wait()
 
-    return_code = process.poll()
     if return_code:
-        raise error_class(return_code=return_code, cmd=' '.join(cmd), output=stderr)
+        raise error_class(return_code=return_code, cmd=' '.join(cmd))
     return process
 
 

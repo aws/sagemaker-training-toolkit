@@ -322,7 +322,6 @@ def test_script_mode_client_error():
 
     message = str(e.value)
     assert 'ExecuteUserScriptError' in message
-    assert 'ZeroDivisionError' in message
 
 
 def test_script_mode_client_import_error():
@@ -342,8 +341,6 @@ def test_script_mode_client_import_error():
 
     message = str(e.value)
     assert 'InstallModuleError:' in message
-    assert "Invalid requirement: \'42/0\'" in message
-    assert "It looks like a path. File \'42/0\' does not exist." in message
 
 
 def failure_message():
