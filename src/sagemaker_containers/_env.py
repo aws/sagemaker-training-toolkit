@@ -24,7 +24,7 @@ import time
 
 import boto3
 
-from sagemaker_containers import _logging, _mapping, _params
+from sagemaker_containers import _content_types, _logging, _mapping, _params
 
 logger = _logging.get_logger()
 
@@ -766,6 +766,10 @@ class ServingEnv(_Env):
             model_server_workers (int): Number of worker processes the model server will use.
             framework_module (str):  Name of the framework module and entry point. For example:
                 my_module:main
+            default_accept (str): The desired default MIME type of the inference in the response
+                as specified in the user-supplied SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT environment
+                variable. Otherwise, returns 'application/json' by default.
+                For example: application/json
     """
 
     def __init__(self):
@@ -775,11 +779,13 @@ class ServingEnv(_Env):
         model_server_timeout = int(os.environ.get(_params.MODEL_SERVER_TIMEOUT_ENV, '60'))
         model_server_workers = int(os.environ.get(_params.MODEL_SERVER_WORKERS_ENV, num_cpus()))
         framework_module = os.environ.get(_params.FRAMEWORK_SERVING_MODULE_ENV, None)
+        default_accept = os.environ.get(_params.DEFAULT_INVOCATIONS_ACCEPT_ENV, _content_types.JSON)
 
         self._use_nginx = use_nginx
         self._model_server_timeout = model_server_timeout
         self._model_server_workers = model_server_workers
         self._framework_module = framework_module
+        self._default_accept = default_accept
 
     @property
     def use_nginx(self):  # type: () -> bool
@@ -806,3 +812,10 @@ class ServingEnv(_Env):
             str: Name of the framework module and entry point. For example:
                 my_module:main"""
         return self._framework_module
+
+    @property
+    def default_accept(self):  # type: () -> str
+        """Returns:
+            str: The desired MIME type of the inference in the response. For example: application/json.
+                Default: application/json"""
+        return self._default_accept

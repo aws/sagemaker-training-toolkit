@@ -29,6 +29,7 @@ TUNING_METRIC_PARAM = '_tuning_objective_metric'  # type: str
 DEFAULT_MODULE_NAME_PARAM = 'default_user_module_name'  # type: str
 REGION_NAME_PARAM = 'sagemaker_region'  # type: str
 REGION_NAME_ENV = REGION_NAME_PARAM.upper()  # type: str
+DEFAULT_INVOCATIONS_ACCEPT_ENV = 'SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT'  # type: str
 MODEL_SERVER_WORKERS_ENV = 'SAGEMAKER_MODEL_SERVER_WORKERS'  # type: str
 MODEL_SERVER_TIMEOUT_ENV = 'SAGEMAKER_MODEL_SERVER_TIMEOUT'  # type: str
 USE_NGINX_ENV = 'SAGEMAKER_USE_NGINX'  # type: str
