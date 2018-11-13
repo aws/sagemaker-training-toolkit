@@ -47,3 +47,25 @@ def untar_directory(tar_file_path, extract_dir_path):
     with open(tar_file_path, 'rb') as f:
         with tarfile.open(mode='r:gz', fileobj=f) as t:
             t.extractall(path=extract_dir_path)
+
+
+def write_file(path, data, mode='w'):
+    """Write data to a file.
+    Args:
+        path (str): path to the file.
+        data (str): data to be written to the file.
+        mode (str): mode which the file will be open.
+    """
+    with open(path, mode) as f:
+        f.write(data)
+
+
+def read_file(path, mode='r'):
+    """Read data from a file.
+     Args:
+        path (str): path to the file.
+        mode (str): mode which the file will be open.
+     Returns:
+    """
+    with open(path, mode) as f:
+        return f.read()

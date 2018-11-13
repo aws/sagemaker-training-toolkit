@@ -14,6 +14,8 @@
 import json
 import logging
 import os
+import re
+
 import pkg_resources
 import shutil
 import signal
@@ -31,6 +33,9 @@ CSV_CONTENT_TYPE = "text/csv"
 OCTET_STREAM_CONTENT_TYPE = "application/octet-stream"
 ANY_CONTENT_TYPE = '*/*'
 UTF8_CONTENT_TYPES = [JSON_CONTENT_TYPE, CSV_CONTENT_TYPE]
+
+nginx_config_template_file = pkg_resources.resource_filename('container_support', '/etc/nginx.conf.template')
+nginx_config_file = os.path.join('/etc', 'sagemaker-nginx.conf')
 
 
 class Server(object):
@@ -82,14 +87,14 @@ class Server(object):
         framework.load_dependencies()
 
         nginx_pid = 0
-        gunicorn_bind_address = '0.0.0.0:8080'
+        gunicorn_bind_address = '0.0.0.0:{}'.format(env.http_port)
         if env.use_nginx:
             logger.info("starting nginx")
-            nginx_conf = pkg_resources.resource_filename('container_support', 'etc/nginx.conf')
+            Server._create_nginx_config(env)
             subprocess.check_call(['ln', '-sf', '/dev/stdout', '/var/log/nginx/access.log'])
             subprocess.check_call(['ln', '-sf', '/dev/stderr', '/var/log/nginx/error.log'])
             gunicorn_bind_address = 'unix:/tmp/gunicorn.sock'
-            nginx_pid = subprocess.Popen(['nginx', '-c', nginx_conf]).pid
+            nginx_pid = subprocess.Popen(['nginx', '-c', nginx_config_file]).pid
 
         logger.info("starting gunicorn")
         gunicorn_pid = subprocess.Popen(["gunicorn",
@@ -135,6 +140,35 @@ class Server(object):
             raise
 
     @staticmethod
+    def next_safe_port(port_range, after=None):
+        first_and_last_port = port_range.split('-')
+        first_safe_port = int(first_and_last_port[0])
+        last_safe_port = int(first_and_last_port[1])
+
+        safe_port = first_safe_port
+
+        if after:
+            safe_port = int(after) + 1
+
+            if safe_port < first_safe_port or safe_port > last_safe_port:
+                raise ValueError(
+                    '{} is outside of the acceptable port range for SageMaker: {}'.format(safe_port, port_range))
+
+        return str(safe_port)
+
+    @staticmethod
+    def _create_nginx_config(serving_env):
+        template = cs.utils.read_file(nginx_config_template_file)
+        pattern = re.compile(r'%(\w+)%')
+
+        template_values = {
+            'NGINX_HTTP_PORT': serving_env.http_port
+        }
+        config = pattern.sub(lambda x: template_values[x.group(1)], template)
+        logger.info('nginx config: \n%s\n', config)
+        cs.utils.write_file(nginx_config_file, config)
+
+    @staticmethod
     def _sigterm_handler(nginx_pid, gunicorn_pid):
         logger.info("stopping inference server")
 
@@ -168,11 +202,12 @@ class Server(object):
 
         :return: 200 response, with transformer result in body.
         """
+        env = cs.HostingEnvironment()
 
         # Accepting both ContentType and Content-Type headers. ContentType because Coral and Content-Type because,
         # well, it is just the html standard
         input_content_type = request.headers.get('ContentType', request.headers.get('Content-Type', JSON_CONTENT_TYPE))
-        requested_output_content_type = request.headers.get('Accept', JSON_CONTENT_TYPE)
+        requested_output_content_type = request.headers.get('Accept') or env.default_accept or JSON_CONTENT_TYPE
 
         # utf-8 decoding is automatic in Flask if the Content-Type is valid. But that does not happens always.
         content = request.get_data().decode('utf-8') if input_content_type in UTF8_CONTENT_TYPES else request.get_data()

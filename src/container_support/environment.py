@@ -19,6 +19,8 @@ import os
 import subprocess
 import sys
 import tempfile
+
+import boto3
 import pkg_resources
 
 import container_support as cs
@@ -41,6 +43,8 @@ class ContainerEnvironment(object):
     CURRENT_HOST_ENV = "CURRENT_HOST"
     JOB_NAME_ENV = "JOB_NAME"
     USE_NGINX_ENV = "SAGEMAKER_USE_NGINX"
+    SAGEMAKER_BIND_TO_PORT_ENV = 'SAGEMAKER_BIND_TO_PORT'
+    SAGEMAKER_SAFE_PORT_RANGE_ENV = 'SAGEMAKER_SAFE_PORT_RANGE'
     SAGEMAKER_REGION_PARAM_NAME = 'sagemaker_region'
 
     def __init__(self, base_dir=BASE_DIRECTORY):
@@ -292,6 +296,7 @@ class HostingEnvironment(ContainerEnvironment):
 
     MODEL_SERVER_WORKERS_PARAM = 'SAGEMAKER_MODEL_SERVER_WORKERS'
     MODEL_SERVER_TIMEOUT_PARAM = "SAGEMAKER_MODEL_SERVER_TIMEOUT"
+    DEFAULT_INVOCATIONS_ACCEPT_ENV = 'SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT'
 
     def __init__(self, base_dir=ContainerEnvironment.BASE_DIRECTORY):
         super(HostingEnvironment, self).__init__(base_dir)
@@ -306,14 +311,22 @@ class HostingEnvironment(ContainerEnvironment):
         self.use_nginx = os.environ.get(ContainerEnvironment.USE_NGINX_ENV, 'true') == 'true'
         "Use nginx as front-end HTTP server instead of gunicorn."
 
+        self.http_port = os.environ.get(ContainerEnvironment.SAGEMAKER_BIND_TO_PORT_ENV, '8080')
+
+        self.port_range = os.environ.get(ContainerEnvironment.SAGEMAKER_SAFE_PORT_RANGE_ENV, None)
+
+        self.default_accept = os.environ.get(HostingEnvironment.DEFAULT_INVOCATIONS_ACCEPT_ENV, None)
+
         self.model_server_workers = int(os.environ.get(
             HostingEnvironment.MODEL_SERVER_WORKERS_PARAM,
             self.available_cpus))
         "The number of model server processes to run concurrently."
 
-        self.container_log_level = int(os.environ[ContainerEnvironment.CONTAINER_LOG_LEVEL_PARAM.upper()])
+        self.container_log_level = int(os.environ.get(
+            ContainerEnvironment.CONTAINER_LOG_LEVEL_PARAM.upper(), logging.INFO))
 
-        self.sagemaker_region = os.environ[ContainerEnvironment.SAGEMAKER_REGION_PARAM_NAME.upper()]
+        self.sagemaker_region = os.environ.get(ContainerEnvironment.SAGEMAKER_REGION_PARAM_NAME.upper(),
+                                               boto3.session.Session().region_name)
         os.environ[ContainerEnvironment.SAGEMAKER_REGION_PARAM_NAME.upper()] = self.sagemaker_region
 
         os.environ[ContainerEnvironment.JOB_NAME_ENV] = os.environ.get(
