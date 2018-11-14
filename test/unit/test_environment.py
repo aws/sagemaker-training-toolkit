@@ -219,15 +219,15 @@ def test_env_mapping_properties(training_env):
 
 
 def test_serving_env_properties(serving_env):
-    assert serving_env.properties() == ['current_host', 'default_accept', 'framework_module', 'log_level', 'model_dir',
-                                        'model_server_timeout', 'model_server_workers', 'module_dir', 'module_name',
-                                        'num_cpus', 'num_gpus', 'use_nginx']
+    assert serving_env.properties() == ['current_host', 'default_accept', 'framework_module', 'http_port', 'log_level',
+                                        'model_dir', 'model_server_timeout', 'model_server_workers', 'module_dir',
+                                        'module_name', 'num_cpus', 'num_gpus', 'safe_port_range', 'use_nginx']
 
 
 def test_request_properties(serving_env):
-    assert serving_env.properties() == ['current_host', 'default_accept', 'framework_module', 'log_level', 'model_dir',
-                                        'model_server_timeout', 'model_server_workers', 'module_dir', 'module_name',
-                                        'num_cpus', 'num_gpus', 'use_nginx']
+    assert serving_env.properties() == ['current_host', 'default_accept', 'framework_module', 'http_port', 'log_level',
+                                        'model_dir', 'model_server_timeout', 'model_server_workers', 'module_dir',
+                                        'module_name', 'num_cpus', 'num_gpus', 'safe_port_range', 'use_nginx']
 
 
 @patch('sagemaker_containers._env.num_cpus', lambda: 8)

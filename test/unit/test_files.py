@@ -58,6 +58,12 @@ def test_read_json_throws_exception():
         _files.read_json('non-existent.json')
 
 
+def test_read_file():
+    test.write_json('test', _env.hyperparameters_file_dir)
+
+    assert _files.read_file(_env.hyperparameters_file_dir) == '\"test\"'
+
+
 @patch('tempfile.mkdtemp')
 @patch('shutil.rmtree')
 def test_tmpdir(rmtree, mkdtemp):

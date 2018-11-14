@@ -13,16 +13,36 @@
 from __future__ import absolute_import
 
 import os
+import re
 import signal
 import subprocess
 
 import pkg_resources
 
 import sagemaker_containers
-from sagemaker_containers import _env
+from sagemaker_containers import _env, _files, _logging
+
+logger = _logging.get_logger()
 
 UNIX_SOCKET_BIND = 'unix:/tmp/gunicorn.sock'
-HTTP_BIND = '0.0.0.0:8080'
+
+nginx_config_file = os.path.join('/etc', 'sagemaker-nginx.conf')
+nginx_config_template_file = pkg_resources.resource_filename(sagemaker_containers.__name__, '/etc/nginx.conf.template')
+
+
+def _create_nginx_config(serving_env):
+    template = _files.read_file(nginx_config_template_file)
+
+    pattern = re.compile(r'%(\w+)%')
+    template_values = {
+        'NGINX_HTTP_PORT': serving_env.http_port
+    }
+
+    config = pattern.sub(lambda x: template_values[x.group(1)], template)
+
+    logger.info('nginx config: \n%s\n', config)
+
+    _files.write_file(nginx_config_file, config)
 
 
 def _add_sigterm_handler(nginx, gunicorn):
@@ -43,14 +63,13 @@ def _add_sigterm_handler(nginx, gunicorn):
 
 def start(module_app):
     env = _env.ServingEnv()
-    gunicorn_bind_address = HTTP_BIND
+    gunicorn_bind_address = '0.0.0.0:{}'.format(env.http_port)
 
     nginx = None
 
     if env.use_nginx:
         gunicorn_bind_address = UNIX_SOCKET_BIND
-        nginx_config_file = pkg_resources.resource_filename(sagemaker_containers.__name__,
-                                                            '/etc/nginx.conf')
+        _create_nginx_config(env)
         nginx = subprocess.Popen(['nginx', '-c', nginx_config_file])
 
     gunicorn = subprocess.Popen(['gunicorn',
@@ -70,3 +89,17 @@ def start(module_app):
         pid, _ = os.wait()
         if pid in pids:
             break
+
+
+def next_safe_port(port_range, after=None):
+    first_and_last_port = port_range.split('-')
+    first_safe_port = int(first_and_last_port[0])
+    last_safe_port = int(first_and_last_port[1])
+    safe_port = first_safe_port
+    if after:
+        safe_port = int(after) + 1
+        if safe_port < first_safe_port or safe_port > last_safe_port:
+            raise ValueError(
+                '{} is outside of the acceptable port range for SageMaker: {}'.format(safe_port, port_range))
+
+    return str(safe_port)

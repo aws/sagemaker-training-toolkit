@@ -75,6 +75,19 @@ def write_file(path, data, mode='w'):  # type: (str, str, str) -> None
         f.write(data)
 
 
+def read_file(path, mode='r'):
+    """Read data from a file.
+
+    Args:
+        path (str): path to the file.
+        mode (str): mode which the file will be open.
+
+    Returns:
+    """
+    with open(path, mode) as f:
+        return f.read()
+
+
 def read_json(path):  # type: (str) -> dict
     """Read a JSON file.
 

@@ -19,7 +19,7 @@ http {
   }
 
   server {
-    listen 8080 deferred;
+    listen %NGINX_HTTP_PORT% deferred;
     client_max_body_size 0;
 
     keepalive_timeout 3;
@@ -34,5 +34,6 @@ http {
     location / {
       return 404 "{}";
     }
+
   }
 }
