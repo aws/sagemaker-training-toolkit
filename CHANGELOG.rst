@@ -2,6 +2,12 @@
 CHANGELOG
 =========
 
+1.1.0
+=====
+
+* feature: Allow for dynamic nginx.conf creation
+* feature: Provide support for additional environment variables. (http_port, safe_port_range and accept)
+
 1.0.9
 =====
 
