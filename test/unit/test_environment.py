@@ -193,6 +193,7 @@ def test_training_env(training_env):
     assert training_env.channel_input_dirs['validation'].endswith('/opt/ml/input/data/validation')
     assert training_env.current_host == RESOURCE_CONFIG['current_host']
     assert training_env.module_name == 'main'
+    assert training_env.user_entry_point == 'main.py'
     assert training_env.module_dir == 'imagenet'
     assert training_env.log_level == logging.WARNING
     assert training_env.network_interface_name == 'ethwe'
@@ -207,27 +208,30 @@ def test_serving_env(serving_env):
     assert serving_env.model_server_timeout == 20
     assert serving_env.model_server_workers == 8
     assert serving_env.module_name == 'main'
+    assert serving_env.user_entry_point == 'main.py'
     assert serving_env.framework_module is None
 
 
 def test_env_mapping_properties(training_env):
-    assert sorted(training_env.properties()) == sorted(
-        ['additional_framework_parameters', 'channel_input_dirs', 'current_host', 'framework_module', 'hosts',
-         'hyperparameters', 'input_config_dir', 'input_data_config', 'input_dir', 'log_level', 'model_dir',
-         'module_dir', 'module_name', 'network_interface_name', 'num_cpus', 'num_gpus', 'output_data_dir',
-         'output_dir', 'resource_config', 'job_name'])
+    assert set(training_env.properties()) == {
+        'additional_framework_parameters', 'channel_input_dirs', 'current_host', 'framework_module', 'hosts',
+        'hyperparameters', 'input_config_dir', 'input_data_config', 'input_dir', 'log_level', 'model_dir',
+        'module_dir', 'module_name', 'network_interface_name', 'num_cpus', 'num_gpus', 'output_data_dir',
+        'output_dir', 'resource_config', 'user_entry_point', 'job_name'}
 
 
 def test_serving_env_properties(serving_env):
-    assert serving_env.properties() == ['current_host', 'default_accept', 'framework_module', 'http_port', 'log_level',
-                                        'model_dir', 'model_server_timeout', 'model_server_workers', 'module_dir',
-                                        'module_name', 'num_cpus', 'num_gpus', 'safe_port_range', 'use_nginx']
+    assert set(serving_env.properties()) == {
+        'current_host', 'default_accept', 'framework_module', 'http_port', 'log_level', 'model_dir',
+        'model_server_timeout', 'model_server_workers', 'module_dir', 'module_name', 'num_cpus',
+        'num_gpus', 'safe_port_range', 'user_entry_point', 'use_nginx'}
 
 
 def test_request_properties(serving_env):
-    assert serving_env.properties() == ['current_host', 'default_accept', 'framework_module', 'http_port', 'log_level',
-                                        'model_dir', 'model_server_timeout', 'model_server_workers', 'module_dir',
-                                        'module_name', 'num_cpus', 'num_gpus', 'safe_port_range', 'use_nginx']
+    assert set(serving_env.properties()) == {
+        'current_host', 'default_accept', 'framework_module', 'http_port', 'log_level', 'model_dir',
+        'model_server_timeout', 'model_server_workers', 'module_dir', 'module_name', 'num_cpus',
+        'num_gpus', 'user_entry_point', 'safe_port_range', 'use_nginx'}
 
 
 @patch('sagemaker_containers._env.num_cpus', lambda: 8)

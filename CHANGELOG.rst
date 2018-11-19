@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.3.1
+=====
+
+* feature: support for Bash commands and Python scripts
+
 2.3.0
 =====
 

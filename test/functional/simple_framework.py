@@ -21,7 +21,7 @@ from sagemaker_containers.beta.framework import functions, modules
 def train():
     training_env = sagemaker_containers.training_env()
 
-    script = modules.import_module(training_env.module_dir, training_env.module_name, False)
+    script = modules.import_module(training_env.module_dir, training_env.module_name)
 
     model = script.train(**functions.matching_args(script.train, training_env))
 

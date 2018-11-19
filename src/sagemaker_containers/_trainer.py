@@ -15,9 +15,9 @@ import os
 import traceback
 
 import sagemaker_containers
-from sagemaker_containers import _errors, _files, _logging
+from sagemaker_containers.beta.framework import entry_point, errors, files, logging
 
-logger = _logging.get_logger()
+logger = logging.get_logger()
 
 SUCCESS_CODE = 0
 DEFAULT_FAILURE_CODE = 1
@@ -42,35 +42,37 @@ def train():
         # if the framework module is not defined.
         env = sagemaker_containers.training_env()
 
-        framework_name, entry_point_name = env.framework_module.split(':')
+        if env.framework_module:
+            framework_name, entry_point_name = env.framework_module.split(':')
 
-        framework = importlib.import_module(framework_name)
+            framework = importlib.import_module(framework_name)
 
-        # the logger is configured after importing the framework library, allowing the framework to
-        # configure logging at import time.
-        _logging.configure_logger(env.log_level)
+            # the logger is configured after importing the framework library, allowing the framework to
+            # configure logging at import time.
+            logging.configure_logger(env.log_level)
+            logger.info('Imported framework %s', framework_name)
 
-        logger.info('Imported framework %s', framework_name)
-
-        entry_point = getattr(framework, entry_point_name)
-
-        entry_point()
+            entrypoint = getattr(framework, entry_point_name)
+            entrypoint()
+        else:
+            logging.configure_logger(env.log_level)
+            entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env.to_env_vars())
 
         logger.info('Reporting training SUCCESS')
-        _files.write_success_file()
+        files.write_success_file()
         _exit_processes(SUCCESS_CODE)
 
-    except _errors.ClientError as e:
+    except errors.ClientError as e:
 
         failure_message = str(e)
-        _files.write_failure_file(failure_message)
+        files.write_failure_file(failure_message)
 
         logger.error(failure_message)
         _exit_processes(DEFAULT_FAILURE_CODE)
     except Exception as e:
         failure_msg = 'framework error: \n%s\n%s' % (traceback.format_exc(), str(e))
 
-        _files.write_failure_file(failure_msg)
+        files.write_failure_file(failure_msg)
         logger.error('Reporting training FAILURE')
 
         logger.error(failure_msg)

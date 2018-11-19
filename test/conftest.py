@@ -44,6 +44,7 @@ def create_base_path():
 
     os.makedirs(_env.model_dir)
     os.makedirs(_env.input_config_dir)
+    os.makedirs(_env.code_dir)
     os.makedirs(_env.output_data_dir)
 
     _write_json({}, _env.hyperparameters_file_dir)

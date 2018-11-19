@@ -13,7 +13,7 @@
 from __future__ import absolute_import
 
 
-def training_env():
+def training_env():  # type: () -> _env.TrainingEnv
     """Create a TrainingEnv.
 
     Returns:

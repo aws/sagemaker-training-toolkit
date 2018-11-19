@@ -23,6 +23,10 @@ class TrainingEnv(Mock):
     log_level = 20
 
 
+class SriptTrainingEnv(TrainingEnv):
+    framework_module = None
+
+
 @patch('importlib.import_module')
 @patch('sagemaker_containers.training_env', TrainingEnv)
 def test_train(import_module):
@@ -79,3 +83,16 @@ def test_train_with_client_error(_exit, import_module):
     _trainer.train()
 
     _exit.assert_called_with(_trainer.DEFAULT_FAILURE_CODE)
+
+
+@patch('sagemaker_containers.entry_point.run')
+@patch('sagemaker_containers.training_env', new_callable=SriptTrainingEnv)
+@patch('sagemaker_containers._trainer._exit_processes')
+def test_train_script(_exit, training_env, run):
+    _trainer.train()
+
+    env = training_env()
+    run.assert_called_with(env.module_dir, env.user_entry_point, env.to_cmd_args(),
+                           env.to_env_vars())
+
+    _exit.assert_called_with(_trainer.SUCCESS_CODE)

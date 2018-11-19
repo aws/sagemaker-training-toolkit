@@ -20,6 +20,7 @@ import os
 import shlex
 import socket
 import subprocess
+import sys
 import time
 
 import boto3
@@ -160,6 +161,15 @@ def _create_training_directories():
 
 if not _is_path_configured:
     _create_training_directories()
+
+
+def _create_code_dir():  # type: () -> None
+    """Creates /opt/ml/code when the module is imported."""
+    if not os.path.exists(code_dir):
+        os.makedirs(code_dir)
+
+
+_create_code_dir()
 
 
 def _read_json(path):  # type: (str) -> dict
@@ -310,6 +320,7 @@ class _Env(_mapping.MappingMixin):
         self._num_gpus = num_gpus()
         self._num_cpus = num_cpus()
         self._module_name = module_name
+        self._user_entry_point = module_name
         self._module_dir = module_dir
         self._log_level = log_level
         self._model_dir = model_dir
@@ -367,6 +378,14 @@ class _Env(_mapping.MappingMixin):
             int: environment logging level.
         """
         return self._log_level
+
+    @property
+    def user_entry_point(self):  # type: () -> str
+        """The name of provided user entry point.
+        Returns:
+            str: The name of provided user entry point
+        """
+        return self._user_entry_point
 
     @staticmethod
     def _parse_module_name(program_param):
@@ -537,6 +556,8 @@ class TrainingEnv(_Env):
         # override base class attributes
         if self._module_name is None:
             self._module_name = str(sagemaker_hyperparameters.get(_params.USER_PROGRAM_PARAM, None))
+        self._user_entry_point = self._user_entry_point or sagemaker_hyperparameters.get(_params.USER_PROGRAM_PARAM)
+
         self._module_dir = str(sagemaker_hyperparameters.get(_params.SUBMIT_DIR_PARAM, code_dir))
         self._log_level = sagemaker_hyperparameters.get(_params.LOG_LEVEL_PARAM, logging.INFO)
         self._framework_module = os.environ.get(_params.FRAMEWORK_TRAINING_MODULE_ENV, None)
@@ -584,7 +605,7 @@ class TrainingEnv(_Env):
 
         env = {
             'hosts':            self.hosts, 'network_interface_name': self.network_interface_name,
-            'hps':              self.hyperparameters,
+            'hps':              self.hyperparameters, 'user_entry_point': self.user_entry_point,
             'framework_params': self.additional_framework_parameters,
             'resource_config':  self.resource_config, 'input_data_config': self.input_data_config,
             'output_data_dir':  self.output_data_dir, 'channels': sorted(self.channel_input_dirs.keys()),
@@ -842,3 +863,19 @@ class ServingEnv(_Env):
             str: HTTP port range that can be used by customers to avoid collisions with the HTTP port
                 specified by SageMaker for handling pings and invocations. For example: 1111-2222"""
         return self._safe_port_range
+
+
+def write_env_vars(env_vars=None):  # type: (dict) -> None
+    """Write the dictionary env_vars in the system, as environment variables.
+
+    Args:
+        env_vars ():
+
+    Returns:
+
+    """
+    env_vars = env_vars or {}
+    env_vars['PYTHONPATH'] = ':'.join(sys.path)
+
+    for name, value in env_vars.items():
+        os.environ[name] = value

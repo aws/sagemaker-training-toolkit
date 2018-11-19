@@ -107,3 +107,27 @@ def test_write_failure_file():
     _files.write_failure_file(failure_msg)
     open.assert_called_with(file_path, 'w')
     open().write.assert_called_with(failure_msg)
+
+
+@patch('sagemaker_containers._files.s3_download')
+@patch('os.path.isdir', lambda x: True)
+@patch('shutil.rmtree')
+@patch('shutil.move')
+def test_download_and_and_extract_source_dir(move, rmtree, s3_download):
+    uri = _env.channel_path('code')
+    _files.download_and_extract(uri, 'train.sh', _env.code_dir)
+    s3_download.assert_not_called()
+
+    rmtree.assert_any_call(_env.code_dir)
+    move.assert_called_with(uri, _env.code_dir)
+
+
+@patch('sagemaker_containers._files.s3_download')
+@patch('os.path.isdir', lambda x: False)
+@patch('shutil.copy2')
+def test_download_and_and_extract_file(copy, s3_download):
+    uri = _env.channel_path('code')
+    _files.download_and_extract(uri, 'train.sh', _env.code_dir)
+
+    s3_download.assert_not_called()
+    copy.assert_called_with(uri, os.path.join(_env.code_dir, 'train.sh'))
