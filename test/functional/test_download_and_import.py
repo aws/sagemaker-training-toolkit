@@ -39,26 +39,35 @@ def erase_user_module():
         pass
 
 
-def test_import_module(user_module_name):
-    user_module = test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE).upload()
+@pytest.mark.parametrize('user_module',
+                         [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE),
+                          test.UserModule(USER_SCRIPT_FILE)])
+def test_import_module(user_module, user_module_name):
+    user_module.upload()
 
     module = modules.import_module(user_module.url, user_module_name)
 
     assert module.validate()
 
 
-def test_import_module_with_s3_script(user_module_name):
-    user_module = test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE).upload()
+@pytest.mark.parametrize('user_module',
+                         [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE),
+                          test.UserModule(USER_SCRIPT_FILE)])
+def test_import_module_with_s3_script(user_module, user_module_name):
+    user_module.upload()
 
     module = modules.import_module(user_module.url, user_module_name, cache=False)
 
     assert module.validate()
 
 
-def test_import_module_with_local_script(user_module_name, tmpdir):
+@pytest.mark.parametrize('user_module',
+                         [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE),
+                          test.UserModule(USER_SCRIPT_FILE)])
+def test_import_module_with_local_script(user_module, user_module_name, tmpdir):
     tmp_code_dir = str(tmpdir)
 
-    test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE).create_tmp_dir_with_files(tmp_code_dir)
+    user_module.create_tmp_dir_with_files(tmp_code_dir)
 
     module = modules.import_module(tmp_code_dir, user_module_name, cache=False)
 
@@ -78,8 +87,10 @@ USER_SCRIPT_WITH_REQUIREMENTS = test.File('my_test_script.py', data)
 REQUIREMENTS_FILE = test.File('requirements.txt', 'pyfiglet')
 
 
-def test_import_module_with_s3_script_with_requirements(user_module_name):
-    user_module = test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(SETUP_FILE)
+@pytest.mark.parametrize('user_module',
+                         [test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(SETUP_FILE),
+                          test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS)])
+def test_import_module_with_s3_script_with_requirements(user_module, user_module_name):
     user_module = user_module.add_file(REQUIREMENTS_FILE).upload()
 
     module = modules.import_module(user_module.url, user_module_name, cache=False)

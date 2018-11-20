@@ -184,6 +184,7 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
     _warning_cache_deprecation(cache)
     _files.download_and_extract(uri, name, _env.code_dir)
 
+    prepare(_env.code_dir, name)
     install(_env.code_dir)
     try:
         module = importlib.import_module(name)

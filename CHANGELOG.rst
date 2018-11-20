@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.3.3
+=====
+
+* bug-fix: reintroduce _modules.prepare to import_module
+
 2.3.2
 =====
 
