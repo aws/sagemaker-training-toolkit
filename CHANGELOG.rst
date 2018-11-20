@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.3.2
+=====
+
+* bug-fix: reintroduce _modules.prepare for backwards compatibility
+
 2.3.1
 =====
 

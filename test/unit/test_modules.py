@@ -15,8 +15,9 @@ from __future__ import absolute_import
 import contextlib
 import os
 import sys
+import textwrap
 
-from mock import call, patch
+from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
@@ -75,6 +76,47 @@ def test_install_no_python_executable():
 @contextlib.contextmanager
 def patch_tmpdir():
     yield '/tmp'
+
+
+@patch(builtins_open, mock_open())
+@patch('os.path.exists', lambda x: False)
+def test_prepare():
+    _modules.prepare('c:/path/to/', 'my-module')
+
+    open.assert_any_call('c:/path/to/setup.py', 'w')
+    open.assert_any_call('c:/path/to/setup.cfg', 'w')
+    open.assert_any_call('c:/path/to/MANIFEST.in', 'w')
+
+    data = textwrap.dedent("""
+    from setuptools import setup
+    setup(packages=[''],
+          name="my-module",
+          version='1.0.0',
+          include_package_data=True)
+    """)
+
+    open().write.assert_any_call(data)
+
+    data = textwrap.dedent("""
+    [wheel]
+    universal = 1
+    """)
+    open().write.assert_any_call(data)
+
+    data = textwrap.dedent("""
+    recursive-include . *
+    recursive-exclude . __pycache__*
+    recursive-exclude . *.pyc
+    recursive-exclude . *.pyo
+    """)
+    open().write.assert_any_call(data)
+
+
+@patch(builtins_open, mock_open())
+@patch('os.path.exists', lambda x: True)
+def test_prepare_already_prepared():
+    _modules.prepare('c:/path/to/', 'my-module')
+    open.assert_not_called()
 
 
 @patch('importlib.import_module')

@@ -241,6 +241,13 @@ def framework_training_with_script_mode_fn():
                     training_env.to_env_vars())
 
 
+def framework_training_with_run_modules_fn():
+    training_env = sagemaker_containers.training_env()
+
+    modules.run_module(training_env.module_dir, training_env.to_cmd_args(),
+                       training_env.to_env_vars(), training_env.module_name)
+
+
 def test_parameter_server():
     module = test.UserModule(test.File(name='user_script.py', data=PARAMETER_SERVER_SCRIPT))
     hyperparameters = dict(sagemaker_program='user_script.py')
@@ -254,8 +261,10 @@ def test_parameter_server():
     process.kill()
 
 
-@pytest.mark.parametrize('user_script', [USER_MODE_SCRIPT])
-def test_script_mode(user_script):
+@pytest.mark.parametrize('user_script, training_fn', [
+    [USER_MODE_SCRIPT, framework_training_with_script_mode_fn],
+    [USER_MODE_SCRIPT, framework_training_with_run_modules_fn]])
+def test_script_mode(user_script, training_fn):
     channel = test.Channel.create(name='training')
 
     features = [1, 2, 3, 4]
@@ -269,7 +278,7 @@ def test_script_mode(user_script):
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    assert execute_an_wrap_exit(framework_training_with_script_mode_fn) == trainer.SUCCESS_CODE
+    assert execute_an_wrap_exit(training_fn) == trainer.SUCCESS_CODE
 
     model_path = os.path.join(env.model_dir, 'saved_model')
 
@@ -281,8 +290,10 @@ def test_script_mode(user_script):
     assert model.optimizer == 'SGD'
 
 
-@pytest.mark.parametrize('user_script', [USER_MODE_SCRIPT])
-def test_script_mode_local_directory(user_script, tmpdir):
+@pytest.mark.parametrize('user_script, training_fn', [
+    [USER_MODE_SCRIPT, framework_training_with_script_mode_fn],
+    [USER_MODE_SCRIPT, framework_training_with_run_modules_fn]])
+def test_script_mode_local_directory(user_script, training_fn, tmpdir):
     channel = test.Channel.create(name='training')
 
     features = [1, 2, 3, 4]
@@ -300,7 +311,7 @@ def test_script_mode_local_directory(user_script, tmpdir):
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel], local=True)
 
-    assert execute_an_wrap_exit(framework_training_with_script_mode_fn) == trainer.SUCCESS_CODE
+    assert execute_an_wrap_exit(training_fn) == trainer.SUCCESS_CODE
 
     model_path = os.path.join(env.model_dir, 'saved_model')
 
@@ -318,7 +329,10 @@ if __name__ == '__main__':
 """
 
 
-def test_script_mode_client_error():
+@pytest.mark.parametrize('training_fn', [
+    framework_training_with_script_mode_fn,
+    framework_training_with_run_modules_fn])
+def test_script_mode_client_error(training_fn):
     channel = test.Channel.create(name='training')
 
     module = test.UserModule(test.File(name='user_script.py', data=USER_MODE_SCRIPT_WITH_ERROR))
@@ -328,13 +342,16 @@ def test_script_mode_client_error():
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
     with pytest.raises(errors.ExecuteUserScriptError) as e:
-        framework_training_with_script_mode_fn()
+        training_fn()
 
     message = str(e.value)
     assert 'ExecuteUserScriptError' in message
 
 
-def test_script_mode_client_import_error():
+@pytest.mark.parametrize('training_fn', [
+    framework_training_with_script_mode_fn,
+    framework_training_with_run_modules_fn])
+def test_script_mode_client_import_error(training_fn):
     channel = test.Channel.create(name='training')
 
     requirements_file = test.File('requirements.txt', '42/0')
@@ -347,7 +364,7 @@ def test_script_mode_client_import_error():
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
     with pytest.raises(errors.InstallModuleError) as e:
-        framework_training_with_script_mode_fn()
+        training_fn()
 
     message = str(e.value)
     assert 'InstallModuleError:' in message

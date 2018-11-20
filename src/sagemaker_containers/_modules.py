@@ -16,6 +16,7 @@ import importlib
 import os
 import shlex
 import sys
+import textwrap
 import warnings
 
 import six
@@ -46,6 +47,48 @@ def exists(name):  # type: (str) -> bool
 
 def has_requirements(path):  # type: (str) -> None
     return os.path.exists(os.path.join(path, 'requirements.txt'))
+
+
+def prepare(path, name):  # type: (str, str) -> None
+    """Prepare a Python script (or module) to be imported as a module.
+    If the script does not contain a setup.py file, it creates a minimal setup.
+    Args:
+        path (str): path to directory with the script or module.
+        name (str): name of the script or module.
+    """
+    setup_path = os.path.join(path, 'setup.py')
+    if not os.path.exists(setup_path):
+        data = textwrap.dedent("""
+        from setuptools import setup
+        setup(packages=[''],
+              name="%s",
+              version='1.0.0',
+              include_package_data=True)
+        """ % name)
+
+        logger.info('Module %s does not provide a setup.py. \nGenerating setup.py' % name)
+
+        _files.write_file(setup_path, data)
+
+        data = textwrap.dedent("""
+        [wheel]
+        universal = 1
+        """)
+
+        logger.info('Generating setup.cfg')
+
+        _files.write_file(os.path.join(path, 'setup.cfg'), data)
+
+        data = textwrap.dedent("""
+        recursive-include . *
+        recursive-exclude . __pycache__*
+        recursive-exclude . *.pyc
+        recursive-exclude . *.pyo
+        """)
+
+        logger.info('Generating MANIFEST.in')
+
+        _files.write_file(os.path.join(path, 'MANIFEST.in'), data)
 
 
 def install(path):  # type: (str) -> None
@@ -173,6 +216,7 @@ def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, w
 
     _files.download_and_extract(uri, name, _env.code_dir)
 
+    prepare(_env.code_dir, name)
     install(_env.code_dir)
 
     _env.write_env_vars(env_vars)
