@@ -91,10 +91,12 @@ def prepare(path, name):  # type: (str, str) -> None
         _files.write_file(os.path.join(path, 'MANIFEST.in'), data)
 
 
-def install(path):  # type: (str) -> None
+def install(path, capture_error=False):  # type: (str, bool) -> None
     """Install a Python module in the executing Python environment.
     Args:
         path (str):  Real path location of the Python module.
+        capture_error (bool): Default false. If True, the running process captures the
+            stderr, and appends it to the returned Exception message in case of errors.
     """
     cmd = '%s -m pip install -U . ' % _process.python_executable()
 
@@ -103,10 +105,11 @@ def install(path):  # type: (str) -> None
 
     logger.info('Installing module with the following command:\n%s', cmd)
 
-    _process.check_error(shlex.split(cmd), _errors.InstallModuleError, cwd=path)
+    _process.check_error(shlex.split(cmd), _errors.InstallModuleError, cwd=path, capture_error=capture_error)
 
 
-def run(module_name, args=None, env_vars=None, wait=True):  # type: (str, list, dict, bool) -> Popen
+def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
+    # type: (str, list, dict, bool, bool) -> Popen
     """Run Python module as a script.
 
     Search sys.path for the named module and execute its contents as the __main__ module.
@@ -154,6 +157,8 @@ def run(module_name, args=None, env_vars=None, wait=True):  # type: (str, list, 
         module_name (str): module name in the same format required by python -m <module-name> cli command.
         args (list):  A list of program arguments.
         env_vars (dict): A map containing the environment variables to be written.
+        capture_error (bool): Default false. If True, the running process captures the
+            stderr, and appends it to the returned Exception message in case of errors.
     """
     args = args or []
     env_vars = env_vars or {}
@@ -163,10 +168,10 @@ def run(module_name, args=None, env_vars=None, wait=True):  # type: (str, list, 
     _logging.log_script_invocation(cmd, env_vars)
 
     if wait:
-        return _process.check_error(cmd, _errors.ExecuteUserScriptError)
+        return _process.check_error(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
 
     else:
-        return _process.create(cmd, _errors.ExecuteUserScriptError)
+        return _process.create(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
 
 
 def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str, bool) -> module
@@ -195,8 +200,8 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
         six.reraise(_errors.ImportModuleError, _errors.ImportModuleError(e), sys.exc_info()[2])
 
 
-def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, wait=True):
-    # type: (str, list, dict, str, bool, bool) -> Popen
+def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, wait=True, capture_error=False):
+    # type: (str, list, dict, str, bool, bool, bool) -> Popen
     """Download, prepare and executes a compressed tar file from S3 or provided directory as a module.
 
     SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
@@ -222,7 +227,7 @@ def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, w
 
     _env.write_env_vars(env_vars)
 
-    return run(name, args, env_vars, wait)
+    return run(name, args, env_vars, wait, capture_error)
 
 
 def _warning_cache_deprecation(cache):

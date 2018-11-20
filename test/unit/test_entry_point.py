@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 
 import os
+import subprocess
 import sys
 
 from mock import patch
@@ -48,12 +49,15 @@ def test_install_module(check_error, entry_point_type_module):
     entry_point.install('python_module.py', path)
 
     cmd = [sys.executable, '-m', 'pip', 'install', '-U', '.']
-    check_error.assert_called_with(cmd, _errors.InstallModuleError, cwd=path)
+    check_error.assert_called_with(cmd, _errors.InstallModuleError,
+                                   capture_error=False, cwd=path)
 
     with patch('os.path.exists', return_value=True):
         entry_point.install('python_module.py', path)
 
-        check_error.assert_called_with(cmd + ['-r', 'requirements.txt'], _errors.InstallModuleError, cwd=path)
+        check_error.assert_called_with(cmd + ['-r', 'requirements.txt'],
+                                       _errors.InstallModuleError, cwd=path,
+                                       capture_error=False)
 
 
 @patch('sagemaker_containers._process.check_error', autospec=True)
@@ -86,18 +90,21 @@ def test_run_bash(log, popen, entry_point_type_script):
         entry_point._call('launcher.sh', ['--lr', '13'])
 
     cmd = ['/bin/sh', '-c', './launcher.sh --lr 13']
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ)
+    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stderr=None)
     log.assert_called_with(cmd, {})
 
 
 @patch('subprocess.Popen')
 @patch('sagemaker_containers._logging.log_script_invocation')
 def test_run_python(log, popen, entry_point_type_script):
+    popen().communicate.return_value = (None, 0)
+
     with pytest.raises(_errors.ExecuteUserScriptError):
-        entry_point._call('launcher.py', ['--lr', '13'])
+        entry_point._call('launcher.py', ['--lr', '13'], capture_error=True)
 
     cmd = [sys.executable, 'launcher.py', '--lr', '13']
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ)
+    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ,
+                             stderr=subprocess.PIPE)
     log.assert_called_with(cmd, {})
 
 
@@ -108,7 +115,8 @@ def test_run_module(log, popen, entry_point_type_module):
         entry_point._call('module.py', ['--lr', '13'])
 
     cmd = [sys.executable, '-m', 'module', '--lr', '13']
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ)
+    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ,
+                             stderr=None)
     log.assert_called_with(cmd, {})
 
 
@@ -125,10 +133,10 @@ def test_run_error():
 @patch('sagemaker_containers.entry_point._call')
 @patch('os.chmod')
 def test_run_module_wait(chmod, call, download_and_extract):
-    entry_point.run(uri='s3://url', user_entry_point='launcher.sh', args=['42'])
+    entry_point.run(uri='s3://url', user_entry_point='launcher.sh', args=['42'], capture_error=True)
 
     download_and_extract.assert_called_with('s3://url', 'launcher.sh', _env.code_dir)
-    call.assert_called_with('launcher.sh', ['42'], {}, True)
+    call.assert_called_with('launcher.sh', ['42'], {}, True, True)
     chmod.assert_called_with(os.path.join(_env.code_dir, 'launcher.sh'), 511)
 
 

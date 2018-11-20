@@ -25,3 +25,19 @@ def test_execute_user_script_error():
     error = _errors.ExecuteUserScriptError(['python', '-m', '42'], return_code=42)
 
     assert str(error) == 'ExecuteUserScriptError:\nCommand "[\'python\', \'-m\', \'42\']"'
+
+
+def test_install_module_error_with_output():
+    error = _errors.InstallModuleError(['python', '-m', '42'], return_code=42, output=b'42')
+
+    assert str(error) == """InstallModuleError:
+Command "['python', '-m', '42']"
+42"""
+
+
+def test_execute_user_script_error_with_output():
+    error = _errors.ExecuteUserScriptError(['python', '-m', '42'], return_code=42, output=b'42')
+
+    assert str(error) == """ExecuteUserScriptError:
+Command "['python', '-m', '42']"
+42"""

@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.3.4
+=====
+
+* feature: add capture_error flag to process.check_error and process.create and to all functions that runs process: modules.run, modules,run_module, and entry_point.run
+
 2.3.3
 =====
 

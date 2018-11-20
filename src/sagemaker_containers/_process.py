@@ -21,19 +21,26 @@ import six
 from sagemaker_containers import _env
 
 
-def create(cmd, error_class, cwd=None, **kwargs):
+def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
     try:
-        return subprocess.Popen(cmd, env=os.environ, cwd=cwd or _env.code_dir, **kwargs)
+        stderr = subprocess.PIPE if capture_error else None
+        return subprocess.Popen(cmd, env=os.environ, cwd=cwd or _env.code_dir, stderr=stderr, **kwargs)
     except Exception as e:
         six.reraise(error_class, error_class(e), sys.exc_info()[2])
 
 
-def check_error(cmd, error_class, **kwargs):
-    process = create(cmd, error_class, **kwargs)
-    return_code = process.wait()
+def check_error(cmd, error_class, capture_error=False, **kwargs):
+    process = create(cmd, error_class, capture_error=capture_error, **kwargs)
+
+    if capture_error:
+        _, stderr = process.communicate()
+        return_code = process.poll()
+    else:
+        stderr = None
+        return_code = process.wait()
 
     if return_code:
-        raise error_class(return_code=return_code, cmd=' '.join(cmd))
+        raise error_class(return_code=return_code, cmd=' '.join(cmd), output=stderr)
     return process
 
 

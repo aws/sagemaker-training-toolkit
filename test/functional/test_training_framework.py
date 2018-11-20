@@ -147,8 +147,9 @@ def framework_training_fn():
             model.save(model_file)
 
 
-@pytest.mark.parametrize('user_script', [USER_SCRIPT_WITH_SAVE, USER_SCRIPT_WITH_SAVE])
-def test_training_framework(user_script):
+@pytest.mark.parametrize('user_script, capture_error',
+                         [[USER_SCRIPT_WITH_SAVE, False], [USER_SCRIPT_WITH_SAVE, True]])
+def test_training_framework(user_script, capture_error):
     with pytest.raises(ImportError):
         importlib.import_module(modules.DEFAULT_MODULE_NAME)
 
@@ -234,18 +235,19 @@ def test_trainer_report_failure():
     assert 'No such file or directory' in message
 
 
-def framework_training_with_script_mode_fn():
+def framework_training_with_script_mode_fn(capture_error):
     training_env = sagemaker_containers.training_env()
 
     entry_point.run(training_env.module_dir, training_env.user_entry_point, training_env.to_cmd_args(),
-                    training_env.to_env_vars())
+                    training_env.to_env_vars(), capture_error=capture_error)
 
 
-def framework_training_with_run_modules_fn():
+def framework_training_with_run_modules_fn(capture_error):
     training_env = sagemaker_containers.training_env()
 
     modules.run_module(training_env.module_dir, training_env.to_cmd_args(),
-                       training_env.to_env_vars(), training_env.module_name)
+                       training_env.to_env_vars(), training_env.module_name,
+                       capture_error=capture_error)
 
 
 def test_parameter_server():
@@ -261,10 +263,10 @@ def test_parameter_server():
     process.kill()
 
 
-@pytest.mark.parametrize('user_script, training_fn', [
-    [USER_MODE_SCRIPT, framework_training_with_script_mode_fn],
-    [USER_MODE_SCRIPT, framework_training_with_run_modules_fn]])
-def test_script_mode(user_script, training_fn):
+@pytest.mark.parametrize('user_script, training_fn, capture_error', [
+    [USER_MODE_SCRIPT, framework_training_with_script_mode_fn, True],
+    [USER_MODE_SCRIPT, framework_training_with_run_modules_fn, False]])
+def test_script_mode(user_script, training_fn, capture_error):
     channel = test.Channel.create(name='training')
 
     features = [1, 2, 3, 4]
@@ -278,7 +280,7 @@ def test_script_mode(user_script, training_fn):
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    assert execute_an_wrap_exit(training_fn) == trainer.SUCCESS_CODE
+    assert execute_an_wrap_exit(training_fn, capture_error=capture_error) == trainer.SUCCESS_CODE
 
     model_path = os.path.join(env.model_dir, 'saved_model')
 
@@ -290,10 +292,10 @@ def test_script_mode(user_script, training_fn):
     assert model.optimizer == 'SGD'
 
 
-@pytest.mark.parametrize('user_script, training_fn', [
-    [USER_MODE_SCRIPT, framework_training_with_script_mode_fn],
-    [USER_MODE_SCRIPT, framework_training_with_run_modules_fn]])
-def test_script_mode_local_directory(user_script, training_fn, tmpdir):
+@pytest.mark.parametrize('user_script, training_fn, capture_error', [
+    [USER_MODE_SCRIPT, framework_training_with_script_mode_fn, False],
+    [USER_MODE_SCRIPT, framework_training_with_run_modules_fn, True]])
+def test_script_mode_local_directory(user_script, training_fn, capture_error, tmpdir):
     channel = test.Channel.create(name='training')
 
     features = [1, 2, 3, 4]
@@ -311,7 +313,7 @@ def test_script_mode_local_directory(user_script, training_fn, tmpdir):
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel], local=True)
 
-    assert execute_an_wrap_exit(training_fn) == trainer.SUCCESS_CODE
+    assert execute_an_wrap_exit(training_fn, capture_error=capture_error) == trainer.SUCCESS_CODE
 
     model_path = os.path.join(env.model_dir, 'saved_model')
 
@@ -329,10 +331,10 @@ if __name__ == '__main__':
 """
 
 
-@pytest.mark.parametrize('training_fn', [
-    framework_training_with_script_mode_fn,
-    framework_training_with_run_modules_fn])
-def test_script_mode_client_error(training_fn):
+@pytest.mark.parametrize('training_fn, capture_error', [
+    (framework_training_with_script_mode_fn, True),
+    (framework_training_with_run_modules_fn, False)])
+def test_script_mode_client_error(training_fn, capture_error):
     channel = test.Channel.create(name='training')
 
     module = test.UserModule(test.File(name='user_script.py', data=USER_MODE_SCRIPT_WITH_ERROR))
@@ -342,16 +344,18 @@ def test_script_mode_client_error(training_fn):
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
     with pytest.raises(errors.ExecuteUserScriptError) as e:
-        training_fn()
+        training_fn(capture_error)
 
     message = str(e.value)
     assert 'ExecuteUserScriptError' in message
+    if capture_error:
+        assert 'ZeroDivisionError' in message
 
 
-@pytest.mark.parametrize('training_fn', [
-    framework_training_with_script_mode_fn,
-    framework_training_with_run_modules_fn])
-def test_script_mode_client_import_error(training_fn):
+@pytest.mark.parametrize('training_fn, capture_error', [
+    [framework_training_with_script_mode_fn, True],
+    [framework_training_with_run_modules_fn, False]])
+def test_script_mode_client_import_error(training_fn, capture_error):
     channel = test.Channel.create(name='training')
 
     requirements_file = test.File('requirements.txt', '42/0')
@@ -364,10 +368,14 @@ def test_script_mode_client_import_error(training_fn):
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
     with pytest.raises(errors.InstallModuleError) as e:
-        training_fn()
+        training_fn(capture_error)
 
     message = str(e.value)
     assert 'InstallModuleError:' in message
+
+    if capture_error:
+        assert "Invalid requirement: \'42/0\'" in message
+        assert "It looks like a path. File \'42/0\' does not exist." in message
 
 
 def failure_message():
@@ -375,9 +383,9 @@ def failure_message():
         return f.read()
 
 
-def execute_an_wrap_exit(fn):
+def execute_an_wrap_exit(fn, **kargs):
     try:
-        fn()
+        fn(**kargs)
         return trainer.SUCCESS_CODE
     except ValueError as e:
         return int(str(e))

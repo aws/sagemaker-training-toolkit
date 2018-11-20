@@ -14,6 +14,8 @@ from __future__ import absolute_import
 
 import textwrap
 
+import six
+
 
 class ClientError(Exception):
     pass
@@ -27,12 +29,20 @@ class _CalledProcessError(ClientError):
       cmd, return_code, output
     """
 
-    def __init__(self, cmd, return_code=None):
+    def __init__(self, cmd, return_code=None, output=None):
         self.return_code = return_code
         self.cmd = cmd
+        self.output = output
 
     def __str__(self):
-        message = '%s:\nCommand "%s"' % (type(self).__name__, self.cmd)
+        if six.PY3 and self.output:
+            error_msg = '\n%s' % self.output.decode('latin1')
+        elif self.output:
+            error_msg = '\n%s' % self.output
+        else:
+            error_msg = ''
+
+        message = '%s:\nCommand "%s"%s' % (type(self).__name__, self.cmd, error_msg)
         return message.strip()
 
 
