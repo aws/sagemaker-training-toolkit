@@ -2,10 +2,15 @@
 CHANGELOG
 =========
 
+2.3.5
+=====
+
+* bug-fix: reintroduce ``_modules.s3_download`` and ``_modules.download_and_install`` for backward compatibility
+
 2.3.4
 =====
 
-* feature: add capture_error flag to process.check_error and process.create and to all functions that runs process: modules.run, modules,run_module, and entry_point.run
+* feature: add capture_error flag to process.check_error and process.create and to all functions that runs process: modules.run, modules.run_module, and entry_point.run
 
 2.3.3
 =====
@@ -20,6 +25,8 @@ CHANGELOG
 2.3.1
 =====
 
+* [breaking change] remove ``_modules.prepare`` and ``_modules.download_and_install``
+* [breaking change] move ``_modules.s3_download`` to ``_files.s3_download``
 * feature: support for Bash commands and Python scripts
 
 2.3.0

@@ -194,3 +194,16 @@ def test_import_module(reload, import_module, install, download_and_extract):
     download_and_extract.assert_called_with('s3://bucket/my-module', 'default_user_module_name', _env.code_dir)
     install.assert_called_with(_env.code_dir)
     reload.assert_called_with(import_module(_modules.DEFAULT_MODULE_NAME))
+
+
+def test_download_and_install_local_directory():
+    uri = '/opt/ml/code'
+
+    with patch('sagemaker_containers._files.s3_download') as s3_download, \
+            patch('sagemaker_containers._modules.prepare') as prepare, \
+            patch('sagemaker_containers._modules.install') as install:
+        _modules.download_and_install(uri)
+
+        s3_download.assert_not_called()
+        prepare.assert_called_with(uri, 'default_user_module_name')
+        install.assert_called_with(uri)

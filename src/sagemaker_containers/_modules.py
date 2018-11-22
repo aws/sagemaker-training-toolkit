@@ -16,6 +16,7 @@ import importlib
 import os
 import shlex
 import sys
+import tarfile
 import textwrap
 import warnings
 
@@ -106,6 +107,58 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
     logger.info('Installing module with the following command:\n%s', cmd)
 
     _process.check_error(shlex.split(cmd), _errors.InstallModuleError, cwd=path, capture_error=capture_error)
+
+
+def s3_download(url, dst):  # type: (str, str) -> None
+    """Download a file from S3.
+
+    This method acts as an alias for :meth:`~sagemaker_containers.beta.framework.files.s3_download`
+    for backward-compatibility purposes.
+
+    Args:
+        url (str): the S3 URL of the file.
+        dst (str): the destination where the file will be saved.
+    """
+    _files.s3_download(url, dst)
+
+
+def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
+    # type: (str, str, bool) -> module
+    """Download, prepare and install a compressed tar file from S3 or local directory as a module.
+
+    The SageMaker Python SDK saves the user provided scripts as compressed tar files in S3.
+    This function downloads this compressed file and, if provided, transforms it
+    into a module before installing it.
+
+    This method is the predecessor of :meth:`~sagemaker_containers.beta.framework.files.download_and_extract`
+    and has been kept for backward-compatibility purposes.
+
+    Args:
+        name (str): name of the script or module.
+        uri (str): the location of the module.
+        cache (bool): defaults to True. It will not download and install the module again if it is already installed.
+
+    Returns:
+        module: the imported module
+    """
+    should_use_cache = cache and exists(name)
+
+    if not should_use_cache:
+        with _files.tmpdir() as tmpdir:
+            if uri.startswith('s3://'):
+                dst = os.path.join(tmpdir, 'tar_file')
+                _files.s3_download(uri, dst)
+                module_path = os.path.join(tmpdir, 'module_dir')
+                os.makedirs(module_path)
+
+                with tarfile.open(name=dst, mode='r:gz') as t:
+                    t.extractall(path=module_path)
+
+            else:
+                module_path = uri
+
+            prepare(module_path, name)
+            install(module_path)
 
 
 def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
