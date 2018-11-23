@@ -182,6 +182,12 @@ class Transformer(object):
         This serves as the default implementation of transform_fn, used when the user has not
         implemented one themselves.
 
+        Args:
+            model (obj): model loaded by model_fn.
+            content: request content.
+            content_type (str): the request Content-Type.
+            accept (str): accept content-type expected by the client.
+
         Returns:
             sagemaker_containers.beta.framework.worker.Response or tuple:
                 the serialized response data and its content type, either as a Response object or

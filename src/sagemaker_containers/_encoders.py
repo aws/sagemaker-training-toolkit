@@ -121,7 +121,8 @@ _encoders_map = {_content_types.NPY: array_to_npy, _content_types.CSV: array_to_
 _decoders_map = {_content_types.NPY: npy_to_numpy, _content_types.CSV: csv_to_numpy, _content_types.JSON: json_to_numpy}
 
 
-def decode(obj, content_type):  # type: (np.array or Iterable or int or float) -> np.array
+def decode(obj, content_type):
+    # type: (np.array or Iterable or int or float, str) -> np.array
     """Decode an object ton a one of the default content types to a numpy array.
 
     Args:
@@ -138,7 +139,8 @@ def decode(obj, content_type):  # type: (np.array or Iterable or int or float) -
         raise _errors.UnsupportedFormatError(content_type)
 
 
-def encode(array_like, content_type):  # type: (np.array or Iterable or int or float) -> np.array
+def encode(array_like, content_type):
+    # type: (np.array or Iterable or int or float, str) -> np.array
     """Encode an array like object in a specific content_type to a numpy array.
 
     To understand better what an array like object is see:

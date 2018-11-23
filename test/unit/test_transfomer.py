@@ -44,7 +44,8 @@ def test_predict_fn():
         _transformer.default_predict_fn('data', 'model')
 
 
-request = test.request(data='42', content_type=_content_types.JSON)
+request = test.request(data='42',
+                       headers={'ContentType': _content_types.JSON})
 
 
 def test_transformer_initialize_with_default_model_fn():
@@ -81,7 +82,7 @@ def test_transformer_transform_with_client_error(input_fn, predict_fn, output_fn
 
 
 def test_transformer_transform_with_unsupported_content_type():
-    bad_request = test.request(data=None, content_type='fake/content-type')
+    bad_request = test.request(data=None, headers={'ContentType': 'fake/content-type'})
     with patch('sagemaker_containers._worker.Request', lambda: bad_request):
         response = _transformer.Transformer().transform()
 
@@ -96,7 +97,7 @@ def test_transformer_transform_with_unsupported_accept_type():
     def empty_fn(*args):
         pass
 
-    bad_request = test.request(data=None, accept='fake/content_type')
+    bad_request = test.request(data=None, headers={'Accept': 'fake/content-type'})
     with patch('sagemaker_containers._worker.Request', lambda: bad_request):
         t = _transformer.Transformer(model_fn=empty_fn, input_fn=empty_fn, predict_fn=empty_fn)
         response = t.transform()
@@ -122,24 +123,29 @@ def test_initialize():
     model_fn.assert_called_with(_env.model_dir)
 
 
-@patch('sagemaker_containers._worker.Request', lambda: request)
-@patch('sagemaker_containers._worker.Response', autospec=True)
-def test_transformer_transform(response):
+@patch('sagemaker_containers._worker.Request',
+       lambda: MagicMock(content='42',
+                         content_type=_content_types.JSON,
+                         accept=_content_types.NPY))
+def test_transformer_transform():
     model_fn, input_fn, predict_fn = (MagicMock(), MagicMock(), MagicMock())
-    output_fn = MagicMock(return_value=response)
+    output_fn = MagicMock(return_value='response')
 
     transform = _transformer.Transformer(model_fn=model_fn, input_fn=input_fn,
                                          predict_fn=predict_fn, output_fn=output_fn)
 
     transform.initialize()
-    assert transform.transform() == response
+    assert transform.transform() == 'response'
 
-    input_fn.assert_called_with(request.content, request.content_type)
+    input_fn.assert_called_with('42', _content_types.JSON)
     predict_fn.assert_called_with(input_fn(), model_fn())
-    output_fn.assert_called_with(predict_fn(), request.accept)
+    output_fn.assert_called_with(predict_fn(), _content_types.NPY)
 
 
-@patch('sagemaker_containers._worker.Request', lambda: request)
+@patch('sagemaker_containers._worker.Request',
+       lambda: MagicMock(content='13',
+                         content_type=_content_types.CSV,
+                         accept=_content_types.ANY))
 def test_transformer_transform_backwards_compatibility():
     model_fn, input_fn, predict_fn, output_fn = (MagicMock(), MagicMock(), MagicMock(), MagicMock(return_value=(0, 1)))
 
@@ -150,12 +156,15 @@ def test_transformer_transform_backwards_compatibility():
 
     assert transform.transform().status_code == http_client.OK
 
-    input_fn.assert_called_with(request.content, request.content_type)
+    input_fn.assert_called_with('13', _content_types.CSV)
     predict_fn.assert_called_with(input_fn(), model_fn())
-    output_fn.assert_called_with(predict_fn(), request.accept)
+    output_fn.assert_called_with(predict_fn(), _content_types.ANY)
 
 
-@patch('sagemaker_containers._worker.Request', lambda: request)
+@patch('sagemaker_containers._worker.Request',
+       lambda: MagicMock(content='13',
+                         content_type=_content_types.CSV,
+                         accept=_content_types.ANY))
 def test_transformer_with_custom_transform_fn():
     model = MagicMock()
 
@@ -168,7 +177,9 @@ def test_transformer_with_custom_transform_fn():
     transform.initialize()
     transform.transform()
 
-    transform_fn.assert_called_with(model, request.content, request.content_type, request.accept)
+    transform_fn.assert_called_with(model, '13',
+                                    _content_types.CSV,
+                                    _content_types.ANY)
 
 
 def test_transformer_too_many_custom_methods():

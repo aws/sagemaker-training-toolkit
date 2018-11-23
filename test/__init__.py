@@ -103,34 +103,25 @@ def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hy
 File = collections.namedtuple('File', ['name', 'data'])  # type: (str, str or list) -> File
 
 
-def request(path='/', base_url=None, query_string=None, accept=None, method='GET', input_stream=None,
-            content_type=None, content_length=None, headers=None, data=None, charset='utf-8', mimetype=None):
+def request(path='/', base_url=None, query_string=None, method='GET',
+            input_stream=None, content_length=None, headers=None,
+            data=None, charset='utf-8', mimetype=None):
+
+    _environ = environ(path, base_url, query_string, method, input_stream,
+                       content_length, headers, data, charset, mimetype)
+
+    return _worker.Request(_environ)
+
+
+def environ(path='/', base_url=None, query_string=None, method='GET',
+            input_stream=None, content_length=None, headers=None,
+            data=None, charset='utf-8', mimetype=None):
 
     headers = headers or {}
-
-    if accept:
-        headers['accept'] = accept
-
     environ_builder = werkzeug_test.EnvironBuilder(
-        path=path, base_url=base_url, query_string=query_string, method=method, input_stream=input_stream,
-        content_type=content_type, content_length=content_length, headers=headers, data=data, charset=charset,
-        mimetype=mimetype)
-
-    return _worker.Request(environ_builder.get_environ())
-
-
-def environ(path='/', base_url=None, query_string=None, accept=None, method='GET', input_stream=None,
-            content_type=None, content_length=None, headers=None, data=None, charset='utf-8', mimetype=None):
-    headers = headers or {}
-
-    if accept:
-        headers['accept'] = accept
-
-    environ_builder = werkzeug_test.EnvironBuilder(
-        path=path, base_url=base_url, query_string=query_string, method=method, input_stream=input_stream,
-        content_type=content_type, content_length=content_length, headers=headers, data=data, charset=charset,
-        mimetype=mimetype)
-
+        path=path, base_url=base_url, query_string=query_string, method=method,
+        input_stream=input_stream, content_length=content_length, headers=headers,
+        data=data, charset=charset, mimetype=mimetype)
     return environ_builder.get_environ()
 
 

@@ -13,12 +13,10 @@
 from __future__ import absolute_import
 
 from mock import MagicMock, patch, PropertyMock
-import numpy as np
 import pytest
 from six.moves import http_client, range
 
-from sagemaker_containers import _content_types, _encoders, _env, _worker
-import test
+from sagemaker_containers import _content_types, _worker
 
 
 def test_default_ping_fn():
@@ -53,9 +51,10 @@ def test_worker_with_initialize(module_name, expected_name):
     assert app.request_class == _worker.Request
 
 
-def test_invocations():
+@pytest.mark.parametrize('content_type', [_content_types.JSON, _content_types.ANY])
+def test_invocations(content_type):
     def transform_fn():
-        return _worker.Response(response='fake data', accept=_content_types.JSON)
+        return _worker.Response(response='fake data', accept=content_type)
 
     app = _worker.Worker(transform_fn=transform_fn, module_name='test_module')
 
@@ -64,7 +63,7 @@ def test_invocations():
             response = client.post('/invocations')
             assert response.status_code == http_client.OK
             assert response.get_data().decode('utf-8') == 'fake data'
-            assert response.mimetype == _content_types.JSON
+            assert response.mimetype == content_type
 
 
 def test_ping():
@@ -75,35 +74,3 @@ def test_ping():
             response = client.get('/ping')
             assert response.status_code == http_client.OK
             assert response.mimetype == _content_types.JSON
-
-
-def test_request():
-    request = test.request(data='42')
-
-    assert request.content_type == _content_types.JSON
-    assert request.accept == _content_types.JSON
-    assert request.content == '42'
-
-    request = test.request(data=_encoders.encode([6, 9.3], _content_types.NPY),
-                           content_type=_content_types.NPY,
-                           accept=_content_types.CSV)
-
-    assert request.content_type == _content_types.NPY
-    assert request.accept == _content_types.CSV
-
-    result = _encoders.decode(request.data, _content_types.NPY)
-    np.testing.assert_array_equal(result, np.array([6, 9.3]))
-
-
-@patch.object(_env.ServingEnv, 'default_accept', PropertyMock(return_value='42'))
-def test_request_accept_env():
-    request = test.request()
-    assert request.accept == '42'
-
-
-def test_request_content_type():
-    response = test.request(content_type=_content_types.CSV)
-    assert response.content_type == _content_types.CSV
-
-    response = test.request(headers={'ContentType': _content_types.NPY})
-    assert response.content_type == _content_types.NPY

@@ -119,8 +119,8 @@ def test_gpu_count_in_gpu_instance():
     assert _env.num_gpus() == 2
 
 
-@patch('multiprocessing.cpu_count', lambda: OSError())
-def test_gpu_count_in_cpu_instance():
+@patch('subprocess.check_output', side_effect=OSError())
+def test_gpu_count_in_cpu_instance(check_output):
     assert _env.num_gpus() == 0
 
 
