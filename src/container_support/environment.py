@@ -24,6 +24,7 @@ import boto3
 import pkg_resources
 
 import container_support as cs
+from container_support import serving
 
 logger = logging.getLogger(__name__)
 
@@ -315,7 +316,8 @@ class HostingEnvironment(ContainerEnvironment):
 
         self.port_range = os.environ.get(ContainerEnvironment.SAGEMAKER_SAFE_PORT_RANGE_ENV, None)
 
-        self.default_accept = os.environ.get(HostingEnvironment.DEFAULT_INVOCATIONS_ACCEPT_ENV, None)
+        self.default_accept = os.environ.get(HostingEnvironment.DEFAULT_INVOCATIONS_ACCEPT_ENV,
+                                             serving.JSON_CONTENT_TYPE)
 
         self.model_server_workers = int(os.environ.get(
             HostingEnvironment.MODEL_SERVER_WORKERS_PARAM,

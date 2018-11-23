@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+1.1.1
+=====
+
+* bug-fix: Accept header ANY ('*/*') fallback to default accept
+
 1.1.0
 =====
 

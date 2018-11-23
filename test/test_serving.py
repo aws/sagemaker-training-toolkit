@@ -57,6 +57,40 @@ def test_app_invoke(app):
     assert "application/json" == result.content_type
 
 
+def test_app_invoke_with_accept_any():
+    with patch.dict('os.environ', {'SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT': 'application/x-npy'}):
+        server = Server("test", Transformer())
+        server.app.testing = True
+        app = server.app.test_client()
+
+        data = '{"k1":"v1", "k2":"v2"}'
+        result = app.post("/invocations",
+                          data=data,
+                          headers={"ContentType": JSON_CONTENT_TYPE,
+                                   "Accept": '*/*'})
+
+        assert 200 == result.status_code
+        assert data == result.data.decode('utf-8')
+        assert 'application/x-npy' == result.content_type
+
+
+def test_app_invoke_with_accept():
+    with patch.dict('os.environ', {'SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT': 'application/x-npy'}):
+        server = Server("test", Transformer())
+        server.app.testing = True
+        app = server.app.test_client()
+
+        data = '{"k1":"v1", "k2":"v2"}'
+        result = app.post("/invocations",
+                          data=data,
+                          headers={"ContentType": JSON_CONTENT_TYPE,
+                                   "Accept": JSON_CONTENT_TYPE})
+
+        assert 200 == result.status_code
+        assert data == result.data.decode('utf-8')
+        assert JSON_CONTENT_TYPE == result.content_type
+
+
 @pytest.mark.parametrize("header", ["ContentType", "Content-Type"])
 def test_app_invoke_error(header):
     def f(*args):
