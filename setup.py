@@ -26,7 +26,9 @@ def read(file_name):
 packages = find_packages(where='src', exclude=('test',))
 packages.append('sagemaker_containers.etc')
 
-required_packages = ['boto3', 'six', 'pip', 'flask', 'gunicorn', 'gevent', 'werkzeug']
+required_packages = [
+  'boto3', 'six', 'pip', 'flask', 'gunicorn', 'gevent', 'inotify_simple', 'werkzeug'
+]
 
 # enum is introduced in Python 3.4. Installing enum back port
 if sys.version_info < (3, 4):
@@ -58,6 +60,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
     ],
+
     install_requires=required_packages,
 
     extras_require={

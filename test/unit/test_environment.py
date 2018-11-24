@@ -57,7 +57,8 @@ SAGEMAKER_HYPERPARAMETERS = {
     'sagemaker_enable_cloudwatch_metrics': True,
     'sagemaker_container_log_level':       logging.WARNING,
     '_tuning_objective_metric':            'loss:3.4',
-    'sagemaker_parameter_server_num':      2
+    'sagemaker_parameter_server_num':      2,
+    'sagemaker_s3_output':                 's3://bucket'
 }
 
 ALL_HYPERPARAMETERS = dict(itertools.chain(USER_HYPERPARAMETERS.items(), SAGEMAKER_HYPERPARAMETERS.items()))
@@ -217,7 +218,7 @@ def test_env_mapping_properties(training_env):
         'additional_framework_parameters', 'channel_input_dirs', 'current_host', 'framework_module', 'hosts',
         'hyperparameters', 'input_config_dir', 'input_data_config', 'input_dir', 'log_level', 'model_dir',
         'module_dir', 'module_name', 'network_interface_name', 'num_cpus', 'num_gpus', 'output_data_dir',
-        'output_dir', 'resource_config', 'user_entry_point', 'job_name'}
+        'output_dir', 'resource_config', 'user_entry_point', 'job_name', 'output_intermediate_dir'}
 
 
 def test_serving_env_properties(serving_env):

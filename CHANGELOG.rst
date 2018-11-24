@@ -6,6 +6,7 @@ CHANGELOG
 =====
 
 * bug-fix: Accept header ANY ('*/*') fallback to default accept
+* feature: Add intermediate output to S3 during training
 
 
 2.3.5

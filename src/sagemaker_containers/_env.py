@@ -129,6 +129,16 @@ Returns:
 
 output_data_dir = os.path.join(output_dir, 'data')  # type: str
 
+output_intermediate_dir = os.path.join(output_dir, 'intermediate')  # type: str
+"""str: the path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
+
+The directory special behavior is to move artifacts from the training instance to
+s3 directory during training.
+Returns:
+    str: the path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
+"""
+
+
 HYPERPARAMETERS_FILE = 'hyperparameters.json'  # type: str
 RESOURCE_CONFIG_FILE = 'resourceconfig.json'  # type: str
 INPUT_DATA_CONFIG_FILE = 'inputdataconfig.json'  # type: str
@@ -550,6 +560,7 @@ class TrainingEnv(_Env):
         self._resource_config = resource_config
         self._input_data_config = input_data_config
         self._output_data_dir = output_data_dir
+        self._output_intermediate_dir = output_intermediate_dir
         self._channel_input_dirs = {channel: channel_path(channel) for channel in input_data_config}
         self._current_host = current_host
 
@@ -560,6 +571,8 @@ class TrainingEnv(_Env):
 
         self._module_dir = str(sagemaker_hyperparameters.get(_params.SUBMIT_DIR_PARAM, code_dir))
         self._log_level = sagemaker_hyperparameters.get(_params.LOG_LEVEL_PARAM, logging.INFO)
+        self._sagemaker_s3_output = sagemaker_hyperparameters.get(_params.S3_OUTPUT_LOCATION_PARAM,
+                                                                  None)
         self._framework_module = os.environ.get(_params.FRAMEWORK_TRAINING_MODULE_ENV, None)
 
         self._input_dir = input_dir
@@ -588,6 +601,14 @@ class TrainingEnv(_Env):
         """
         return self._additional_framework_parameters
 
+    def sagemaker_s3_output(self):  # type: () -> str
+        """S3 output directory location provided by the user.
+
+        Returns:
+            str: S3 location.
+        """
+        return self._sagemaker_s3_output
+
     def to_cmd_args(self):
         """Command line arguments representation of the training environment.
 
@@ -613,7 +634,8 @@ class TrainingEnv(_Env):
             'framework_module': self.framework_module, 'input_dir': self.input_dir,
             'input_config_dir': self.input_config_dir, 'output_dir': self.output_dir, 'num_cpus': self.num_cpus,
             'num_gpus':         self.num_gpus, 'model_dir': self.model_dir, 'module_dir': self.module_dir,
-            'training_env':     dict(self), 'user_args': self.to_cmd_args()
+            'training_env':     dict(self), 'user_args': self.to_cmd_args(),
+            'output_intermediate_dir': self.output_intermediate_dir
         }
 
         for name, path in self.channel_input_dirs.items():
@@ -756,6 +778,16 @@ class TrainingEnv(_Env):
             str: the path to output data directory, e.g. /opt/ml/output/data/algo-1.
         """
         return self._output_data_dir
+
+    @property
+    def output_intermediate_dir(self):  # type: () -> str
+        """The directory for intermediate output artifacts that should be synced to S3.
+        Any files written to this directory will be uploaded to S3 by a background process
+        while training is in progress, but only if sagemaker_s3_output was specified.
+        Returns:
+            str: the path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
+        """
+        return self._output_intermediate_dir
 
     @property
     def framework_module(self):  # type: () -> str

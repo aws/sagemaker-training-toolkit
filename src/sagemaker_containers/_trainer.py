@@ -15,6 +15,7 @@ import os
 import traceback
 
 import sagemaker_containers
+from sagemaker_containers import _intermediate_output, _params
 from sagemaker_containers.beta.framework import entry_point, errors, files, logging
 
 logger = logging.get_logger()
@@ -37,10 +38,19 @@ def _exit_processes(exit_code):  # type:
 
 
 def train():
+    intermediate_sync = None
+    exit_code = SUCCESS_CODE
     try:
         # TODO: iquintero - add error handling for ImportError to let the user know
         # if the framework module is not defined.
         env = sagemaker_containers.training_env()
+
+        # TODO: [issue#144] There is a bug in the logic -
+        # we need os.environ.get(_params.REGION_NAME_ENV)
+        # in certain regions, but it is not going to be available unless
+        # TrainingEnvironment has been initialized. It shouldn't be environment variable.
+        region = os.environ.get('AWS_REGION', os.environ.get(_params.REGION_NAME_ENV))
+        intermediate_sync = _intermediate_output.start_sync(env.sagemaker_s3_output(), region)
 
         if env.framework_module:
             framework_name, entry_point_name = env.framework_module.split(':')
@@ -59,16 +69,19 @@ def train():
             entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env.to_env_vars())
 
         logger.info('Reporting training SUCCESS')
-        files.write_success_file()
-        _exit_processes(SUCCESS_CODE)
 
+        files.write_success_file()
     except errors.ClientError as e:
 
         failure_message = str(e)
         files.write_failure_file(failure_message)
 
         logger.error(failure_message)
-        _exit_processes(DEFAULT_FAILURE_CODE)
+
+        if intermediate_sync:
+            intermediate_sync.join()
+
+        exit_code = DEFAULT_FAILURE_CODE
     except Exception as e:
         failure_msg = 'framework error: \n%s\n%s' % (traceback.format_exc(), str(e))
 
@@ -78,4 +91,8 @@ def train():
         logger.error(failure_msg)
 
         exit_code = getattr(e, 'errno', DEFAULT_FAILURE_CODE)
+    finally:
+        if intermediate_sync:
+            intermediate_sync.join()
+
         _exit_processes(exit_code)
