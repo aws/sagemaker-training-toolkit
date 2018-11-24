@@ -2,16 +2,11 @@
 CHANGELOG
 =========
 
-2.3.6
+2.3.5
 =====
 
 * bug-fix: Accept header ANY ('*/*') fallback to default accept
 * feature: Add intermediate output to S3 during training
-
-
-2.3.5
-=====
-
 * bug-fix: reintroduce ``_modules.s3_download`` and ``_modules.download_and_install`` for backward compatibility
 
 2.3.4

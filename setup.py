@@ -36,7 +36,7 @@ if sys.version_info < (3, 4):
 
 setup(
     name='sagemaker_containers',
-    version='2.3.6',
+    version='2.3.5',
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
     packages=packages,
