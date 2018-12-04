@@ -12,6 +12,8 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import warnings
+
 import flask
 from six.moves import http_client
 
@@ -78,8 +80,10 @@ class Worker(flask.Flask):
         if initialize_fn:
             self.before_first_request(initialize_fn)
 
-        self.add_url_rule(rule='/invocations', endpoint='invocations', view_func=transform_fn, methods=["POST"])
-        self.add_url_rule(rule='/ping', endpoint='ping', view_func=healthcheck_fn or default_healthcheck_fn)
+        self.add_url_rule(rule='/invocations', endpoint='invocations', view_func=transform_fn,
+                          methods=["POST"])
+        self.add_url_rule(rule='/ping', endpoint='ping',
+                          view_func=healthcheck_fn or default_healthcheck_fn)
 
         self.request_class = Request
 
@@ -89,9 +93,11 @@ class Response(flask.Response):
 
     def __init__(self, response=None, accept=None, status=http_client.OK, headers=None,
                  mimetype=None, direct_passthrough=False):
-        headers = headers or {}
-        headers['accept'] = accept
-        super(Response, self).__init__(response, status, headers, mimetype, accept, direct_passthrough)
+        if accept:
+            warnings.warn('ignoring deprecated "accept" argument to Response.__init__',
+                          DeprecationWarning)
+        super(Response, self).__init__(response, status, headers, mimetype, None,
+                                       direct_passthrough)
 
 
 class Request(flask.Request, _mapping.MappingMixin):
@@ -134,7 +140,8 @@ class Request(flask.Request, _mapping.MappingMixin):
                     Otherwise, returns 'application/json' as default.
         """
         # todo(mvsusp): consider a better default content-type
-        return self.headers.get('ContentType') or self.headers.get('Content-Type') or _content_types.JSON
+        return self.headers.get('ContentType') or self.headers.get(
+            'Content-Type') or _content_types.JSON
 
     @property
     def accept(self):  # type: () -> str

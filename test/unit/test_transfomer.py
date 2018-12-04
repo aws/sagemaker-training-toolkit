@@ -31,7 +31,7 @@ def test_default_input_fn(loads):
 def test_default_output_fn():
     response = _transformer.default_output_fn(2, _content_types.CSV)
     assert response.response == 4
-    assert response.headers['accept'] == _content_types.CSV
+    assert response.mimetype == _content_types.CSV
 
 
 def test_default_model_fn():
@@ -147,7 +147,8 @@ def test_transformer_transform():
                          content_type=_content_types.CSV,
                          accept=_content_types.ANY))
 def test_transformer_transform_backwards_compatibility():
-    model_fn, input_fn, predict_fn, output_fn = (MagicMock(), MagicMock(), MagicMock(), MagicMock(return_value=(0, 1)))
+    model_fn, input_fn, predict_fn, output_fn = (MagicMock(), MagicMock(), MagicMock(),
+                                                 MagicMock(return_value=(0, _content_types.ANY)))
 
     transform = _transformer.Transformer(model_fn=model_fn, input_fn=input_fn,
                                          predict_fn=predict_fn, output_fn=output_fn)

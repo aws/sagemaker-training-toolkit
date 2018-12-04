@@ -18,7 +18,7 @@ import traceback
 
 from six.moves import http_client
 
-from sagemaker_containers import _encoders, _env, _errors, _functions, _worker
+from sagemaker_containers import _content_types, _encoders, _env, _errors, _functions, _worker
 
 
 def default_model_fn(model_dir):
@@ -88,7 +88,7 @@ def default_output_fn(prediction, accept):
                 response: the serialized data to return
                 accept: the content-type that the data was transformed to.
     """
-    return _worker.Response(_encoders.encode(prediction, accept), accept)
+    return _worker.Response(response=_encoders.encode(prediction, accept), mimetype=accept)
 
 
 class Transformer(object):
@@ -172,7 +172,7 @@ class Transformer(object):
 
         if isinstance(result, tuple):
             # transforms tuple in Response for backwards compatibility
-            return _worker.Response(response=result[0], accept=result[1])
+            return _worker.Response(response=result[0], mimetype=result[1])
 
         return result
 
@@ -211,4 +211,4 @@ class Transformer(object):
         body = json.dumps({'error': error.__class__.__name__,
                            'error-message': str(error),
                            'stack-trace': traceback.format_exc()})
-        return _worker.Response(response=body, status=status_code)
+        return _worker.Response(response=body, status=status_code, mimetype=_content_types.JSON)

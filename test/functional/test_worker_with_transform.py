@@ -30,7 +30,7 @@ class Transformer(object):
 
     def transform(self):
         self.calls['transform'] += 1
-        return _worker.Response(json.dumps(self.calls), _content_types.JSON)
+        return _worker.Response(response=json.dumps(self.calls), mimetype=_content_types.JSON)
 
 
 def test_worker_with_initialize():
@@ -48,12 +48,14 @@ def test_worker_with_initialize():
             assert response.status_code == http_client.OK
 
         response = client.post('/invocations')
-        assert json.loads(response.get_data(as_text=True)) == dict(initialize=1, transform=10)
         assert response.mimetype == _content_types.JSON
+        assert json.loads(response.get_data(as_text=True)) == dict(initialize=1, transform=10)
 
 
-@patch('sagemaker_containers._env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
-@pytest.mark.parametrize('module_name,expected_name', [('my_module', 'my_module'), (None, 'user_program')])
+@patch('sagemaker_containers._env.ServingEnv.module_name',
+       PropertyMock(return_value='user_program'))
+@pytest.mark.parametrize('module_name,expected_name',
+                         [('my_module', 'my_module'), (None, 'user_program')])
 def test_worker(module_name, expected_name):
     transformer = Transformer()
 
@@ -68,8 +70,8 @@ def test_worker(module_name, expected_name):
             assert response.status_code == http_client.OK
 
         response = client.post('/invocations')
-        assert json.loads(response.get_data(as_text=True)) == dict(initialize=0, transform=10)
         assert response.mimetype == _content_types.JSON
+        assert json.loads(response.get_data(as_text=True)) == dict(initialize=0, transform=10)
 
 
 def test_worker_with_custom_ping():

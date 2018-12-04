@@ -12,6 +12,8 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import warnings
+
 from mock import MagicMock, patch, PropertyMock
 import pytest
 from six.moves import http_client, range
@@ -21,15 +23,6 @@ from sagemaker_containers import _content_types, _worker
 
 def test_default_ping_fn():
     assert _worker.default_healthcheck_fn().status_code == http_client.OK
-
-
-@pytest.fixture(name='flask')
-def patch_flask():
-    property_mock = PropertyMock(return_value='user_program')
-    with patch('flask.Flask') as flask, \
-            patch('sagemaker_containers._env.ServingEnv.module_name',
-                  property_mock):
-        yield flask
 
 
 @pytest.mark.parametrize('module_name, expected_name', [('test_module', 'test_module'), (None, 'user_program')])
@@ -54,7 +47,7 @@ def test_worker_with_initialize(module_name, expected_name):
 @pytest.mark.parametrize('content_type', [_content_types.JSON, _content_types.ANY])
 def test_invocations(content_type):
     def transform_fn():
-        return _worker.Response(response='fake data', accept=content_type)
+        return _worker.Response(response='fake data', mimetype=content_type)
 
     app = _worker.Worker(transform_fn=transform_fn, module_name='test_module')
 
@@ -74,3 +67,16 @@ def test_ping():
             response = client.get('/ping')
             assert response.status_code == http_client.OK
             assert response.mimetype == _content_types.JSON
+
+
+def test_response_accept_deprecated():
+    def transform_fn():
+        return _worker.Response(response='fake data', accept='deprecated accept arg')
+
+    app = _worker.Worker(transform_fn=transform_fn, module_name='test_module')
+    with app.test_client() as client:
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            client.post('/invocations')
+            assert len(w) == 1
+            assert issubclass(w[0].category, DeprecationWarning)

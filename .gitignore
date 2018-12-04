@@ -1,5 +1,7 @@
 .idea
 .cache/
+build/
+dist/
 **/__pycache__/
 .coverage
 .pytest_cache/
