@@ -29,6 +29,8 @@ JOB_NAME_PARAM = 'sagemaker_job_name'  # type: str
 JOB_NAME_ENV = JOB_NAME_PARAM.upper()  # type: str
 TUNING_METRIC_PARAM = '_tuning_objective_metric'  # type: str
 DEFAULT_MODULE_NAME_PARAM = 'default_user_module_name'  # type: str
+MPI_ENABLED = 'sagemaker_mpi_enabled'  # type: str
+PARAMETER_SERVER_ENABLED = 'sagemaker_parameter_server_enabled'  # type: str
 REGION_NAME_PARAM = 'sagemaker_region'  # type: str
 REGION_NAME_ENV = REGION_NAME_PARAM.upper()  # type: str
 DEFAULT_INVOCATIONS_ACCEPT_ENV = 'SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT'  # type: str
@@ -40,5 +42,9 @@ SAGEMAKER_SAFE_PORT_RANGE_ENV = 'SAGEMAKER_SAFE_PORT_RANGE'  # type: str
 FRAMEWORK_SERVING_MODULE_ENV = 'SAGEMAKER_SERVING_MODULE'  # type: str
 FRAMEWORK_TRAINING_MODULE_ENV = 'SAGEMAKER_TRAINING_MODULE'  # type: str
 SAGEMAKER_HYPERPARAMETERS = (
-    USER_PROGRAM_PARAM, SUBMIT_DIR_PARAM, ENABLE_METRICS_PARAM, REGION_NAME_PARAM, LOG_LEVEL_PARAM, JOB_NAME_PARAM,
-    DEFAULT_MODULE_NAME_PARAM, TUNING_METRIC_PARAM, S3_OUTPUT_LOCATION_PARAM)  # type: tuple
+    USER_PROGRAM_PARAM, SUBMIT_DIR_PARAM, ENABLE_METRICS_PARAM, REGION_NAME_PARAM,
+    LOG_LEVEL_PARAM, JOB_NAME_PARAM, DEFAULT_MODULE_NAME_PARAM,
+    TUNING_METRIC_PARAM, S3_OUTPUT_LOCATION_PARAM)  # type: tuple
+MPI_PROCESSES_PER_HOST = "sagemaker_mpi_num_of_processes_per_host"  # type: int
+MPI_CUSTOM_OPTIONS = "sagemaker_mpi_custom_mpi_options"  # type: str
+SAGEMAKER_NETWORK_INTERFACE_NAME = 'sagemaker_network_interface_name'  # type: str

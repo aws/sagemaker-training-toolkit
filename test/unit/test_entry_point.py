@@ -13,14 +13,13 @@
 from __future__ import absolute_import
 
 import os
-import subprocess
 import sys
 
-from mock import patch
+from mock import MagicMock, patch
 import pytest
 from six import PY2
 
-from sagemaker_containers import _env, _errors, entry_point
+from sagemaker_containers import _env, _errors, _process, entry_point
 
 builtins_open = '__builtin__.open' if PY2 else 'builtins.open'
 
@@ -83,68 +82,24 @@ def test_install_no_python_executable(has_requirements, entry_point_type_module)
     assert str(e.value) == 'Failed to retrieve the real path for the Python executable binary'
 
 
-@patch('subprocess.Popen')
-@patch('sagemaker_containers._logging.log_script_invocation')
-def test_run_bash(log, popen, entry_point_type_script):
-    with pytest.raises(_errors.ExecuteUserScriptError):
-        entry_point._call('launcher.sh', ['--lr', '13'])
-
-    cmd = ['/bin/sh', '-c', './launcher.sh --lr 13']
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stderr=None)
-    log.assert_called_with(cmd, {})
-
-
-@patch('subprocess.Popen')
-@patch('sagemaker_containers._logging.log_script_invocation')
-def test_run_python(log, popen, entry_point_type_script):
-    popen().communicate.return_value = (None, 0)
-
-    with pytest.raises(_errors.ExecuteUserScriptError):
-        entry_point._call('launcher.py', ['--lr', '13'], capture_error=True)
-
-    cmd = [sys.executable, 'launcher.py', '--lr', '13']
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ,
-                             stderr=subprocess.PIPE)
-    log.assert_called_with(cmd, {})
-
-
-@patch('subprocess.Popen')
-@patch('sagemaker_containers._logging.log_script_invocation')
-def test_run_module(log, popen, entry_point_type_module):
-    with pytest.raises(_errors.ExecuteUserScriptError):
-        entry_point._call('module.py', ['--lr', '13'])
-
-    cmd = [sys.executable, '-m', 'module', '--lr', '13']
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ,
-                             stderr=None)
-    log.assert_called_with(cmd, {})
-
-
-@patch('sagemaker_containers.training_env', lambda: {})
-def test_run_error():
-    with pytest.raises(_errors.ExecuteUserScriptError) as e:
-        entry_point._call('wrong module')
-
-    message = str(e.value)
-    assert 'ExecuteUserScriptError:' in message
-
-
 @patch('sagemaker_containers._files.download_and_extract')
-@patch('sagemaker_containers.entry_point._call')
 @patch('os.chmod')
-def test_run_module_wait(chmod, call, download_and_extract):
-    entry_point.run(uri='s3://url', user_entry_point='launcher.sh', args=['42'], capture_error=True)
+def test_run_module_wait(chmod, download_and_extract):
+    runner = MagicMock(spec=_process.ProcessRunner)
+    entry_point.run(uri='s3://url', user_entry_point='launcher.sh', args=['42'],
+                    capture_error=True, runner=runner)
 
     download_and_extract.assert_called_with('s3://url', 'launcher.sh', _env.code_dir)
-    call.assert_called_with('launcher.sh', ['42'], {}, True, True)
+    runner.run.assert_called_with(True, True)
     chmod.assert_called_with(os.path.join(_env.code_dir, 'launcher.sh'), 511)
 
 
 @patch('sagemaker_containers._files.download_and_extract')
-@patch('sagemaker_containers.entry_point._call')
-def test_run_module_no_wait(call, download_and_extract, entry_point_type_module):
-    with pytest.raises(_errors.InstallModuleError):
-        entry_point.run(uri='s3://url', user_entry_point='default_user_module_name', args=['42'], wait=False)
+@patch('os.chmod')
+def test_run_module_no_wait(chmod, download_and_extract):
+    runner = MagicMock(spec=_process.ProcessRunner)
 
-        download_and_extract.assert_called_with('s3://url', 'default_user_module_name', _env.code_dir)
-        call.assert_called_with('default_user_module_name', ['42'], {}, False)
+    module_name = 'default_user_module_name'
+    entry_point.run(uri='s3://url', user_entry_point=module_name, args=['42'], wait=False, runner=runner)
+
+    runner.run.assert_called_with(False, False)

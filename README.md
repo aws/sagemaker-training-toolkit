@@ -485,4 +485,4 @@ SM_TRAINING_ENV='
 Provides the entire training information as a JSON encoded dictionary.
 ## License
 
-This library is licensed under the Apache 2.0 License. 
+This library is licensed under the Apache 2.0 License.

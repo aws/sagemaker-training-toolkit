@@ -197,7 +197,7 @@ def test_training_env(training_env):
     assert training_env.user_entry_point == 'main.py'
     assert training_env.module_dir == 'imagenet'
     assert training_env.log_level == logging.WARNING
-    assert training_env.network_interface_name == 'ethwe'
+    assert training_env.network_interface_name == 'eth0'
     assert training_env.job_name == 'training-job-42'
     assert training_env.additional_framework_parameters == {'sagemaker_parameter_server_num': 2}
 
@@ -218,7 +218,8 @@ def test_env_mapping_properties(training_env):
         'additional_framework_parameters', 'channel_input_dirs', 'current_host', 'framework_module', 'hosts',
         'hyperparameters', 'input_config_dir', 'input_data_config', 'input_dir', 'log_level', 'model_dir',
         'module_dir', 'module_name', 'network_interface_name', 'num_cpus', 'num_gpus', 'output_data_dir',
-        'output_dir', 'resource_config', 'user_entry_point', 'job_name', 'output_intermediate_dir'}
+        'output_dir', 'resource_config', 'user_entry_point', 'job_name', 'output_intermediate_dir',
+        'is_master', 'master_hostname'}
 
 
 def test_serving_env_properties(serving_env):

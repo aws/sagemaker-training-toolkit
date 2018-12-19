@@ -12,15 +12,21 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import enum
 import os
 import sys
+from typing import Dict, List  # noqa ignore=F401 imported but unused
 
-from sagemaker_containers import _env, _errors, _files, _logging, _modules, _process
+from sagemaker_containers import _entry_point_type, _env, _files, _modules, _runner
 
 
-def run(uri, user_entry_point, args, env_vars=None, wait=True, capture_error=False):
-    # type: (str, str, list, dict, bool, bool) -> subprocess.Popen
+def run(uri,
+        user_entry_point,
+        args,
+        env_vars=None,
+        wait=True,
+        capture_error=False,
+        runner=_runner.ProcessRunnerType):
+    # type: (str, str, List[str], Dict[str, str], bool, bool, _runner.RunnerType) -> None
     """Download, prepare and executes a compressed tar file from S3 or provided directory as an user
     entrypoint. Runs the user entry point, passing env_vars as environment variables and args as command
     arguments.
@@ -57,8 +63,6 @@ def run(uri, user_entry_point, args, env_vars=None, wait=True, capture_error=Fal
         args (list):  A list of program arguments.
         env_vars (dict): A map containing the environment variables to be written.
         uri (str): the location of the module.
-        wait (bool): If True, holds the process executing the user entry-point.
-                     If False, returns the process that is executing it.
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
 
@@ -72,7 +76,7 @@ def run(uri, user_entry_point, args, env_vars=None, wait=True, capture_error=Fal
 
     _env.write_env_vars(env_vars)
 
-    return _call(user_entry_point, args, env_vars, wait, capture_error)
+    return _runner.get(runner).run(wait, capture_error)
 
 
 def install(name, dst, capture_error=False):
@@ -89,54 +93,8 @@ def install(name, dst, capture_error=False):
     if dst not in sys.path:
         sys.path.insert(0, dst)
 
-    entrypoint_type = entry_point_type(dst, name)
-    if entrypoint_type is EntryPointType.PYTHON_PACKAGE:
+    entrypoint_type = _entry_point_type.get(dst, name)
+    if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
         _modules.install(dst, capture_error)
-    if entrypoint_type is EntryPointType.COMMAND:
+    if entrypoint_type is _entry_point_type.COMMAND:
         os.chmod(os.path.join(dst, name), 511)
-
-
-def _call(user_entry_point, args=None, env_vars=None, wait=True, capture_error=False):
-    # type: (str, list, dict, bool, bool) -> Popen
-    args = args or []
-    env_vars = env_vars or {}
-
-    entrypoint_type = entry_point_type(_env.code_dir, user_entry_point)
-
-    if entrypoint_type is EntryPointType.PYTHON_PACKAGE:
-        cmd = [_process.python_executable(), '-m', user_entry_point.replace('.py', '')] + args
-    elif entrypoint_type is EntryPointType.PYTHON_PROGRAM:
-        cmd = [_process.python_executable(), user_entry_point] + args
-    else:
-        cmd = ['/bin/sh', '-c', './%s %s' % (user_entry_point, ' '.join(args))]
-
-    _logging.log_script_invocation(cmd, env_vars)
-
-    if wait:
-        return _process.check_error(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
-
-    else:
-        return _process.create(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
-
-
-class EntryPointType(enum.Enum):
-    PYTHON_PACKAGE = 'PYTHON_PACKAGE'
-    PYTHON_PROGRAM = 'PYTHON_PROGRAM'
-    COMMAND = 'COMMAND'
-
-
-def entry_point_type(path, name):  # type: (str, str) -> EntryPointType
-    """
-    Args:
-        path (string): Directory where the entry point is located
-        name (string): Name of the entry point file
-
-    Returns:
-        (EntryPointType): The type of the entry point
-    """
-    if 'setup.py' in os.listdir(path):
-        return EntryPointType.PYTHON_PACKAGE
-    elif name.endswith('.py'):
-        return EntryPointType.PYTHON_PROGRAM
-    else:
-        return EntryPointType.COMMAND

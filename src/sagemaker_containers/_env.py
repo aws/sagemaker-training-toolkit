@@ -138,7 +138,6 @@ Returns:
     str: the path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
 """
 
-
 HYPERPARAMETERS_FILE = 'hyperparameters.json'  # type: str
 RESOURCE_CONFIG_FILE = 'resourceconfig.json'  # type: str
 INPUT_DATA_CONFIG_FILE = 'inputdataconfig.json'  # type: str
@@ -164,7 +163,7 @@ def _create_training_directories():
 
     resources_dict = {
         "current_host": host_name,
-        "hosts":        [host_name]
+        "hosts": [host_name]
     }
     _write_json(resources_dict, resource_config_file_dir)
 
@@ -534,11 +533,11 @@ class TrainingEnv(_Env):
         resource_config = resource_config or read_resource_config()
         current_host = resource_config['current_host']
         hosts = resource_config['hosts']
-        network_interface_name = resource_config.get('network_interface_name', 'ethwe')
         input_data_config = input_data_config or read_input_data_config()
 
         all_hyperparameters = hyperparameters or read_hyperparameters()
-        split_result = _mapping.split_by_criteria(all_hyperparameters, keys=_params.SAGEMAKER_HYPERPARAMETERS,
+        split_result = _mapping.split_by_criteria(all_hyperparameters,
+                                                  keys=_params.SAGEMAKER_HYPERPARAMETERS,
                                                   prefix=_params.SAGEMAKER_PREFIX)
 
         sagemaker_hyperparameters = split_result.included
@@ -547,14 +546,17 @@ class TrainingEnv(_Env):
             if k not in _params.SAGEMAKER_HYPERPARAMETERS
         }
 
-        sagemaker_region = sagemaker_hyperparameters.get(_params.REGION_NAME_PARAM, boto3.session.Session().region_name)
+        sagemaker_region = sagemaker_hyperparameters.get(_params.REGION_NAME_PARAM,
+                                                         boto3.session.Session().region_name)
 
         os.environ[_params.JOB_NAME_ENV] = sagemaker_hyperparameters.get(_params.JOB_NAME_PARAM, '')
         os.environ[_params.CURRENT_HOST_ENV] = current_host
         os.environ[_params.REGION_NAME_ENV] = sagemaker_region or ''
 
         self._hosts = hosts
-        self._network_interface_name = network_interface_name
+
+        self._network_interface_name = resource_config.get('network_interface_name', 'eth0')
+
         self._hyperparameters = split_result.excluded
         self._additional_framework_parameters = additional_framework_parameters
         self._resource_config = resource_config
@@ -567,7 +569,8 @@ class TrainingEnv(_Env):
         # override base class attributes
         if self._module_name is None:
             self._module_name = str(sagemaker_hyperparameters.get(_params.USER_PROGRAM_PARAM, None))
-        self._user_entry_point = self._user_entry_point or sagemaker_hyperparameters.get(_params.USER_PROGRAM_PARAM)
+        self._user_entry_point = self._user_entry_point or sagemaker_hyperparameters.get(
+            _params.USER_PROGRAM_PARAM)
 
         self._module_dir = str(sagemaker_hyperparameters.get(_params.SUBMIT_DIR_PARAM, code_dir))
         self._log_level = sagemaker_hyperparameters.get(_params.LOG_LEVEL_PARAM, logging.INFO)
@@ -579,6 +582,21 @@ class TrainingEnv(_Env):
         self._input_config_dir = input_config_dir
         self._output_dir = output_dir
         self._job_name = os.environ.get(_params.TRAINING_JOB_ENV.upper(), None)
+
+        self._master_hostname = list(hosts)[0]
+        self._is_master = current_host == self._master_hostname
+
+    @property
+    def is_master(self):  # type: () -> bool
+        """Returns True if host is master
+        """
+        return self._is_master
+
+    @property
+    def master_hostname(self):  # type: () -> str
+        """Returns the hostname of the master node
+        """
+        return self._master_hostname
 
     @property
     def job_name(self):  # type: () -> str
@@ -625,16 +643,19 @@ class TrainingEnv(_Env):
         """
 
         env = {
-            'hosts':            self.hosts, 'network_interface_name': self.network_interface_name,
-            'hps':              self.hyperparameters, 'user_entry_point': self.user_entry_point,
+            'hosts': self.hosts, 'network_interface_name': self.network_interface_name,
+            'hps': self.hyperparameters, 'user_entry_point': self.user_entry_point,
             'framework_params': self.additional_framework_parameters,
-            'resource_config':  self.resource_config, 'input_data_config': self.input_data_config,
-            'output_data_dir':  self.output_data_dir, 'channels': sorted(self.channel_input_dirs.keys()),
-            'current_host':     self.current_host, 'module_name': self.module_name, 'log_level': self.log_level,
+            'resource_config': self.resource_config, 'input_data_config': self.input_data_config,
+            'output_data_dir': self.output_data_dir,
+            'channels': sorted(self.channel_input_dirs.keys()),
+            'current_host': self.current_host, 'module_name': self.module_name,
+            'log_level': self.log_level,
             'framework_module': self.framework_module, 'input_dir': self.input_dir,
-            'input_config_dir': self.input_config_dir, 'output_dir': self.output_dir, 'num_cpus': self.num_cpus,
-            'num_gpus':         self.num_gpus, 'model_dir': self.model_dir, 'module_dir': self.module_dir,
-            'training_env':     dict(self), 'user_args': self.to_cmd_args(),
+            'input_config_dir': self.input_config_dir, 'output_dir': self.output_dir,
+            'num_cpus': self.num_cpus,
+            'num_gpus': self.num_gpus, 'model_dir': self.model_dir, 'module_dir': self.module_dir,
+            'training_env': dict(self), 'user_args': self.to_cmd_args(),
             'output_intermediate_dir': self.output_intermediate_dir
         }
 

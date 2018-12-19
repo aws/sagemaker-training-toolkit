@@ -16,25 +16,31 @@ from glob import glob
 import os
 import sys
 
-from setuptools import find_packages, setup
+import setuptools
 
 
 def read(file_name):
     return open(os.path.join(os.path.dirname(__file__), file_name)).read()
 
 
-packages = find_packages(where='src', exclude=('test',))
+packages = setuptools.find_packages(where='src', exclude=('test',))
 packages.append('sagemaker_containers.etc')
 
 required_packages = [
-  'boto3', 'six', 'pip', 'flask', 'gunicorn', 'gevent', 'inotify_simple', 'werkzeug'
+    'numpy', 'boto3', 'six', 'pip', 'flask', 'gunicorn', 'typing',
+    'gevent', 'inotify_simple', 'werkzeug', 'paramiko==2.4.2', 'psutil==5.4.8'
 ]
 
 # enum is introduced in Python 3.4. Installing enum back port
 if sys.version_info < (3, 4):
     required_packages.append('enum34 >= 1.1.6')
 
-setup(
+gethostname = setuptools.Extension('libchangehostname',
+                                   sources=['src/sagemaker_containers/c/libchangehostname.c'],
+                                   extra_compile_args=['-Wall', '-shared', '-export-dynamic',
+                                                       '-ldl'])
+
+setuptools.setup(
     name='sagemaker_containers',
     version='2.3.5',
     description='Open source library for creating containers to run on Amazon SageMaker.',
@@ -46,6 +52,7 @@ setup(
     },
     package_data={'sagemaker_containers.etc': ['*']},
     py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob('src/*.py')],
+    ext_modules=[gethostname],
     long_description=read('README.md'),
     author='Amazon Web Services',
     url='https://github.com/aws/sagemaker-containers/',
@@ -64,11 +71,11 @@ setup(
     install_requires=required_packages,
 
     extras_require={
-        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'mock', 'sagemaker', 'numpy']
+        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'mock', 'sagemaker==1.16.2']
     },
 
     entry_points={
-          'console_scripts': ['serve=sagemaker_containers.cli.serve:main',
-                              'train=sagemaker_containers.cli.train:main'],
+        'console_scripts': ['serve=sagemaker_containers.cli.serve:main',
+                            'train=sagemaker_containers.cli.train:main'],
     }
 )

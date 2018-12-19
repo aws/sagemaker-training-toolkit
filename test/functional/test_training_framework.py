@@ -22,7 +22,8 @@ import numpy as np
 import pytest
 
 import sagemaker_containers
-from sagemaker_containers.beta.framework import entry_point, env, errors, functions, modules, trainer
+from sagemaker_containers.beta.framework import (entry_point, env, errors,
+                                                 functions, modules, trainer)
 import test
 from test import fake_ml_framework
 
@@ -83,6 +84,53 @@ import os
 
 def train(channel_input_dirs, hyperparameters):
     raise OSError(os.errno.ENOENT, 'No such file or directory')
+"""
+
+MPI_USER_MODE_SCRIPT_BASIC = """
+import os
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+
+print("MPI is running at: {} with rank: {} in total of {} processes." \
+    .format(os.environ["SM_CURRENT_HOST"],comm.rank, comm.size))
+"""
+
+MPI_USER_MODE_SCRIPT = """
+import os
+import argparse
+import os
+import test.fake_ml_framework as fake_ml
+import numpy as np
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+
+parser = argparse.ArgumentParser()
+
+# Data and model checkpoints directories
+parser.add_argument('--training_data_file', type=str)
+parser.add_argument('--epochs', type=int)
+parser.add_argument('--batch_size', type=int)
+parser.add_argument('--model_dir', type=str)
+
+args = parser.parse_args()
+
+print("MPI is running at: {} with rank: {} in total of {} processes." \
+    .format(os.environ["SM_CURRENT_HOST"],comm.rank, comm.size))
+
+data = np.load(os.path.join(os.environ['SM_CHANNEL_TRAINING'], args.training_data_file))
+x_train = data['features']
+y_train = data['labels']
+
+model = fake_ml.Model(loss='elastic', optimizer='SGD')
+
+model.fit(x=x_train, y=y_train, epochs=args.epochs, batch_size=args.batch_size)
+
+if comm.rank == 0:
+    print("Model saving at master.")
+    model_file = os.path.join(os.environ['SM_MODEL_DIR'], 'saved_model')
+    model.save(model_file)
 """
 
 USER_MODE_SCRIPT = """
@@ -182,7 +230,6 @@ def test_training_framework(user_script, capture_error):
     [BASH_SCRIPT, 'bash_script']
 ])
 def test_trainer_report_success(user_script, sagemaker_program):
-
     channel = test.Channel.create(name='training')
 
     features = [1, 2, 3, 4]
@@ -240,6 +287,13 @@ def framework_training_with_script_mode_fn(capture_error):
 
     entry_point.run(training_env.module_dir, training_env.user_entry_point, training_env.to_cmd_args(),
                     training_env.to_env_vars(), capture_error=capture_error)
+
+
+def mpi_training_with_script_mode_fn(capture_error):
+    training_env = sagemaker_containers.training_env()
+
+    entry_point.run(training_env.module_dir, training_env.user_entry_point, training_env.to_cmd_args(),
+                    training_env.to_env_vars(), capture_error=capture_error, mpi_enabled=True)
 
 
 def framework_training_with_run_modules_fn(capture_error):

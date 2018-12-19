@@ -1,3 +1,3 @@
 [flake8]
-application_import_names = sagemaker_containers, test
+application_import_names = sagemaker_containers, test, libchangehostname
 import-order-style = google

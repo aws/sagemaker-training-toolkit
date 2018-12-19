@@ -193,7 +193,7 @@ def test_env_vars_round_trip():
                                                '"RecordWrapperType":"None","S3DistributionType":"FullyReplicated",' \
                                                '"TrainingInputMode":"File"},"validation":{"RecordWrapperType":"None",' \
                                                '"S3DistributionType":"FullyReplicated","TrainingInputMode":"File"}}'
-    assert env_vars['SM_NETWORK_INTERFACE_NAME'] == 'ethwe'
+    assert env_vars['SM_NETWORK_INTERFACE_NAME'] == 'eth0'
     assert env_vars['SM_LOG_LEVEL'] == '20'
     assert env_vars['SM_INPUT_DIR'].endswith('/opt/ml/input')
     assert env_vars['SM_NUM_CPUS'] == str(training_env.num_cpus)

@@ -15,7 +15,7 @@ import os
 
 from mock import MagicMock, Mock, patch
 
-from sagemaker_containers import _errors, _trainer
+from sagemaker_containers import _errors, _runner, _trainer
 
 
 class TrainingEnv(Mock):
@@ -42,6 +42,7 @@ class ScriptTrainingEnv(TrainingEnv):
 
 
 @patch('inotify_simple.INotify', MagicMock())
+@patch('boto3.client', MagicMock())
 @patch('importlib.import_module')
 @patch('sagemaker_containers.training_env', TrainingEnv)
 def test_train(import_module):
@@ -54,6 +55,7 @@ def test_train(import_module):
 
 
 @patch('inotify_simple.INotify', MagicMock())
+@patch('boto3.client', MagicMock())
 @patch('importlib.import_module')
 @patch('sagemaker_containers.training_env', TrainingEnv)
 @patch('sagemaker_containers._trainer._exit_processes')
@@ -70,6 +72,7 @@ def test_train_with_success(_exit, import_module):
 
 
 @patch('inotify_simple.INotify', MagicMock())
+@patch('boto3.client', MagicMock())
 @patch('importlib.import_module')
 @patch('sagemaker_containers.training_env', TrainingEnv)
 @patch('sagemaker_containers._trainer._exit_processes')
@@ -87,6 +90,7 @@ def test_train_fails(_exit, import_module):
 
 
 @patch('inotify_simple.INotify', MagicMock())
+@patch('boto3.client', MagicMock())
 @patch('importlib.import_module')
 @patch('sagemaker_containers.training_env', TrainingEnv)
 @patch('sagemaker_containers._trainer._exit_processes')
@@ -104,6 +108,7 @@ def test_train_with_client_error(_exit, import_module):
 
 
 @patch('inotify_simple.INotify', MagicMock())
+@patch('boto3.client', MagicMock())
 @patch('sagemaker_containers.entry_point.run')
 @patch('sagemaker_containers.training_env', new_callable=ScriptTrainingEnv)
 @patch('sagemaker_containers._trainer._exit_processes')
@@ -112,7 +117,7 @@ def test_train_script(_exit, training_env, run):
 
     env = training_env()
     run.assert_called_with(env.module_dir, env.user_entry_point, env.to_cmd_args(),
-                           env.to_env_vars())
+                           env.to_env_vars(), runner=_runner.RunnerType.MPI)
 
     _exit.assert_called_with(_trainer.SUCCESS_CODE)
 

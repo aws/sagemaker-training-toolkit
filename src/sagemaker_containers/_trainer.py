@@ -15,7 +15,7 @@ import os
 import traceback
 
 import sagemaker_containers
-from sagemaker_containers import _intermediate_output, _params
+from sagemaker_containers import _intermediate_output, _params, _runner
 from sagemaker_containers.beta.framework import entry_point, errors, files, logging
 
 logger = logging.get_logger()
@@ -66,7 +66,12 @@ def train():
             entrypoint()
         else:
             logging.configure_logger(env.log_level)
-            entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(), env.to_env_vars())
+
+            mpi_enabled = env.additional_framework_parameters.get(_params.MPI_ENABLED)
+            runner_type = _runner.RunnerType.MPI if mpi_enabled else _runner.RunnerType.Process
+
+            entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(),
+                            env.to_env_vars(), runner=runner_type)
 
         logger.info('Reporting training SUCCESS')
 
