@@ -2,6 +2,12 @@
 CHANGELOG
 =========
 
+2.4.0
+=====
+
+* feature: Generic OpenMPI support
+* bug-fix: Fix response content_type handling
+
 2.3.5
 =====
 
