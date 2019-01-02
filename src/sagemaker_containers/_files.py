@@ -128,6 +128,8 @@ def download_and_extract(uri, name, path):  # type: (str, str, str) -> None
                     t.extractall(path=path)
 
             elif os.path.isdir(uri):
+                if uri == path:
+                    return
                 if os.path.exists(path):
                     shutil.rmtree(path)
                 shutil.move(uri, path)
