@@ -29,7 +29,8 @@ logging.getLogger("paramiko").setLevel(logging.INFO)
 
 
 class WorkerRunner(_process.ProcessRunner):
-    """Runner responsible prepare MPI training and wait for MPI master execution
+    """Runner responsible for preparing MPI distributed training and waiting for MPI
+     master execution to finish.
     """
 
     def __init__(self, user_entry_point, args, env_vars, master_hostname):

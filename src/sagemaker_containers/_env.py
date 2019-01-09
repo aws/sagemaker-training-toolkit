@@ -555,6 +555,9 @@ class TrainingEnv(_Env):
 
         self._hosts = hosts
 
+        # eth0 is the default network interface defined by SageMaker with VPC support and local mode.
+        # ethwe is the current network interface defined by SageMaker training, it will be changed
+        # to eth0 in the short future.
         self._network_interface_name = resource_config.get('network_interface_name', 'eth0')
 
         self._hyperparameters = split_result.excluded

@@ -36,13 +36,15 @@ if sys.version_info < (3, 4):
     required_packages.append('enum34 >= 1.1.6')
 
 gethostname = setuptools.Extension('libchangehostname',
-                                   sources=['src/sagemaker_containers/c/libchangehostname.c'],
+                                   sources=['src/sagemaker_containers/c/libchangehostname.c',
+                                            'src/sagemaker_containers/c/jsmn.c'],
+                                   include_dirs=['src/sagemaker_containers/c'],
                                    extra_compile_args=['-Wall', '-shared', '-export-dynamic',
                                                        '-ldl'])
 
 setuptools.setup(
     name='sagemaker_containers',
-    version='2.4.0',
+    version='2.4.1',
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
     packages=packages,

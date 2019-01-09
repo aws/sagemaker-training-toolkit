@@ -10,22 +10,45 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import json
 import os
+import shutil
 import sys
 
-from mock import patch
 import pytest
 
+import libchangehostname
 from sagemaker_containers import _errors, _process
 
-
-def test_libchangehostname_with_env_set():
-    with patch.dict(os.environ, {'SM_CURRENT_HOST': 'algo-5'}):
-        py_cmd = "import libchangehostname\nassert libchangehostname.call(30) == 'algo-5'"
-        _process.check_error([sys.executable, '-c', py_cmd], _errors.ExecuteUserScriptError)
+OPT_ML = "/opt/ml"
+INPUT_CONFIG = "/opt/ml/input/config/"
 
 
-def test_libchangehostname_with_env_not_set():
+@pytest.fixture()
+def opt_ml_input_config():
+    if os.path.exists(OPT_ML):
+        shutil.rmtree(OPT_ML)
+
+    try:
+        os.makedirs(INPUT_CONFIG)
+
+        yield INPUT_CONFIG
+
+    finally:
+        shutil.rmtree(OPT_ML)
+
+
+@pytest.mark.parametrize('content,value', [
+    [{'channel': 'training', 'current_host': 'algo-5', 'File': 'pipe'}, 'algo-5'],
+    [{'current_host': 'algo-1-thse'}, 'algo-1-thse']])
+def test_libchangehostname_resource_config_set(content, value, opt_ml_input_config):
+    with open("/opt/ml/input/config/resourceconfig.json", 'w') as f:
+        json.dump(content, f)
+
+    assert libchangehostname.call(30) == value
+
+
+def test_libchangehostname_with_env_not_set(opt_ml_input_config):
     py_cmd = "import libchangehostname\nassert libchangehostname.call(30) == 'algo-9'"
 
     with pytest.raises(_errors.ExecuteUserScriptError):

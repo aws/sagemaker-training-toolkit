@@ -10,15 +10,16 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from __future__ import absolute_import
+
 import importlib
 import os
 import traceback
 
 import sagemaker_containers
-from sagemaker_containers import _intermediate_output, _params, _runner
-from sagemaker_containers.beta.framework import entry_point, errors, files, logging
+from sagemaker_containers import _errors, _files, _intermediate_output, _logging, _params, _runner, entry_point
 
-logger = logging.get_logger()
+logger = _logging.get_logger()
 
 SUCCESS_CODE = 0
 DEFAULT_FAILURE_CODE = 1
@@ -59,13 +60,13 @@ def train():
 
             # the logger is configured after importing the framework library, allowing the framework to
             # configure logging at import time.
-            logging.configure_logger(env.log_level)
+            _logging.configure_logger(env.log_level)
             logger.info('Imported framework %s', framework_name)
 
             entrypoint = getattr(framework, entry_point_name)
             entrypoint()
         else:
-            logging.configure_logger(env.log_level)
+            _logging.configure_logger(env.log_level)
 
             mpi_enabled = env.additional_framework_parameters.get(_params.MPI_ENABLED)
             runner_type = _runner.RunnerType.MPI if mpi_enabled else _runner.RunnerType.Process
@@ -75,11 +76,11 @@ def train():
 
         logger.info('Reporting training SUCCESS')
 
-        files.write_success_file()
-    except errors.ClientError as e:
+        _files.write_success_file()
+    except _errors.ClientError as e:
 
         failure_message = str(e)
-        files.write_failure_file(failure_message)
+        _files.write_failure_file(failure_message)
 
         logger.error(failure_message)
 
@@ -90,7 +91,7 @@ def train():
     except Exception as e:
         failure_msg = 'framework error: \n%s\n%s' % (traceback.format_exc(), str(e))
 
-        files.write_failure_file(failure_msg)
+        _files.write_failure_file(failure_msg)
         logger.error('Reporting training FAILURE')
 
         logger.error(failure_msg)

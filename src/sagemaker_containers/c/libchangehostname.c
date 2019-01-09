@@ -12,23 +12,83 @@
 // language governing permissions and limitations under the License.
 
 #include <Python.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include "jsmn.h"
 
+static int jsoneq(const char *json, jsmntok_t *tok, const char *s)
+{
+    if (tok->type == JSMN_STRING && (int) strlen(s) == tok->end - tok->start &&
+        strncmp(json + tok->start, s, tok->end - tok->start) == 0)
+    {
+        return 0;
+    }
+    return -1;
+}
 
 int libchangehostname(char *name, size_t len)
 {
-  const char *val = getenv("SM_CURRENT_HOST");
+    int r;
+    FILE *file = fopen("/opt/ml/input/config/resourceconfig.json", "r");
 
-  strncpy(name, val, len);
-  return 0;
+    fseek(file, 0, SEEK_END);
+
+    long length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char *json_string = malloc(length + 1);
+    fread(json_string, 1, length, file);
+    json_string[length] = '\0';
+
+    fclose(file);
+
+    jsmn_parser parser;
+    jsmntok_t token[1024];
+
+
+    jsmn_init(&parser);
+    r = jsmn_parse(&parser, json_string, strlen(json_string), token, sizeof(token) / sizeof(token[0]));
+
+
+	if (r < 0) {
+		printf("Failed to parse JSON: %d\n", r);
+		return 1;
+	}
+
+	/* Assume the top-level element is an object */
+	if (r < 1 || token[0].type != JSMN_OBJECT) {
+		printf("Object expected\n");
+		return 1;
+	}
+
+    /* Loop over all keys of the root object */
+    int i;
+    for (i = 1; i < r; i++)
+    {
+        if (jsoneq(json_string, &token[i], "current_host") == 0)
+        {
+            const char *val = strndup(json_string + token[i + 1].start, token[i + 1].end - token[i + 1].start);
+
+            strncpy(name, val, len);
+
+            name[len] = "\0";
+
+            free(json_string);
+            return 0;
+        }
+    }
+
+    free(json_string);
+    return 1;
 }
 
-
-static PyObject* libchangehostname_call(PyObject* self, PyObject* args) {
+static PyObject *libchangehostname_call(PyObject *self, PyObject *args)
+{
     long unsigned command;
     char name[40];
 
-    if (!PyArg_ParseTuple(args, "k", &command)) {
+    if (!PyArg_ParseTuple(args, "k", &command))
+    {
         return NULL;
     }
 
@@ -43,7 +103,7 @@ static PyMethodDef LibchangehostnameMethods[] = {
         libchangehostname_call,
         METH_VARARGS,
     },
-    {NULL, NULL, 0, NULL},  // sentinel
+    {NULL, NULL, 0, NULL}, // sentinel
 };
 
 #if PY_MAJOR_VERSION >= 3
@@ -55,12 +115,14 @@ static PyModuleDef libchangehostnamemodule = {
     LibchangehostnameMethods,
 };
 
-PyMODINIT_FUNC PyInit_libchangehostname() {
+PyMODINIT_FUNC PyInit_libchangehostname()
+{
     return PyModule_Create(&libchangehostnamemodule);
 }
 #else
-PyMODINIT_FUNC initlibchangehostname() {
-    PyObject* module;
+PyMODINIT_FUNC initlibchangehostname()
+{
+    PyObject *module;
 
     module = Py_InitModule3(
         "libchangehostname", LibchangehostnameMethods, "Returns the value of $SM_CURRENT_HOST");

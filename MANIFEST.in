@@ -3,3 +3,4 @@ include README.md
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
+include src/sagemaker_containers/c/jsmn.h

@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.4.1
+=====
+
+* feature: C extension reads hostname from resourceconfig instead of env var.
+
 2.4.0
 =====
 
