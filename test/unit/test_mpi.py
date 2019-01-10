@@ -17,7 +17,7 @@ import os
 
 from mock import ANY, MagicMock, patch
 
-import libchangehostname
+import gethostname
 from sagemaker_containers import _env, _mpi
 
 
@@ -120,7 +120,7 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client):
             '-x', 'NCCL_DEBUG=INFO',
             '-x', 'LD_LIBRARY_PATH',
             '-x', 'PATH',
-            '-x', 'LD_PRELOAD=%s' % inspect.getfile(libchangehostname),
+            '-x', 'LD_PRELOAD=%s' % inspect.getfile(gethostname),
             '-v', '--lr', '35', '-x', 'LD_CONFIG_PATH', '/bin/sh', '-c', './train.sh -v --lr 35'],
             cwd=_env.code_dir,
             env=ANY, stderr=None)

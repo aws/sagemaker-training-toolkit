@@ -21,7 +21,7 @@ from typing import Any, List, Tuple  # noqa ignore=F401 imported but unused
 import paramiko
 import psutil
 
-import libchangehostname
+import gethostname
 from sagemaker_containers import _logging, _process, _timeout
 
 logger = _logging.get_logger()
@@ -156,7 +156,7 @@ class MasterRunner(_process.ProcessRunner):
                    '-x', 'NCCL_DEBUG=%s' % overridden_known_options.NCCL_DEBUG,
                    '-x', 'LD_LIBRARY_PATH',
                    '-x', 'PATH',
-                   '-x', 'LD_PRELOAD=%s' % inspect.getfile(libchangehostname),
+                   '-x', 'LD_PRELOAD=%s' % inspect.getfile(gethostname),
 
                    ]
 

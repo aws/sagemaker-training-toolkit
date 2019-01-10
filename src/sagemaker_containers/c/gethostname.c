@@ -26,7 +26,7 @@ static int jsoneq(const char *json, jsmntok_t *tok, const char *s)
     return -1;
 }
 
-int libchangehostname(char *name, size_t len)
+int gethostname(char *name, size_t len)
 {
     int r;
     FILE *file = fopen("/opt/ml/input/config/resourceconfig.json", "r");
@@ -71,7 +71,7 @@ int libchangehostname(char *name, size_t len)
 
             strncpy(name, val, len);
 
-            name[len] = "\0";
+            name[len] = '\0';
 
             free(json_string);
             return 0;
@@ -82,7 +82,7 @@ int libchangehostname(char *name, size_t len)
     return 1;
 }
 
-static PyObject *libchangehostname_call(PyObject *self, PyObject *args)
+static PyObject *gethostname_call(PyObject *self, PyObject *args)
 {
     long unsigned command;
     char name[40];
@@ -92,39 +92,39 @@ static PyObject *libchangehostname_call(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    libchangehostname(name, command);
+    gethostname(name, command);
 
     return Py_BuildValue("s", name);
 }
 
-static PyMethodDef LibchangehostnameMethods[] = {
+static PyMethodDef GetHostnameMethods[] = {
     {
         "call",
-        libchangehostname_call,
+        gethostname_call,
         METH_VARARGS,
     },
     {NULL, NULL, 0, NULL}, // sentinel
 };
 
 #if PY_MAJOR_VERSION >= 3
-static PyModuleDef libchangehostnamemodule = {
+static PyModuleDef gethostnamemodule = {
     PyModuleDef_HEAD_INIT,
-    "libchangehostname",
-    "Returns the value of $SM_CURRENT_HOST",
+    "gethostname",
+    "Returns the current host defined in resourceconfig.json",
     -1,
-    LibchangehostnameMethods,
+    GetHostnameMethods,
 };
 
-PyMODINIT_FUNC PyInit_libchangehostname()
+PyMODINIT_FUNC PyInit_gethostname()
 {
-    return PyModule_Create(&libchangehostnamemodule);
+    return PyModule_Create(&gethostnamemodule);
 }
 #else
-PyMODINIT_FUNC initlibchangehostname()
+PyMODINIT_FUNC initgethostname()
 {
     PyObject *module;
 
     module = Py_InitModule3(
-        "libchangehostname", LibchangehostnameMethods, "Returns the value of $SM_CURRENT_HOST");
+        "gethostname", GetHostnameMethods, "Returns the current host defined in resourceconfig.json");
 }
 #endif

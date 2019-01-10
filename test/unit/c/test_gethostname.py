@@ -17,7 +17,7 @@ import sys
 
 import pytest
 
-import libchangehostname
+import gethostname
 from sagemaker_containers import _errors, _process
 
 OPT_ML = "/opt/ml"
@@ -41,15 +41,15 @@ def opt_ml_input_config():
 @pytest.mark.parametrize('content,value', [
     [{'channel': 'training', 'current_host': 'algo-5', 'File': 'pipe'}, 'algo-5'],
     [{'current_host': 'algo-1-thse'}, 'algo-1-thse']])
-def test_libchangehostname_resource_config_set(content, value, opt_ml_input_config):
+def test_gethostname_resource_config_set(content, value, opt_ml_input_config):
     with open("/opt/ml/input/config/resourceconfig.json", 'w') as f:
         json.dump(content, f)
 
-    assert libchangehostname.call(30) == value
+    assert gethostname.call(30)
 
 
-def test_libchangehostname_with_env_not_set(opt_ml_input_config):
-    py_cmd = "import libchangehostname\nassert libchangehostname.call(30) == 'algo-9'"
+def test_gethostname_with_env_not_set(opt_ml_input_config):
+    py_cmd = "import gethostname\nassert gethostname.call(30) == 'algo-9'"
 
     with pytest.raises(_errors.ExecuteUserScriptError):
         _process.check_error([sys.executable, '-c', py_cmd], _errors.ExecuteUserScriptError)
