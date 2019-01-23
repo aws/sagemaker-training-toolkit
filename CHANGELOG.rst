@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.4.3
+=====
+
+* bug-fix: Fix recursive directory navigation in intermediate output.
+
 2.4.2
 =====
 

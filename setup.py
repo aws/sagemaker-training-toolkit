@@ -46,7 +46,7 @@ gethostname = setuptools.Extension('gethostname',
 
 setuptools.setup(
     name='sagemaker_containers',
-    version='2.4.2',
+    version='2.4.3',
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
     packages=packages,
