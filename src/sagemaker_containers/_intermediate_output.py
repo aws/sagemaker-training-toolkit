@@ -97,7 +97,8 @@ def _watch(inotify, watchers, watch_flags, s3_uploader):
                 # for it which should cause any problems because when we copy files to temp dir
                 # we add a unique timestamp up to microseconds.
                 if flag is inotify_simple.flags.ISDIR and inotify_simple.flags.CREATE & event.mask:
-                    for folder, dirs, files in os.walk(os.path.join(intermediate_path, event.name)):
+                    path = os.path.join(intermediate_path, watchers[event.wd], event.name)
+                    for folder, dirs, files in os.walk(path):
                         wd = inotify.add_watch(folder, watch_flags)
                         relative_path = os.path.relpath(folder, intermediate_path)
                         watchers[wd] = relative_path

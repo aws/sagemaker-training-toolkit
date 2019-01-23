@@ -51,12 +51,12 @@ def test_non_write_ignored(process_mock, upload_file, inotify_mock, copy2):
     process = process_mock.return_value
     inotify = inotify_mock.return_value
 
-    inotify.add_watch.return_value = 'wd'
+    inotify.add_watch.return_value = 1
     mask = flags.CREATE
     for flag in flags:
         if flag is not flags.CLOSE_WRITE and flag is not flags.ISDIR:
             mask = mask | flag
-    inotify.read.return_value = [Event('wd', mask, 'cookie', 'file_name')]
+    inotify.read.return_value = [Event(1, mask, 'cookie', 'file_name')]
 
     def watch():
         call = process_mock.call_args
@@ -84,8 +84,8 @@ def test_modification_triggers_upload(process_mock, upload_file, inotify_mock, c
     process = process_mock.return_value
     inotify = inotify_mock.return_value
 
-    inotify.add_watch.return_value = 'wd'
-    inotify.read.return_value = [Event('wd', flags.CLOSE_WRITE, 'cookie', 'file_name')]
+    inotify.add_watch.return_value = 1
+    inotify.read.return_value = [Event(1, flags.CLOSE_WRITE, 'cookie', 'file_name')]
 
     def watch():
         call = process_mock.call_args
@@ -115,8 +115,8 @@ def test_new_folders_are_watched(process_mock, upload_file, inotify_mock, copy2)
 
     new_dir = 'new_dir'
     new_dir_path = os.path.join(_env.output_intermediate_dir, new_dir)
-    inotify.add_watch.return_value = 'wd'
-    inotify.read.return_value = [Event('wd', flags.CREATE | flags.ISDIR, 'cookie', new_dir)]
+    inotify.add_watch.return_value = 1
+    inotify.read.return_value = [Event(1, flags.CREATE | flags.ISDIR, 'cookie', new_dir)]
 
     def watch():
         os.makedirs(new_dir_path)

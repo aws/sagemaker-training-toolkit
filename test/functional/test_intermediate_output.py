@@ -130,6 +130,47 @@ def test_intermediate_upload():
         assert content == content_to_assert
 
 
+def test_nested_delayed_file():
+    os.environ['TRAINING_JOB_NAME'] = _timestamp()
+    p = _intermediate_output.start_sync(bucket_uri, region)
+
+    os.makedirs(os.path.join(intermediate_path, 'dir1'))
+    dir1 = os.path.join(intermediate_path, 'dir1')
+
+    time.sleep(3)
+
+    os.makedirs(os.path.join(dir1, 'dir2'))
+    dir2 = os.path.join(dir1, 'dir2')
+
+    time.sleep(3)
+
+    file1 = os.path.join(dir2, 'file1.txt')
+    write_file(file1, 'file1')
+
+    os.makedirs(os.path.join(intermediate_path, 'dir3'))
+    dir3 = os.path.join(intermediate_path, 'dir3')
+
+    time.sleep(3)
+
+    file2 = os.path.join(dir3, 'file2.txt')
+    write_file(file2, 'file2')
+
+    _files.write_success_file()
+    p.join()
+
+    # assert that all files that should be under intermediate are still there
+    assert os.path.exists(file1)
+    assert os.path.exists(file2)
+
+    # assert file exist in S3
+    key_prefix = os.path.join(os.environ.get('TRAINING_JOB_NAME'), 'output', 'intermediate')
+    client = boto3.client('s3', region)
+    assert _file_exists_in_s3(
+        client, os.path.join(key_prefix, os.path.relpath(file1, intermediate_path)))
+    assert _file_exists_in_s3(
+        client, os.path.join(key_prefix, os.path.relpath(file2, intermediate_path)))
+
+
 def test_large_files():
     os.environ['TRAINING_JOB_NAME'] = _timestamp()
     p = _intermediate_output.start_sync(bucket_uri, region)
