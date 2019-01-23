@@ -27,7 +27,9 @@ packages = setuptools.find_packages(where='src', exclude=('test',))
 packages.append('sagemaker_containers.etc')
 
 required_packages = [
-    'numpy', 'boto3', 'six', 'pip', 'flask', 'gunicorn', 'typing',
+    # freeze numpy version because of the python2 bug
+    # in 16.0: https://github.com/numpy/numpy/pull/12754
+    'numpy<=1.15.4', 'boto3', 'six', 'pip', 'flask', 'gunicorn', 'typing',
     'gevent', 'inotify_simple', 'werkzeug', 'paramiko==2.4.2', 'psutil==5.4.8'
 ]
 
