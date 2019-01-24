@@ -35,7 +35,8 @@ def _create_nginx_config(serving_env):
 
     pattern = re.compile(r'%(\w+)%')
     template_values = {
-        'NGINX_HTTP_PORT': serving_env.http_port
+        'NGINX_HTTP_PORT': serving_env.http_port,
+        'NGINX_PROXY_READ_TIMEOUT': str(serving_env.model_server_timeout)
     }
 
     config = pattern.sub(lambda x: template_values[x.group(1)], template)

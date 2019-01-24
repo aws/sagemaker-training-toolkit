@@ -883,7 +883,8 @@ class ServingEnv(_Env):
     def model_server_timeout(self):  # type: () -> int
         """Returns:
             int: Timeout in seconds for the model server. This is passed over to gunicorn, from the docs:
-                Workers silent for more than this many seconds are killed and restarted. Our default value is 60."""
+                Workers silent for more than this many seconds are killed and restarted. Our default value is 60.
+                If ``use_nginx`` is True, then this same value will be used for nginx's proxy_read_timeout."""
         return self._model_server_timeout
 
     @property

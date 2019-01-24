@@ -10,6 +10,8 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import os
+
 from mock import call, Mock, patch, PropertyMock
 import pytest
 
@@ -94,3 +96,20 @@ def test_next_safe_port_less_than_range_exception():
 
     with pytest.raises(ValueError):
         _server.next_safe_port(SAFE_PORT_RANGE, current_port)
+
+
+@patch('sagemaker_containers._files.read_file',
+       lambda x: 'nginx_timeout=%NGINX_PROXY_READ_TIMEOUT%, nginx_port=%NGINX_HTTP_PORT%')
+@patch('sagemaker_containers._server.nginx_config_template_file', '/tmp/nginx.conf.template')
+@patch.object(_env.ServingEnv, 'model_server_timeout', PropertyMock(return_value=4567))
+@patch.object(_env.ServingEnv, 'http_port', PropertyMock(return_value='1234'))
+def test_create_nginx_config(tmpdir):
+    nginx_config_file = os.path.join(str(tmpdir), 'nginx.conf')
+    serving_env = _env.ServingEnv()
+
+    with patch('sagemaker_containers._server.nginx_config_file', nginx_config_file):
+        _server._create_nginx_config(serving_env)
+        assert os.path.exists(nginx_config_file)
+        with open(nginx_config_file, 'r') as f:
+            data = f.readline()
+            assert data == 'nginx_timeout=4567, nginx_port=1234'
