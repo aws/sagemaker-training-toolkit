@@ -45,7 +45,8 @@ def test_app_healthcheck(app):
     assert 0 == len(result.data)
 
 
-def test_app_invoke(app):
+@patch('container_support.HostingEnvironment')
+def test_app_invoke(env, app):
     data = '{"k1":"v1", "k2":"v2"}'
     result = app.post("/invocations",
                       data=data,
@@ -55,6 +56,7 @@ def test_app_invoke(app):
     assert 200 == result.status_code
     assert data == result.data.decode('utf-8')
     assert "application/json" == result.content_type
+    env.assert_not_called()
 
 
 def test_app_invoke_with_accept_any():
@@ -74,7 +76,8 @@ def test_app_invoke_with_accept_any():
         assert 'application/x-npy' == result.content_type
 
 
-def test_app_invoke_with_accept():
+@patch('container_support.HostingEnvironment')
+def test_app_invoke_with_accept(env):
     with patch.dict('os.environ', {'SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT': 'application/x-npy'}):
         server = Server("test", Transformer())
         server.app.testing = True
@@ -89,6 +92,7 @@ def test_app_invoke_with_accept():
         assert 200 == result.status_code
         assert data == result.data.decode('utf-8')
         assert JSON_CONTENT_TYPE == result.content_type
+        env.assert_called_once()
 
 
 @pytest.mark.parametrize("header", ["ContentType", "Content-Type"])

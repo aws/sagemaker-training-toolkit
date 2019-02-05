@@ -42,7 +42,7 @@ class Server(object):
     """A simple web service wrapper for custom inference code.
     """
 
-    def __init__(self, name, transformer):
+    def __init__(self, name, transformer, env=None):
         """ Initialize the web service instance.
 
         :param name: the name of the service
@@ -52,6 +52,7 @@ class Server(object):
         self.transformer = transformer
         self.app = self._build_flask_app(name)
         self.log = self.app.logger
+        self.env = cs.HostingEnvironment() if env is None else env
 
     @classmethod
     def from_env(cls):
@@ -64,7 +65,7 @@ class Server(object):
         framework = cs.ContainerEnvironment.load_framework()
         transformer = framework.transformer(user_module)
 
-        server = Server("model server", transformer)
+        server = Server("model server", transformer, env)
         logger.info("returning initialized server")
         return server
 
@@ -202,16 +203,15 @@ class Server(object):
 
         :return: 200 response, with transformer result in body.
         """
-        env = cs.HostingEnvironment()
 
         # Accepting both ContentType and Content-Type headers. ContentType because Coral and Content-Type because,
         # well, it is just the html standard
         input_content_type = request.headers.get('ContentType', request.headers.get('Content-Type', JSON_CONTENT_TYPE))
 
-        requested_output_content_type = request.headers.get('Accept') or env.default_accept or JSON_CONTENT_TYPE
+        requested_output_content_type = request.headers.get('Accept') or self.env.default_accept or JSON_CONTENT_TYPE
 
         if requested_output_content_type == ANY_CONTENT_TYPE:
-            requested_output_content_type = env.default_accept
+            requested_output_content_type = self.env.default_accept
 
         # utf-8 decoding is automatic in Flask if the Content-Type is valid. But that does not happens always.
         content = request.get_data().decode('utf-8') if input_content_type in UTF8_CONTENT_TYPES else request.get_data()
