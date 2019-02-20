@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+2.4.4.post1
+===========
+
+* Specify ``long_description_content_type`` in setup
+
 2.4.4
 =====
 

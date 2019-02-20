@@ -44,7 +44,7 @@ gethostname = setuptools.Extension('gethostname',
 
 setuptools.setup(
     name='sagemaker_containers',
-    version='2.4.4',
+    version='2.4.4.post1',
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
     packages=packages,
@@ -56,6 +56,7 @@ setuptools.setup(
     py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob('src/*.py')],
     ext_modules=[gethostname],
     long_description=read('README.md'),
+    long_description_content_type='text/markdown',
     author='Amazon Web Services',
     url='https://github.com/aws/sagemaker-containers/',
     license='Apache License 2.0',
