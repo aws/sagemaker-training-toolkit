@@ -93,7 +93,7 @@ def to_cmd_args(mapping):  # type: (dict) -> list
     return [item for item in itertools.chain.from_iterable(items)]
 
 
-def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode
+def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode # noqa ignore=F821
     """Decode an object to unicode.
     Args:
         obj (bytes or str or unicode or anything serializable): object to be decoded

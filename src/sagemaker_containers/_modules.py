@@ -15,6 +15,7 @@ from __future__ import absolute_import
 import importlib
 import os
 import shlex
+from subprocess import Popen
 import sys
 import tarfile
 import textwrap
@@ -123,7 +124,7 @@ def s3_download(url, dst):  # type: (str, str) -> None
 
 
 def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
-    # type: (str, str, bool) -> module
+    # type: (str, str, bool) -> None
     """Download, prepare and install a compressed tar file from S3 or local directory as a module.
 
     The SageMaker Python SDK saves the user provided scripts as compressed tar files in S3.
@@ -137,9 +138,6 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
         name (str): name of the script or module.
         uri (str): the location of the module.
         cache (bool): defaults to True. It will not download and install the module again if it is already installed.
-
-    Returns:
-        module: the imported module
     """
     should_use_cache = cache and exists(name)
 

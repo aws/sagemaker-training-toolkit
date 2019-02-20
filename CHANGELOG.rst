@@ -6,6 +6,7 @@ CHANGELOG
 ========
 
 * bug-fix: correctly set NGINX_PROXY_READ_TIMEOUT to match model_sever_timeout.
+* enhancement: remove numpy version restriction.
 
 2.4.3
 =====

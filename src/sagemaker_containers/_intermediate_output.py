@@ -44,7 +44,7 @@ def _upload_to_s3(s3_uploader, relative_path, file_path, filename):
     try:
         key = os.path.join(s3_uploader['key_prefix'], relative_path, filename)
         s3_uploader['transfer'].upload_file(file_path, s3_uploader['bucket'], key)
-    except FileNotFoundError:
+    except FileNotFoundError:  # noqa ignore=F821
         # Broken link or deleted
         pass
     except Exception:
@@ -61,7 +61,7 @@ def _copy_file(executor, s3_uploader, relative_path, filename):
         dst = os.path.join(tmp_dir_path, relative_path, '{}.{}'.format(_timestamp(), filename))
         shutil.copy2(src, dst)
         executor.submit(_upload_to_s3, s3_uploader, relative_path, dst, filename)
-    except FileNotFoundError:
+    except FileNotFoundError:  # noqa ignore=F821
         # Broken link or deleted
         pass
     except Exception:

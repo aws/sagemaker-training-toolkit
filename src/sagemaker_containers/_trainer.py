@@ -25,7 +25,7 @@ SUCCESS_CODE = 0
 DEFAULT_FAILURE_CODE = 1
 
 
-def _exit_processes(exit_code):  # type:
+def _exit_processes(exit_code):
     """Exit main thread and child processes.
 
     For more information:

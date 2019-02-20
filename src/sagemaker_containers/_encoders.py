@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 
 import json
+from typing import Iterable
 
 import numpy as np
 from six import BytesIO, StringIO
@@ -70,7 +71,7 @@ def array_to_json(array_like):  # type: (np.array or Iterable or int or float) -
     return json.dumps(array_like, default=default)
 
 
-def json_to_numpy(string_like, dtype=None):  # type: (str or unicode) -> np.array
+def json_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
     """Convert a JSON object to a numpy array.
 
         Args:
@@ -85,7 +86,7 @@ def json_to_numpy(string_like, dtype=None):  # type: (str or unicode) -> np.arra
     return np.array(data, dtype=dtype)
 
 
-def csv_to_numpy(string_like, dtype=None):  # type: (str or unicode) -> np.array
+def csv_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
     """Convert a CSV object to a numpy array.
 
     Args:

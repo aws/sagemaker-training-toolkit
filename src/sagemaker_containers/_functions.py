@@ -14,13 +14,14 @@ from __future__ import absolute_import
 
 import inspect
 import sys
+from typing import Callable
 
 import six
 
 from sagemaker_containers import _mapping
 
 
-def matching_args(fn, dictionary):  # type: (function, _mapping.Mapping) -> dict
+def matching_args(fn, dictionary):  # type: (Callable, _mapping.Mapping) -> dict
     """Given a function fn and a dict dictionary, returns the function arguments that match the dict keys.
 
     Example:
@@ -47,7 +48,7 @@ def matching_args(fn, dictionary):  # type: (function, _mapping.Mapping) -> dict
     return _mapping.split_by_criteria(dictionary, arg_spec.args).included
 
 
-def getargspec(fn):  # type: (function) -> inspect.ArgSpec
+def getargspec(fn):  # type: (Callable) -> inspect.ArgSpec
     """Get the names and default values of a function's arguments.
 
     Args:
@@ -69,7 +70,7 @@ def getargspec(fn):  # type: (function) -> inspect.ArgSpec
         return inspect.ArgSpec(full_arg_spec.args, full_arg_spec.varargs, full_arg_spec.varkw, full_arg_spec.defaults)
 
 
-def error_wrapper(fn, error_class):  # type: (function or None, Exception) -> ...
+def error_wrapper(fn, error_class):  # type: (Callable or None, Exception) -> ...
     """Wraps function fn in a try catch block that re-raises error_class.
 
     Args:
