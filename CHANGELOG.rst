@@ -2,8 +2,8 @@
 CHANGELOG
 =========
 
-2.4.4dev
-========
+2.4.4
+=====
 
 * bug-fix: correctly set NGINX_PROXY_READ_TIMEOUT to match model_sever_timeout.
 * enhancement: remove numpy version restriction.

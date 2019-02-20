@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import importlib
 import os
 import shlex
-from subprocess import Popen
+import subprocess
 import sys
 import tarfile
 import textwrap
@@ -160,7 +160,7 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
 
 
 def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
-    # type: (str, list, dict, bool, bool) -> Popen
+    # type: (str, list, dict, bool, bool) -> subprocess.Popen
     """Run Python module as a script.
 
     Search sys.path for the named module and execute its contents as the __main__ module.
@@ -252,7 +252,7 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
 
 
 def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, wait=True, capture_error=False):
-    # type: (str, list, dict, str, bool, bool, bool) -> Popen
+    # type: (str, list, dict, str, bool, bool, bool) -> subprocess.Popen
     """Download, prepare and executes a compressed tar file from S3 or provided directory as a module.
 
     SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
