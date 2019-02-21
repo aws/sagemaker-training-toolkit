@@ -74,7 +74,7 @@ setuptools.setup(
     install_requires=required_packages,
 
     extras_require={
-        'test': ['tox', 'flake8==3.6.0', 'pytest', 'pytest-cov', 'mock', 'sagemaker==1.16.2']
+        'test': ['tox', 'pytest', 'pytest-cov', 'mock', 'sagemaker>=1.16.2']
     },
 
     entry_points={
