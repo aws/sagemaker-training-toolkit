@@ -11,17 +11,14 @@ container by just installing the module:
 
 SageMaker Containers gives you tools to create SageMaker-compatible
 containers, and has additional tools for letting you create Frameworks
-(SageMaker-compatible containers that can run arbitrary python scripts).
+(SageMaker-compatible containers that can run arbitrary Python scripts).
 
-`SageMaker Chainer
-Container <https://github.com/aws/sagemaker-chainer-container>`__ uses
-sagemaker-containers.
+Currently, this library is used by:
 
-`SageMaker TensorFlow
-Container <https://github.com/aws/sagemaker-tensorflow-container>`__ and
-`SageMaker MXNet
-Container <https://github.com/aws/sagemaker-mxnet-container>`__ will be
-ported to use it as well in the future.
+- `SageMaker TensorFlow Script Mode Container <https://github.com/aws/sagemaker-tensorflow-container/tree/script-mode>`__
+- `SageMaker MXNet Container <https://github.com/aws/sagemaker-mxnet-container>`__
+- `SageMaker PyTorch Container <https://github.com/aws/sagemaker-pytorch-container>`__
+- `SageMaker Chainer Container <https://github.com/aws/sagemaker-chainer-container>`__
 
 Getting Started - Executing User Scripts on Amazon SageMaker
 ------------------------------------------------------------
@@ -33,19 +30,10 @@ Containers**.
 Creating the training job
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A SageMaker training job created using the `SageMaker Python
-SDK <https://github.com/aws/sagemaker-python-sdk#sagemaker-python-sdk-overview>`__
-|Chainer|_, |TensorFlow|_, and |MXNet|_
-takes an user script containing the model to be trained, the
-Hyperparameters required by the script, and information about the input
+A SageMaker training job created using the `SageMaker Python SDK <https://github.com/aws/sagemaker-python-sdk>`__
+takes a user script containing the model to be trained, the
+hyperparameters required by the script, and information about the input
 data. For example:
-
-.. |Chainer| replace:: ``Chainer``
-.. _Chainer: https://github.com/aws/sagemaker-python-sdk#chainer-sagemaker-estimators
-.. |TensorFlow| replace:: ``TensorFlow``
-.. _TensorFlow: https://github.com/aws/sagemaker-python-sdk#tensorflow-sagemaker-estimators
-.. |MXNet| replace:: ``MXNet``
-.. _MXNet: https://github.com/aws/sagemaker-python-sdk#mxnet-sagemaker-estimators
 
 .. code:: python
 
@@ -64,6 +52,13 @@ data. For example:
    # for more information about data channels, see
    # https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
    chainer_estimator.fit({'training': 's3://bucket/path/to/training/data', 'testing': 's3://bucket/path/to/testing/data')
+
+For more on using the SageMaker Python SDK for interacting with the various frameworks, see their repsective documentation:
+
+- TensorFlow: https://github.com/aws/sagemaker-python-sdk#tensorflow-sagemaker-estimators
+- MXNet: https://sagemaker.readthedocs.io/en/stable/using_mxnet.html
+- PyTorch: https://github.com/aws/sagemaker-python-sdk#pytorch-sagemaker-estimators
+- Chainer: https://github.com/aws/sagemaker-python-sdk#chainer-sagemaker-estimators
 
 How a script is executed inside the container
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -126,7 +121,7 @@ List of provided environment variables by SageMaker Containers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The list of the environment variables is logged and available in
-cloudwatch logs. From the example above:
+CloudWatch logs. From the example above:
 
 .. code:: bash
 
@@ -294,8 +289,8 @@ container as a JSON encoded list. Usage example:
    # using it as variable
    channel_names = json.loads(os.environ['SM_CHANNELS']))
 
-SM_CHANNEL_``{channel_name}``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SM_CHANNEL\_ ``{channel_name}``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
 
@@ -335,8 +330,8 @@ hyperparameters. Example usage:
    hyperparameters = json.loads(os.environ['SM_HPS']))
    # {"batch-size": 256, "learning-rate": 0.0001, "communicator": "pure_nccl"}
 
-SM_HP_``{hyperparameter_name}``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SM_HP\_ ``{hyperparameter_name}``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
 
@@ -354,7 +349,7 @@ Usage examples:
    comminicator = os.environ['SM_HP_COMMUNICATOR']
 
 SM_CURRENT_HOST
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 .. code:: json
 
@@ -527,11 +522,13 @@ SM_RESOURCE_CONFIG
    SM_RESOURCE_CONFIG='{"current_host":"algo-1","hosts":["algo-1","algo-2"]}'
 
 The contents from ``/opt/ml/input/config/resourceconfig.json``. It has
-the following keys: - current_host: The name of the current container on
-the container network. For example, ``'algo-1'``. - hosts: The list of
-names of all containers on the container network, sorted
-lexicographically. For example, ``['algo-1', 'algo-2', 'algo-3']`` for a
-three-node cluster.
+the following keys:
+
+- current_host: The name of the current container on the container network.
+  For example, ``'algo-1'``.
+- hosts: The list of names of all containers on the container network, sorted
+  lexicographically. For example, ``['algo-1', 'algo-2', 'algo-3']`` for a
+  three-node cluster.
 
 For more information about resourceconfig.json:
 https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-dist-training
