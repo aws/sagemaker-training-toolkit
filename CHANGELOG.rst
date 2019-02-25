@@ -2,8 +2,8 @@
 CHANGELOG
 =========
 
-2.4.4.post2.dev
-===============
+2.4.4.post2
+===========
 
 * doc-fix: Convert README to RST
 * doc-fix: Update README with newer frameworks using SageMaker Containers
