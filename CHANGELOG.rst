@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+1.1.3
+=====
+
+* bug-fix: make sure nginx proxy_read_timeout >= gunicorn worker timeout
+
 1.1.2
 =====
 

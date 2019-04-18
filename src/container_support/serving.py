@@ -162,9 +162,16 @@ class Server(object):
         template = cs.utils.read_file(nginx_config_template_file)
         pattern = re.compile(r'%(\w+)%')
 
+        # make sure nginx proxy timeout >= gunicorn timeout
+        proxy_read_timeout = 60
+        if int(serving_env.model_server_timeout) > 60:
+            proxy_read_timeout = int(serving_env.model_server_timeout)
+
         template_values = {
-            'NGINX_HTTP_PORT': serving_env.http_port
+            'NGINX_HTTP_PORT': serving_env.http_port,
+            'NGINX_PROXY_READ_TIMEOUT': str(proxy_read_timeout)
         }
+
         config = pattern.sub(lambda x: template_values[x.group(1)], template)
         logger.info('nginx config: \n%s\n', config)
         cs.utils.write_file(nginx_config_file, config)

@@ -14,7 +14,7 @@ PKG_NAME = 'container_support'
 
 setup(
     name='sagemaker_container_support',
-    version='1.1.2',
+    version='1.1.3',
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
     packages=[PKG_NAME],
