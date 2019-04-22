@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -76,7 +76,7 @@ def run(uri,
 
     _env.write_env_vars(env_vars)
 
-    return _runner.get(runner).run(wait, capture_error)
+    return _runner.get(runner, user_entry_point, args, env_vars).run(wait, capture_error)
 
 
 def install(name, dst, capture_error=False):

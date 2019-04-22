@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -19,7 +19,7 @@ from mock import MagicMock, patch
 import pytest
 from six import PY2
 
-from sagemaker_containers import _env, _errors, _process, entry_point
+from sagemaker_containers import _env, _errors, _process, _runner, entry_point
 
 builtins_open = '__builtin__.open' if PY2 else 'builtins.open'
 
@@ -103,3 +103,16 @@ def test_run_module_no_wait(chmod, download_and_extract):
     entry_point.run(uri='s3://url', user_entry_point=module_name, args=['42'], wait=False, runner=runner)
 
     runner.run.assert_called_with(False, False)
+
+
+@patch('sys.path')
+@patch('sagemaker_containers._runner.get')
+@patch('sagemaker_containers._files.download_and_extract')
+@patch('os.chmod')
+def test_run_module_with_env_vars(chmod, download_and_extract, get_runner, sys_path):
+    module_name = 'default_user_module_name'
+    args = ['--some-arg', '42']
+    entry_point.run(uri='s3://url', user_entry_point=module_name, args=args, env_vars={'FOO': 'BAR'})
+
+    expected_env_vars = {'FOO': 'BAR', 'PYTHONPATH': ''}
+    get_runner.assert_called_with(_runner.ProcessRunnerType, module_name, args, expected_env_vars)

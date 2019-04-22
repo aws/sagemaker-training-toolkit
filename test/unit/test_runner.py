@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -16,6 +16,10 @@ from mock import MagicMock, patch
 import pytest
 
 from sagemaker_containers import _mpi, _process, _runner
+
+USER_SCRIPT = 'script'
+CMD_ARGS = ['--some-arg', 42]
+ENV_VARS = {'FOO': 'BAR'}
 
 
 @pytest.mark.parametrize('runner_class', [_process.ProcessRunner, _mpi.MasterRunner, _mpi.WorkerRunner])
@@ -35,6 +39,21 @@ def test_get_runner_by_process_returns_runnner(training_env):
 
 
 @patch('sagemaker_containers.training_env')
+def test_get_runner_by_process_with_extra_args(training_env):
+    runner = _runner.get(_runner.ProcessRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS)
+
+    assert isinstance(runner, _process.ProcessRunner)
+
+    assert runner._user_entry_point == USER_SCRIPT
+    assert runner._args == CMD_ARGS
+    assert runner._env_vars == ENV_VARS
+
+    training_env().to_cmd_args.assert_not_called()
+    training_env().to_env_vars.assert_not_called()
+    training_env().user_entry_point.assert_not_called()
+
+
+@patch('sagemaker_containers.training_env')
 def test_get_runner_by_mpi_returns_runnner(training_env):
     runner = _runner.get(_runner.MPIRunnerType)
 
@@ -48,6 +67,34 @@ def test_get_runner_by_mpi_returns_runnner(training_env):
     assert isinstance(runner, _mpi.WorkerRunner)
     training_env().to_cmd_args.assert_called()
     training_env().to_env_vars.assert_called()
+
+
+@patch('sagemaker_containers.training_env')
+def test_get_runner_by_mpi_with_extra_args(training_env):
+    runner = _runner.get(_runner.MPIRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS)
+
+    assert isinstance(runner, _mpi.MasterRunner)
+
+    assert runner._user_entry_point == USER_SCRIPT
+    assert runner._args == CMD_ARGS
+    assert runner._env_vars == ENV_VARS
+
+    training_env().to_cmd_args.assert_not_called()
+    training_env().to_env_vars.assert_not_called()
+    training_env().user_entry_point.assert_not_called()
+
+    training_env().is_master = False
+    runner = _runner.get(_runner.MPIRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS)
+
+    assert isinstance(runner, _mpi.WorkerRunner)
+
+    assert runner._user_entry_point == USER_SCRIPT
+    assert runner._args == CMD_ARGS
+    assert runner._env_vars == ENV_VARS
+
+    training_env().to_cmd_args.assert_not_called()
+    training_env().to_env_vars.assert_not_called()
+    training_env().user_entry_point.assert_not_called()
 
 
 def test_get_runner_invalid_identifier():

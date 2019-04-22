@@ -2,6 +2,12 @@
 CHANGELOG
 =========
 
+2.4.5.dev
+=========
+
+* bug-fix: use specified args, entry point, and env vars when creating a runner
+
+
 2.4.4.post2
 ===========
 
