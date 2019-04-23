@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.4.6 (2019-04-23)
+
+### Bug fixes and other changes
+
+ * update for automated releases
+
 ## v2.4.5
 
 * bug-fix: use specified args, entry point, and env vars when creating a runner
