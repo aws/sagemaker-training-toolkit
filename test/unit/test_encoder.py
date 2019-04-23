@@ -35,11 +35,11 @@ def test_array_to_npy(target):
 
     actual = _encoders.array_to_npy(input_data)
 
-    np.testing.assert_equal(np.load(BytesIO(actual)), np.array(target))
+    np.testing.assert_equal(np.load(BytesIO(actual), allow_pickle=True), np.array(target))
 
     actual = _encoders.array_to_npy(target)
 
-    np.testing.assert_equal(np.load(BytesIO(actual)), np.array(target))
+    np.testing.assert_equal(np.load(BytesIO(actual), allow_pickle=True), np.array(target))
 
 
 @pytest.mark.parametrize(

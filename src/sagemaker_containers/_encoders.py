@@ -47,7 +47,7 @@ def npy_to_numpy(npy_array):  # type: (object) -> np.array
         (np.array): converted numpy array.
     """
     stream = BytesIO(npy_array)
-    return np.load(stream)
+    return np.load(stream, allow_pickle=True)
 
 
 def array_to_json(array_like):  # type: (np.array or Iterable or int or float) -> str
