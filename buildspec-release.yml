@@ -1,0 +1,31 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      # prepare the release (update versions, changelog etc.)
+      - git-release --prepare
+
+      # run linters
+      - tox -e flake8,twine
+
+      # run unit tests
+      - AWS_ACCESS_KEY_ID= AWS_SECRET_ACCESS_KEY= AWS_SESSION_TOKEN=
+        AWS_CONTAINER_CREDENTIALS_RELATIVE_URI= AWS_DEFAULT_REGION=
+        tox -e py27,py36 -- test/unit
+
+      # run functional tests
+      - $(aws ecr get-login --no-include-email --region us-west-2)
+      - IGNORE_COVERAGE=- tox -e py27,py36 -- test/functional
+
+      # generate the distribution package
+      - python3 setup.py sdist
+
+      # publish the release to github
+      - git-release --publish
+
+artifacts:
+  files:
+    - dist/sagemaker_containers*.tar.gz
+  name: ARTIFACT_1
+  discard-paths: yes

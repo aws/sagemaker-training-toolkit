@@ -23,6 +23,10 @@ def read(file_name):
     return open(os.path.join(os.path.dirname(__file__), file_name)).read()
 
 
+def read_version():
+    return read('VERSION').strip()
+
+
 packages = setuptools.find_packages(where='src', exclude=('test',))
 packages.append('sagemaker_containers.etc')
 
@@ -44,7 +48,7 @@ gethostname = setuptools.Extension('gethostname',
 
 setuptools.setup(
     name='sagemaker_containers',
-    version='2.4.5',
+    version=read_version(),
     description='Open source library for creating containers to run on Amazon SageMaker.',
 
     packages=packages,

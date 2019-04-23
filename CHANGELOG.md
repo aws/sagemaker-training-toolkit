@@ -1,151 +1,122 @@
-=========
-CHANGELOG
-=========
+# Changelog
 
-2.4.5
-=====
+## v2.4.5
 
 * bug-fix: use specified args, entry point, and env vars when creating a runner
 
-
-2.4.4.post2
-===========
+## v2.4.4.post2
 
 * doc-fix: Convert README to RST
 * doc-fix: Update README with newer frameworks using SageMaker Containers
 
-2.4.4.post1
-===========
+## v2.4.4.post1
 
 * Specify ``long_description_content_type`` in setup
 
-2.4.4
-=====
+## v2.4.4
 
 * bug-fix: correctly set NGINX_PROXY_READ_TIMEOUT to match model_sever_timeout.
 * enhancement: remove numpy version restriction.
 
-2.4.3
-=====
+## v2.4.3
 
 * bug-fix: Fix recursive directory navigation in intermediate output.
 
-2.4.2
-=====
+## v2.4.2
 
 * bug-fix: Rename libchangehostname to gethostname to match POSIX function name
 
-2.4.1
-=====
+## v2.4.1
 
 * feature: C extension reads hostname from resourceconfig instead of env var.
 
-2.4.0
-=====
+## v2.4.0
 
 * feature: Generic OpenMPI support
 * bug-fix: Fix response content_type handling
 
-2.3.5
-=====
+## v2.3.5
 
 * bug-fix: Accept header ANY ('*/*') fallback to default accept
 * feature: Add intermediate output to S3 during training
 * bug-fix: reintroduce ``_modules.s3_download`` and ``_modules.download_and_install`` for backward compatibility
 
-2.3.4
-=====
+## v2.3.4
 
 * feature: add capture_error flag to process.check_error and process.create and to all functions that runs process: modules.run, modules.run_module, and entry_point.run
 
-2.3.3
-=====
+## v2.3.3
 
 * bug-fix: reintroduce _modules.prepare to import_module
 
-2.3.2
-=====
+## v2.3.2
 
 * bug-fix: reintroduce _modules.prepare for backwards compatibility
 
-2.3.1
-=====
+## v2.3.1
 
 * [breaking change] remove ``_modules.prepare`` and ``_modules.download_and_install``
 * [breaking change] move ``_modules.s3_download`` to ``_files.s3_download``
 * feature: support for Bash commands and Python scripts
 
-2.3.0
-=====
+## v2.3.0
 
 * feature: Allow for dynamic nginx.conf creation
 * feature: Provide support for additional environment variables. (http_port, safe_port_range and accept)
 
-2.2.7
-=====
+## v2.2.7
 
 * feature: Making pip install less noisy
 * bug-fix: Stream stderr instead of capturing it when running user script
 
-2.2.6
-=====
+## v2.2.6
 
 * feature: Make it optional for run_module method to wait for the subprocess to exit
 * feature: Allow additional sagemaker hyperparameters to be stored in TrainingEnv
 
-2.2.5
-=====
+## v2.2.5
 
 * feature: Transformer: support user-supplied ``transform_fn``
 
-2.2.4
-=====
+## v2.2.4
 
 * bug-fix: remove request size limit correctly
 
-2.2.3
-=====
+## v2.2.3
 
 * enhancement: remove request size limit
 
-2.2.2
-=====
+## v2.2.2
 
 * bug-fix: Fix choosing region for S3 client
 
-2.2.1
-=====
+## v2.2.1
 
 * bug-fix: Use regional endpoint for S3 clients
 
-2.2.0
-=====
+## v2.2.0
 
 * [breaking change] Remove ``status_codes`` module and use ``six.moves.http_client`` instead
 * [breaking change] Move ``UnsupportedFormatError`` from ``encoders`` module to ``errors`` module
 * Return 4XX status codes for ``UnsupportedFormatError`` from default input/output handlers
 
-2.1.0
-=====
+## v2.1.0
 
 * Allow for local modules to work with AWS SageMaker framework containers.
 * Support for training outside of AWS SageMaker Training.
 
-2.0.4
-=====
+## v2.0.4
 
 * Fix output_data_dir to reference an existing directory.
 * Fix error message.
 * Make pip install verbose.
 
-2.0.3
-=====
+## v2.0.3
 
 * Fix error class for user script errors.
 * Adding Readme.
 
-2.0.2
-=====
+## v2.0.2
 
 * Improve logging
 * Support for hyperparameters with JSON serialized and non serialized keys altogether
@@ -157,28 +128,23 @@ CHANGELOG
 * Support to requirements.txt
 * Decoder/Encoder support for numpy, JSON, and CSV
 
-1.0.4
-=====
+## v1.0.4
 
 * bug: Configuration: Change module names to string in __all__
 * bug: Environment: handle hyperparameter injected by tuning jobs
 
-1.0.3
-=====
+## v1.0.3
 
 * bug: Training: Move processing of requirements file out to the specific container.
 
-1.0.2
-=====
+## v1.0.2
 
 * feature: TrainingEnvironment: read new environment variable for job name
 
-1.0.1
-=====
+## v1.0.1
 
 * feature: Documentation: add descriptive README
 
-1.0.0
-=====
+## v1.0.0
 
 * Initial commit
