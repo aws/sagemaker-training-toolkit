@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.4.6.post0 (2019-04-24)
+
+### Documentation changes
+
+ * add commit message format to CONTRIBUTING.md and PR template
+
 ## v2.4.6 (2019-04-23)
 
 ### Bug fixes and other changes
