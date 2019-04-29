@@ -25,8 +25,9 @@ def run(uri,
         env_vars=None,
         wait=True,
         capture_error=False,
-        runner=_runner.ProcessRunnerType):
-    # type: (str, str, List[str], Dict[str, str], bool, bool, _runner.RunnerType) -> None
+        runner=_runner.ProcessRunnerType,
+        extra_opts=None):
+    # type: (str, str, List[str], Dict[str, str], bool, bool, _runner.RunnerType, Dict[str, str]) -> None
     """Download, prepare and executes a compressed tar file from S3 or provided directory as an user
     entrypoint. Runs the user entry point, passing env_vars as environment variables and args as command
     arguments.
@@ -58,15 +59,24 @@ def run(uri,
          SAGEMAKER_CHANNELS=training SAGEMAKER_CHANNEL_TRAINING=/opt/ml/input/training \
          SAGEMAKER_MODEL_DIR=/opt/ml/model python -m user_script --batch-size 128 --model_dir /opt/ml/model
 
-     Args:
+    Args:
+        uri (str): the location of the module.
         user_entry_point (str): name of the user provided entry point
         args (list):  A list of program arguments.
-        env_vars (dict): A map containing the environment variables to be written.
-        uri (str): the location of the module.
+        env_vars (dict): A map containing the environment variables to be written (default: None).
+        wait (bool): If the user entry point should be run to completion before this method returns
+            (default: True).
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
+        runner (sagemaker_containers.beta.framework.runner.RunnerType): the type of runner object to
+            be created (default: sagemaker_containers.beta.framework.runner.ProcessRunnerType).
+        extra_opts (dict): Additional options for running the entry point (default: None).
+            Currently, this only applies for MPI.
 
-     """
+    Returns:
+        sagemaker_containers.beta.framework.process.ProcessRunner: the runner object responsible for
+            executing the entry point.
+    """
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
@@ -76,7 +86,7 @@ def run(uri,
 
     _env.write_env_vars(env_vars)
 
-    return _runner.get(runner, user_entry_point, args, env_vars).run(wait, capture_error)
+    return _runner.get(runner, user_entry_point, args, env_vars, extra_opts).run(wait, capture_error)
 
 
 def install(name, dst, capture_error=False):

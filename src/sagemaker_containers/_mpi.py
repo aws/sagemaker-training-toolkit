@@ -88,13 +88,14 @@ class MasterRunner(_process.ProcessRunner):
 
     def __init__(self, user_entry_point, args, env_vars, master_hostname, hosts, process_per_host,
                  custom_mpi_options, network_interface_name, interval=1,
-                 timeout_in_seconds=60 * 60):
+                 timeout_in_seconds=60 * 60, num_processes=None):
 
         super(MasterRunner, self).__init__(user_entry_point, args, env_vars)
 
         self._master_hostname = master_hostname
         self._hosts = hosts
         self._process_per_host = process_per_host
+        self._num_processes = num_processes
         self._custom_mpi_options = custom_mpi_options
         self._network_interface_name = network_interface_name
         self._interval = interval
@@ -119,7 +120,7 @@ class MasterRunner(_process.ProcessRunner):
 
     def _create_command(self):  # type: () -> List[str, Any]
         num_hosts = len(self._hosts)
-        num_processes = self._process_per_host * num_hosts
+        num_processes = self._num_processes or self._process_per_host * num_hosts
 
         # By default, use one process per GPU, or one process per node (if training with CPU).
         if self._process_per_host == 1:

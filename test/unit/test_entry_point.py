@@ -115,4 +115,17 @@ def test_run_module_with_env_vars(chmod, download_and_extract, get_runner, sys_p
     entry_point.run(uri='s3://url', user_entry_point=module_name, args=args, env_vars={'FOO': 'BAR'})
 
     expected_env_vars = {'FOO': 'BAR', 'PYTHONPATH': ''}
-    get_runner.assert_called_with(_runner.ProcessRunnerType, module_name, args, expected_env_vars)
+    get_runner.assert_called_with(_runner.ProcessRunnerType, module_name, args, expected_env_vars, None)
+
+
+@patch('sys.path')
+@patch('sagemaker_containers._runner.get')
+@patch('sagemaker_containers._files.download_and_extract')
+@patch('os.chmod')
+def test_run_module_with_extra_opts(chmod, download_and_extract, get_runner, sys_path):
+    module_name = 'default_user_module_name'
+    args = ['--some-arg', '42']
+    extra_opts = {'foo': 'bar'}
+
+    entry_point.run(uri='s3://url', user_entry_point=module_name, args=args, extra_opts=extra_opts)
+    get_runner.assert_called_with(_runner.ProcessRunnerType, module_name, args, {}, extra_opts)
