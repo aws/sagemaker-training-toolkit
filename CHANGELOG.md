@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.4.7 (2019-04-30)
+
+### Bug fixes and other changes
+
+ * allow MPI options to be passed through entry_point.run
+
 ## v2.4.6.post0 (2019-04-24)
 
 ### Documentation changes
