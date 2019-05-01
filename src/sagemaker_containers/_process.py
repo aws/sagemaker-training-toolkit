@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -74,12 +74,15 @@ class ProcessRunner(object):
         entrypoint_type = _entry_point_type.get(_env.code_dir, self._user_entry_point)
 
         if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
-            return [python_executable(), '-m',
-                    self._user_entry_point.replace('.py', '')] + self._args
+            entry_module = self._user_entry_point.replace('.py', '')
+            return self._python_command() + ['-m', entry_module] + self._args
         elif entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
-            return [python_executable(), self._user_entry_point] + self._args
+            return self._python_command() + [self._user_entry_point] + self._args
         else:
             return ['/bin/sh', '-c', './%s %s' % (self._user_entry_point, ' '.join(self._args))]
+
+    def _python_command(self):
+        return [python_executable()]
 
     def _setup(self):
         pass

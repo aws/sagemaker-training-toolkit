@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -173,6 +173,11 @@ class MasterRunner(_process.ProcessRunner):
         command.extend(super(MasterRunner, self)._create_command())
 
         return command
+
+    def _python_command(self):
+        # Use mpi4py to force processes to abort if an uncaught exception occurs.
+        # https://docs.chainer.org/en/stable/chainermn/tutorial/tips_faqs.html#mpi-process-hangs-after-an-unhandled-python-exception
+        return super(MasterRunner, self)._python_command() + ['-m', 'mpi4py']
 
 
 _SSH_DAEMON_NOT_FOUND_ERROR_MESSAGE = """
