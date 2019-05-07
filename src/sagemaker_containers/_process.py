@@ -98,9 +98,11 @@ class ProcessRunner(object):
         _logging.log_script_invocation(cmd, self._env_vars)
 
         if wait:
-            process = check_error(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
+            process = check_error(cmd, _errors.ExecuteUserScriptError,
+                                  capture_error=capture_error, cwd=_env.code_dir)
         else:
-            process = create(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
+            process = create(cmd, _errors.ExecuteUserScriptError,
+                             capture_error=capture_error, cwd=_env.code_dir)
 
         self._tear_down()
 

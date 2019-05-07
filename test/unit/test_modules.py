@@ -174,9 +174,8 @@ def test_run_no_wait(log_script_invocation,  create, executable):
 def test_run_module_wait(download_and_extract, write_env_vars, install, run, wait, cache):
     with pytest.warns(DeprecationWarning):
         _modules.run_module(uri='s3://url', args=['42'], wait=wait, cache=cache)
-        module_name = 'default_user_module_name'
 
-        download_and_extract.assert_called_with('s3://url', module_name, _env.code_dir)
+        download_and_extract.assert_called_with('s3://url', _env.code_dir)
         write_env_vars.assert_called_with({})
         install.assert_called_with(_env.code_dir)
 
@@ -191,7 +190,7 @@ def test_import_module(reload, import_module, install, download_and_extract):
 
     _modules.import_module('s3://bucket/my-module')
 
-    download_and_extract.assert_called_with('s3://bucket/my-module', 'default_user_module_name', _env.code_dir)
+    download_and_extract.assert_called_with('s3://bucket/my-module', _env.code_dir)
     install.assert_called_with(_env.code_dir)
     reload.assert_called_with(import_module(_modules.DEFAULT_MODULE_NAME))
 

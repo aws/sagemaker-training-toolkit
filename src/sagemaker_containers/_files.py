@@ -105,13 +105,12 @@ def read_json(path):  # type: (str) -> dict
         return json.load(f)
 
 
-def download_and_extract(uri, name, path):  # type: (str, str, str) -> None
+def download_and_extract(uri, path):  # type: (str, str) -> None
     """Download, prepare and install a compressed tar file from S3 or local directory as an entry point.
 
     SageMaker Python SDK saves the user provided entry points as compressed tar files in S3
 
     Args:
-        name (str): name of the entry point.
         uri (str): the location of the entry point.
         path (bool): The path where the script will be installed. It will not download and install the
                         if the path already has the user entry point.
@@ -134,7 +133,7 @@ def download_and_extract(uri, name, path):  # type: (str, str, str) -> None
                     shutil.rmtree(path)
                 shutil.move(uri, path)
             else:
-                shutil.copy2(uri, os.path.join(path, name))
+                shutil.copy2(uri, path)
 
 
 def s3_download(url, dst):  # type: (str, str) -> None

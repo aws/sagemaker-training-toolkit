@@ -238,7 +238,7 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
         (module): the imported module
     """
     _warning_cache_deprecation(cache)
-    _files.download_and_extract(uri, name, _env.code_dir)
+    _files.download_and_extract(uri, _env.code_dir)
 
     prepare(_env.code_dir, name)
     install(_env.code_dir)
@@ -271,7 +271,7 @@ def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, w
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    _files.download_and_extract(uri, name, _env.code_dir)
+    _files.download_and_extract(uri, _env.code_dir)
 
     prepare(_env.code_dir, name)
     install(_env.code_dir)

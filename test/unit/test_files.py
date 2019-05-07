@@ -115,7 +115,7 @@ def test_write_failure_file():
 @patch('shutil.move')
 def test_download_and_and_extract_source_dir(move, rmtree, s3_download):
     uri = _env.channel_path('code')
-    _files.download_and_extract(uri, 'train.sh', _env.code_dir)
+    _files.download_and_extract(uri, _env.code_dir)
     s3_download.assert_not_called()
 
     rmtree.assert_any_call(_env.code_dir)
@@ -127,7 +127,7 @@ def test_download_and_and_extract_source_dir(move, rmtree, s3_download):
 @patch('shutil.copy2')
 def test_download_and_and_extract_file(copy, s3_download):
     uri = _env.channel_path('code')
-    _files.download_and_extract(uri, 'train.sh', _env.code_dir)
+    _files.download_and_extract(uri, _env.code_dir)
 
     s3_download.assert_not_called()
-    copy.assert_called_with(uri, os.path.join(_env.code_dir, 'train.sh'))
+    copy.assert_called_with(uri, _env.code_dir)

@@ -89,7 +89,7 @@ def test_run_module_wait(chmod, download_and_extract):
     entry_point.run(uri='s3://url', user_entry_point='launcher.sh', args=['42'],
                     capture_error=True, runner=runner)
 
-    download_and_extract.assert_called_with('s3://url', 'launcher.sh', _env.code_dir)
+    download_and_extract.assert_called_with('s3://url', _env.code_dir)
     runner.run.assert_called_with(True, True)
     chmod.assert_called_with(os.path.join(_env.code_dir, 'launcher.sh'), 511)
 

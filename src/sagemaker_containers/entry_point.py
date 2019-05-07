@@ -80,7 +80,7 @@ def run(uri,
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    _files.download_and_extract(uri, user_entry_point, _env.code_dir)
+    _files.download_and_extract(uri, _env.code_dir)
 
     install(user_entry_point, _env.code_dir, capture_error)
 
