@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.4.9 (2019-05-08)
+
+### Bug fixes and other changes
+
+ * add test for network isolation mode training
+ * remove unnecessary name argument from download and extract function
+
 ## v2.4.8 (2019-05-02)
 
 ### Bug fixes and other changes
