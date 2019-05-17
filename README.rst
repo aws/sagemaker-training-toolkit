@@ -1,86 +1,160 @@
+.. _header-n957:
+
 SageMaker Containers
 ====================
 
-SageMaker Containers contains common functionality necessary to create a
-container compatible with SageMaker. It can be simply used by any
-container by just installing the module:
+SageMaker Containers gives you tools to create SageMaker-compatible Docker containers, and has additional tools for letting you create Frameworks
+(SageMaker-compatible Docker containers that can run arbitrary Python or shell scripts).
 
-.. code:: bash
+Currently, this library is used by the following containers: `TensorFlow
+Script Mode <https://github.com/aws/sagemaker-tensorflow-container/tree/script-mode>`__,
+`MXNet <https://github.com/aws/sagemaker-mxnet-container>`__,
+`PyTorch <https://github.com/aws/sagemaker-pytorch-container>`__,
+`Chainer <https://github.com/aws/sagemaker-chainer-container>`__, and
+`Scikit-learn <https://github.com/aws/sagemaker-scikit-learn-container>`__.
 
-   pip install sagemaker-containers
+.. contents::
 
-SageMaker Containers gives you tools to create SageMaker-compatible
-containers, and has additional tools for letting you create Frameworks
-(SageMaker-compatible containers that can run arbitrary Python scripts).
+.. _header-n1174:
 
-Currently, this library is used by:
+Getting Started
+===============
 
-- `SageMaker TensorFlow Script Mode Container <https://github.com/aws/sagemaker-tensorflow-container/tree/script-mode>`__
-- `SageMaker MXNet Container <https://github.com/aws/sagemaker-mxnet-container>`__
-- `SageMaker PyTorch Container <https://github.com/aws/sagemaker-pytorch-container>`__
-- `SageMaker Chainer Container <https://github.com/aws/sagemaker-chainer-container>`__
+.. _header-n962:
 
-Getting Started - Executing User Scripts on Amazon SageMaker
-------------------------------------------------------------
+Creating a container using SageMaker Containers
+-----------------------------------------------
 
-The objective of this tutorial is to explain how a script is executed
-inside any SageMaker-compatible container using **SageMaker
-Containers**.
+Here we'll demonstrate how to create a Docker image using SageMaker Containers in order to show the simplicity of using this library.
 
-Creating the training job
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A SageMaker training job created using the `SageMaker Python SDK <https://github.com/aws/sagemaker-python-sdk>`__
-takes a user script containing the model to be trained, the
-hyperparameters required by the script, and information about the input
-data. For example:
+Let's suppose we need to train a model with the following training script ``train.py`` using TF 2.0 in SageMaker:
 
 .. code:: python
 
-   from sagemaker.chainer import Chainer
+   import tensorflow as tf
 
-   # for complete list of parameters, see
-   # https://github.com/aws/sagemaker-python-sdk#sagemaker-python-sdk-overview
-   estimator = Chainer(entry_point='user-script.py',
-                       hyperparameters={'batch-size':256,
-                                        'learning-rate':0.0001,
-                                        'communicator':'pure_nccl'},
-                       ...)
+   mnist = tf.keras.datasets.mnist
 
-   # starts the training job with an input data channel named training pointing to
-   # s3://bucket/path/to/training/data
-   # for more information about data channels, see
-   # https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
-   chainer_estimator.fit({'training': 's3://bucket/path/to/training/data', 'testing': 's3://bucket/path/to/testing/data')
+   (x_train, y_train), (x_test, y_test) = mnist.load_data()
+   x_train, x_test = x_train / 255.0, x_test / 255.0
 
-For more on using the SageMaker Python SDK for interacting with the various frameworks, see their repsective documentation:
+   model = tf.keras.models.Sequential([
+     tf.keras.layers.Flatten(input_shape=(28, 28)),
+     tf.keras.layers.Dense(128, activation='relu'),
+     tf.keras.layers.Dropout(0.2),
+     tf.keras.layers.Dense(10, activation='softmax')
+   ])
 
-- TensorFlow: https://github.com/aws/sagemaker-python-sdk#tensorflow-sagemaker-estimators
-- MXNet: https://sagemaker.readthedocs.io/en/stable/using_mxnet.html
-- PyTorch: https://github.com/aws/sagemaker-python-sdk#pytorch-sagemaker-estimators
-- Chainer: https://github.com/aws/sagemaker-python-sdk#chainer-sagemaker-estimators
+   model.compile(optimizer='adam',
+                 loss='sparse_categorical_crossentropy',
+                 metrics=['accuracy'])
+
+   model.fit(x_train, y_train, epochs=1)
+
+   model.evaluate(x_test, y_test)
+
+.. _header-n965:
+
+The Dockerfile
+~~~~~~~~~~~~~~
+
+We then create a Dockerfile with our dependencies and define the
+program that will be executed in SageMaker:
+
+.. code:: docker
+
+   FROM tensorflow/tensorflow:2.0.0a0
+
+   RUN pip install sagemaker-containers
+
+   # Copies the training code inside the container
+   COPY train.py /opt/ml/code/train.py
+
+   # Defines train.py as script entry point
+   ENV SAGEMAKER_PROGRAM train.py
+
+More documentation on how to build a Docker container can be found `here <https://docs.docker.com/get-started/part2/#define-a-container-with-dockerfile>`__
+
+.. _header-n968:
+
+Building the container
+~~~~~~~~~~~~~~~~~~~~~~
+
+We then build the Docker image using ``docker build``:
+
+.. code:: shell
+
+   docker build -t tf-2.0 .
+
+.. _header-n971:
+
+Training with Local Mode
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+We can use `Local
+Mode <https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode>`__
+to test the container locally:
+
+.. code:: python
+
+   from sagemaker.estimator import Estimator
+
+   estimator = Estimator(image_name='tf-2.0',
+                         role='SageMakerRole',
+                         train_instance_count=1,
+                         train_instance_type='local')
+
+   estimator.fit()
+
+After using Local Mode, we can push the image to ECR and run a SageMaker training job. To see a complete example on how to create a container using SageMaker
+Container, including pushing it to ECR, see the example notebook `tensorflow_bring_your_own.ipynb  <https://github.com/awslabs/amazon-sagemaker-examples/blob/master/advanced_functionality/tensorflow_bring_your_own/tensorflow_bring_your_own.ipynb>`__.
+
+.. _header-n975:
 
 How a script is executed inside the container
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------
 
-When the container starts for training, **SageMaker Containers**
-installs the user script as a Python module. The module name matches the
-script name. In the case above, **user-script.py** is transformed in a
-Python module named **user-script**.
+The training script must be located under the folder ``/opt/ml/model`` and its relative path is defined in the environment variable ``SAGEMAKER_PROGRAM``. The following scripts are supported:
 
-After that, the Python interpreter executes the user module, passing
-``hyperparameters`` as script arguments. The example above will be
-executed by **SageMaker Containers** as follow:
+-  **Python scripts**: uses the Python interpreter for any script with
+   .py suffix
 
-.. code:: bash
+-  **Shell scripts**: uses the Shell interpreter to execute any other
+   script
 
-   python -m user-script --batch-size 256 --learning_rate 0.0001 --communicator pure_nccl
-
-A user provide script consumes the hyperparameters using any argument
-parsing library, for example:
+When training starts, the interpreter executes the entry point, from the
+example above:
 
 .. code:: python
 
+   python train.py
+
+.. _header-n984:
+
+Mapping hyperparameters to script arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Any hyperparameters provided by the training job will be passed by the
+interpreter to the entry point as script arguments. For example the
+training job hyperparameters:
+
+.. code:: python
+
+   {"HyperParameters": {"batch-size": 256, "learning-rate": 0.0001, "communicator": "pure_nccl"}}
+
+Will be executed as:
+
+.. code:: shell
+
+   ./user_script.sh --batch-size 256 --learning_rate 0.0001 --communicator pure_nccl
+
+The entry point is responsible for parsing these script arguments. For
+example, in a Python script:
+
+.. code:: python
+
+   import argparse
+   
    if __name__ == '__main__':
      parser = argparse.ArgumentParser()
 
@@ -92,18 +166,33 @@ parsing library, for example:
      args = parser.parse_args()
      ...
 
+.. _header-n991:
+
 Reading additional information from the container
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Very often, a user script needs additional information from the
+Very often, an entry point needs additional information from the
 container that is not available in ``hyperparameters``. SageMaker
 Containers writes this information as **environment variables** that are
-available inside the script.
-
-For example, the example above can read information about the
-**training** channel provided in the training job request:
+available inside the script. For example, the training job below
+includes the channels **training** and **testing**:
 
 .. code:: python
+
+   from sagemaker.pytorch import PyTorch
+
+   estimator = PyTorch(entry_point='train.py', ...)
+
+   estimator.fit({'training': 's3://bucket/path/to/training/data', 
+                  'testing': 's3://bucket/path/to/testing/data'})
+
+The environment variable ``SM_CHANNEL_{channel_name}`` provides the
+path were the channel is located:
+
+.. code:: python
+
+   import argparse
+   import os
 
    if __name__ == '__main__':
      parser = argparse.ArgumentParser()
@@ -117,116 +206,10 @@ For example, the example above can read information about the
      args = parser.parse_args()
      ...
 
-List of provided environment variables by SageMaker Containers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When training starts, SageMaker Containers will print all available
+environment variables.
 
-The list of the environment variables is logged and available in
-CloudWatch logs. From the example above:
-
-.. code:: bash
-
-   SM_NUM_GPUS=1
-   SM_NUM_CPUS=4
-   SM_NETWORK_INTERFACE_NAME=ethwe
-
-   SM_CURRENT_HOST=algo-1
-   SM_HOSTS=["algo-1","algo-2"]
-   SM_LOG_LEVEL=20
-
-   SM_USER_ARGS=["--batch-size","256","--learning-rate","0.0001","--communicator","pure_nccl"]
-
-   SM_HP_LEARNING_RATE=0.0001
-   SM_HP_BATCH-SIZE=10000
-
-   SM_HPS={"batch-size": '256', "learning-rate": "0.0001","communicator": "pure_nccl"}
-
-   SM_CHANNELS=["testing","training"]
-   SM_CHANNEL_TRAINING=/opt/ml/input/data/training
-   SM_CHANNEL_TESTING=/opt/ml/input/data/test
-
-   SM_MODULE_NAME=user_script
-   SM_MODULE_DIR=s3://sagemaker-{aws-region}-{aws-id}/{training-job-name}/source/sourcedir.tar.gz
-
-   SM_INPUT_DIR=/opt/ml/input
-   SM_INPUT_CONFIG_DIR=/opt/ml/input/config
-   SM_OUTPUT_DIR=/opt/ml/output
-   SM_OUTPUT_DATA_DIR=/opt/ml/output/data/algo-1
-   SM_MODEL_DIR=/opt/ml/model
-
-   SM_RESOURCE_CONFIG=
-   {
-       "current_host": "algo-1",
-       "hosts": [
-           "algo-1",
-           "algo-2"
-       ]
-   }
-
-   SM_INPUT_DATA_CONFIG=
-   {
-       "test": {
-           "RecordWrapperType": "None",
-           "S3DistributionType": "FullyReplicated",
-           "TrainingInputMode": "File"
-       },
-       "train": {
-           "RecordWrapperType": "None",
-           "S3DistributionType": "FullyReplicated",
-           "TrainingInputMode": "File"
-       }
-   }
-
-
-   SM_FRAMEWORK_MODULE=sagemaker_chainer_container.training:main
-
-   SM_TRAINING_ENV=
-   {
-       "channel_input_dirs": {
-           "test": "/opt/ml/input/data/testing",
-           "train": "/opt/ml/input/data/training"
-       },
-       "current_host": "algo-1",
-       "framework_module": "sagemaker_chainer_container.training:main",
-       "hosts": [
-           "algo-1",
-           "algo-2"
-       ],
-       "hyperparameters": {
-           "batch-size": 10000,
-           "epochs": 1
-       },
-       "input_config_dir": "/opt/ml/input/config",
-       "input_data_config": {
-           "test": {
-               "RecordWrapperType": "None",
-               "S3DistributionType": "FullyReplicated",
-               "TrainingInputMode": "File"
-           },
-           "train": {
-               "RecordWrapperType": "None",
-               "S3DistributionType": "FullyReplicated",
-               "TrainingInputMode": "File"
-           }
-       },
-       "input_dir": "/opt/ml/input",
-       "job_name": "preprod-chainer-2018-05-31-06-27-15-511",
-       "log_level": 20,
-       "model_dir": "/opt/ml/model",
-       "module_dir": "s3://sagemaker-{aws-region}-{aws-id}/{training-job-name}/source/sourcedir.tar.gz",
-       "module_name": "user_script",
-       "network_interface_name": "ethwe",
-       "num_cpus": 4,
-       "num_gpus": 1,
-       "output_data_dir": "/opt/ml/output/data/algo-1",
-       "output_dir": "/opt/ml/output",
-       "resource_config": {
-           "current_host": "algo-1",
-           "hosts": [
-               "algo-1",
-               "algo-2"
-           ]
-       }
-   }
+.. _header-n997:
 
 IMPORTANT ENVIRONMENT VARIABLES
 -------------------------------
@@ -235,20 +218,24 @@ These environment variables are those that you're likely to use when
 writing a user script. A full list of environment variables is given
 below.
 
+.. _header-n999:
+
 SM_MODEL_DIR
 ~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_MODEL_DIR=/opt/ml/model
 
 When the training job finishes, the container will be **deleted**
-including its file system except for **/opt/ml/model** and
-**/opt/ml/output**. Use **/opt/ml/model** to save the model checkpoints.
-These checkpoints will be uploaded to the default S3 bucket. Usage
-example:
+including its file system with **exception** of the ``/opt/ml/model`` and
+``/opt/ml/output`` folders. Use ``/opt/ml/model`` to save the model
+checkpoints. These checkpoints will be uploaded to the default S3
+bucket. Usage example:
 
 .. code:: python
+
+   import os
 
    # using it in argparse
    parser.add_argument('model_dir', type=str, default=os.environ['SM_MODEL_DIR'])
@@ -262,10 +249,12 @@ example:
 For more information, see: `How Amazon SageMaker Processes Training
 Output <https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-envvariables>`__.
 
+.. _header-n1004:
+
 SM_CHANNELS
 ~~~~~~~~~~~
 
-.. code:: bash
+.. code:: shell
 
    SM_CHANNELS='["testing","training"]'
 
@@ -273,26 +262,29 @@ Contains the list of input data channels in the container.
 
 When you run training, you can partition your training data into
 different logical "channels". Depending on your problem, some common
-channel ideas are: "training", "testing", "evaluation" or
-"images" and "labels".
+channel ideas are: "training", "testing", "evaluation" or "images" and
+"labels".
 
 ``SM_CHANNELS`` includes the name of the available channels in the
 container as a JSON encoded list. Usage example:
 
 .. code:: python
 
+   import os
    import json
 
    # using it in argparse
-   parser.add_argument('channel_names', type=int, default=json.loads(os.environ['SM_CHANNELS'])))
+   parser.add_argument('channel_names', default=json.loads(os.environ['SM_CHANNELS'])))
 
    # using it as variable
    channel_names = json.loads(os.environ['SM_CHANNELS']))
 
-SM_CHANNEL\_ ``{channel_name}``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _header-n1010:
 
-.. code:: bash
+SM_CHANNEL_{channel_name}
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: shell
 
    SM_CHANNEL_TRAINING='/opt/ml/input/data/training'
    SM_CHANNEL_TESTING='/opt/ml/input/data/testing'
@@ -302,6 +294,7 @@ located in the container. Usage examples:
 
 .. code:: python
 
+   import os
    import json
 
    parser.add_argument('--train', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
@@ -313,10 +306,12 @@ located in the container. Usage examples:
    train_file = np.load(os.path.join(args.train, 'train.npz'))
    test_file = np.load(os.path.join(args.test, 'test.npz'))
 
+.. _header-n1014:
+
 SM_HPS
 ~~~~~~
 
-.. code:: bash
+.. code:: shell
 
    SM_HPS='{"batch-size": "256", "learning-rate": "0.0001","communicator": "pure_nccl"}'
 
@@ -325,15 +320,18 @@ hyperparameters. Example usage:
 
 .. code:: python
 
+   import os
    import json
 
    hyperparameters = json.loads(os.environ['SM_HPS']))
    # {"batch-size": 256, "learning-rate": 0.0001, "communicator": "pure_nccl"}
 
-SM_HP\_ ``{hyperparameter_name}``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _header-n1020:
 
-.. code:: bash
+SM_HP_{hyperparameter_name}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: shell
 
    SM_HP_LEARNING-RATE=0.0001
    SM_HP_BATCH-SIZE=10000
@@ -348,10 +346,12 @@ Usage examples:
    batch_size = int(os.environ['SM_HP_BATCH-SIZE'])
    comminicator = os.environ['SM_HP_COMMUNICATOR']
 
+.. _header-n1026:
+
 SM_CURRENT_HOST
 ~~~~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_CURRENT_HOST=algo-1
 
@@ -360,16 +360,20 @@ example:
 
 .. code:: python
 
+   import os
+
    # using it in argparse
    parser.add_argument('current_host', type=str, default=os.environ['SM_CURRENT_HOST'])
 
    # using it as variable
    current_host = os.environ['SM_CURRENT_HOST']
 
+.. _header-n1032:
+
 SM_HOSTS
 ~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_HOSTS='["algo-1","algo-2"]'
 
@@ -377,18 +381,21 @@ JSON encoded list containing all the hosts . Usage example:
 
 .. code:: python
 
+   import os
    import json
 
    # using it in argparse
-   parser.add_argument('hosts', type=nargs, default=json.loads(os.environ['SM_HOSTS']))
+   parser.add_argument('hosts', type=str, default=json.loads(os.environ['SM_HOSTS']))
 
    # using it as variable
    hosts = json.loads(os.environ['SM_HOSTS'])
 
+.. _header-n1038:
+
 SM_NUM_GPUS
 ~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_NUM_GPUS=1
 
@@ -396,19 +403,25 @@ The number of gpus available in the current container. Usage example:
 
 .. code:: python
 
+   import os
+   
    # using it in argparse
    parser.add_argument('num_gpus', type=int, default=os.environ['SM_NUM_GPUS'])
 
    # using it as variable
    num_gpus = int(os.environ['SM_NUM_GPUS'])
 
-Environment Variables full specification:
------------------------------------------
+.. _header-n1042:
+
+List of provided environment variables by SageMaker Containers
+--------------------------------------------------------------
+
+.. _header-n1043:
 
 SM_NUM_CPUS
 ~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_NUM_CPUS=32
 
@@ -422,10 +435,12 @@ The number of cpus available in the current container. Usage example:
    # using it as variable
    num_cpus = int(os.environ['SM_NUM_CPUS'])
 
+.. _header-n1047:
+
 SM_LOG_LEVEL
 ~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_LOG_LEVEL=20
 
@@ -433,16 +448,19 @@ The current log level in the container. Usage example:
 
 .. code:: python
 
+   import os
    import logging
 
    logger = logging.getLogger(__name__)
 
    logger.setLevel(int(os.environ.get('SM_LOG_LEVEL', logging.INFO)))
 
+.. _header-n1053:
+
 SM_NETWORK_INTERFACE_NAME
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_NETWORK_INTERFACE_NAME=ethwe
 
@@ -457,53 +475,61 @@ example:
    # using it as variable
    network_interface = os.environ['SM_NETWORK_INTERFACE_NAME']
 
+.. _header-n1057:
+
 SM_USER_ARGS
 ~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_USER_ARGS='["--batch-size","256","--learning_rate","0.0001","--communicator","pure_nccl"]'
 
 JSON encoded list with the script arguments provided for training.
 
+.. _header-n1060:
+
 SM_INPUT_DIR
 ~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_INPUT_DIR=/opt/ml/input/
 
-The path of the input directory, e.g. ``/opt/ml/input/`` The
-input_dir, e.g. ``/opt/ml/input/``, is the directory where SageMaker
-saves input data and configuration files before and during training.
+The path of the input directory, e.g. ``/opt/ml/input/`` The input_dir,
+e.g. ``/opt/ml/input/``, is the directory where SageMaker saves input
+data and configuration files before and during training.
+
+.. _header-n1063:
 
 SM_INPUT_CONFIG_DIR
 ~~~~~~~~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_INPUT_DIR=/opt/ml/input/config
 
 The path of the input directory, e.g. ``/opt/ml/input/config/``. The
-directory where standard SageMaker configuration files are located,
-e.g. ``/opt/ml/input/config/``.
+directory where standard SageMaker configuration files are located, e.g.
+``/opt/ml/input/config/``.
 
 SageMaker training creates the following files in this folder when
-training starts: - ``hyperparameters.json``: Amazon SageMaker makes the
-hyperparameters in a CreateTrainingJob request available in this file. -
-``inputdataconfig.json``: You specify data channel information in the
-InputDataConfig parameter in a CreateTrainingJob request. Amazon
-SageMaker makes this information available in this file. -
-``resourceconfig.json``: name of the current host and all host
-containers in the training.
+training starts: 
+
+- ``hyperparameters.json``: Amazon SageMaker makes the hyperparameters in a CreateTrainingJob request available in this file. 
+
+- ``inputdataconfig.json``: You specify data channel information in the InputDataConfig parameter in a CreateTrainingJob request. Amazon SageMaker makes this information available in this file. 
+
+- ``resourceconfig.json``: name of the current host and all host containers in the training.
 
 More information about this files can be find here:
 https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
 
+.. _header-n1068:
+
 SM_OUTPUT_DATA_DIR
 ~~~~~~~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_OUTPUT_DATA_DIR=/opt/ml/output/data/algo-1
 
@@ -514,29 +540,34 @@ As your algorithm runs in a container, it generates output including the
 status of the training job and model and output artifacts. Your
 algorithm should write this information to the this directory.
 
+.. _header-n1072:
+
 SM_RESOURCE_CONFIG
 ~~~~~~~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_RESOURCE_CONFIG='{"current_host":"algo-1","hosts":["algo-1","algo-2"]}'
 
 The contents from ``/opt/ml/input/config/resourceconfig.json``. It has
 the following keys:
 
-- current_host: The name of the current container on the container network.
-  For example, ``'algo-1'``.
-- hosts: The list of names of all containers on the container network, sorted
-  lexicographically. For example, ``['algo-1', 'algo-2', 'algo-3']`` for a
-  three-node cluster.
+-  current_host: The name of the current container on the container
+   network. For example, ``'algo-1'``.
 
-For more information about resourceconfig.json:
+-  hosts: The list of names of all containers on the container network,
+   sorted lexicographically. For example,
+   ``['algo-1', 'algo-2', 'algo-3']`` for a three-node cluster.
+
+For more information about ``resourceconfig.json``:
 https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-dist-training
+
+.. _header-n1081:
 
 SM_INPUT_DATA_CONFIG
 ~~~~~~~~~~~~~~~~~~~~
 
-.. code:: json
+.. code:: shell
 
    SM_INPUT_DATA_CONFIG='{
        "testing": {
@@ -554,13 +585,15 @@ SM_INPUT_DATA_CONFIG
 Input data configuration from
 ``/opt/ml/input/config/inputdataconfig.json``.
 
-For more information about inpudataconfig.json:
+For more information about ``inpudataconfig.json``:
 https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-dist-training
+
+.. _header-n1085:
 
 SM_TRAINING_ENV
 ~~~~~~~~~~~~~~~
 
-.. code:: python
+.. code:: shell
 
    SM_TRAINING_ENV='
    {
@@ -611,9 +644,4 @@ SM_TRAINING_ENV
        }
    }'
 
-Provides the entire training information as a JSON encoded dictionary.
-
-License
--------
-
-This library is licensed under the Apache 2.0 License.
+Provides the entire training information as a JSON-encoded dictionary.
