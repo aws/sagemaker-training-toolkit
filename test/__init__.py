@@ -150,22 +150,28 @@ class UserModule(object):
     def url(self):  # type: () -> str
         return os.path.join('s3://', self.bucket, self.key)
 
+    def create_tar(self, dir_path=None):
+        dir_path = dir_path or os.path.dirname(os.path.realpath(__file__))
+        tar_name = os.path.join(dir_path, 'sourcedir.tar.gz')
+        with tarfile.open(tar_name, mode='w:gz') as tar:
+            for _file in self._files:
+                name = os.path.join(dir_path, _file.name)
+                with open(name, 'w+') as f:
+
+                    if isinstance(_file.data, six.string_types):
+                        data = _file.data
+                    else:
+                        data = '\n'.join(_file.data)
+
+                    f.write(data)
+                tar.add(name=name, arcname=_file.name)
+                os.remove(name)
+
+        return tar_name
+
     def upload(self):  # type: () -> UserModule
         with _files.tmpdir() as tmpdir:
-            tar_name = os.path.join(tmpdir, 'sourcedir.tar.gz')
-            with tarfile.open(tar_name, mode='w:gz') as tar:
-                for _file in self._files:
-                    name = os.path.join(tmpdir, _file.name)
-                    with open(name, 'w+') as f:
-
-                        if isinstance(_file.data, six.string_types):
-                            data = _file.data
-                        else:
-                            data = '\n'.join(_file.data)
-
-                        f.write(data)
-                    tar.add(name=name, arcname=_file.name)
-
+            tar_name = self.create_tar(dir_path=tmpdir)
             self._s3.Object(self.bucket, self.key).upload_file(tar_name)
         return self
 

@@ -13,6 +13,7 @@
 import itertools
 import logging
 import os
+import tarfile
 
 from mock import mock_open, patch
 import pytest
@@ -113,7 +114,7 @@ def test_write_failure_file():
 @patch('os.path.isdir', lambda x: True)
 @patch('shutil.rmtree')
 @patch('shutil.move')
-def test_download_and_and_extract_source_dir(move, rmtree, s3_download):
+def test_download_and_extract_source_dir(move, rmtree, s3_download):
     uri = _env.channel_path('code')
     _files.download_and_extract(uri, _env.code_dir)
     s3_download.assert_not_called()
@@ -125,9 +126,24 @@ def test_download_and_and_extract_source_dir(move, rmtree, s3_download):
 @patch('sagemaker_containers._files.s3_download')
 @patch('os.path.isdir', lambda x: False)
 @patch('shutil.copy2')
-def test_download_and_and_extract_file(copy, s3_download):
-    uri = _env.channel_path('code')
+def test_download_and_extract_file(copy, s3_download):
+    uri = __file__
     _files.download_and_extract(uri, _env.code_dir)
 
     s3_download.assert_not_called()
     copy.assert_called_with(uri, _env.code_dir)
+
+
+@patch('sagemaker_containers._files.s3_download')
+@patch('os.path.isdir', lambda x: False)
+@patch('tarfile.TarFile.extractall')
+def test_download_and_extract_tar(extractall, s3_download):
+    t = tarfile.open(name='test.tar.gz', mode='w:gz')
+    t.close()
+    uri = t.name
+    _files.download_and_extract(uri, _env.code_dir)
+
+    s3_download.assert_not_called()
+    extractall.assert_called_with(path=_env.code_dir)
+
+    os.remove(uri)

@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 
 import importlib
+import os
 import shlex
 import subprocess
 import textwrap
@@ -157,3 +158,17 @@ def test_import_module_with_s3_script_with_error(user_module_name):
 
     with pytest.raises(errors.ImportModuleError):
         modules.import_module(user_module.url, user_module_name, cache=False)
+
+
+@pytest.mark.parametrize('user_module',
+                         [test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(SETUP_FILE),
+                          test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS)])
+def test_import_module_with_local_tar_via_download_and_extract(user_module, user_module_name):
+    user_module = user_module.add_file(REQUIREMENTS_FILE)
+    tar_name = user_module.create_tar()
+
+    module = modules.import_module(tar_name, name=user_module_name, cache=False)
+
+    assert module.say() == REQUIREMENTS_TXT_ASSERT_STR
+
+    os.remove(tar_name)
