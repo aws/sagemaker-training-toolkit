@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.4.10 (2019-05-20)
+
+### Bug fixes and other changes
+
+ * Detailed documentation for SageMaker Containers - training
+ * download_and_extract local tar file
+
 ## v2.4.9 (2019-05-08)
 
 ### Bug fixes and other changes
