@@ -114,7 +114,7 @@ Container, including pushing it to ECR, see the example notebook `tensorflow_bri
 How a script is executed inside the container
 ---------------------------------------------
 
-The training script must be located under the folder ``/opt/ml/model`` and its relative path is defined in the environment variable ``SAGEMAKER_PROGRAM``. The following scripts are supported:
+The training script must be located under the folder ``/opt/ml/code`` and its relative path is defined in the environment variable ``SAGEMAKER_PROGRAM``. The following scripts are supported:
 
 -  **Python scripts**: uses the Python interpreter for any script with
    .py suffix
