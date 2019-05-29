@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.4.10.post0 (2019-05-29)
+
+### Documentation changes
+
+ * fix path for training script location
+
 ## v2.4.10 (2019-05-20)
 
 ### Bug fixes and other changes
