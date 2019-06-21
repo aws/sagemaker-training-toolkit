@@ -18,6 +18,7 @@ import os
 import shlex
 import subprocess
 
+import mock
 import numpy as np
 import pytest
 
@@ -28,6 +29,12 @@ import test
 from test import fake_ml_framework
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+
+
+@pytest.fixture(autouse=True)
+def patch_gethostname_to_avoid_deadlock():
+    with mock.patch('socket.gethostbyname') as gethostbyname:
+        yield gethostbyname
 
 
 @pytest.fixture(autouse=True)

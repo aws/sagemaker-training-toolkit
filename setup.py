@@ -31,7 +31,7 @@ packages = setuptools.find_packages(where='src', exclude=('test',))
 packages.append('sagemaker_containers.etc')
 
 required_packages = [
-    'numpy', 'boto3', 'six', 'pip', 'flask', 'gunicorn', 'typing',
+    'numpy', 'boto3', 'six', 'pip', 'flask', 'gunicorn', 'typing', 'retrying==1.3.3',
     'gevent', 'inotify_simple', 'werkzeug', 'paramiko==2.4.2', 'psutil==5.4.8'
 ]
 

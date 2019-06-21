@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import os
 import sys
 
-from mock import MagicMock, patch
+from mock import call, MagicMock, patch, PropertyMock
 import pytest
 from six import PY2
 
@@ -92,6 +92,36 @@ def test_run_module_wait(chmod, download_and_extract):
     download_and_extract.assert_called_with('s3://url', _env.code_dir)
     runner.run.assert_called_with(True, True)
     chmod.assert_called_with(os.path.join(_env.code_dir, 'launcher.sh'), 511)
+
+
+@patch('sagemaker_containers._files.download_and_extract')
+@patch('sagemaker_containers._modules.install')
+@patch.object(_env.TrainingEnv, 'hosts',
+              return_value=['algo-1', 'algo-2'], new_callable=PropertyMock)
+@patch('socket.gethostbyname')
+def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_and_extract):
+    runner = MagicMock(spec=_process.ProcessRunner)
+    entry_point.run(uri='s3://url', user_entry_point='launcher.py',
+                    args=['42'], runner=runner)
+
+    gethostbyname.assert_called_with('algo-2')
+    gethostbyname.assert_any_call('algo-1')
+
+
+@patch('sagemaker_containers._files.download_and_extract')
+@patch('sagemaker_containers._modules.install')
+@patch.object(_env.TrainingEnv, 'hosts',
+              return_value=['algo-1', 'algo-2'], new_callable=PropertyMock)
+@patch('socket.gethostbyname')
+def test_run_waits_hostname_resolution(gethostbyname, hosts, install, download_and_extract):
+
+    gethostbyname.side_effect = [ValueError(), ValueError(), True, True]
+
+    runner = MagicMock(spec=_process.ProcessRunner)
+    entry_point.run(uri='s3://url', user_entry_point='launcher.py',
+                    args=['42'], runner=runner)
+
+    gethostbyname.assert_has_calls([call('algo-1'), call('algo-1'), call('algo-1'), call('algo-2')])
 
 
 @patch('sagemaker_containers._files.download_and_extract')

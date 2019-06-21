@@ -13,8 +13,11 @@
 from __future__ import absolute_import
 
 import os
+import socket
 import sys
 from typing import Dict, List  # noqa ignore=F401 imported but unused
+
+from retrying import retry
 
 from sagemaker_containers import _entry_point_type, _env, _files, _modules, _runner
 
@@ -86,6 +89,8 @@ def run(uri,
 
     _env.write_env_vars(env_vars)
 
+    _wait_hostname_resolution()
+
     return _runner.get(runner, user_entry_point, args, env_vars, extra_opts).run(wait, capture_error)
 
 
@@ -108,3 +113,20 @@ def install(name, dst, capture_error=False):
         _modules.install(dst, capture_error)
     if entrypoint_type is _entry_point_type.COMMAND:
         os.chmod(os.path.join(dst, name), 511)
+
+
+@retry(stop_max_delay=1000 * 60 * 15,
+       wait_exponential_multiplier=100,
+       wait_exponential_max=30000)
+def _dns_lookup(host):
+    """ Retrying dns lookup on host """
+    return socket.gethostbyname(host)
+
+
+def _wait_hostname_resolution():
+    """Wait for the hostname resolution of the container. This is known behavior as the cluster
+    boots up and has been documented here:
+     https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-dist-training
+    """
+    for host in _env.TrainingEnv().hosts:
+        _dns_lookup(host)
