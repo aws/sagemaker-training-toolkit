@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.0 (2019-06-24)
+
+### Features
+
+ * entrypoint run waits for hostname resolution
+
 ## v2.4.10.post0 (2019-05-29)
 
 ### Documentation changes
