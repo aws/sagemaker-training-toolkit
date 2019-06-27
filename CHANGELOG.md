@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.1 (2019-06-27)
+
+### Bug fixes and other changes
+
+ * Added execution-parameters to nginx.conf.template
+
 ## v2.5.0 (2019-06-24)
 
 ### Features
