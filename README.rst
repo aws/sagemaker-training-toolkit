@@ -506,9 +506,9 @@ SM_INPUT_CONFIG_DIR
 
 .. code:: shell
 
-   SM_INPUT_DIR=/opt/ml/input/config
+   SM_INPUT_CONFIG_DIR=/opt/ml/input/config
 
-The path of the input directory, e.g. ``/opt/ml/input/config/``. The
+The path of the input configuration directory, e.g. ``/opt/ml/input/config/``. The
 directory where standard SageMaker configuration files are located, e.g.
 ``/opt/ml/input/config/``.
 
