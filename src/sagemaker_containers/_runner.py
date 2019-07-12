@@ -45,7 +45,9 @@ def _get_by_runner_type(identifier, user_entry_point=None, args=None, env_vars=N
     if identifier is RunnerType.MPI and env.is_master:
         mpi_args = extra_opts or {}
 
-        processes_per_host = _mpi_param_value(mpi_args, env, _params.MPI_PROCESSES_PER_HOST, 1)
+        # Default to single process for CPU
+        default_processes_per_host = env.num_gpus if env.num_gpus > 0 else 1
+        processes_per_host = _mpi_param_value(mpi_args, env, _params.MPI_PROCESSES_PER_HOST, default_processes_per_host)
         num_processes = _mpi_param_value(mpi_args, env, _params.MPI_NUM_PROCESSES)
         custom_mpi_options = _mpi_param_value(mpi_args, env, _params.MPI_CUSTOM_OPTIONS, '')
 

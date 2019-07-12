@@ -62,6 +62,8 @@ def test_get_runner_by_process_with_extra_args(training_env):
 
 @patch('sagemaker_containers.training_env')
 def test_get_runner_by_mpi_returns_runnner(training_env):
+    training_env().num_gpus = 0
+
     runner = _runner.get(_runner.MPIRunnerType)
 
     assert isinstance(runner, _mpi.MasterRunner)
@@ -77,7 +79,31 @@ def test_get_runner_by_mpi_returns_runnner(training_env):
 
 
 @patch('sagemaker_containers.training_env')
+def test_runnner_with_default_cpu_processes_per_host(training_env):
+    training_env().additional_framework_parameters = dict()
+    training_env().num_gpus = 0
+
+    runner = _runner.get(_runner.MPIRunnerType)
+
+    assert isinstance(runner, _mpi.MasterRunner)
+    assert runner._process_per_host == 1
+
+
+@patch('sagemaker_containers.training_env')
+def test_runnner_with_default_gpu_processes_per_host(training_env):
+    training_env().additional_framework_parameters = dict()
+    training_env().num_gpus = 2
+
+    runner = _runner.get(_runner.MPIRunnerType)
+
+    assert isinstance(runner, _mpi.MasterRunner)
+    assert runner._process_per_host == 2
+
+
+@patch('sagemaker_containers.training_env')
 def test_get_runner_by_mpi_with_extra_args(training_env):
+    training_env().num_gpus = 0
+
     runner = _runner.get(_runner.MPIRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS, MPI_OPTS)
 
     assert isinstance(runner, _mpi.MasterRunner)
