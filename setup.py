@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -31,8 +31,8 @@ packages = setuptools.find_packages(where='src', exclude=('test',))
 packages.append('sagemaker_containers.etc')
 
 required_packages = [
-    'numpy', 'boto3', 'six', 'pip', 'flask', 'gunicorn', 'typing', 'retrying==1.3.3',
-    'gevent', 'inotify_simple', 'werkzeug', 'paramiko==2.4.2', 'psutil==5.4.8'
+    'numpy', 'boto3', 'six', 'pip', 'flask==1.1.1', 'gunicorn', 'typing', 'retrying==1.3.3',
+    'gevent', 'inotify_simple', 'werkzeug==0.15.0', 'paramiko==2.4.2', 'psutil==5.4.8'
 ]
 
 # enum is introduced in Python 3.4. Installing enum back port
