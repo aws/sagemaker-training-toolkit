@@ -94,6 +94,45 @@ def test_train_fails(_exit, import_module):
 @patch('importlib.import_module')
 @patch('sagemaker_containers.training_env', TrainingEnv)
 @patch('sagemaker_containers._trainer._exit_processes')
+def test_train_fails_with_no_error_number(_exit, import_module):
+
+    def fail():
+        raise Exception('No errno defined.')
+
+    framework = Mock(entry_point=fail)
+    import_module.return_value = framework
+
+    _trainer.train()
+
+    _exit.assert_called_with(_trainer.DEFAULT_FAILURE_CODE)
+
+
+@patch('inotify_simple.INotify', MagicMock())
+@patch('boto3.client', MagicMock())
+@patch('importlib.import_module')
+@patch('sagemaker_containers.training_env', TrainingEnv)
+@patch('sagemaker_containers._trainer._exit_processes')
+def test_train_fails_with_invalid_error_number(_exit, import_module):
+    class InvalidErrorNumberException(Exception):
+        def __init__(self, *args, **kwargs):  # real signature unknown
+            self.errno = 'invalid'
+
+    def fail():
+        raise InvalidErrorNumberException('No such file or directory')
+
+    framework = Mock(entry_point=fail)
+    import_module.return_value = framework
+
+    _trainer.train()
+
+    _exit.assert_called_with(_trainer.DEFAULT_FAILURE_CODE)
+
+
+@patch('inotify_simple.INotify', MagicMock())
+@patch('boto3.client', MagicMock())
+@patch('importlib.import_module')
+@patch('sagemaker_containers.training_env', TrainingEnv)
+@patch('sagemaker_containers._trainer._exit_processes')
 def test_train_with_client_error(_exit, import_module):
 
     def fail():

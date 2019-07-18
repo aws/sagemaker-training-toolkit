@@ -25,6 +25,15 @@ SUCCESS_CODE = 0
 DEFAULT_FAILURE_CODE = 1
 
 
+def _get_valid_failure_exit_code(exit_code):
+    try:
+        valid_exit_code = int(exit_code)
+    except ValueError:
+        valid_exit_code = DEFAULT_FAILURE_CODE
+
+    return valid_exit_code
+
+
 def _exit_processes(exit_code):  # type: (int) -> None
     """Exit main thread and child processes.
 
@@ -96,7 +105,8 @@ def train():
 
         logger.error(failure_msg)
 
-        exit_code = getattr(e, 'errno', DEFAULT_FAILURE_CODE)
+        error_number = getattr(e, 'errno', DEFAULT_FAILURE_CODE)
+        exit_code = _get_valid_failure_exit_code(error_number)
     finally:
         if intermediate_sync:
             intermediate_sync.join()
