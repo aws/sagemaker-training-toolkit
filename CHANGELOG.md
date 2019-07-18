@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.5.2 (2019-07-18)
+
+### Bug fixes and other changes
+
+ * pin flake and werkzeug versions
+ * add GPU default for MPI processes per host
+
+### Documentation changes
+
+ * fix env var in readme
+
 ## v2.5.1 (2019-06-27)
 
 ### Bug fixes and other changes
