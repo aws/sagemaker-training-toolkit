@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.3 (2019-07-22)
+
+### Bug fixes and other changes
+
+ * ensure exit code is an int
+
 ## v2.5.2 (2019-07-18)
 
 ### Bug fixes and other changes
