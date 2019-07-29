@@ -100,7 +100,7 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
     """
-    cmd = '%s -m pip install -U . ' % _process.python_executable()
+    cmd = '%s -m pip install . ' % _process.python_executable()
 
     if has_requirements(path):
         cmd += '-r requirements.txt'

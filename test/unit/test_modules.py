@@ -50,7 +50,7 @@ def test_install(check_error):
     path = 'c://sagemaker-pytorch-container'
     _modules.install(path)
 
-    cmd = [sys.executable, '-m', 'pip', 'install', '-U', '.']
+    cmd = [sys.executable, '-m', 'pip', 'install', '.']
     check_error.assert_called_with(cmd, _errors.InstallModuleError, cwd=path, capture_error=False)
 
     with patch('os.path.exists', return_value=True):

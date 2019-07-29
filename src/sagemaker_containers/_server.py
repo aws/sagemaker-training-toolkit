@@ -21,7 +21,7 @@ import sys
 import pkg_resources
 
 import sagemaker_containers
-from sagemaker_containers import _env, _files, _logging
+from sagemaker_containers import _env, _files, _logging, _modules
 
 logger = _logging.get_logger()
 
@@ -73,6 +73,10 @@ def start(module_app):
         gunicorn_bind_address = UNIX_SOCKET_BIND
         _create_nginx_config(env)
         nginx = subprocess.Popen(['nginx', '-c', nginx_config_file])
+
+    # Install user module before starting GUnicorn
+    if env.module_name:
+        _modules.import_module(env.module_dir, env.module_name)
 
     pythonpath = ','.join(sys.path + [_env.code_dir])
 
