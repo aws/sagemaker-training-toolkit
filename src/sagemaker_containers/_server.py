@@ -16,6 +16,7 @@ import os
 import re
 import signal
 import subprocess
+import sys
 
 import pkg_resources
 
@@ -73,9 +74,12 @@ def start(module_app):
         _create_nginx_config(env)
         nginx = subprocess.Popen(['nginx', '-c', nginx_config_file])
 
+    pythonpath = ','.join(sys.path + [_env.code_dir])
+
     gunicorn = subprocess.Popen(['gunicorn',
                                  '--timeout', str(env.model_server_timeout),
                                  '-k', 'gevent',
+                                 '--pythonpath', pythonpath,
                                  '-b', gunicorn_bind_address,
                                  '--worker-connections', str(1000 * env.model_server_workers),
                                  '-w', str(env.model_server_workers),

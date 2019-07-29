@@ -29,12 +29,14 @@ SAFE_PORT_RANGE = '{}-{}'.format(FIRST_PORT, LAST_PORT)
 @patch('sagemaker_containers._env.num_gpus', lambda: 0)
 @patch('os.wait', lambda: (-1, 0))
 @patch('subprocess.Popen')
+@patch('sys.path', ['/opt/folder', '/lib/another/folder'])
 def test_start_no_nginx(popen):
     popen.return_value.pid = -1
     calls = [call(
         ['gunicorn',
          '--timeout', '100',
          '-k', 'gevent',
+         '--pythonpath', '/opt/folder,/lib/another/folder,%s' % _env.code_dir,
          '-b', '0.0.0.0:8080',
          '--worker-connections', '2000',
          '-w', '2',
@@ -55,6 +57,7 @@ def test_start_no_nginx(popen):
 @patch('sagemaker_containers._files.write_file', Mock())
 @patch('os.wait', lambda: (-1, 0))
 @patch('subprocess.Popen')
+@patch('sys.path', ['/opt/folder', '/lib/another/folder'])
 def test_start_with_nginx(popen):
     popen.return_value.pid = -1
     calls = [
@@ -62,6 +65,7 @@ def test_start_with_nginx(popen):
         call(['gunicorn',
               '--timeout', '100',
               '-k', 'gevent',
+              '--pythonpath', '/opt/folder,/lib/another/folder,%s' % _env.code_dir,
               '-b', 'unix:/tmp/gunicorn.sock',
               '--worker-connections', '2000',
               '-w', '2',
