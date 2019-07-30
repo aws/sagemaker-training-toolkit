@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.5.4 (2019-07-30)
+
+### Bug fixes and other changes
+
+ * install user module before GUnicorn starts
+ * include /opt/ml/code to GUnicorn PYTHONPATH
+
 ## v2.5.3 (2019-07-22)
 
 ### Bug fixes and other changes
