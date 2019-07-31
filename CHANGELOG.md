@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.5 (2019-07-31)
+
+### Bug fixes and other changes
+
+ * Update setup.py
+
 ## v2.5.4 (2019-07-30)
 
 ### Bug fixes and other changes
