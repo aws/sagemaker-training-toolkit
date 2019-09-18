@@ -22,13 +22,13 @@ from sagemaker_containers.beta.framework import env, params, server
 def test_server_with_a_simple_app():
     original_env = os.environ.copy()
 
-    os.environ[params.FRAMEWORK_SERVING_MODULE_ENV] = 'test.functional.simple_flask:app'
-    os.environ[params.USE_NGINX_ENV] = 'false'
+    os.environ[params.FRAMEWORK_SERVING_MODULE_ENV] = "test.functional.simple_flask:app"
+    os.environ[params.USE_NGINX_ENV] = "false"
 
     def worker():
         server.start(env.ServingEnv().framework_module)
 
-    base_url = 'http://127.0.0.1:8080'
+    base_url = "http://127.0.0.1:8080"
     http = urllib3.PoolManager()
 
     try:
@@ -37,19 +37,19 @@ def test_server_with_a_simple_app():
 
         time.sleep(2)
 
-        r = http.request('GET', '{}/ping'.format(base_url))
+        r = http.request("GET", "{}/ping".format(base_url))
         assert r.status == 200
 
-        r = http.request('GET', '{}/invocations'.format(base_url))
+        r = http.request("GET", "{}/invocations".format(base_url))
         assert r.status == 200
-        assert r.data.decode('utf-8') == 'invocation'
+        assert r.data.decode("utf-8") == "invocation"
 
     finally:
         os.environ = original_env
 
         # shut down the server or else it will go on forever.
         try:
-            http.request('GET', '{}/shutdown'.format(base_url))
+            http.request("GET", "{}/shutdown".format(base_url))
         except urllib3.exceptions.MaxRetryError:
             # the above request will kill the server so it is expected that it fails.
             pass

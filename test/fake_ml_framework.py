@@ -17,7 +17,9 @@ import test
 
 
 class Model(object):
-    def __init__(self, weights=None, bias=1, loss=None, optimizer=None, epochs=None, batch_size=None):
+    def __init__(
+        self, weights=None, bias=1, loss=None, optimizer=None, epochs=None, batch_size=None
+    ):
         self.batch_size = batch_size
         self.epochs = epochs
         self.optimizer = optimizer

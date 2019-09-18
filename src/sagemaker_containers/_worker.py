@@ -80,10 +80,12 @@ class Worker(flask.Flask):
         if initialize_fn:
             self.before_first_request(initialize_fn)
 
-        self.add_url_rule(rule='/invocations', endpoint='invocations', view_func=transform_fn,
-                          methods=["POST"])
-        self.add_url_rule(rule='/ping', endpoint='ping',
-                          view_func=healthcheck_fn or default_healthcheck_fn)
+        self.add_url_rule(
+            rule="/invocations", endpoint="invocations", view_func=transform_fn, methods=["POST"]
+        )
+        self.add_url_rule(
+            rule="/ping", endpoint="ping", view_func=healthcheck_fn or default_healthcheck_fn
+        )
 
         self.request_class = Request
 
@@ -91,13 +93,22 @@ class Worker(flask.Flask):
 class Response(flask.Response):
     default_mimetype = _content_types.JSON
 
-    def __init__(self, response=None, accept=None, status=http_client.OK, headers=None,
-                 mimetype=None, direct_passthrough=False):
+    def __init__(
+        self,
+        response=None,
+        accept=None,
+        status=http_client.OK,
+        headers=None,
+        mimetype=None,
+        direct_passthrough=False,
+    ):
         if accept:
-            warnings.warn('ignoring deprecated "accept" argument to Response.__init__',
-                          DeprecationWarning)
-        super(Response, self).__init__(response, status, headers, mimetype, None,
-                                       direct_passthrough)
+            warnings.warn(
+                'ignoring deprecated "accept" argument to Response.__init__', DeprecationWarning
+            )
+        super(Response, self).__init__(
+            response, status, headers, mimetype, None, direct_passthrough
+        )
 
 
 class Request(flask.Request, _mapping.MappingMixin):
@@ -122,6 +133,7 @@ class Request(flask.Request, _mapping.MappingMixin):
 
 
     """
+
     default_mimetype = _content_types.JSON
 
     def __init__(self, environ=None, serving_env=None):  # type: (dict, _env.ServingEnv) -> None
@@ -140,8 +152,11 @@ class Request(flask.Request, _mapping.MappingMixin):
                     Otherwise, returns 'application/json' as default.
         """
         # todo(mvsusp): consider a better default content-type
-        return self.headers.get('ContentType') or self.headers.get(
-            'Content-Type') or _content_types.JSON
+        return (
+            self.headers.get("ContentType")
+            or self.headers.get("Content-Type")
+            or _content_types.JSON
+        )
 
     @property
     def accept(self):  # type: () -> str
@@ -151,7 +166,7 @@ class Request(flask.Request, _mapping.MappingMixin):
             (str): The value of the header 'Accept' or the user-supplied SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT
                     environment variable.
         """
-        accept = self.headers.get('Accept')
+        accept = self.headers.get("Accept")
 
         if not accept or accept == _content_types.ANY:
             return self._default_accept

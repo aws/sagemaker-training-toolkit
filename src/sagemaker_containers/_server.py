@@ -25,24 +25,26 @@ from sagemaker_containers import _env, _files, _logging, _modules
 
 logger = _logging.get_logger()
 
-UNIX_SOCKET_BIND = 'unix:/tmp/gunicorn.sock'
+UNIX_SOCKET_BIND = "unix:/tmp/gunicorn.sock"
 
-nginx_config_file = os.path.join('/etc', 'sagemaker-nginx.conf')
-nginx_config_template_file = pkg_resources.resource_filename(sagemaker_containers.__name__, '/etc/nginx.conf.template')
+nginx_config_file = os.path.join("/etc", "sagemaker-nginx.conf")
+nginx_config_template_file = pkg_resources.resource_filename(
+    sagemaker_containers.__name__, "/etc/nginx.conf.template"
+)
 
 
 def _create_nginx_config(serving_env):
     template = _files.read_file(nginx_config_template_file)
 
-    pattern = re.compile(r'%(\w+)%')
+    pattern = re.compile(r"%(\w+)%")
     template_values = {
-        'NGINX_HTTP_PORT': serving_env.http_port,
-        'NGINX_PROXY_READ_TIMEOUT': str(serving_env.model_server_timeout)
+        "NGINX_HTTP_PORT": serving_env.http_port,
+        "NGINX_PROXY_READ_TIMEOUT": str(serving_env.model_server_timeout),
     }
 
     config = pattern.sub(lambda x: template_values[x.group(1)], template)
 
-    logger.info('nginx config: \n%s\n', config)
+    logger.info("nginx config: \n%s\n", config)
 
     _files.write_file(nginx_config_file, config)
 
@@ -65,30 +67,41 @@ def _add_sigterm_handler(nginx, gunicorn):
 
 def start(module_app):
     env = _env.ServingEnv()
-    gunicorn_bind_address = '0.0.0.0:{}'.format(env.http_port)
+    gunicorn_bind_address = "0.0.0.0:{}".format(env.http_port)
 
     nginx = None
 
     if env.use_nginx:
         gunicorn_bind_address = UNIX_SOCKET_BIND
         _create_nginx_config(env)
-        nginx = subprocess.Popen(['nginx', '-c', nginx_config_file])
+        nginx = subprocess.Popen(["nginx", "-c", nginx_config_file])
 
     # Install user module before starting GUnicorn
     if env.module_name:
         _modules.import_module(env.module_dir, env.module_name)
 
-    pythonpath = ','.join(sys.path + [_env.code_dir])
+    pythonpath = ",".join(sys.path + [_env.code_dir])
 
-    gunicorn = subprocess.Popen(['gunicorn',
-                                 '--timeout', str(env.model_server_timeout),
-                                 '-k', 'gevent',
-                                 '--pythonpath', pythonpath,
-                                 '-b', gunicorn_bind_address,
-                                 '--worker-connections', str(1000 * env.model_server_workers),
-                                 '-w', str(env.model_server_workers),
-                                 '--log-level', 'info',
-                                 module_app])
+    gunicorn = subprocess.Popen(
+        [
+            "gunicorn",
+            "--timeout",
+            str(env.model_server_timeout),
+            "-k",
+            "gevent",
+            "--pythonpath",
+            pythonpath,
+            "-b",
+            gunicorn_bind_address,
+            "--worker-connections",
+            str(1000 * env.model_server_workers),
+            "-w",
+            str(env.model_server_workers),
+            "--log-level",
+            "info",
+            module_app,
+        ]
+    )
 
     _add_sigterm_handler(nginx, gunicorn)
 
@@ -101,7 +114,7 @@ def start(module_app):
 
 
 def next_safe_port(port_range, after=None):
-    first_and_last_port = port_range.split('-')
+    first_and_last_port = port_range.split("-")
     first_safe_port = int(first_and_last_port[0])
     last_safe_port = int(first_and_last_port[1])
     safe_port = first_safe_port
@@ -109,6 +122,9 @@ def next_safe_port(port_range, after=None):
         safe_port = int(after) + 1
         if safe_port < first_safe_port or safe_port > last_safe_port:
             raise ValueError(
-                '{} is outside of the acceptable port range for SageMaker: {}'.format(safe_port, port_range))
+                "{} is outside of the acceptable port range for SageMaker: {}".format(
+                    safe_port, port_range
+                )
+            )
 
     return str(safe_port)

@@ -67,7 +67,9 @@ def getargspec(fn):  # type: (Callable) -> inspect.ArgSpec
         return inspect.getargspec(fn)
     elif six.PY3:
         full_arg_spec = inspect.getfullargspec(fn)
-        return inspect.ArgSpec(full_arg_spec.args, full_arg_spec.varargs, full_arg_spec.varkw, full_arg_spec.defaults)
+        return inspect.ArgSpec(
+            full_arg_spec.args, full_arg_spec.varargs, full_arg_spec.varkw, full_arg_spec.defaults
+        )
 
 
 def error_wrapper(fn, error_class):  # type: (Callable or None, Exception) -> ...
@@ -80,6 +82,7 @@ def error_wrapper(fn, error_class):  # type: (Callable or None, Exception) -> ..
     Returns:
         (object): fn wrapped in a try catch.
     """
+
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)

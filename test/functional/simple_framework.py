@@ -26,8 +26,8 @@ def train():
     model = script.train(**functions.matching_args(script.train, training_env))
 
     if model:
-        if hasattr(script, 'save'):
+        if hasattr(script, "save"):
             script.save(model, training_env.model_dir)
         else:
-            model_file = os.path.join(training_env.model_dir, 'saved_model')
+            model_file = os.path.join(training_env.model_dir, "saved_model")
             model.save(model_file)

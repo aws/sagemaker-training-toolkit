@@ -27,7 +27,7 @@ from sagemaker_containers import _mapping as mapping
 from sagemaker_containers import _modules as modules
 from sagemaker_containers import entry_point
 from sagemaker_containers import _params as params
-from sagemaker_containers import  _process as process
+from sagemaker_containers import _process as process
 from sagemaker_containers import _runner as runner
 from sagemaker_containers import _server as server
 from sagemaker_containers import _trainer as trainer
@@ -41,6 +41,8 @@ def training_env(resource_config=None, input_data_config=None, hyperparameters=N
     input_data_config = input_data_config or env.read_input_data_config()
     hyperparameters = hyperparameters or env.read_hyperparameters()
 
-    return env.TrainingEnv(resource_config=resource_config,
-                           input_data_config=input_data_config,
-                           hyperparameters=hyperparameters)
+    return env.TrainingEnv(
+        resource_config=resource_config,
+        input_data_config=input_data_config,
+        hyperparameters=hyperparameters,
+    )

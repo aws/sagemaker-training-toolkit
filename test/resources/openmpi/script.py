@@ -19,14 +19,13 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
-data = {'rank': rank, 'size': size}
+data = {"rank": rank, "size": size}
 data = comm.gather(data, root=0)
 if rank == 0:
-    assert data == [{'rank': 0, 'size': 2},
-                    {'rank': 1, 'size': 2}]
+    assert data == [{"rank": 0, "size": 2}, {"rank": 1, "size": 2}]
 
-    model = os.path.join(os.environ['SM_MODEL_DIR'], 'result.json')
-    with open(model, 'w+') as f:
+    model = os.path.join(os.environ["SM_MODEL_DIR"], "result.json")
+    with open(model, "w+") as f:
         json.dump(data, f)
 else:
     assert data is None

@@ -27,7 +27,7 @@ from sagemaker_containers import _env, _errors, _files, _logging, _process
 
 logger = _logging.get_logger()
 
-DEFAULT_MODULE_NAME = 'default_user_module_name'
+DEFAULT_MODULE_NAME = "default_user_module_name"
 
 
 def exists(name):  # type: (str) -> bool
@@ -48,7 +48,7 @@ def exists(name):  # type: (str) -> bool
 
 
 def has_requirements(path):  # type: (str) -> None
-    return os.path.exists(os.path.join(path, 'requirements.txt'))
+    return os.path.exists(os.path.join(path, "requirements.txt"))
 
 
 def prepare(path, name):  # type: (str, str) -> None
@@ -58,39 +58,46 @@ def prepare(path, name):  # type: (str, str) -> None
         path (str): path to directory with the script or module.
         name (str): name of the script or module.
     """
-    setup_path = os.path.join(path, 'setup.py')
+    setup_path = os.path.join(path, "setup.py")
     if not os.path.exists(setup_path):
-        data = textwrap.dedent("""
+        data = textwrap.dedent(
+            """
         from setuptools import setup
         setup(packages=[''],
               name="%s",
               version='1.0.0',
               include_package_data=True)
-        """ % name)
+        """
+            % name
+        )
 
-        logger.info('Module %s does not provide a setup.py. \nGenerating setup.py' % name)
+        logger.info("Module %s does not provide a setup.py. \nGenerating setup.py" % name)
 
         _files.write_file(setup_path, data)
 
-        data = textwrap.dedent("""
+        data = textwrap.dedent(
+            """
         [wheel]
         universal = 1
-        """)
+        """
+        )
 
-        logger.info('Generating setup.cfg')
+        logger.info("Generating setup.cfg")
 
-        _files.write_file(os.path.join(path, 'setup.cfg'), data)
+        _files.write_file(os.path.join(path, "setup.cfg"), data)
 
-        data = textwrap.dedent("""
+        data = textwrap.dedent(
+            """
         recursive-include . *
         recursive-exclude . __pycache__*
         recursive-exclude . *.pyc
         recursive-exclude . *.pyo
-        """)
+        """
+        )
 
-        logger.info('Generating MANIFEST.in')
+        logger.info("Generating MANIFEST.in")
 
-        _files.write_file(os.path.join(path, 'MANIFEST.in'), data)
+        _files.write_file(os.path.join(path, "MANIFEST.in"), data)
 
 
 def install(path, capture_error=False):  # type: (str, bool) -> None
@@ -100,14 +107,16 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
     """
-    cmd = '%s -m pip install . ' % _process.python_executable()
+    cmd = "%s -m pip install . " % _process.python_executable()
 
     if has_requirements(path):
-        cmd += '-r requirements.txt'
+        cmd += "-r requirements.txt"
 
-    logger.info('Installing module with the following command:\n%s', cmd)
+    logger.info("Installing module with the following command:\n%s", cmd)
 
-    _process.check_error(shlex.split(cmd), _errors.InstallModuleError, cwd=path, capture_error=capture_error)
+    _process.check_error(
+        shlex.split(cmd), _errors.InstallModuleError, cwd=path, capture_error=capture_error
+    )
 
 
 def s3_download(url, dst):  # type: (str, str) -> None
@@ -143,13 +152,13 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
 
     if not should_use_cache:
         with _files.tmpdir() as tmpdir:
-            if uri.startswith('s3://'):
-                dst = os.path.join(tmpdir, 'tar_file')
+            if uri.startswith("s3://"):
+                dst = os.path.join(tmpdir, "tar_file")
                 _files.s3_download(uri, dst)
-                module_path = os.path.join(tmpdir, 'module_dir')
+                module_path = os.path.join(tmpdir, "module_dir")
                 os.makedirs(module_path)
 
-                with tarfile.open(name=dst, mode='r:gz') as t:
+                with tarfile.open(name=dst, mode="r:gz") as t:
                     t.extractall(path=module_path)
 
             else:
@@ -214,12 +223,14 @@ def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
     args = args or []
     env_vars = env_vars or {}
 
-    cmd = [_process.python_executable(), '-m', module_name] + args
+    cmd = [_process.python_executable(), "-m", module_name] + args
 
     _logging.log_script_invocation(cmd, env_vars)
 
     if wait:
-        return _process.check_error(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
+        return _process.check_error(
+            cmd, _errors.ExecuteUserScriptError, capture_error=capture_error
+        )
 
     else:
         return _process.create(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
@@ -251,7 +262,9 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
         six.reraise(_errors.ImportModuleError, _errors.ImportModuleError(e), sys.exc_info()[2])
 
 
-def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, wait=True, capture_error=False):
+def run_module(
+    uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, wait=True, capture_error=False
+):
     # type: (str, list, dict, str, bool, bool, bool) -> subprocess.Popen
     """Download, prepare and executes a compressed tar file from S3 or provided directory as a module.
 
@@ -283,5 +296,5 @@ def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, w
 
 def _warning_cache_deprecation(cache):
     if cache is not None:
-        msg = 'the cache parameter is unnecessary anymore. Cache is always set to True'
+        msg = "the cache parameter is unnecessary anymore. Cache is always set to True"
         warnings.warn(msg, DeprecationWarning)

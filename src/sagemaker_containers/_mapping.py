@@ -18,7 +18,7 @@ import json
 
 import six
 
-SplitResultSpec = collections.namedtuple('SplitResultSpec', 'included excluded')
+SplitResultSpec = collections.namedtuple("SplitResultSpec", "included excluded")
 
 
 def to_env_vars(mapping):  # type: (dict) -> dict
@@ -37,21 +37,21 @@ def to_env_vars(mapping):  # type: (dict) -> dict
     def format_key(key):
         """Decode a key, adds a SM_ prefix to the key and upper case it"""
         if key:
-            decoded_name = 'SM_%s' % str(key).upper()
+            decoded_name = "SM_%s" % str(key).upper()
             return decoded_name
         else:
-            return ''
+            return ""
 
     def format_value(_mapping):
         if six.PY3 and isinstance(_mapping, six.binary_type):
             # transforms a byte string (b'') in unicode
-            return _mapping.decode('latin1')
+            return _mapping.decode("latin1")
         elif _mapping is None:
-            return ''
+            return ""
         elif isinstance(_mapping, six.string_types):
             return str(_mapping)
         else:
-            return json.dumps(_mapping, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
+            return json.dumps(_mapping, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
     return {format_key(k): format_value(v) for k, v in mapping.items()}
 
@@ -74,16 +74,16 @@ def to_cmd_args(mapping):  # type: (dict) -> list
     def arg_name(obj):
         string = _decode(obj)
         if string:
-            return u'--%s' % string if len(string) > 1 else u'-%s' % string
+            return u"--%s" % string if len(string) > 1 else u"-%s" % string
         else:
-            return u''
+            return u""
 
     arg_names = [arg_name(argument) for argument in sorted_keys]
 
     def arg_value(value):
-        if hasattr(value, 'items'):
-            map_items = ['%s=%s' % (k, v) for k, v in sorted(value.items())]
-            return ','.join(map_items)
+        if hasattr(value, "items"):
+            map_items = ["%s=%s" % (k, v) for k, v in sorted(value.items())]
+            return ",".join(map_items)
         return _decode(value)
 
     arg_values = [arg_value(mapping[key]) for key in sorted_keys]
@@ -101,10 +101,10 @@ def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode # noqa
         object decoded in unicode.
     """
     if obj is None:
-        return u''
+        return u""
     if six.PY3 and isinstance(obj, six.binary_type):
         # transforms a byte string (b'') in unicode
-        return obj.decode('latin1')
+        return obj.decode("latin1")
     elif six.PY3:
         # PY3 strings are unicode.
         return str(obj)
@@ -113,10 +113,12 @@ def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode # noqa
         return obj
     else:
         # decodes pY2 string to unicode
-        return str(obj).decode('utf-8')
+        return str(obj).decode("utf-8")
 
 
-def split_by_criteria(dictionary, keys=None, prefix=None):  # type: (dict, set or list or tuple) -> SplitResultSpec
+def split_by_criteria(
+    dictionary, keys=None, prefix=None
+):  # type: (dict, set or list or tuple) -> SplitResultSpec
     """Split a dictionary in two by the provided keys.
 
     Args:
@@ -134,7 +136,11 @@ def split_by_criteria(dictionary, keys=None, prefix=None):  # type: (dict, set o
     keys = keys or []
     keys = set(keys)
 
-    included_items = {k: dictionary[k] for k in dictionary.keys() if k in keys or (prefix and k.startswith(prefix))}
+    included_items = {
+        k: dictionary[k]
+        for k in dictionary.keys()
+        if k in keys or (prefix and k.startswith(prefix))
+    }
     excluded_items = {k: dictionary[k] for k in dictionary.keys() if k not in included_items}
 
     return SplitResultSpec(included=included_items, excluded=excluded_items)
@@ -155,7 +161,7 @@ class MappingMixin(collections.Mapping):
 
     def __getitem__(self, k):
         if not self._is_property(k):
-            raise KeyError('Trying to access non property %s' % k)
+            raise KeyError("Trying to access non property %s" % k)
         return getattr(self, k)
 
     def __len__(self):

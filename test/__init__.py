@@ -25,15 +25,28 @@ import werkzeug.test as werkzeug_test
 
 # loading base path before loading the environment so all the environment paths are loaded properly
 
-DEFAULT_REGION = 'us-west-2'
+DEFAULT_REGION = "us-west-2"
 
-from sagemaker_containers import _env, _files, _params, _worker  # noqa ignore=E402 module level import not at top of file
+from sagemaker_containers import (  # noqa ignore=E402 module level import not at top of file
+    _env,
+    _files,
+    _params,
+    _worker,
+)
 
-DEFAULT_CONFIG = dict(ContentType="application/x-numpy", TrainingInputMode="File",
-                      S3DistributionType="FullyReplicated", RecordWrapperType="None")
+DEFAULT_CONFIG = dict(
+    ContentType="application/x-numpy",
+    TrainingInputMode="File",
+    S3DistributionType="FullyReplicated",
+    RecordWrapperType="None",
+)
 
-DEFAULT_HYPERPARAMETERS = dict(sagemaker_region='us-west-2', sagemaker_job_name='sagemaker-training-job',
-                               sagemaker_enable_cloudwatch_metrics=False, sagemaker_container_log_level=logging.WARNING)
+DEFAULT_HYPERPARAMETERS = dict(
+    sagemaker_region="us-west-2",
+    sagemaker_job_name="sagemaker-training-job",
+    sagemaker_enable_cloudwatch_metrics=False,
+    sagemaker_container_log_level=logging.WARNING,
+)
 
 
 def sagemaker_session(region_name=DEFAULT_REGION):  # type: (str) -> sagemaker.Session
@@ -52,14 +65,21 @@ def write_json(obj, path):  # type: (object, str) -> None
         obj (object): Object to be serialized
         path (str): Path to JSON file
     """
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(obj, f)
 
 
-def prepare(user_module, hyperparameters, channels, current_host='algo-1', hosts=None, network_interface_name="ethwe",
-            local=False):
+def prepare(
+    user_module,
+    hyperparameters,
+    channels,
+    current_host="algo-1",
+    hosts=None,
+    network_interface_name="ethwe",
+    local=False,
+):
     # type: (UserModule, dict, list, str, list, str, bool) -> None
-    hosts = hosts or ['algo-1']
+    hosts = hosts or ["algo-1"]
 
     if not local:
         user_module.upload()
@@ -76,16 +96,24 @@ def hyperparameters(**kwargs):  # type: (...) -> dict
     return default_hyperparameters
 
 
-def create_resource_config(current_host='algo-1', hosts=None,
-                           network_interface_name="ethwe"):  # type: (str, list, str) -> None
+def create_resource_config(
+    current_host="algo-1", hosts=None, network_interface_name="ethwe"
+):  # type: (str, list, str) -> None
 
     if network_interface_name:
         write_json(
-            dict(current_host=current_host, hosts=hosts or ['algo-1'], network_interface_name=network_interface_name),
-            _env.resource_config_file_dir)
+            dict(
+                current_host=current_host,
+                hosts=hosts or ["algo-1"],
+                network_interface_name=network_interface_name,
+            ),
+            _env.resource_config_file_dir,
+        )
     else:
         write_json(
-            dict(current_host=current_host, hosts=hosts or ['algo-1']), _env.resource_config_file_dir)
+            dict(current_host=current_host, hosts=hosts or ["algo-1"]),
+            _env.resource_config_file_dir,
+        )
 
 
 def create_input_data_config(channels=None):  # type: (list) -> None
@@ -109,37 +137,74 @@ def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hy
     write_json(all_hyperparameters, _env.hyperparameters_file_dir)
 
 
-File = collections.namedtuple('File', ['name', 'data'])  # type: (str, str or list) -> File
+File = collections.namedtuple("File", ["name", "data"])  # type: (str, str or list) -> File
 
 
-def request(path='/', base_url=None, query_string=None, method='GET',
-            input_stream=None, content_length=None, headers=None,
-            data=None, charset='utf-8', mimetype=None):
-    _environ = environ(path, base_url, query_string, method, input_stream,
-                       content_length, headers, data, charset, mimetype)
+def request(
+    path="/",
+    base_url=None,
+    query_string=None,
+    method="GET",
+    input_stream=None,
+    content_length=None,
+    headers=None,
+    data=None,
+    charset="utf-8",
+    mimetype=None,
+):
+    _environ = environ(
+        path,
+        base_url,
+        query_string,
+        method,
+        input_stream,
+        content_length,
+        headers,
+        data,
+        charset,
+        mimetype,
+    )
 
     return _worker.Request(_environ)
 
 
-def environ(path='/', base_url=None, query_string=None, method='GET',
-            input_stream=None, content_length=None, headers=None,
-            data=None, charset='utf-8', mimetype=None):
+def environ(
+    path="/",
+    base_url=None,
+    query_string=None,
+    method="GET",
+    input_stream=None,
+    content_length=None,
+    headers=None,
+    data=None,
+    charset="utf-8",
+    mimetype=None,
+):
     headers = headers or {}
     environ_builder = werkzeug_test.EnvironBuilder(
-        path=path, base_url=base_url, query_string=query_string, method=method,
-        input_stream=input_stream, content_length=content_length, headers=headers,
-        data=data, charset=charset, mimetype=mimetype)
+        path=path,
+        base_url=base_url,
+        query_string=query_string,
+        method=method,
+        input_stream=input_stream,
+        content_length=content_length,
+        headers=headers,
+        data=data,
+        charset=charset,
+        mimetype=mimetype,
+    )
     return environ_builder.get_environ()
 
 
 class UserModule(object):
-
     def __init__(self, main_file, key=None, bucket=None, session=None):
         # type: (File, str, str, sagemaker.Session) -> None
         session = session or sagemaker_session()
-        self._s3 = session.boto_session.resource('s3')
+        self._s3 = session.boto_session.resource("s3")
         self.bucket = bucket or default_bucket(session)
-        self.key = key or os.path.join('test', 'sagemaker-containers', str(time.time()), 'sourcedir.tar.gz')
+        self.key = key or os.path.join(
+            "test", "sagemaker-containers", str(time.time()), "sourcedir.tar.gz"
+        )
         self._files = [main_file]
 
     def add_file(self, file):  # type: (File) -> UserModule
@@ -148,20 +213,20 @@ class UserModule(object):
 
     @property
     def url(self):  # type: () -> str
-        return os.path.join('s3://', self.bucket, self.key)
+        return os.path.join("s3://", self.bucket, self.key)
 
     def create_tar(self, dir_path=None):
         dir_path = dir_path or os.path.dirname(os.path.realpath(__file__))
-        tar_name = os.path.join(dir_path, 'sourcedir.tar.gz')
-        with tarfile.open(tar_name, mode='w:gz') as tar:
+        tar_name = os.path.join(dir_path, "sourcedir.tar.gz")
+        with tarfile.open(tar_name, mode="w:gz") as tar:
             for _file in self._files:
                 name = os.path.join(dir_path, _file.name)
-                with open(name, 'w+') as f:
+                with open(name, "w+") as f:
 
                     if isinstance(_file.data, six.string_types):
                         data = _file.data
                     else:
-                        data = '\n'.join(_file.data)
+                        data = "\n".join(_file.data)
 
                     f.write(data)
                 tar.add(name=name, arcname=_file.name)
@@ -178,18 +243,19 @@ class UserModule(object):
     def create_tmp_dir_with_files(self, tmp_dir_path):
         for _file in self._files:
             name = os.path.join(tmp_dir_path, _file.name)
-            with open(name, 'w+') as f:
+            with open(name, "w+") as f:
 
                 if isinstance(_file.data, six.string_types):
                     data = _file.data
                 else:
-                    data = '\n'.join(_file.data)
+                    data = "\n".join(_file.data)
 
                 f.write(data)
 
 
-class Channel(collections.namedtuple('Channel', ['name', 'config'])):  # type: (str, dict) -> Channel
-
+class Channel(
+    collections.namedtuple("Channel", ["name", "config"])
+):  # type: (str, dict) -> Channel
     def __new__(cls, name, config=None):
         config = DEFAULT_CONFIG.copy().update(config or {})
         return super(Channel, cls).__new__(cls, name=name, config=config)

@@ -17,21 +17,21 @@ from flask import Flask
 app = Flask(__name__)
 
 
-@app.route('/')
+@app.route("/")
 def hello():
-    return 'Hello World!'
+    return "Hello World!"
 
 
-@app.route('/invocations')
+@app.route("/invocations")
 def invocations():
-    return 'invocation'
+    return "invocation"
 
 
-@app.route('/ping')
+@app.route("/ping")
 def ping():
-    return ':)'
+    return ":)"
 
 
-@app.route('/shutdown')
+@app.route("/shutdown")
 def shutdown():
     os._exit(4)

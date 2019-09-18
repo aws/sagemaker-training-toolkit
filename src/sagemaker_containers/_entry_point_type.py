@@ -15,9 +15,9 @@ import os
 
 
 class _EntryPointType(enum.Enum):
-    PYTHON_PACKAGE = 'PYTHON_PACKAGE'
-    PYTHON_PROGRAM = 'PYTHON_PROGRAM'
-    COMMAND = 'COMMAND'
+    PYTHON_PACKAGE = "PYTHON_PACKAGE"
+    PYTHON_PROGRAM = "PYTHON_PROGRAM"
+    COMMAND = "COMMAND"
 
 
 PYTHON_PACKAGE = _EntryPointType.PYTHON_PACKAGE
@@ -34,9 +34,9 @@ def get(path, name):  # type: (str, str) -> _EntryPointType
     Returns:
         (_EntryPointType): The type of the entry point
     """
-    if 'setup.py' in os.listdir(path):
+    if "setup.py" in os.listdir(path):
         return _EntryPointType.PYTHON_PACKAGE
-    elif name.endswith('.py'):
+    elif name.endswith(".py"):
         return _EntryPointType.PYTHON_PROGRAM
     else:
         return _EntryPointType.COMMAND

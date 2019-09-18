@@ -24,12 +24,14 @@ import six
 from sagemaker_containers.beta.framework import errors, modules
 import test
 
-data = ['from distutils.core import setup\n',
-        'setup(name="my_test_script", py_modules=["my_test_script"])']
+data = [
+    "from distutils.core import setup\n",
+    'setup(name="my_test_script", py_modules=["my_test_script"])',
+]
 
-SETUP_FILE = test.File('setup.py', data)
+SETUP_FILE = test.File("setup.py", data)
 
-USER_SCRIPT_FILE = test.File('my_test_script.py', 'def validate(): return True')
+USER_SCRIPT_FILE = test.File("my_test_script.py", "def validate(): return True")
 
 REQUIREMENTS_TXT_ASSERT_STR = """
  ____                   __  __       _.............
@@ -38,22 +40,25 @@ REQUIREMENTS_TXT_ASSERT_STR = """
  ___) | (_| | (_| |  __/ |  | | (_| |   <  __/ |...
 |____/ \__,_|\__, |\___|_|  |_|\__,_|_|\_\___|_|...
              |___/.................................
-""".replace('.', ' ').strip()  # noqa W605
+""".replace(  # noqa W605
+    ".", " "
+).strip()
 
 
-@pytest.fixture(name='user_module_name')
+@pytest.fixture(name="user_module_name")
 def erase_user_module():
-    user_module = 'my_test_script'
+    user_module = "my_test_script"
     yield user_module
     try:
-        subprocess.check_call(shlex.split('pip uninstall -y --quiet %s' % user_module))
+        subprocess.check_call(shlex.split("pip uninstall -y --quiet %s" % user_module))
     except subprocess.CalledProcessError:
         pass
 
 
-@pytest.mark.parametrize('user_module',
-                         [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE),
-                          test.UserModule(USER_SCRIPT_FILE)])
+@pytest.mark.parametrize(
+    "user_module",
+    [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
+)
 def test_import_module(user_module, user_module_name):
     user_module.upload()
 
@@ -62,9 +67,10 @@ def test_import_module(user_module, user_module_name):
     assert module.validate()
 
 
-@pytest.mark.parametrize('user_module',
-                         [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE),
-                          test.UserModule(USER_SCRIPT_FILE)])
+@pytest.mark.parametrize(
+    "user_module",
+    [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
+)
 def test_import_module_with_s3_script(user_module, user_module_name):
     user_module.upload()
 
@@ -73,9 +79,10 @@ def test_import_module_with_s3_script(user_module, user_module_name):
     assert module.validate()
 
 
-@pytest.mark.parametrize('user_module',
-                         [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE),
-                          test.UserModule(USER_SCRIPT_FILE)])
+@pytest.mark.parametrize(
+    "user_module",
+    [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
+)
 def test_import_module_with_local_script(user_module, user_module_name, tmpdir):
     tmp_code_dir = str(tmpdir)
 
@@ -86,9 +93,10 @@ def test_import_module_with_local_script(user_module, user_module_name, tmpdir):
     assert module.validate()
 
 
-@pytest.mark.parametrize('user_module',
-                         [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE),
-                          test.UserModule(USER_SCRIPT_FILE)])
+@pytest.mark.parametrize(
+    "user_module",
+    [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
+)
 def test_import_module_via_download_and_install(user_module, user_module_name):
     user_module.upload()
 
@@ -99,9 +107,10 @@ def test_import_module_via_download_and_install(user_module, user_module_name):
     assert module.validate()
 
 
-@pytest.mark.parametrize('user_module',
-                         [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE),
-                          test.UserModule(USER_SCRIPT_FILE)])
+@pytest.mark.parametrize(
+    "user_module",
+    [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
+)
 def test_import_module_with_s3_script_via_download_and_install(user_module, user_module_name):
     user_module.upload()
 
@@ -112,22 +121,28 @@ def test_import_module_with_s3_script_via_download_and_install(user_module, user
     assert module.validate()
 
 
-data = textwrap.dedent("""
+data = textwrap.dedent(
+    """
             from pyfiglet import Figlet
 
             def say():
                 return Figlet().renderText('SageMaker').strip()
 
-""")
+"""
+)
 
-USER_SCRIPT_WITH_REQUIREMENTS = test.File('my_test_script.py', data)
+USER_SCRIPT_WITH_REQUIREMENTS = test.File("my_test_script.py", data)
 
-REQUIREMENTS_FILE = test.File('requirements.txt', 'pyfiglet')
+REQUIREMENTS_FILE = test.File("requirements.txt", "pyfiglet")
 
 
-@pytest.mark.parametrize('user_module',
-                         [test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(SETUP_FILE),
-                          test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS)])
+@pytest.mark.parametrize(
+    "user_module",
+    [
+        test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(SETUP_FILE),
+        test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS),
+    ],
+)
 def test_import_module_with_s3_script_with_requirements(user_module, user_module_name):
     user_module = user_module.add_file(REQUIREMENTS_FILE).upload()
 
@@ -136,9 +151,13 @@ def test_import_module_with_s3_script_with_requirements(user_module, user_module
     assert module.say() == REQUIREMENTS_TXT_ASSERT_STR
 
 
-@pytest.mark.parametrize('user_module',
-                         [test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(SETUP_FILE),
-                          test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS)])
+@pytest.mark.parametrize(
+    "user_module",
+    [
+        test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(SETUP_FILE),
+        test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS),
+    ],
+)
 def test_import_module_with_requirements_via_download_and_install(user_module, user_module_name):
     user_module = user_module.add_file(REQUIREMENTS_FILE).upload()
 
@@ -150,7 +169,7 @@ def test_import_module_with_requirements_via_download_and_install(user_module, u
 
 
 data = ['raise ValueError("this script does not work")']
-USER_SCRIPT_WITH_ERROR = test.File('my_test_script.py', data)
+USER_SCRIPT_WITH_ERROR = test.File("my_test_script.py", data)
 
 
 def test_import_module_with_s3_script_with_error(user_module_name):
@@ -160,9 +179,13 @@ def test_import_module_with_s3_script_with_error(user_module_name):
         modules.import_module(user_module.url, user_module_name, cache=False)
 
 
-@pytest.mark.parametrize('user_module',
-                         [test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(SETUP_FILE),
-                          test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS)])
+@pytest.mark.parametrize(
+    "user_module",
+    [
+        test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS).add_file(SETUP_FILE),
+        test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS),
+    ],
+)
 def test_import_module_with_local_tar_via_download_and_extract(user_module, user_module_name):
     user_module = user_module.add_file(REQUIREMENTS_FILE)
     tar_name = user_module.create_tar()

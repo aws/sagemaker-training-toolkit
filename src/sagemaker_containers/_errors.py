@@ -36,11 +36,11 @@ class _CalledProcessError(ClientError):
 
     def __str__(self):
         if six.PY3 and self.output:
-            error_msg = '\n%s' % self.output.decode('latin1')
+            error_msg = "\n%s" % self.output.decode("latin1")
         elif self.output:
-            error_msg = '\n%s' % self.output
+            error_msg = "\n%s" % self.output
         else:
-            error_msg = ''
+            error_msg = ""
 
         message = '%s:\nCommand "%s"%s' % (type(self).__name__, self.cmd, error_msg)
         return message.strip()
@@ -60,7 +60,9 @@ class ExecuteUserScriptError(_CalledProcessError):
 
 class ChannelDoesNotExistException(Exception):
     def __init__(self, channel_name):
-        super(ChannelDoesNotExistException, self).__init__('Channel %s is not a valid channel' % channel_name)
+        super(ChannelDoesNotExistException, self).__init__(
+            "Channel %s is not a valid channel" % channel_name
+        )
 
 
 class UnsupportedFormatError(Exception):
@@ -70,5 +72,6 @@ class UnsupportedFormatError(Exception):
 
             Please implement input_fn to to deserialize the request data or an output_fn to
             serialize the response. For more information, see the SageMaker Python SDK README."""
-            % content_type)
+            % content_type
+        )
         super(Exception, self).__init__(self.message, **kwargs)

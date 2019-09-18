@@ -17,7 +17,15 @@ import os
 import traceback
 
 import sagemaker_containers
-from sagemaker_containers import _errors, _files, _intermediate_output, _logging, _params, _runner, entry_point
+from sagemaker_containers import (
+    _errors,
+    _files,
+    _intermediate_output,
+    _logging,
+    _params,
+    _runner,
+    entry_point,
+)
 
 logger = _logging.get_logger()
 
@@ -59,18 +67,18 @@ def train():
         # we need os.environ.get(_params.REGION_NAME_ENV)
         # in certain regions, but it is not going to be available unless
         # TrainingEnvironment has been initialized. It shouldn't be environment variable.
-        region = os.environ.get('AWS_REGION', os.environ.get(_params.REGION_NAME_ENV))
+        region = os.environ.get("AWS_REGION", os.environ.get(_params.REGION_NAME_ENV))
         intermediate_sync = _intermediate_output.start_sync(env.sagemaker_s3_output(), region)
 
         if env.framework_module:
-            framework_name, entry_point_name = env.framework_module.split(':')
+            framework_name, entry_point_name = env.framework_module.split(":")
 
             framework = importlib.import_module(framework_name)
 
             # the logger is configured after importing the framework library, allowing the framework to
             # configure logging at import time.
             _logging.configure_logger(env.log_level)
-            logger.info('Imported framework %s', framework_name)
+            logger.info("Imported framework %s", framework_name)
 
             entrypoint = getattr(framework, entry_point_name)
             entrypoint()
@@ -80,10 +88,15 @@ def train():
             mpi_enabled = env.additional_framework_parameters.get(_params.MPI_ENABLED)
             runner_type = _runner.RunnerType.MPI if mpi_enabled else _runner.RunnerType.Process
 
-            entry_point.run(env.module_dir, env.user_entry_point, env.to_cmd_args(),
-                            env.to_env_vars(), runner=runner_type)
+            entry_point.run(
+                env.module_dir,
+                env.user_entry_point,
+                env.to_cmd_args(),
+                env.to_env_vars(),
+                runner=runner_type,
+            )
 
-        logger.info('Reporting training SUCCESS')
+        logger.info("Reporting training SUCCESS")
 
         _files.write_success_file()
     except _errors.ClientError as e:
@@ -98,14 +111,14 @@ def train():
 
         exit_code = DEFAULT_FAILURE_CODE
     except Exception as e:
-        failure_msg = 'framework error: \n%s\n%s' % (traceback.format_exc(), str(e))
+        failure_msg = "framework error: \n%s\n%s" % (traceback.format_exc(), str(e))
 
         _files.write_failure_file(failure_msg)
-        logger.error('Reporting training FAILURE')
+        logger.error("Reporting training FAILURE")
 
         logger.error(failure_msg)
 
-        error_number = getattr(e, 'errno', DEFAULT_FAILURE_CODE)
+        error_number = getattr(e, "errno", DEFAULT_FAILURE_CODE)
         exit_code = _get_valid_failure_exit_code(error_number)
     finally:
         if intermediate_sync:

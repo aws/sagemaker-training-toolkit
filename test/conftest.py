@@ -23,15 +23,15 @@ import pytest
 
 from sagemaker_containers import _env
 
-logging.getLogger('boto3').setLevel(logging.INFO)
-logging.getLogger('s3transfer').setLevel(logging.INFO)
-logging.getLogger('botocore').setLevel(logging.WARN)
+logging.getLogger("boto3").setLevel(logging.INFO)
+logging.getLogger("s3transfer").setLevel(logging.INFO)
+logging.getLogger("botocore").setLevel(logging.WARN)
 
-DEFAULT_REGION = 'us-west-2'
+DEFAULT_REGION = "us-west-2"
 
 
 def _write_json(obj, path):  # type: (object, str) -> None
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(obj, f)
 
 
@@ -51,10 +51,7 @@ def create_base_path():
     _write_json({}, _env.input_data_config_file_dir)
     host_name = socket.gethostname()
 
-    resources_dict = {
-        "current_host": host_name,
-        "hosts":        [host_name]
-    }
+    resources_dict = {"current_host": host_name, "hosts": [host_name]}
     _write_json(resources_dict, _env.resource_config_file_dir)
 
 
@@ -64,5 +61,5 @@ def patch_exit_process():
         if error_code:
             raise ValueError(error_code)
 
-    with patch('sagemaker_containers._trainer._exit_processes', _exit):
+    with patch("sagemaker_containers._trainer._exit_processes", _exit):
         yield _exit

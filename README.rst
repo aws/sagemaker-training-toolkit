@@ -3,6 +3,10 @@
 SageMaker Containers
 ====================
 
+.. image:: https://img.shields.io/badge/code_style-black-000000.svg
+   :target: https://github.com/python/black
+   :alt: Code style: black
+
 SageMaker Containers gives you tools to create SageMaker-compatible Docker containers, and has additional tools for letting you create Frameworks
 (SageMaker-compatible Docker containers that can run arbitrary Python or shell scripts).
 

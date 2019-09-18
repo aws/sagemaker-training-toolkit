@@ -25,8 +25,12 @@ def test_default_ping_fn():
     assert _worker.default_healthcheck_fn().status_code == http_client.OK
 
 
-@pytest.mark.parametrize('module_name, expected_name', [('test_module', 'test_module'), (None, 'user_program')])
-@patch('sagemaker_containers._env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
+@pytest.mark.parametrize(
+    "module_name, expected_name", [("test_module", "test_module"), (None, "user_program")]
+)
+@patch(
+    "sagemaker_containers._env.ServingEnv.module_name", PropertyMock(return_value="user_program")
+)
 def test_worker(module_name, expected_name):
     app = _worker.Worker(transform_fn=MagicMock().transform, module_name=module_name)
     assert app.import_name == expected_name
@@ -34,49 +38,55 @@ def test_worker(module_name, expected_name):
     assert app.request_class == _worker.Request
 
 
-@pytest.mark.parametrize('module_name, expected_name', [('test_module', 'test_module'), (None, 'user_program')])
-@patch('sagemaker_containers._env.ServingEnv.module_name', PropertyMock(return_value='user_program'))
+@pytest.mark.parametrize(
+    "module_name, expected_name", [("test_module", "test_module"), (None, "user_program")]
+)
+@patch(
+    "sagemaker_containers._env.ServingEnv.module_name", PropertyMock(return_value="user_program")
+)
 def test_worker_with_initialize(module_name, expected_name):
     mock = MagicMock()
-    app = _worker.Worker(transform_fn=mock.transform, initialize_fn=mock.initialize, module_name=module_name)
+    app = _worker.Worker(
+        transform_fn=mock.transform, initialize_fn=mock.initialize, module_name=module_name
+    )
     assert app.import_name == expected_name
     assert app.before_first_request_funcs == [mock.initialize]
     assert app.request_class == _worker.Request
 
 
-@pytest.mark.parametrize('content_type', [_content_types.JSON, _content_types.ANY])
+@pytest.mark.parametrize("content_type", [_content_types.JSON, _content_types.ANY])
 def test_invocations(content_type):
     def transform_fn():
-        return _worker.Response(response='fake data', mimetype=content_type)
+        return _worker.Response(response="fake data", mimetype=content_type)
 
-    app = _worker.Worker(transform_fn=transform_fn, module_name='test_module')
+    app = _worker.Worker(transform_fn=transform_fn, module_name="test_module")
 
     with app.test_client() as client:
         for _ in range(9):
-            response = client.post('/invocations')
+            response = client.post("/invocations")
             assert response.status_code == http_client.OK
-            assert response.get_data().decode('utf-8') == 'fake data'
+            assert response.get_data().decode("utf-8") == "fake data"
             assert response.mimetype == content_type
 
 
 def test_ping():
-    app = _worker.Worker(transform_fn=MagicMock(), module_name='test_module')
+    app = _worker.Worker(transform_fn=MagicMock(), module_name="test_module")
 
     with app.test_client() as client:
         for _ in range(9):
-            response = client.get('/ping')
+            response = client.get("/ping")
             assert response.status_code == http_client.OK
             assert response.mimetype == _content_types.JSON
 
 
 def test_response_accept_deprecated():
     def transform_fn():
-        return _worker.Response(response='fake data', accept='deprecated accept arg')
+        return _worker.Response(response="fake data", accept="deprecated accept arg")
 
-    app = _worker.Worker(transform_fn=transform_fn, module_name='test_module')
+    app = _worker.Worker(transform_fn=transform_fn, module_name="test_module")
     with app.test_client() as client:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            client.post('/invocations')
+            client.post("/invocations")
             assert len(w) == 1
             assert issubclass(w[0].category, DeprecationWarning)

@@ -29,8 +29,8 @@ def write_success_file():  # type: () -> None
     """Create a file 'success' when training is successful. This file doesn't need to have any content.
     See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
     """
-    file_path = os.path.join(_env.output_dir, 'success')
-    empty_content = ''
+    file_path = os.path.join(_env.output_dir, "success")
+    empty_content = ""
     write_file(file_path, empty_content)
 
 
@@ -42,12 +42,12 @@ def write_failure_file(failure_msg):  # type: (str) -> None
     Args:
         failure_msg: The description of failure
     """
-    file_path = os.path.join(_env.output_dir, 'failure')
+    file_path = os.path.join(_env.output_dir, "failure")
     write_file(file_path, failure_msg)
 
 
 @contextlib.contextmanager
-def tmpdir(suffix='', prefix='tmp', dir=None):  # type: (str, str, str) -> None
+def tmpdir(suffix="", prefix="tmp", dir=None):  # type: (str, str, str) -> None
     """Create a temporary directory with a context manager. The file is deleted when the context exits.
 
     The prefix, suffix, and dir arguments are the same as for mkstemp().
@@ -67,7 +67,7 @@ def tmpdir(suffix='', prefix='tmp', dir=None):  # type: (str, str, str) -> None
     shutil.rmtree(tmp)
 
 
-def write_file(path, data, mode='w'):  # type: (str, str, str) -> None
+def write_file(path, data, mode="w"):  # type: (str, str, str) -> None
     """Write data to a file.
 
     Args:
@@ -79,7 +79,7 @@ def write_file(path, data, mode='w'):  # type: (str, str, str) -> None
         f.write(data)
 
 
-def read_file(path, mode='r'):
+def read_file(path, mode="r"):
     """Read data from a file.
 
     Args:
@@ -101,7 +101,7 @@ def read_json(path):  # type: (str) -> dict
     Returns:
         (dict[object, object]): A dictionary representation of the JSON file.
     """
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         return json.load(f)
 
 
@@ -119,11 +119,11 @@ def download_and_extract(uri, path):  # type: (str, str) -> None
         os.makedirs(path)
     if not os.listdir(path):
         with tmpdir() as tmp:
-            if uri.startswith('s3://'):
-                dst = os.path.join(tmp, 'tar_file')
+            if uri.startswith("s3://"):
+                dst = os.path.join(tmp, "tar_file")
                 s3_download(uri, dst)
 
-                with tarfile.open(name=dst, mode='r:gz') as t:
+                with tarfile.open(name=dst, mode="r:gz") as t:
                     t.extractall(path=path)
 
             elif os.path.isdir(uri):
@@ -133,7 +133,7 @@ def download_and_extract(uri, path):  # type: (str, str) -> None
                     shutil.rmtree(path)
                 shutil.move(uri, path)
             elif tarfile.is_tarfile(uri):
-                with tarfile.open(name=uri, mode='r:gz') as t:
+                with tarfile.open(name=uri, mode="r:gz") as t:
                     t.extractall(path=path)
             else:
                 shutil.copy2(uri, path)
@@ -148,12 +148,12 @@ def s3_download(url, dst):  # type: (str, str) -> None
     """
     url = parse.urlparse(url)
 
-    if url.scheme != 's3':
+    if url.scheme != "s3":
         raise ValueError("Expecting 's3' scheme, got: %s in %s" % (url.scheme, url))
 
-    bucket, key = url.netloc, url.path.lstrip('/')
+    bucket, key = url.netloc, url.path.lstrip("/")
 
-    region = os.environ.get('AWS_REGION', os.environ.get(_params.REGION_NAME_ENV))
-    s3 = boto3.resource('s3', region_name=region)
+    region = os.environ.get("AWS_REGION", os.environ.get(_params.REGION_NAME_ENV))
+    s3 = boto3.resource("s3", region_name=region)
 
     s3.Bucket(bucket).download_file(key, dst)

@@ -29,13 +29,13 @@ from sagemaker_containers import _content_types, _logging, _mapping, _params
 
 logger = _logging.get_logger()
 
-SAGEMAKER_BASE_PATH = os.path.join('/opt', 'ml')  # type: str
-BASE_PATH_ENV = 'SAGEMAKER_BASE_DIR'  # type: str
+SAGEMAKER_BASE_PATH = os.path.join("/opt", "ml")  # type: str
+BASE_PATH_ENV = "SAGEMAKER_BASE_DIR"  # type: str
 
 
 def _write_json(obj, path):  # type: (object, str) -> None
     """Writes a serializeable object as a JSON file"""
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(obj, f)
 
 
@@ -67,28 +67,29 @@ def _set_base_path_env():  # type: () -> None
         (bool): indicating whe
     """
 
-    local_config_dir = os.path.join(os.path.expanduser('~'), 'sagemaker_local', 'jobs',
-                                    str(time.time()), 'opt', 'ml')
+    local_config_dir = os.path.join(
+        os.path.expanduser("~"), "sagemaker_local", "jobs", str(time.time()), "opt", "ml"
+    )
 
-    logger.info('Setting environment variable SAGEMAKER_BASE_DIR as %s .' % local_config_dir)
+    logger.info("Setting environment variable SAGEMAKER_BASE_DIR as %s ." % local_config_dir)
     os.environ[BASE_PATH_ENV] = local_config_dir
 
 
 _is_path_configured = _is_training_path_configured()
 
 if not _is_path_configured:
-    logger.info('Directory /opt/ml does not exist.')
+    logger.info("Directory /opt/ml does not exist.")
     _set_base_path_env()
 
 base_dir = os.environ.get(BASE_PATH_ENV, SAGEMAKER_BASE_PATH)  # type: str
 
-code_dir = os.path.join(base_dir, 'code')
+code_dir = os.path.join(base_dir, "code")
 """str: the path of the user's code directory, e.g., /opt/ml/code/"""
 
-model_dir = os.path.join(base_dir, 'model')  # type: str
+model_dir = os.path.join(base_dir, "model")  # type: str
 """str: the directory where models should be saved, e.g., /opt/ml/model/"""
 
-input_dir = os.path.join(base_dir, 'input')  # type: str
+input_dir = os.path.join(base_dir, "input")  # type: str
 """str: the path of the input directory, e.g. /opt/ml/input/
 
 The input_dir, e.g. /opt/ml/input/, is the directory where SageMaker saves input data
@@ -99,9 +100,9 @@ The input_dir, e.g. /opt/ml/input/, is the directory where SageMaker saves input
             str: the path of the input directory, e.g. /opt/ml/input/
 """
 
-_input_data_dir = os.path.join(input_dir, 'data')  # type: str
+_input_data_dir = os.path.join(input_dir, "data")  # type: str
 
-input_config_dir = os.path.join(input_dir, 'config')  # type: str
+input_config_dir = os.path.join(input_dir, "config")  # type: str
 """str: the path of the input directory, e.g. /opt/ml/input/config/
 
 The directory where standard SageMaker configuration files are located, e.g. /opt/ml/input/config/.
@@ -118,7 +119,7 @@ Returns:
     str: the path of the input directory, e.g. /opt/ml/input/config/
 """
 
-output_dir = os.path.join(base_dir, 'output')  # type: str
+output_dir = os.path.join(base_dir, "output")  # type: str
 """str: the path to the output directory, e.g. /opt/ml/output/.
 
 The directory where training success/failure indications will be written, e.g. /opt/ml/output.
@@ -127,9 +128,9 @@ Returns:
     str: the path to the output directory, e.g. /opt/ml/output/.
 """
 
-output_data_dir = os.path.join(output_dir, 'data')  # type: str
+output_data_dir = os.path.join(output_dir, "data")  # type: str
 
-output_intermediate_dir = os.path.join(output_dir, 'intermediate')  # type: str
+output_intermediate_dir = os.path.join(output_dir, "intermediate")  # type: str
 """str: the path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
 
 The directory special behavior is to move artifacts from the training instance to
@@ -138,9 +139,9 @@ Returns:
     str: the path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
 """
 
-HYPERPARAMETERS_FILE = 'hyperparameters.json'  # type: str
-RESOURCE_CONFIG_FILE = 'resourceconfig.json'  # type: str
-INPUT_DATA_CONFIG_FILE = 'inputdataconfig.json'  # type: str
+HYPERPARAMETERS_FILE = "hyperparameters.json"  # type: str
+RESOURCE_CONFIG_FILE = "resourceconfig.json"  # type: str
+INPUT_DATA_CONFIG_FILE = "inputdataconfig.json"  # type: str
 
 hyperparameters_file_dir = os.path.join(input_config_dir, HYPERPARAMETERS_FILE)  # type: str
 input_data_config_file_dir = os.path.join(input_config_dir, INPUT_DATA_CONFIG_FILE)  # type: str
@@ -150,7 +151,7 @@ resource_config_file_dir = os.path.join(input_config_dir, RESOURCE_CONFIG_FILE) 
 def _create_training_directories():
     """Creates the directory structure and files necessary for training under the base path
     """
-    logger.info('Creating a new training folder under %s .' % base_dir)
+    logger.info("Creating a new training folder under %s ." % base_dir)
 
     os.makedirs(model_dir)
     os.makedirs(input_config_dir)
@@ -161,10 +162,7 @@ def _create_training_directories():
 
     host_name = socket.gethostname()
 
-    resources_dict = {
-        "current_host": host_name,
-        "hosts": [host_name]
-    }
+    resources_dict = {"current_host": host_name, "hosts": [host_name]}
     _write_json(resources_dict, resource_config_file_dir)
 
 
@@ -190,7 +188,7 @@ def _read_json(path):  # type: (str) -> dict
     Returns:
         (dict[object, object]): A dictionary representation of the JSON file.
     """
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         return json.load(f)
 
 
@@ -211,8 +209,12 @@ def read_hyperparameters():  # type: () -> dict
         try:
             v = json.loads(v)
         except (ValueError, TypeError):
-            logger.info("Failed to parse hyperparameter %s value %s to Json.\n"
-                        "Returning the value itself", k, v)
+            logger.info(
+                "Failed to parse hyperparameter %s value %s to Json.\n"
+                "Returning the value itself",
+                k,
+                v,
+            )
 
         deserialized_hps[k] = v
 
@@ -289,11 +291,11 @@ def num_gpus():  # type: () -> int
         int: number of gpus available in the current container.
     """
     try:
-        cmd = shlex.split('nvidia-smi --list-gpus')
-        output = subprocess.check_output(cmd).decode('utf-8')
-        return sum([1 for x in output.split('\n') if x.startswith('GPU ')])
+        cmd = shlex.split("nvidia-smi --list-gpus")
+        output = subprocess.check_output(cmd).decode("utf-8")
+        return sum([1 for x in output.split("\n") if x.startswith("GPU ")])
     except (OSError, subprocess.CalledProcessError):
-        logger.info('No GPUs detected (normal if no gpus installed)')
+        logger.info("No GPUs detected (normal if no gpus installed)")
         return 0
 
 
@@ -405,7 +407,7 @@ class _Env(_mapping.MappingMixin):
         Returns:
             str: Module name
         """
-        if program_param and program_param.endswith('.py'):
+        if program_param and program_param.endswith(".py"):
             return program_param[:-3]
         return program_param
 
@@ -531,34 +533,38 @@ class TrainingEnv(_Env):
         super(TrainingEnv, self).__init__()
 
         resource_config = resource_config or read_resource_config()
-        current_host = resource_config['current_host']
-        hosts = resource_config['hosts']
+        current_host = resource_config["current_host"]
+        hosts = resource_config["hosts"]
         input_data_config = input_data_config or read_input_data_config()
 
         all_hyperparameters = hyperparameters or read_hyperparameters()
-        split_result = _mapping.split_by_criteria(all_hyperparameters,
-                                                  keys=_params.SAGEMAKER_HYPERPARAMETERS,
-                                                  prefix=_params.SAGEMAKER_PREFIX)
+        split_result = _mapping.split_by_criteria(
+            all_hyperparameters,
+            keys=_params.SAGEMAKER_HYPERPARAMETERS,
+            prefix=_params.SAGEMAKER_PREFIX,
+        )
 
         sagemaker_hyperparameters = split_result.included
         additional_framework_parameters = {
-            k: sagemaker_hyperparameters[k] for k in sagemaker_hyperparameters.keys()
+            k: sagemaker_hyperparameters[k]
+            for k in sagemaker_hyperparameters.keys()
             if k not in _params.SAGEMAKER_HYPERPARAMETERS
         }
 
-        sagemaker_region = sagemaker_hyperparameters.get(_params.REGION_NAME_PARAM,
-                                                         boto3.session.Session().region_name)
+        sagemaker_region = sagemaker_hyperparameters.get(
+            _params.REGION_NAME_PARAM, boto3.session.Session().region_name
+        )
 
-        os.environ[_params.JOB_NAME_ENV] = sagemaker_hyperparameters.get(_params.JOB_NAME_PARAM, '')
+        os.environ[_params.JOB_NAME_ENV] = sagemaker_hyperparameters.get(_params.JOB_NAME_PARAM, "")
         os.environ[_params.CURRENT_HOST_ENV] = current_host
-        os.environ[_params.REGION_NAME_ENV] = sagemaker_region or ''
+        os.environ[_params.REGION_NAME_ENV] = sagemaker_region or ""
 
         self._hosts = hosts
 
         # eth0 is the default network interface defined by SageMaker with VPC support and local mode.
         # ethwe is the current network interface defined by SageMaker training, it will be changed
         # to eth0 in the short future.
-        self._network_interface_name = resource_config.get('network_interface_name', 'eth0')
+        self._network_interface_name = resource_config.get("network_interface_name", "eth0")
 
         self._hyperparameters = split_result.excluded
         self._additional_framework_parameters = additional_framework_parameters
@@ -573,12 +579,14 @@ class TrainingEnv(_Env):
         if self._module_name is None:
             self._module_name = str(sagemaker_hyperparameters.get(_params.USER_PROGRAM_PARAM, None))
         self._user_entry_point = self._user_entry_point or sagemaker_hyperparameters.get(
-            _params.USER_PROGRAM_PARAM)
+            _params.USER_PROGRAM_PARAM
+        )
 
         self._module_dir = str(sagemaker_hyperparameters.get(_params.SUBMIT_DIR_PARAM, code_dir))
         self._log_level = sagemaker_hyperparameters.get(_params.LOG_LEVEL_PARAM, logging.INFO)
-        self._sagemaker_s3_output = sagemaker_hyperparameters.get(_params.S3_OUTPUT_LOCATION_PARAM,
-                                                                  None)
+        self._sagemaker_s3_output = sagemaker_hyperparameters.get(
+            _params.S3_OUTPUT_LOCATION_PARAM, None
+        )
         self._framework_module = os.environ.get(_params.FRAMEWORK_TRAINING_MODULE_ENV, None)
 
         self._input_dir = input_dir
@@ -646,27 +654,36 @@ class TrainingEnv(_Env):
         """
 
         env = {
-            'hosts': self.hosts, 'network_interface_name': self.network_interface_name,
-            'hps': self.hyperparameters, 'user_entry_point': self.user_entry_point,
-            'framework_params': self.additional_framework_parameters,
-            'resource_config': self.resource_config, 'input_data_config': self.input_data_config,
-            'output_data_dir': self.output_data_dir,
-            'channels': sorted(self.channel_input_dirs.keys()),
-            'current_host': self.current_host, 'module_name': self.module_name,
-            'log_level': self.log_level,
-            'framework_module': self.framework_module, 'input_dir': self.input_dir,
-            'input_config_dir': self.input_config_dir, 'output_dir': self.output_dir,
-            'num_cpus': self.num_cpus,
-            'num_gpus': self.num_gpus, 'model_dir': self.model_dir, 'module_dir': self.module_dir,
-            'training_env': dict(self), 'user_args': self.to_cmd_args(),
-            'output_intermediate_dir': self.output_intermediate_dir
+            "hosts": self.hosts,
+            "network_interface_name": self.network_interface_name,
+            "hps": self.hyperparameters,
+            "user_entry_point": self.user_entry_point,
+            "framework_params": self.additional_framework_parameters,
+            "resource_config": self.resource_config,
+            "input_data_config": self.input_data_config,
+            "output_data_dir": self.output_data_dir,
+            "channels": sorted(self.channel_input_dirs.keys()),
+            "current_host": self.current_host,
+            "module_name": self.module_name,
+            "log_level": self.log_level,
+            "framework_module": self.framework_module,
+            "input_dir": self.input_dir,
+            "input_config_dir": self.input_config_dir,
+            "output_dir": self.output_dir,
+            "num_cpus": self.num_cpus,
+            "num_gpus": self.num_gpus,
+            "model_dir": self.model_dir,
+            "module_dir": self.module_dir,
+            "training_env": dict(self),
+            "user_args": self.to_cmd_args(),
+            "output_intermediate_dir": self.output_intermediate_dir,
         }
 
         for name, path in self.channel_input_dirs.items():
-            env['channel_%s' % name] = path
+            env["channel_%s" % name] = path
 
         for key, value in self.hyperparameters.items():
-            env['hp_%s' % key] = value
+            env["hp_%s" % key] = value
 
         return _mapping.to_env_vars(env)
 
@@ -857,12 +874,12 @@ class ServingEnv(_Env):
     def __init__(self):
         super(ServingEnv, self).__init__()
 
-        use_nginx = util.strtobool(os.environ.get(_params.USE_NGINX_ENV, 'true')) == 1
-        model_server_timeout = int(os.environ.get(_params.MODEL_SERVER_TIMEOUT_ENV, '60'))
+        use_nginx = util.strtobool(os.environ.get(_params.USE_NGINX_ENV, "true")) == 1
+        model_server_timeout = int(os.environ.get(_params.MODEL_SERVER_TIMEOUT_ENV, "60"))
         model_server_workers = int(os.environ.get(_params.MODEL_SERVER_WORKERS_ENV, num_cpus()))
         framework_module = os.environ.get(_params.FRAMEWORK_SERVING_MODULE_ENV, None)
         default_accept = os.environ.get(_params.DEFAULT_INVOCATIONS_ACCEPT_ENV, _content_types.JSON)
-        http_port = os.environ.get(_params.SAGEMAKER_BIND_TO_PORT_ENV, '8080')
+        http_port = os.environ.get(_params.SAGEMAKER_BIND_TO_PORT_ENV, "8080")
         safe_port_range = os.environ.get(_params.SAGEMAKER_SAFE_PORT_RANGE_ENV)
 
         self._use_nginx = use_nginx
@@ -932,7 +949,7 @@ def write_env_vars(env_vars=None):  # type: (dict) -> None
 
     """
     env_vars = env_vars or {}
-    env_vars['PYTHONPATH'] = ':'.join(sys.path)
+    env_vars["PYTHONPATH"] = ":".join(sys.path)
 
     for name, value in env_vars.items():
         os.environ[name] = value

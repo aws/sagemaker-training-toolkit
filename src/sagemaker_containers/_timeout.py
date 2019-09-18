@@ -37,7 +37,7 @@ def timeout(seconds=0, minutes=0, hours=0):
     limit = seconds + 60 * minutes + 3600 * hours
 
     def handler(signum, frame):  # pylint: disable=W0613
-        raise TimeoutError('timed out after {} seconds'.format(limit))
+        raise TimeoutError("timed out after {} seconds".format(limit))
 
     try:
         signal.signal(signal.SIGALRM, handler)

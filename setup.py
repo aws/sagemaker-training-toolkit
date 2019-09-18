@@ -24,64 +24,79 @@ def read(file_name):
 
 
 def read_version():
-    return read('VERSION').strip()
+    return read("VERSION").strip()
 
 
-packages = setuptools.find_packages(where='src', exclude=('test',))
-packages.append('sagemaker_containers.etc')
+packages = setuptools.find_packages(where="src", exclude=("test",))
+packages.append("sagemaker_containers.etc")
 
 required_packages = [
-    'numpy', 'boto3', 'six', 'pip', 'flask==1.1.1', 'gunicorn', 'typing', 'retrying==1.3.3',
-    'gevent', 'inotify_simple', 'werkzeug==0.15.5', 'paramiko==2.4.2', 'psutil==5.4.8'
+    "numpy",
+    "boto3",
+    "six",
+    "pip",
+    "flask==1.1.1",
+    "gunicorn",
+    "typing",
+    "retrying==1.3.3",
+    "gevent",
+    "inotify_simple",
+    "werkzeug==0.15.5",
+    "paramiko==2.4.2",
+    "psutil==5.4.8",
 ]
 
 # enum is introduced in Python 3.4. Installing enum back port
 if sys.version_info < (3, 4):
-    required_packages.append('enum34 >= 1.1.6')
+    required_packages.append("enum34 >= 1.1.6")
 
-gethostname = setuptools.Extension('gethostname',
-                                   sources=['src/sagemaker_containers/c/gethostname.c',
-                                            'src/sagemaker_containers/c/jsmn.c'],
-                                   include_dirs=['src/sagemaker_containers/c'],
-                                   extra_compile_args=['-Wall', '-shared', '-export-dynamic',
-                                                       '-ldl'])
+gethostname = setuptools.Extension(
+    "gethostname",
+    sources=["src/sagemaker_containers/c/gethostname.c", "src/sagemaker_containers/c/jsmn.c"],
+    include_dirs=["src/sagemaker_containers/c"],
+    extra_compile_args=["-Wall", "-shared", "-export-dynamic", "-ldl"],
+)
 
 setuptools.setup(
-    name='sagemaker_containers',
+    name="sagemaker_containers",
     version=read_version(),
-    description='Open source library for creating containers to run on Amazon SageMaker.',
-
+    description="Open source library for creating containers to run on Amazon SageMaker.",
     packages=packages,
     package_dir={
-        'sagemaker_containers': 'src/sagemaker_containers',
-        'sagemaker_containers.etc': 'etc'
+        "sagemaker_containers": "src/sagemaker_containers",
+        "sagemaker_containers.etc": "etc",
     },
-    package_data={'sagemaker_containers.etc': ['*']},
-    py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob('src/*.py')],
+    package_data={"sagemaker_containers.etc": ["*"]},
+    py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob("src/*.py")],
     ext_modules=[gethostname],
-    long_description=read('README.rst'),
-    author='Amazon Web Services',
-    url='https://github.com/aws/sagemaker-containers/',
-    license='Apache License 2.0',
-
+    long_description=read("README.rst"),
+    author="Amazon Web Services",
+    url="https://github.com/aws/sagemaker-containers/",
+    license="Apache License 2.0",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.5',
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.6",
     ],
-
     install_requires=required_packages,
-
     extras_require={
-        'test': ['tox==3.13.1', 'pytest==4.4.1', 'pytest-cov', 'mock', 'sagemaker>=1.16.2']
+        "test": [
+            "tox==3.13.1",
+            "pytest==4.4.1",
+            "pytest-cov",
+            "mock",
+            "sagemaker>=1.16.2",
+            "black==19.3b0 ; python_version >= '3.6'",
+        ]
     },
-
     entry_points={
-        'console_scripts': ['serve=sagemaker_containers.cli.serve:main',
-                            'train=sagemaker_containers.cli.train:main'],
-    }
+        "console_scripts": [
+            "serve=sagemaker_containers.cli.serve:main",
+            "train=sagemaker_containers.cli.train:main",
+        ]
+    },
 )

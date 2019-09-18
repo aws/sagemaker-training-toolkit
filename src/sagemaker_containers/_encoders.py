@@ -64,7 +64,7 @@ def array_to_json(array_like):  # type: (np.array or Iterable or int or float) -
     """
 
     def default(_array_like):
-        if hasattr(_array_like, 'tolist'):
+        if hasattr(_array_like, "tolist"):
             return _array_like.tolist()
         return json.JSONEncoder().default(_array_like)
 
@@ -98,7 +98,7 @@ def csv_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
         (np.array): numpy array
     """
     stream = StringIO(string_like)
-    return np.genfromtxt(stream, dtype=dtype, delimiter=',')
+    return np.genfromtxt(stream, dtype=dtype, delimiter=",")
 
 
 def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) -> str
@@ -114,12 +114,20 @@ def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) ->
         (str): object serialized to CSV
     """
     stream = StringIO()
-    np.savetxt(stream, array_like, delimiter=',', fmt='%s')
+    np.savetxt(stream, array_like, delimiter=",", fmt="%s")
     return stream.getvalue()
 
 
-_encoders_map = {_content_types.NPY: array_to_npy, _content_types.CSV: array_to_csv, _content_types.JSON: array_to_json}
-_decoders_map = {_content_types.NPY: npy_to_numpy, _content_types.CSV: csv_to_numpy, _content_types.JSON: json_to_numpy}
+_encoders_map = {
+    _content_types.NPY: array_to_npy,
+    _content_types.CSV: array_to_csv,
+    _content_types.JSON: array_to_json,
+}
+_decoders_map = {
+    _content_types.NPY: npy_to_numpy,
+    _content_types.CSV: csv_to_numpy,
+    _content_types.JSON: json_to_numpy,
+}
 
 
 def decode(obj, content_type):

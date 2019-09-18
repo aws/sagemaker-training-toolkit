@@ -19,10 +19,10 @@ import sagemaker_containers
 
 
 def get_logger():
-    return logging.getLogger('sagemaker-containers')
+    return logging.getLogger("sagemaker-containers")
 
 
-def configure_logger(level, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'):
+def configure_logger(level, format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s"):
     # type: (int, str) -> None
     """Set logger configuration.
 
@@ -33,15 +33,15 @@ def configure_logger(level, format='%(asctime)s %(name)-12s %(levelname)-8s %(me
     logging.basicConfig(format=format, level=level)
 
     if level >= logging.INFO:
-        logging.getLogger('boto3').setLevel(logging.INFO)
-        logging.getLogger('s3transfer').setLevel(logging.INFO)
-        logging.getLogger('botocore').setLevel(logging.WARN)
+        logging.getLogger("boto3").setLevel(logging.INFO)
+        logging.getLogger("s3transfer").setLevel(logging.INFO)
+        logging.getLogger("botocore").setLevel(logging.WARN)
 
 
 def log_script_invocation(cmd, env_vars, logger=None):
     logger = logger or get_logger()
 
-    prefix = '\n'.join(['%s=%s' % (key, value) for key, value in env_vars.items()])
+    prefix = "\n".join(["%s=%s" % (key, value) for key, value in env_vars.items()])
     env = sagemaker_containers.training_env()
     message = """Invoking user script
 
@@ -57,5 +57,9 @@ Invoking script with the following command:
 
 %s
 
-""" % (json.dumps(dict(env), indent=4), prefix, ' '.join(cmd))
+""" % (
+        json.dumps(dict(env), indent=4),
+        prefix,
+        " ".join(cmd),
+    )
     logger.info(message)

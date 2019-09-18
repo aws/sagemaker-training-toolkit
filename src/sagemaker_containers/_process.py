@@ -25,15 +25,14 @@ from sagemaker_containers import _entry_point_type, _env, _errors, _logging
 def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
     try:
         stderr = subprocess.PIPE if capture_error else None
-        return subprocess.Popen(cmd, env=os.environ, cwd=cwd or _env.code_dir, stderr=stderr, **kwargs)
+        return subprocess.Popen(
+            cmd, env=os.environ, cwd=cwd or _env.code_dir, stderr=stderr, **kwargs
+        )
     except Exception as e:
         six.reraise(error_class, error_class(e), sys.exc_info()[2])
 
 
-def check_error(cmd,
-                error_class,
-                capture_error=False,
-                **kwargs):
+def check_error(cmd, error_class, capture_error=False, **kwargs):
     # type: (List[str], type, bool, Mapping[str, object]) -> subprocess.Popen
     process = create(cmd, error_class, capture_error=capture_error, **kwargs)
 
@@ -45,7 +44,7 @@ def check_error(cmd,
         return_code = process.wait()
 
     if return_code:
-        raise error_class(return_code=return_code, cmd=' '.join(cmd), output=stderr)
+        raise error_class(return_code=return_code, cmd=" ".join(cmd), output=stderr)
     return process
 
 
@@ -56,7 +55,7 @@ def python_executable():
         (str): the real path of the current Python executable
     """
     if not sys.executable:
-        raise RuntimeError('Failed to retrieve the real path for the Python executable binary')
+        raise RuntimeError("Failed to retrieve the real path for the Python executable binary")
     return sys.executable
 
 
@@ -74,12 +73,12 @@ class ProcessRunner(object):
         entrypoint_type = _entry_point_type.get(_env.code_dir, self._user_entry_point)
 
         if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
-            entry_module = self._user_entry_point.replace('.py', '')
-            return self._python_command() + ['-m', entry_module] + self._args
+            entry_module = self._user_entry_point.replace(".py", "")
+            return self._python_command() + ["-m", entry_module] + self._args
         elif entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
             return self._python_command() + [self._user_entry_point] + self._args
         else:
-            return ['/bin/sh', '-c', './%s %s' % (self._user_entry_point, ' '.join(self._args))]
+            return ["/bin/sh", "-c", "./%s %s" % (self._user_entry_point, " ".join(self._args))]
 
     def _python_command(self):
         return [python_executable()]
@@ -98,11 +97,13 @@ class ProcessRunner(object):
         _logging.log_script_invocation(cmd, self._env_vars)
 
         if wait:
-            process = check_error(cmd, _errors.ExecuteUserScriptError,
-                                  capture_error=capture_error, cwd=_env.code_dir)
+            process = check_error(
+                cmd, _errors.ExecuteUserScriptError, capture_error=capture_error, cwd=_env.code_dir
+            )
         else:
-            process = create(cmd, _errors.ExecuteUserScriptError,
-                             capture_error=capture_error, cwd=_env.code_dir)
+            process = create(
+                cmd, _errors.ExecuteUserScriptError, capture_error=capture_error, cwd=_env.code_dir
+            )
 
         self._tear_down()
 

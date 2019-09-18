@@ -22,14 +22,16 @@ from retrying import retry
 from sagemaker_containers import _entry_point_type, _env, _files, _modules, _runner
 
 
-def run(uri,
-        user_entry_point,
-        args,
-        env_vars=None,
-        wait=True,
-        capture_error=False,
-        runner=_runner.ProcessRunnerType,
-        extra_opts=None):
+def run(
+    uri,
+    user_entry_point,
+    args,
+    env_vars=None,
+    wait=True,
+    capture_error=False,
+    runner=_runner.ProcessRunnerType,
+    extra_opts=None,
+):
     # type: (str, str, List[str], Dict[str, str], bool, bool, _runner.RunnerType, Dict[str, str]) -> None
     """Download, prepare and executes a compressed tar file from S3 or provided directory as an user
     entrypoint. Runs the user entry point, passing env_vars as environment variables and args as command
@@ -91,7 +93,9 @@ def run(uri,
 
     _wait_hostname_resolution()
 
-    return _runner.get(runner, user_entry_point, args, env_vars, extra_opts).run(wait, capture_error)
+    return _runner.get(runner, user_entry_point, args, env_vars, extra_opts).run(
+        wait, capture_error
+    )
 
 
 def install(name, dst, capture_error=False):
@@ -115,9 +119,7 @@ def install(name, dst, capture_error=False):
         os.chmod(os.path.join(dst, name), 511)
 
 
-@retry(stop_max_delay=1000 * 60 * 15,
-       wait_exponential_multiplier=100,
-       wait_exponential_max=30000)
+@retry(stop_max_delay=1000 * 60 * 15, wait_exponential_multiplier=100, wait_exponential_max=30000)
 def _dns_lookup(host):
     """ Retrying dns lookup on host """
     return socket.gethostbyname(host)

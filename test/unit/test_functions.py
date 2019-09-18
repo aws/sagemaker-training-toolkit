@@ -19,25 +19,31 @@ import pytest as pytest
 from sagemaker_containers import _functions
 
 
-@pytest.mark.parametrize('fn, expected', [
-    (lambda: None, inspect.ArgSpec([], None, None, None)),
-    (lambda x, y='y': None, inspect.ArgSpec(['x', 'y'], None, None, ('y',))),
-    (lambda *args: None, inspect.ArgSpec([], 'args', None, None)),
-    (lambda **kwargs: None, inspect.ArgSpec([], None, 'kwargs', None)),
-    (lambda x, y, *args, **kwargs: None, inspect.ArgSpec(['x', 'y'], 'args', 'kwargs', None))
-])
+@pytest.mark.parametrize(
+    "fn, expected",
+    [
+        (lambda: None, inspect.ArgSpec([], None, None, None)),
+        (lambda x, y="y": None, inspect.ArgSpec(["x", "y"], None, None, ("y",))),
+        (lambda *args: None, inspect.ArgSpec([], "args", None, None)),
+        (lambda **kwargs: None, inspect.ArgSpec([], None, "kwargs", None)),
+        (lambda x, y, *args, **kwargs: None, inspect.ArgSpec(["x", "y"], "args", "kwargs", None)),
+    ],
+)
 def test_getargspec(fn, expected):
     assert _functions.getargspec(fn) == expected
 
 
-@pytest.mark.parametrize('fn, env, expected', [
-    (lambda: None, {}, {}),
-    (lambda x, y='y': None, dict(x='x', y=None, t=3), dict(x='x', y=None)),
-    (lambda not_in_env_arg: None, dict(x='x', y=None, t=3), {}),
-    (lambda *args: None, dict(x='x', y=None, t=3), {}),
-    (lambda *arguments, **keywords: None, dict(x='x', y=None, t=3), dict(x='x', y=None, t=3)),
-    (lambda **kwargs: None, dict(x='x', y=None, t=3), dict(x='x', y=None, t=3))
-])
+@pytest.mark.parametrize(
+    "fn, env, expected",
+    [
+        (lambda: None, {}, {}),
+        (lambda x, y="y": None, dict(x="x", y=None, t=3), dict(x="x", y=None)),
+        (lambda not_in_env_arg: None, dict(x="x", y=None, t=3), {}),
+        (lambda *args: None, dict(x="x", y=None, t=3), {}),
+        (lambda *arguments, **keywords: None, dict(x="x", y=None, t=3), dict(x="x", y=None, t=3)),
+        (lambda **kwargs: None, dict(x="x", y=None, t=3), dict(x="x", y=None, t=3)),
+    ],
+)
 def test_matching_args(fn, env, expected):
     assert _functions.matching_args(fn, env) == expected
 

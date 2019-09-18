@@ -31,10 +31,14 @@ def default_model_fn(model_dir):
     Returns:
         (obj) the loaded model.
     """
-    raise NotImplementedError(textwrap.dedent("""
+    raise NotImplementedError(
+        textwrap.dedent(
+            """
     Please provide a model_fn implementation.
     See documentation for model_fn at https://github.com/aws/sagemaker-python-sdk
-    """))
+    """
+        )
+    )
 
 
 def default_input_fn(input_data, content_type):
@@ -68,10 +72,14 @@ def default_predict_fn(data, model):
      Returns:
          (obj): data ready for prediction.
     """
-    raise NotImplementedError(textwrap.dedent("""
+    raise NotImplementedError(
+        textwrap.dedent(
+            """
     Please provide a predict_fn implementation.
     See documentation for predict_fn at https://github.com/aws/sagemaker-python-sdk
-    """))
+    """
+        )
+    )
 
 
 def default_output_fn(prediction, accept):
@@ -114,8 +122,15 @@ class Transformer(object):
     >>>transformer.load_user_fns(mod)
     """
 
-    def __init__(self, model_fn=None, input_fn=None, predict_fn=None, output_fn=None,
-                 transform_fn=None, error_class=_errors.ClientError):
+    def __init__(
+        self,
+        model_fn=None,
+        input_fn=None,
+        predict_fn=None,
+        output_fn=None,
+        transform_fn=None,
+        error_class=_errors.ClientError,
+    ):
         """Default constructor. Wraps the any non default framework function in an error class to isolate
         framework from user errors.
 
@@ -130,19 +145,29 @@ class Transformer(object):
             error_class (Exception): Error class used to separate framework and user errors.
         """
         self._model = None
-        self._model_fn = _functions.error_wrapper(model_fn, error_class) if model_fn else default_model_fn
+        self._model_fn = (
+            _functions.error_wrapper(model_fn, error_class) if model_fn else default_model_fn
+        )
 
         if transform_fn and (input_fn or predict_fn or output_fn):
-            raise ValueError('Cannot use transform_fn implementation with input_fn, predict_fn, and/or output_fn')
+            raise ValueError(
+                "Cannot use transform_fn implementation with input_fn, predict_fn, and/or output_fn"
+            )
 
         if transform_fn is not None:
             self._transform_fn = _functions.error_wrapper(transform_fn, error_class)
         else:
             self._transform_fn = self._default_transform_fn
 
-        self._input_fn = _functions.error_wrapper(input_fn, error_class) if input_fn else default_input_fn
-        self._predict_fn = _functions.error_wrapper(predict_fn, error_class) if predict_fn else default_predict_fn
-        self._output_fn = _functions.error_wrapper(output_fn, error_class) if output_fn else default_output_fn
+        self._input_fn = (
+            _functions.error_wrapper(input_fn, error_class) if input_fn else default_input_fn
+        )
+        self._predict_fn = (
+            _functions.error_wrapper(predict_fn, error_class) if predict_fn else default_predict_fn
+        )
+        self._output_fn = (
+            _functions.error_wrapper(output_fn, error_class) if output_fn else default_output_fn
+        )
         self._error_class = error_class
 
     def initialize(self):  # type: () -> None
@@ -168,7 +193,9 @@ class Transformer(object):
                 * accept: the content type that the data was serialized into
         """
         request = _worker.Request()
-        result = self._transform_fn(self._model, request.content, request.content_type, request.accept)
+        result = self._transform_fn(
+            self._model, request.content, request.content_type, request.accept
+        )
 
         if isinstance(result, tuple):
             # transforms tuple in Response for backwards compatibility
@@ -208,7 +235,11 @@ class Transformer(object):
         return result
 
     def _error_response(self, error, status_code):
-        body = json.dumps({'error': error.__class__.__name__,
-                           'error-message': str(error),
-                           'stack-trace': traceback.format_exc()})
+        body = json.dumps(
+            {
+                "error": error.__class__.__name__,
+                "error-message": str(error),
+                "stack-trace": traceback.format_exc(),
+            }
+        )
         return _worker.Response(response=body, status=status_code, mimetype=_content_types.JSON)
