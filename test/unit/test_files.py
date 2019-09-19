@@ -121,14 +121,14 @@ def test_write_failure_file():
 @patch("sagemaker_containers._files.s3_download")
 @patch("os.path.isdir", lambda x: True)
 @patch("shutil.rmtree")
-@patch("shutil.move")
-def test_download_and_extract_source_dir(move, rmtree, s3_download):
+@patch("shutil.copytree")
+def test_download_and_extract_source_dir(copy, rmtree, s3_download):
     uri = _env.channel_path("code")
     _files.download_and_extract(uri, _env.code_dir)
     s3_download.assert_not_called()
 
     rmtree.assert_any_call(_env.code_dir)
-    move.assert_called_with(uri, _env.code_dir)
+    copy.assert_called_with(uri, _env.code_dir)
 
 
 @patch("sagemaker_containers._files.s3_download")
