@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.5.6 (2019-09-19)
+
+### Bug fixes and other changes
+
+ * Use copy when installing user module from local path
+ * Integrate black into development process
+
 ## v2.5.5 (2019-07-31)
 
 ### Bug fixes and other changes
