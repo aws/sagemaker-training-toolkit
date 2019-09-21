@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 import textwrap
@@ -18,7 +19,7 @@ import six
 
 
 class ClientError(Exception):
-    pass
+    """Error class used to separate framework and user errors."""
 
 
 class _CalledProcessError(ClientError):
@@ -33,6 +34,7 @@ class _CalledProcessError(ClientError):
         self.return_code = return_code
         self.cmd = cmd
         self.output = output
+        super(_CalledProcessError, self).__init__()
 
     def __str__(self):
         if six.PY3 and self.output:
@@ -47,18 +49,20 @@ class _CalledProcessError(ClientError):
 
 
 class InstallModuleError(_CalledProcessError):
-    pass
+    """Error class indicating a module failed to install."""
 
 
 class ImportModuleError(ClientError):
-    pass
+    """Error class indicating a module failed to import."""
 
 
 class ExecuteUserScriptError(_CalledProcessError):
-    pass
+    """Error class indicating a user script failed to execute."""
 
 
 class ChannelDoesNotExistException(Exception):
+    """Error class indicating a channel does not exist."""
+
     def __init__(self, channel_name):
         super(ChannelDoesNotExistException, self).__init__(
             "Channel %s is not a valid channel" % channel_name
@@ -66,6 +70,8 @@ class ChannelDoesNotExistException(Exception):
 
 
 class UnsupportedFormatError(Exception):
+    """Error class indicating a content type is not supported by the current framework."""
+
     def __init__(self, content_type, **kwargs):
         self.message = textwrap.dedent(
             """Content type %s is not supported by this framework.
@@ -74,4 +80,4 @@ class UnsupportedFormatError(Exception):
             serialize the response. For more information, see the SageMaker Python SDK README."""
             % content_type
         )
-        super(Exception, self).__init__(self.message, **kwargs)
+        super(UnsupportedFormatError, self).__init__(self.message, **kwargs)

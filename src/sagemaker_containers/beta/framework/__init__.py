@@ -36,6 +36,7 @@ from sagemaker_containers import _worker as worker
 
 
 def training_env(resource_config=None, input_data_config=None, hyperparameters=None):
+    """Placeholder docstring"""
 
     resource_config = resource_config or env.read_resource_config()
     input_data_config = input_data_config or env.read_input_data_config()

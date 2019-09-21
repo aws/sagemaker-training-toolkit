@@ -10,11 +10,14 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 import enum
 import os
 
 
 class _EntryPointType(enum.Enum):
+    """Placeholder docstring"""
+
     PYTHON_PACKAGE = "PYTHON_PACKAGE"
     PYTHON_PROGRAM = "PYTHON_PROGRAM"
     COMMAND = "COMMAND"

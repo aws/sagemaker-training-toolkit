@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 import os
@@ -34,6 +35,7 @@ nginx_config_template_file = pkg_resources.resource_filename(
 
 
 def _create_nginx_config(serving_env):
+    """Placeholder docstring"""
     template = _files.read_file(nginx_config_template_file)
 
     pattern = re.compile(r"%(\w+)%")
@@ -50,7 +52,9 @@ def _create_nginx_config(serving_env):
 
 
 def _add_sigterm_handler(nginx, gunicorn):
-    def _terminate(signo, frame):
+    """Placeholder docstring"""
+
+    def _terminate(signo, frame):  # pylint: disable=unused-argument
         if nginx:
             try:
                 os.kill(nginx.pid, signal.SIGQUIT)
@@ -66,6 +70,7 @@ def _add_sigterm_handler(nginx, gunicorn):
 
 
 def start(module_app):
+    """Placeholder docstring"""
     env = _env.ServingEnv()
     gunicorn_bind_address = "0.0.0.0:{}".format(env.http_port)
 
@@ -114,6 +119,7 @@ def start(module_app):
 
 
 def next_safe_port(port_range, after=None):
+    """Placeholder docstring"""
     first_and_last_port = port_range.split("-")
     first_safe_port = int(first_and_last_port[0])
     last_safe_port = int(first_and_last_port[1])

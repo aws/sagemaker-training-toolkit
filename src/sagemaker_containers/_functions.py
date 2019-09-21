@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 import inspect
@@ -22,7 +23,8 @@ from sagemaker_containers import _mapping
 
 
 def matching_args(fn, dictionary):  # type: (Callable, _mapping.Mapping) -> dict
-    """Given a function fn and a dict dictionary, returns the function arguments that match the dict keys.
+    """Given a function fn and a dict dictionary, returns the function
+    arguments that match the dict keys.
 
     Example:
 
@@ -30,7 +32,8 @@ def matching_args(fn, dictionary):  # type: (Callable, _mapping.Mapping) -> dict
 
         dictionary = {'channel_dirs': {}, 'model_dir': '/opt/ml/model', 'other_args': None}
 
-        args = functions.matching_args(train, dictionary) # {'channel_dirs': {}, 'model_dir': '/opt/ml/model'}
+        args = functions.matching_args(train, dictionary) # {'channel_dirs': {},
+                                                             'model_dir': '/opt/ml/model'}
 
         train(**args)
     Args:
@@ -48,7 +51,9 @@ def matching_args(fn, dictionary):  # type: (Callable, _mapping.Mapping) -> dict
     return _mapping.split_by_criteria(dictionary, arg_spec.args).included
 
 
-def getargspec(fn):  # type: (Callable) -> inspect.ArgSpec
+def getargspec(  # pylint: disable=inconsistent-return-statements
+    fn
+):  # type: (Callable) -> inspect.ArgSpec
     """Get the names and default values of a function's arguments.
 
     Args:
@@ -64,7 +69,7 @@ def getargspec(fn):  # type: (Callable) -> inspect.ArgSpec
                 defaults (tuple): an n-tuple of the default values of the last n arguments.
     """
     if six.PY2:
-        return inspect.getargspec(fn)
+        return inspect.getargspec(fn)  # pylint: disable=deprecated-method
     elif six.PY3:
         full_arg_spec = inspect.getfullargspec(fn)
         return inspect.ArgSpec(
@@ -86,7 +91,7 @@ def error_wrapper(fn, error_class):  # type: (Callable or None, Exception) -> ..
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             six.reraise(error_class, error_class(e), sys.exc_info()[2])
 
     return wrapper

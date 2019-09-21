@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 import collections
@@ -131,7 +132,8 @@ def split_by_criteria(
 
             * Args:
                 included (dict[str, object]: A dictionary with the keys included in the criteria.
-                excluded (dict[str, object]: A dictionary with the keys not included in the criteria.
+                excluded (dict[str, object]: A dictionary with the keys not included in the
+                                             criteria.
     """
     keys = keys or []
     keys = set(keys)
@@ -147,6 +149,8 @@ def split_by_criteria(
 
 
 class MappingMixin(collections.Mapping):
+    """Placeholder docstring"""
+
     def properties(self):  # type: () -> list
         """
             Returns:
@@ -157,6 +161,7 @@ class MappingMixin(collections.Mapping):
         return [_property for _property in dir(_type) if self._is_property(_property)]
 
     def _is_property(self, _property):
+        """Placeholder docstring"""
         return isinstance(getattr(type(self), _property), property)
 
     def __getitem__(self, k):

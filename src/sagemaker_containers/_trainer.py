@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 import importlib
@@ -34,6 +35,7 @@ DEFAULT_FAILURE_CODE = 1
 
 
 def _get_valid_failure_exit_code(exit_code):
+    """Placeholder docstring"""
     try:
         valid_exit_code = int(exit_code)
     except ValueError:
@@ -52,21 +54,16 @@ def _exit_processes(exit_code):  # type: (int) -> None
     Args:
         exit_code (int): exit code
     """
-    os._exit(exit_code)
+    os._exit(exit_code)  # pylint: disable=protected-access
 
 
 def train():
+    """Placeholder docstring"""
     intermediate_sync = None
     exit_code = SUCCESS_CODE
     try:
-        # TODO: iquintero - add error handling for ImportError to let the user know
-        # if the framework module is not defined.
         env = sagemaker_containers.training_env()
 
-        # TODO: [issue#144] There is a bug in the logic -
-        # we need os.environ.get(_params.REGION_NAME_ENV)
-        # in certain regions, but it is not going to be available unless
-        # TrainingEnvironment has been initialized. It shouldn't be environment variable.
         region = os.environ.get("AWS_REGION", os.environ.get(_params.REGION_NAME_ENV))
         intermediate_sync = _intermediate_output.start_sync(env.sagemaker_s3_output(), region)
 
@@ -75,8 +72,8 @@ def train():
 
             framework = importlib.import_module(framework_name)
 
-            # the logger is configured after importing the framework library, allowing the framework to
-            # configure logging at import time.
+            # the logger is configured after importing the framework library, allowing
+            # the framework to configure logging at import time.
             _logging.configure_logger(env.log_level)
             logger.info("Imported framework %s", framework_name)
 
@@ -110,7 +107,7 @@ def train():
             intermediate_sync.join()
 
         exit_code = DEFAULT_FAILURE_CODE
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         failure_msg = "framework error: \n%s\n%s" % (traceback.format_exc(), str(e))
 
         _files.write_failure_file(failure_msg)

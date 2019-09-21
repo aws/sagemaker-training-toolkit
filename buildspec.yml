@@ -5,7 +5,7 @@ phases:
     commands:
       # run linters
       - TOX_PARALLEL_NO_SPINNER=1
-      - tox -e flake8,black-check --parallel all
+      - tox -e flake8,black-check,pylint --parallel all
 
       # run README check
       - tox -e twine

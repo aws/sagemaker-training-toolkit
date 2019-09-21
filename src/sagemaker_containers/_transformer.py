@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 import json
@@ -131,12 +132,13 @@ class Transformer(object):
         transform_fn=None,
         error_class=_errors.ClientError,
     ):
-        """Default constructor. Wraps the any non default framework function in an error class to isolate
-        framework from user errors.
+        """Default constructor. Wraps the any non default framework function in an error class to
+        isolate framework from user errors.
 
         Args:
             model_fn (fn): Function responsible to load the model.
-            input_fn (fn): Takes request data and de-serializes the data into an object for prediction.
+            input_fn (fn): Takes request data and de-serializes the data into an object for
+                           prediction.
             predict_fn (fn): Function responsible for model predictions.
             output_fn (fn): Function responsible to serialize the prediction for the response.
             transform_fn (fn): Function responsible for taking input data and returning a prediction
@@ -175,7 +177,8 @@ class Transformer(object):
         The default implementation is used to load the model.
         This function is called by sagemaker_containers.beta.framework.worker.Worker,
         before starting the Flask application.
-        The gunicorn server forks multiple workers, executing multiple Flask applications in parallel.
+        The gunicorn server forks multiple workers, executing multiple Flask applications in
+        parallel.
         This function will be called once per each worker.
         It does not have return type or arguments.
         """
@@ -234,7 +237,8 @@ class Transformer(object):
 
         return result
 
-    def _error_response(self, error, status_code):
+    def _error_response(self, error, status_code):  # pylint: disable=no-self-use
+        """Placeholder docstring"""
         body = json.dumps(
             {
                 "error": error.__class__.__name__,

@@ -10,6 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 import concurrent.futures as futures
@@ -41,13 +42,14 @@ def _timestamp():
 
 
 def _upload_to_s3(s3_uploader, relative_path, file_path, filename):
+    """Placeholder docstring"""
     try:
         key = os.path.join(s3_uploader["key_prefix"], relative_path, filename)
         s3_uploader["transfer"].upload_file(file_path, s3_uploader["bucket"], key)
     except FileNotFoundError:  # noqa ignore=F821
         # Broken link or deleted
         pass
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logger.exception("Failed to upload file to s3.")
     finally:
         # delete the original file
@@ -56,6 +58,7 @@ def _upload_to_s3(s3_uploader, relative_path, file_path, filename):
 
 
 def _copy_file(executor, s3_uploader, relative_path, filename):
+    """Placeholder docstring"""
     try:
         src = os.path.join(intermediate_path, relative_path, filename)
         dst = os.path.join(tmp_dir_path, relative_path, "{}.{}".format(_timestamp(), filename))
@@ -64,7 +67,7 @@ def _copy_file(executor, s3_uploader, relative_path, filename):
     except FileNotFoundError:  # noqa ignore=F821
         # Broken link or deleted
         pass
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logger.exception("Failed to copy file to the temporarily directory.")
 
 
@@ -86,7 +89,7 @@ def _watch(inotify, watchers, watch_flags, s3_uploader):
     stop_file_exists = False
 
     # after we see stop file do one additional pass to make sure we didn't miss anything
-    while not last_pass_done:
+    while not last_pass_done:  # pylint: disable=too-many-nested-blocks
         # wait for any events in the directory for 1 sec and then re-check exit conditions
         for event in inotify.read(timeout=1000):
             for flag in inotify_simple.flags.from_mask(event.mask):
@@ -98,7 +101,7 @@ def _watch(inotify, watchers, watch_flags, s3_uploader):
                 # we add a unique timestamp up to microseconds.
                 if flag is inotify_simple.flags.ISDIR and inotify_simple.flags.CREATE & event.mask:
                     path = os.path.join(intermediate_path, watchers[event.wd], event.name)
-                    for folder, dirs, files in os.walk(path):
+                    for folder, _, files in os.walk(path):
                         wd = inotify.add_watch(folder, watch_flags)
                         relative_path = os.path.relpath(folder, intermediate_path)
                         watchers[wd] = relative_path
@@ -117,7 +120,7 @@ def _watch(inotify, watchers, watch_flags, s3_uploader):
     executor.shutdown(wait=True)
 
 
-def start_sync(s3_output_location, region):
+def start_sync(s3_output_location, region):  # pylint: disable=inconsistent-return-statements
     """Starts intermediate folder sync which copies files from 'opt/ml/output/intermediate'
     directory to the provided s3 output location as files created or modified.
     If files are deleted it doesn't delete them from s3.

@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 import json
@@ -57,7 +58,8 @@ def array_to_json(array_like):  # type: (np.array or Iterable or int or float) -
     https://docs.scipy.org/doc/numpy/user/basics.creation.html#converting-python-array-like-objects-to-numpy-arrays
 
     Args:
-        array_like (np.array or Iterable or int or float): array like object to be converted to JSON.
+        array_like (np.array or Iterable or int or float): array like object to be
+                                                           converted to JSON.
 
     Returns:
         (str): object serialized to JSON
@@ -76,9 +78,12 @@ def json_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
 
         Args:
             string_like (str): JSON string.
-            dtype (dtype, optional):  Data type of the resulting array. If None, the dtypes will be determined by the
-                                        contents of each column, individually. This argument can only be used to
-                                        'upcast' the array.  For downcasting, use the .astype(t) method.
+            dtype (dtype, optional):  Data type of the resulting array. If None,
+                                      the dtypes will be determined by the
+                                      contents of each column, individually.
+                                      This argument can only be used to
+                                      'upcast' the array.  For downcasting,
+                                      use the .astype(t) method.
         Returns:
             (np.array): numpy array
         """
@@ -91,9 +96,11 @@ def csv_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
 
     Args:
         string_like (str): CSV string.
-        dtype (dtype, optional):  Data type of the resulting array. If None, the dtypes will be determined by the
-                                        contents of each column, individually. This argument can only be used to
-                                        'upcast' the array.  For downcasting, use the .astype(t) method.
+        dtype (dtype, optional):  Data type of the resulting array. If None, the
+                                  dtypes will be determined by the contents of
+                                  each column, individually. This argument can
+                                  only be used to 'upcast' the array.  For
+                                  downcasting, use the .astype(t) method.
     Returns:
         (np.array): numpy array
     """

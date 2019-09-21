@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 import os
@@ -32,10 +33,10 @@ def run(
     runner=_runner.ProcessRunnerType,
     extra_opts=None,
 ):
-    # type: (str, str, List[str], Dict[str, str], bool, bool, _runner.RunnerType, Dict[str, str]) -> None
+    # type: (str, str, List[str], Dict[str, str], bool, bool, _runner.RunnerType,Dict[str, str]) -> None  # pylint: disable=line-too-long # noqa ignore=E501
     """Download, prepare and executes a compressed tar file from S3 or provided directory as an user
-    entrypoint. Runs the user entry point, passing env_vars as environment variables and args as command
-    arguments.
+    entrypoint. Runs the user entry point, passing env_vars as environment variables and args
+    as command arguments.
 
     If the entry point is:
         - A Python package: executes the packages as >>> env_vars python -m module_name + args
@@ -47,7 +48,8 @@ def run(
          >>>from sagemaker_containers.beta.framework import entry_point
 
          >>>env = sagemaker_containers.training_env()
-         {'channel-input-dirs': {'training': '/opt/ml/input/training'}, 'model_dir': '/opt/ml/model', ...}
+         {'channel-input-dirs': {'training': '/opt/ml/input/training'},
+          'model_dir': '/opt/ml/model', ...}
 
 
          >>>hyperparameters = env.hyperparameters
@@ -62,7 +64,8 @@ def run(
 
          >>>entry_point.run('user_script', args, env_vars)
          SAGEMAKER_CHANNELS=training SAGEMAKER_CHANNEL_TRAINING=/opt/ml/input/training \
-         SAGEMAKER_MODEL_DIR=/opt/ml/model python -m user_script --batch-size 128 --model_dir /opt/ml/model
+         SAGEMAKER_MODEL_DIR=/opt/ml/model python -m user_script --batch-size 128
+                             --model_dir /opt/ml/model
 
     Args:
         uri (str): the location of the module.

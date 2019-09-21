@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+"""Placeholder docstring"""
 from __future__ import absolute_import
 
 from distutils import util
@@ -230,11 +231,11 @@ https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.ht
     Returns:
         resource_config (dict[string, object]): the contents from /opt/ml/input/config/resourceconfig.json.
                         It has the following keys:
-                            - current_host: The name of the current container on the container network.
-                                For example, 'algo-1'.
-                            -  hosts: The list of names of all containers on the container network,
-                                sorted lexicographically. For example, `['algo-1', 'algo-2', 'algo-3']`
-                                for a three-node cluster.
+                            - current_host: The name of the current container on the container
+                                            network. For example, 'algo-1'.
+                            -  hosts: The list of names of all containers on the container
+                                      network, sorted lexicographically. For example,
+                                      `['algo-1', 'algo-2', 'algo-3']` for a three-node cluster.
     """
     return _read_json(resource_config_file_dir)
 
@@ -312,16 +313,18 @@ class _Env(_mapping.MappingMixin):
     """Base Class which provides access to aspects of the environment including
     system characteristics, filesystem locations, environment variables and configuration settings.
 
-    The Env is a read-only snapshot of the container environment. It does not contain any form of state.
-    It is a dictionary like object, allowing any builtin function that works with dictionary.
+    The Env is a read-only snapshot of the container environment. It does not contain any form of
+    state. It is a dictionary like object, allowing any builtin function that works with dictionary.
 
     Attributes:
-            current_host (str): The name of the current container on the container network. For example, 'algo-1'.
+            current_host (str): The name of the current container on the container network. For
+                                example, 'algo-1'.
             module_name (str): The name of the user provided module.
             module_dir (str): The full path location of the user provided module.
     """
 
     def __init__(self):
+        """Placeholder docstring"""
         current_host = os.environ.get(_params.CURRENT_HOST_ENV)
         module_name = os.environ.get(_params.USER_PROGRAM_ENV, None)
         module_dir = os.environ.get(_params.SUBMIT_DIR_ENV, code_dir)
@@ -414,10 +417,11 @@ class _Env(_mapping.MappingMixin):
 
 class TrainingEnv(_Env):
     """Provides access to aspects of the training environment relevant to training jobs, including
-    hyperparameters, system characteristics, filesystem locations, environment variables and configuration settings.
+    hyperparameters, system characteristics, filesystem locations, environment variables and
+    configuration settings.
 
-    The TrainingEnv is a read-only snapshot of the container environment during training. It does not contain any form
-    of state.
+    The TrainingEnv is a read-only snapshot of the container environment during training. It does
+    not contain any form of state.
 
     It is a dictionary like object, allowing any builtin function that works with dictionary.
 
@@ -445,33 +449,37 @@ class TrainingEnv(_Env):
             >>>model.save(os.path.join(model_dir, 'saved_model'))
 
     Attributes:
-        input_dir (str): The input_dir, e.g. /opt/ml/input/, is the directory where SageMaker saves input data
-            and configuration files before and during training. The input data directory has the
-            following subdirectories: config (`input_config_dir`) and data (`_input_data_dir`)
+        input_dir (str): The input_dir, e.g. /opt/ml/input/, is the directory where SageMaker saves
+                         input data and configuration files before and during training. The input
+                         data directory has the following subdirectories:
+                         config (`input_config_dir`) and data (`_input_data_dir`)
 
-        input_config_dir (str): The directory where standard SageMaker configuration files are located,
-            e.g. /opt/ml/input/config/.
+        input_config_dir (str): The directory where standard SageMaker configuration files are
+                                located, e.g. /opt/ml/input/config/.
 
             SageMaker training creates the following files in this folder when training starts:
-                - `hyperparameters.json`: Amazon SageMaker makes the hyperparameters in a CreateTrainingJob
-                        request available in this file.
-                - `inputdataconfig.json`: You specify data channel information in the InputDataConfig
-                        parameter in a CreateTrainingJob request. Amazon SageMaker makes this information
-                        available in this file.
-                - `resourceconfig.json`: name of the current host and all host containers in the training
+                - `hyperparameters.json`: Amazon SageMaker makes the hyperparameters in a
+                                          CreateTrainingJob request available in this file.
+                - `inputdataconfig.json`: You specify data channel information in the
+                                          InputDataConfig parameter in a CreateTrainingJob request.
+                                          Amazon SageMaker makes this information available in this
+                                          file.
+                - `resourceconfig.json`: name of the current host and all host containers in the
+                                         training
 
             More information about these files can be find here:
                 https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
 
         model_dir (str):  the directory where models should be saved, e.g., /opt/ml/model/
 
-        output_dir (str): The directory where training success/failure indications will be written, e.g.
-            /opt/ml/output. To save non-model artifacts check `output_data_dir`.
+        output_dir (str): The directory where training success/failure indications will be written,
+                          e.g. /opt/ml/output. To save non-model artifacts check `output_data_dir`.
 
-        hyperparameters (dict[string, object]): An instance of `HyperParameters` containing the training job
-                                                hyperparameters.
+        hyperparameters (dict[string, object]): An instance of `HyperParameters` containing the
+                                                training job hyperparameters.
 
-        resource_config (dict[string, object]): the contents from /opt/ml/input/config/resourceconfig.json.
+        resource_config (dict[string, object]): the contents from
+                                                /opt/ml/input/config/resourceconfig.json.
             It has the following keys:
                 - current_host: The name of the current container on the container network.
                     For example, 'algo-1'.
@@ -504,18 +512,24 @@ class TrainingEnv(_Env):
             You can find more information about /opt/ml/input/config/inputdataconfig.json here:
             https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
 
-        output_data_dir (str): The dir to write non-model training artifacts (e.g. evaluation results) which will be
-            retained by SageMaker, e.g. /opt/ml/output/data. As your algorithm runs in a container, it generates
-            output including the status of the training job and model and output artifacts. Your algorithm should
-            write this information to the this directory.
+        output_data_dir (str): The dir to write non-model training artifacts (e.g. evaluation
+                               results) which will be retained by SageMaker,
+                               e.g. /opt/ml/output/data. As your algorithm runs in a container,
+                               it generates output including the status of the training job and
+                               model and output artifacts. Your algorithm should write this
+                               information to the this directory.
 
-        hosts (list[str]): The list of names of all containers on the container network, sorted lexicographically.
-            For example, `['algo-1', 'algo-2', 'algo-3']` for a three-node cluster.
+        hosts (list[str]): The list of names of all containers on the container network, sorted
+                           lexicographically. For example, `['algo-1', 'algo-2', 'algo-3']` for
+                           a three-node cluster.
 
-        channel_input_dirs (dict[string, string]): containing the data channels and the directories where the
-            training data was saved. When you run training, you can partition your training data into different logical
-            'channels'. Depending on your problem, some common channel ideas are: 'train', 'test',
-            'evaluation' or 'images','labels'.
+        channel_input_dirs (dict[string, string]): containing the data channels and the directories
+                                                   where the training data was saved. When you run
+                                                   training, you can partition your training data
+                                                   into different logical 'channels'. Depending on
+                                                   your problem, some common channel ideas are:
+                                                   'train', 'test', 'evaluation' or 'images',
+                                                   'labels'.
 
             The format of channel_input_dir is as follows:
                 - `channel`(str) - the name of the channel defined in the input_data_config.
@@ -561,9 +575,10 @@ class TrainingEnv(_Env):
 
         self._hosts = hosts
 
-        # eth0 is the default network interface defined by SageMaker with VPC support and local mode.
-        # ethwe is the current network interface defined by SageMaker training, it will be changed
-        # to eth0 in the short future.
+        # eth0 is the default network interface defined by SageMaker with VPC support and
+        # local mode.
+        # ethwe is the current network interface defined by SageMaker training, it will be
+        # changed to eth0 in the short future.
         self._network_interface_name = resource_config.get("network_interface_name", "eth0")
 
         self._hyperparameters = split_result.excluded
@@ -620,13 +635,13 @@ class TrainingEnv(_Env):
 
     @property
     def additional_framework_parameters(self):  # type: () -> dict
-        """The dict of additional framework hyperparameters. All the hyperparameters prefixed with 'sagemaker_' but
-            not in SAGEMAKER_HYPERPARAMETERS will be included here.
+        """The dict of additional framework hyperparameters. All the hyperparameters prefixed with
+        'sagemaker_' but not in SAGEMAKER_HYPERPARAMETERS will be included here.
 
         Returns:
-            dict: additional framework hyperparameters, SageMaker Python SDK adds hyperparameters with a prefix
-            **sagemaker_** during training. These hyperparameters are framework independent settings and are not
-            defined by the user.
+            dict: additional framework hyperparameters, SageMaker Python SDK adds hyperparameters
+                  with a prefix **sagemaker_** during training. These hyperparameters are
+                  framework independent settings and are not defined by the user.
         """
         return self._additional_framework_parameters
 
@@ -700,12 +715,14 @@ class TrainingEnv(_Env):
     def channel_input_dirs(self):  # type: () -> dict
         """A dict[str, str] containing the data channels and the directories where the training
         data was saved.
-        When you run training, you can partition your training data into different logical "channels".
+        When you run training, you can partition your training data into different logical
+        "channels".
         Depending on your problem, some common channel ideas are: "train", "test", "evaluation"
             or "images',"labels".
         The format of channel_input_dir is as follows:
             - `channel`[key](str) - the name of the channel defined in the input_data_config.
-            - `training data path`[value](str) - the path to the directory where the training data is saved.
+            - `training data path`[value](str) - the path to the directory where the training
+                                                 data is saved.
         Returns:
             dict[str, str] with the information about the channels.
         """
@@ -732,15 +749,17 @@ class TrainingEnv(_Env):
 
     @property
     def input_config_dir(self):  # type: () -> str
-        """The directory where standard SageMaker configuration files are located, e.g. /opt/ml/input/config/.
+        """The directory where standard SageMaker configuration files are located, e.g.
+        /opt/ml/input/config/.
         SageMaker training creates the following files in this folder when training starts:
-            - `hyperparameters.json`: Amazon SageMaker makes the hyperparameters in a CreateTrainingJob
-                request available in this file.
-            - `inputdataconfig.json`: You specify data channel information in the InputDataConfig parameter
-                in a CreateTrainingJob request. Amazon SageMaker makes this information available
-                in this file.
-            - `resourceconfig.json`: name of the current host and all host containers in the training
-        More information about this files can be find here:
+            - `hyperparameters.json`: Amazon SageMaker makes the hyperparameters in a
+                                      CreateTrainingJob request available in this file.
+            - `inputdataconfig.json`: You specify data channel information in the
+                                      InputDataConfig parameter in a CreateTrainingJob request.
+                                      Amazon SageMaker makes this information available in this
+                                      file.
+            - `resourceconfig.json`: name of the current host and all host containers in the
+                                     training More information about this files can be find here:
             https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
         Returns:
             str: the path of the input directory, e.g. /opt/ml/input/config/
@@ -749,7 +768,8 @@ class TrainingEnv(_Env):
 
     @property
     def output_dir(self):  # type: () -> str
-        """The directory where training success/failure indications will be written, e.g. /opt/ml/output.
+        """The directory where training success/failure indications will be written,
+        e.g. /opt/ml/output.
         To save non-model artifacts check `output_data_dir`.
         Returns:
             str: the path to the output directory, e.g. /opt/ml/output/.
@@ -769,10 +789,11 @@ class TrainingEnv(_Env):
     def resource_config(self):  # type: () -> dict
         """A dictionary with the contents from /opt/ml/input/config/resourceconfig.json.
                 It has the following keys:
-                    - current_host: The name of the current container on the container network.
-                        For example, 'algo-1'.
-                    -  hosts: The list of names of all containers on the container network, sorted lexicographically.
-                        For example, `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
+                    - current_host: The name of the current container on the container
+                                    network. For example, 'algo-1'.
+                    -  hosts: The list of names of all containers on the container network,
+                              sorted lexicographically. For example,
+                              `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
                 Returns:
                     dict[str, str or list(str)]
         """
@@ -781,8 +802,8 @@ class TrainingEnv(_Env):
     @property
     def input_data_config(self):  # type: () -> dict
         """A dictionary with the contents from /opt/ml/input/config/inputdataconfig.json.
-                For example, suppose that you specify three data channels (train, evaluation, and validation) in
-                your request. This dictionary will contain:
+                For example, suppose that you specify three data channels (train,
+                evaluation, and validation) in your request. This dictionary will contain:
                 ```{"train": {
                         "ContentType":  "trainingContentType",
                         "TrainingInputMode": "File",
@@ -810,8 +831,8 @@ class TrainingEnv(_Env):
 
     @property
     def output_data_dir(self):  # type: () -> str
-        """The dir to write non-model training artifacts (e.g. evaluation results) which will be retained
-        by SageMaker, e.g. /opt/ml/output/data/{current_host}.
+        """The dir to write non-model training artifacts (e.g. evaluation results) which will be
+        retained by SageMaker, e.g. /opt/ml/output/data/{current_host}.
         As your algorithm runs in a container, it generates output including the status of the
         training job and model and output artifacts. Your algorithm should write this information
         to the this directory.
@@ -839,10 +860,11 @@ class TrainingEnv(_Env):
 
 
 class ServingEnv(_Env):
-    """Provides access to aspects of the serving environment relevant to serving containers, including
-       system characteristics, environment variables and configuration settings.
+    """Provides access to aspects of the serving environment relevant to serving containers,
+    including system characteristics, environment variables and configuration settings.
 
-       The ServingEnv is a read-only snapshot of the container environment. It does not contain any form of state.
+       The ServingEnv is a read-only snapshot of the container environment. It does not contain any
+       form of state.
 
        It is a dictionary like object, allowing any builtin function that works with dictionary.
 
@@ -864,8 +886,8 @@ class ServingEnv(_Env):
                 as specified in the user-supplied SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT environment
                 variable. Otherwise, returns 'application/json' by default.
                 For example: application/json
-            http_port (str): Port that SageMaker will use to handle invocations and pings against the
-                running Docker container. Default is 8080. For example: 8080
+            http_port (str): Port that SageMaker will use to handle invocations and pings against
+                             the running Docker container. Default is 8080. For example: 8080
             safe_port_range (str): HTTP port range that can be used by customers to avoid collisions
                 with the HTTP port specified by SageMaker for handling pings and invocations.
                 For example: 1111-2222
@@ -899,9 +921,11 @@ class ServingEnv(_Env):
     @property
     def model_server_timeout(self):  # type: () -> int
         """Returns:
-            int: Timeout in seconds for the model server. This is passed over to gunicorn, from the docs:
-                Workers silent for more than this many seconds are killed and restarted. Our default value is 60.
-                If ``use_nginx`` is True, then this same value will be used for nginx's proxy_read_timeout."""
+            int: Timeout in seconds for the model server. This is passed over to gunicorn,
+                 from the docs:
+                 Workers silent for more than this many seconds are killed and restarted.
+                 Our default value is 60. If ``use_nginx`` is True, then this same value
+                 will be used for nginx's proxy_read_timeout."""
         return self._model_server_timeout
 
     @property
@@ -920,22 +944,24 @@ class ServingEnv(_Env):
     @property
     def default_accept(self):  # type: () -> str
         """Returns:
-            str: The desired MIME type of the inference in the response. For example: application/json.
+            str: The desired MIME type of the inference in the response. For example:
+                 application/json.
                 Default: application/json"""
         return self._default_accept
 
     @property
     def http_port(self):  # type: () -> str
         """Returns:
-            str: HTTP port that SageMaker will use to handle invocations and pings against the running
-                Docker container. Default is 8080. For example: 8080"""
+            str: HTTP port that SageMaker will use to handle invocations and pings against
+                 the running Docker container. Default is 8080. For example: 8080"""
         return self._http_port
 
     @property
     def safe_port_range(self):  # type: () -> str
         """Returns:
-            str: HTTP port range that can be used by customers to avoid collisions with the HTTP port
-                specified by SageMaker for handling pings and invocations. For example: 1111-2222"""
+            str: HTTP port range that can be used by customers to avoid collisions with the
+                 HTTP port specified by SageMaker for handling pings and invocations.
+                 For example: 1111-2222"""
         return self._safe_port_range
 
 
