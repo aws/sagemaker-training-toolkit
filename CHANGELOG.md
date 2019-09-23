@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.7 (2019-09-23)
+
+### Bug fixes and other changes
+
+ * Add Pylint to development process
+
 ## v2.5.6 (2019-09-19)
 
 ### Bug fixes and other changes
