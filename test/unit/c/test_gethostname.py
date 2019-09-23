@@ -45,6 +45,10 @@ def opt_ml_input_config():
         [{"current_host": "algo-1-thse"}, "algo-1-thse"],
     ],
 )
+@pytest.mark.xfail(
+    os.environ.get("IS_CODEBUILD_IMAGE") != "true",
+    reason="Needs root permissions to create /opt/ml when run locally.",
+)
 def test_gethostname_resource_config_set(content, value, opt_ml_input_config):
     with open("/opt/ml/input/config/resourceconfig.json", "w") as f:
         json.dump(content, f)
@@ -52,6 +56,10 @@ def test_gethostname_resource_config_set(content, value, opt_ml_input_config):
     assert gethostname.call(30)
 
 
+@pytest.mark.xfail(
+    os.environ.get("IS_CODEBUILD_IMAGE") != "true",
+    reason="Needs root permissions to create /opt/ml when run locally.",
+)
 def test_gethostname_with_env_not_set(opt_ml_input_config):
     py_cmd = "import gethostname\nassert gethostname.call(30) == 'algo-9'"
 
