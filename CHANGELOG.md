@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.8 (2019-09-24)
+
+### Bug fixes and other changes
+
+ * Mark gethostname tests as xfail if run locally
+
 ## v2.5.7 (2019-09-23)
 
 ### Bug fixes and other changes
