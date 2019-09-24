@@ -35,13 +35,14 @@ class MockSSHClient(MagicMock):
         self.connect = MagicMock(side_effect=[does_not_connect, connect, does_not_connect])
 
 
+@patch("os.path.exists")
 @patch("time.sleep")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("psutil.wait_procs")
 @patch("psutil.process_iter")
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
-def test_mpi_worker_run(popen, policy, process_iter, wait_procs, ssh_client, sleep):
+def test_mpi_worker_run(popen, policy, process_iter, wait_procs, ssh_client, sleep, path_exists):
 
     process = MagicMock(info={"name": "orted"})
     process_iter.side_effect = lambda attrs: [process]
@@ -62,11 +63,13 @@ def test_mpi_worker_run(popen, policy, process_iter, wait_procs, ssh_client, sle
     wait_procs.assert_called_with([process])
 
     popen.assert_called_with(["/usr/sbin/sshd", "-D"])
+    path_exists.assert_called_with("/usr/sbin/sshd")
 
 
+@patch("os.path.exists")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("subprocess.Popen")
-def test_mpi_worker_run_no_wait(popen, ssh_client):
+def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists):
     worker = _mpi.WorkerRunner(
         user_entry_point="train.sh",
         args=["-v", "--lr", "35"],
@@ -79,13 +82,15 @@ def test_mpi_worker_run_no_wait(popen, ssh_client):
     ssh_client.assert_not_called()
 
     popen.assert_called_with(["/usr/sbin/sshd", "-D"])
+    path_exists.assert_called_with("/usr/sbin/sshd")
 
 
+@patch("os.path.exists")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
 @patch("sagemaker_containers.training_env")
-def test_mpi_master_run(training_env, popen, policy, ssh_client):
+def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
     with patch.dict(os.environ, clear=True):
 
         master = _mpi.MasterRunner(
@@ -165,14 +170,18 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client):
         )
 
         assert process == popen()
+        path_exists.assert_called_with("/usr/sbin/sshd")
 
 
+@patch("os.path.exists")
 @patch("sagemaker_containers._process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
 @patch("sagemaker_containers.training_env")
-def test_mpi_master_run_python(training_env, popen, policy, ssh_client, python_executable):
+def test_mpi_master_run_python(
+    training_env, popen, policy, ssh_client, python_executable, path_exists
+):
     with patch.dict(os.environ, clear=True):
 
         master = _mpi.MasterRunner(
@@ -256,3 +265,4 @@ def test_mpi_master_run_python(training_env, popen, policy, ssh_client, python_e
         )
 
         assert process == popen()
+        path_exists.assert_called_with("/usr/sbin/sshd")
