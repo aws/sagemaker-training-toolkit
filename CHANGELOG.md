@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.9 (2019-09-25)
+
+### Bug fixes and other changes
+
+ * Patch os.path.exists for sshd
+
 ## v2.5.8 (2019-09-24)
 
 ### Bug fixes and other changes
