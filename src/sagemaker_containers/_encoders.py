@@ -13,6 +13,7 @@
 """Placeholder docstring"""
 from __future__ import absolute_import
 
+import csv
 import json
 from typing import Iterable
 
@@ -104,8 +105,19 @@ def csv_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
     Returns:
         (np.array): numpy array
     """
-    stream = StringIO(string_like)
-    return np.genfromtxt(stream, dtype=dtype, delimiter=",")
+    try:
+        stream = StringIO(string_like)
+        reader = csv.reader(stream, delimiter=",", quotechar='"', doublequote=True, strict=True)
+        array = np.array([row for row in reader]).squeeze()
+        array = array.astype(dtype)
+    except ValueError as e:
+        if dtype is not None:
+            raise _errors.ClientError(
+                "Error while writing numpy array: {}. dtype is: {}".format(e, dtype)
+            )
+    except Exception as e:
+        raise _errors.ClientError("Error while decoding csv: {}".format(e))
+    return array
 
 
 def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) -> str
@@ -120,9 +132,19 @@ def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) ->
     Returns:
         (str): object serialized to CSV
     """
-    stream = StringIO()
-    np.savetxt(stream, array_like, delimiter=",", fmt="%s")
-    return stream.getvalue()
+    array = np.array(array_like)
+    if len(array.shape) == 1:
+        array = np.reshape(array, (array.shape[0], 1))  # pylint: disable=unsubscriptable-object
+
+    try:
+        stream = StringIO()
+        writer = csv.writer(
+            stream, lineterminator="\n", delimiter=",", quotechar='"', doublequote=True, strict=True
+        )
+        writer.writerows(array)
+        return stream.getvalue()
+    except csv.Error as e:
+        raise _errors.ClientError("Error while encoding csv: {}".format(e))
 
 
 _encoders_map = {

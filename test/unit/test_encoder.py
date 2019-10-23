@@ -94,11 +94,19 @@ def test_array_to_json_exception():
         ("42\n6\n9\n", np.array([42, 6, 9])),
         ("42.0\n6.0\n9.0\n", np.array([42.0, 6.0, 9.0])),
         ("42\n6\n9\n", np.array([42, 6, 9])),
+        ('"False,"\n"True."\n"False,"\n', np.array(["False,", "True.", "False,"])),
+        ('aaa\n"b""bb"\nccc\n', np.array(["aaa", 'b"bb', "ccc"])),
+        ('"a\nb"\nc\n', np.array(["a\nb", "c"])),
     ],
 )
 def test_csv_to_numpy(target, expected):
     actual = _encoders.csv_to_numpy(target)
     np.testing.assert_equal(actual, expected)
+
+
+def test_csv_to_numpy_error():
+    with pytest.raises(_errors.ClientError):
+        _encoders.csv_to_numpy("a\n", dtype="float")
 
 
 @pytest.mark.parametrize(
@@ -107,6 +115,9 @@ def test_csv_to_numpy(target, expected):
         ([42, 6, 9], "42\n6\n9\n"),
         ([42.0, 6.0, 9.0], "42.0\n6.0\n9.0\n"),
         (["42", "6", "9"], "42\n6\n9\n"),
+        (["False,", "True.", "False,"], '"False,"\nTrue.\n"False,"\n'),
+        (["aaa", 'b"bb', "ccc"], 'aaa\n"b""bb"\nccc\n'),
+        (["a\nb", "c"], '"a\nb"\nc\n'),
     ],
 )
 def test_array_to_csv(target, expected):
