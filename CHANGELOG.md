@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.10 (2019-10-24)
+
+### Bug fixes and other changes
+
+ * use built-in csv library in csv encoding/decoding for correct quoted string handling.
+
 ## v2.5.9 (2019-09-25)
 
 ### Bug fixes and other changes
