@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.11 (2019-10-29)
+
+### Bug fixes and other changes
+
+ * stream stderr even when capture_error is True
+
 ## v2.5.10 (2019-10-24)
 
 ### Bug fixes and other changes
