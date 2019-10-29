@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -67,20 +67,28 @@ def test_run_bash(log, popen, entry_point_type_script):
         _process.ProcessRunner("launcher.sh", ["--lr", "13"], {}).run()
 
     cmd = ["/bin/sh", "-c", "./launcher.sh --lr 13"]
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stderr=None)
+    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stdout=None, stderr=None)
     log.assert_called_with(cmd, {})
 
 
 @patch("subprocess.Popen")
 @patch("sagemaker_containers._logging.log_script_invocation")
-def test_run_python(log, popen, entry_point_type_script):
-    popen().communicate.return_value = (None, 0)
+def test_run_python_capture_error(log, popen, entry_point_type_script):
+    mock_process = MagicMock()
+    mock_process.stdout.readline.return_value = b"stdout"
+    mock_process.stderr.readline.return_value = b"stderr"
+    mock_process.stdout.read.return_value = b"stdout"
+    mock_process.stderr.read.return_value = b"stderr"
+    mock_process.poll.return_value = 1
+    popen.return_value = mock_process
 
     with pytest.raises(_errors.ExecuteUserScriptError):
         _process.ProcessRunner("launcher.py", ["--lr", "13"], {}).run(capture_error=True)
 
     cmd = [sys.executable, "launcher.py", "--lr", "13"]
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stderr=subprocess.PIPE)
+    popen.assert_called_with(
+        cmd, cwd=_env.code_dir, env=os.environ, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     log.assert_called_with(cmd, {})
 
 
@@ -91,7 +99,7 @@ def test_run_module(log, popen, entry_point_type_module):
         _process.ProcessRunner("module.py", ["--lr", "13"], {}).run()
 
     cmd = [sys.executable, "-m", "module", "--lr", "13"]
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stderr=None)
+    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stdout=None, stderr=None)
     log.assert_called_with(cmd, {})
 
 
