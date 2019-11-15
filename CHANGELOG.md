@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.12 (2019-11-15)
+
+### Bug fixes and other changes
+
+ * Adding support for encoding to recordio
+
 ## v2.5.11 (2019-10-29)
 
 ### Bug fixes and other changes
