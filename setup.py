@@ -44,6 +44,7 @@ required_packages = [
     "werkzeug==0.15.5",
     "paramiko==2.4.2",
     "psutil==5.4.8",
+    "protobuf>=3.1",
 ]
 
 # enum is introduced in Python 3.4. Installing enum back port

@@ -14,13 +14,19 @@
 from __future__ import absolute_import
 
 import csv
+import io
 import json
 from typing import Iterable
 
 import numpy as np
+from scipy.sparse import issparse
 from six import BytesIO, StringIO
 
 from sagemaker_containers import _content_types, _errors
+from sagemaker_containers._recordio import (
+    _write_numpy_to_dense_tensor,
+    _write_spmatrix_to_sparse_tensor,
+)
 
 
 def array_to_npy(array_like):  # type: (np.array or Iterable or int or float) -> object
@@ -145,6 +151,36 @@ def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) ->
         return stream.getvalue()
     except csv.Error as e:
         raise _errors.ClientError("Error while encoding csv: {}".format(e))
+
+
+def array_to_recordio_protobuf(array_like, labels=None):
+    """Convert an array like object to recordio-protobuf format.
+
+    To understand better what an array like object is see:
+    https://docs.scipy.org/doc/numpy/user/basics.creation.html#converting-python-array-like-objects-to-numpy-arrays
+
+     Args:
+        array_like (np.array or scipy.sparse.csr_matrix): array like object to be
+                                                          converted to recordio-protobuf.
+        labels (np.array or scipy.sparse.csr_matrix): array like object representing
+                                                      the labels to be encoded
+
+    Returns:
+        buffer: bytes buffer recordio-protobuf
+    """
+
+    if len(array_like.shape) == 1:
+        array_like = array_like.reshape(1, array_like.shape[0])
+    assert len(array_like.shape) == 2, "Expecting a 1 or 2 dimensional array"
+
+    buffer = io.BytesIO()
+
+    if issparse(array_like):
+        _write_spmatrix_to_sparse_tensor(buffer, array_like, labels)
+    else:
+        _write_numpy_to_dense_tensor(buffer, array_like, labels)
+    buffer.seek(0)
+    return buffer
 
 
 _encoders_map = {

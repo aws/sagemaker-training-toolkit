@@ -10,12 +10,17 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import itertools
+
 from mock import Mock, patch
 import numpy as np
 import pytest
+from scipy import sparse
 from six import BytesIO
 
 from sagemaker_containers import _content_types, _encoders, _errors
+from sagemaker_containers._recordio import _read_recordio
+from sagemaker_containers.record_pb2 import Record
 
 
 @pytest.mark.parametrize(
@@ -158,3 +163,57 @@ def test_decode(content_type):
         _encoders.decode(42, content_type)
 
         decoder.assert_called_once_with(42)
+
+
+def test_array_to_recordio_dense():
+    array_data = [[1.0, 2.0, 3.0], [10.0, 20.0, 30.0]]
+    buf = _encoders.array_to_recordio_protobuf(np.array(array_data))
+    for record_data, expected in zip(_read_recordio(buf), array_data):
+        record = Record()
+        record.ParseFromString(record_data)
+        assert record.features["values"].float64_tensor.values == expected
+
+
+def test_sparse_int_write_spmatrix_to_sparse_tensor():
+    n = 4
+    array_data = [[1.0, 2.0], [10.0, 30.0], [100.0, 200.0, 300.0, 400.0], [1000.0, 2000.0, 3000.0]]
+    keys_data = [[0, 1], [1, 2], [0, 1, 2, 3], [0, 2, 3]]
+
+    flatten_data = list(itertools.chain.from_iterable(array_data))
+    y_indices = list(itertools.chain.from_iterable(keys_data))
+    x_indices = [[i] * len(keys_data[i]) for i in range(len(keys_data))]
+    x_indices = list(itertools.chain.from_iterable(x_indices))
+
+    array = sparse.coo_matrix((flatten_data, (x_indices, y_indices)), dtype="int")
+    buf = _encoders.array_to_recordio_protobuf(array)
+
+    for record_data, expected_data, expected_keys in zip(
+        _read_recordio(buf), array_data, keys_data
+    ):
+        record = Record()
+        record.ParseFromString(record_data)
+        assert record.features["values"].int32_tensor.values == expected_data
+        assert record.features["values"].int32_tensor.keys == expected_keys
+        assert record.features["values"].int32_tensor.shape == [n]
+
+
+def test_sparse_float32_write_spmatrix_to_sparse_tensor():
+    n = 4
+    array_data = [[1.0, 2.0], [10.0, 30.0], [100.0, 200.0, 300.0, 400.0], [1000.0, 2000.0, 3000.0]]
+    keys_data = [[0, 1], [1, 2], [0, 1, 2, 3], [0, 2, 3]]
+
+    flatten_data = list(itertools.chain.from_iterable(array_data))
+    y_indices = list(itertools.chain.from_iterable(keys_data))
+    x_indices = [[i] * len(keys_data[i]) for i in range(len(keys_data))]
+    x_indices = list(itertools.chain.from_iterable(x_indices))
+
+    array = sparse.coo_matrix((flatten_data, (x_indices, y_indices)), dtype="float32")
+    buf = _encoders.array_to_recordio_protobuf(array)
+    for record_data, expected_data, expected_keys in zip(
+        _read_recordio(buf), array_data, keys_data
+    ):
+        record = Record()
+        record.ParseFromString(record_data)
+        assert record.features["values"].float32_tensor.values == expected_data
+        assert record.features["values"].float32_tensor.keys == expected_keys
+        assert record.features["values"].float32_tensor.shape == [n]
