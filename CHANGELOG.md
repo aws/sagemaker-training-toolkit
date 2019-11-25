@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.6.0 (2019-11-25)
+
+### Features
+
+ * adding support for execution_parameters endpoint for serving
+
 ## v2.5.12 (2019-11-15)
 
 ### Bug fixes and other changes
