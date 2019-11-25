@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import json
 import warnings
 
 from mock import MagicMock, patch, PropertyMock
@@ -90,3 +91,28 @@ def test_response_accept_deprecated():
             client.post("/invocations")
             assert len(w) == 1
             assert issubclass(w[0].category, DeprecationWarning)
+
+
+def test_no_execution_parameters_fn():
+    app = _worker.Worker(transform_fn=MagicMock(), module_name="test_module")
+    with app.test_client() as client:
+        response = client.get("/execution_parameters")
+        assert response.status_code == http_client.NOT_FOUND
+
+
+def test_user_execution_parameters_fn():
+    expected_json = {"some-json": 1}
+    expected_response_string = json.dumps(expected_json)
+    test_execution_parameters_fn = MagicMock(return_value=expected_response_string)
+
+    app = _worker.Worker(
+        transform_fn=MagicMock(),
+        module_name="test_module",
+        execution_parameters_fn=test_execution_parameters_fn,
+    )
+
+    with app.test_client() as client:
+        response = client.get("/execution_parameters")
+        assert response.status_code == http_client.OK
+        assert response.get_data().decode("utf-8") == expected_response_string
+        assert json.loads(response.get_data().decode("utf-8")) == expected_json

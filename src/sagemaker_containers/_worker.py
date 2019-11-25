@@ -51,7 +51,14 @@ def default_healthcheck_fn():  # type: () -> Response
 class Worker(flask.Flask):
     """Flask application that receives predictions from a Transformer ready for inferences."""
 
-    def __init__(self, transform_fn, initialize_fn=None, module_name=None, healthcheck_fn=None):
+    def __init__(
+        self,
+        transform_fn,
+        initialize_fn=None,
+        module_name=None,
+        healthcheck_fn=None,
+        execution_parameters_fn=None,
+    ):
         """Creates and Flask application from a transformer.
 
         Args:
@@ -71,6 +78,10 @@ class Worker(flask.Flask):
                                                  will use ping as the default healthcheck call.
                                                  Signature:
 
+            execution_parameters_fn (function, optional): function that will be used for responding
+                                                          to execution_parameters calls. If not
+                                                          specified, execution-parameters endpoint
+                                                          will not be supported.
                 * Returns:
                     `flask.app.Response`: response object with new healthcheck response.
 
@@ -93,6 +104,13 @@ class Worker(flask.Flask):
         self.add_url_rule(
             rule="/ping", endpoint="ping", view_func=healthcheck_fn or default_healthcheck_fn
         )
+        if execution_parameters_fn:
+            self.add_url_rule(
+                rule="/execution_parameters",
+                endpoint="execution_parameters",
+                view_func=execution_parameters_fn,
+                methods=["GET"],
+            )
 
         self.request_class = Request
 
