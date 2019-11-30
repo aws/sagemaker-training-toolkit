@@ -96,7 +96,7 @@ def test_response_accept_deprecated():
 def test_no_execution_parameters_fn():
     app = _worker.Worker(transform_fn=MagicMock(), module_name="test_module")
     with app.test_client() as client:
-        response = client.get("/execution_parameters")
+        response = client.get("/execution-parameters")
         assert response.status_code == http_client.NOT_FOUND
 
 
@@ -112,7 +112,7 @@ def test_user_execution_parameters_fn():
     )
 
     with app.test_client() as client:
-        response = client.get("/execution_parameters")
+        response = client.get("/execution-parameters")
         assert response.status_code == http_client.OK
         assert response.get_data().decode("utf-8") == expected_response_string
         assert json.loads(response.get_data().decode("utf-8")) == expected_json
