@@ -10,6 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import io
 import itertools
 
 from mock import Mock, patch
@@ -168,7 +169,9 @@ def test_decode(content_type):
 def test_array_to_recordio_dense():
     array_data = [[1.0, 2.0, 3.0], [10.0, 20.0, 30.0]]
     buf = _encoders.array_to_recordio_protobuf(np.array(array_data))
-    for record_data, expected in zip(_read_recordio(buf), array_data):
+    stream = io.BytesIO(buf)
+
+    for record_data, expected in zip(_read_recordio(stream), array_data):
         record = Record()
         record.ParseFromString(record_data)
         assert record.features["values"].float64_tensor.values == expected
@@ -186,9 +189,10 @@ def test_sparse_int_write_spmatrix_to_sparse_tensor():
 
     array = sparse.coo_matrix((flatten_data, (x_indices, y_indices)), dtype="int")
     buf = _encoders.array_to_recordio_protobuf(array)
+    stream = io.BytesIO(buf)
 
     for record_data, expected_data, expected_keys in zip(
-        _read_recordio(buf), array_data, keys_data
+        _read_recordio(stream), array_data, keys_data
     ):
         record = Record()
         record.ParseFromString(record_data)
@@ -209,8 +213,10 @@ def test_sparse_float32_write_spmatrix_to_sparse_tensor():
 
     array = sparse.coo_matrix((flatten_data, (x_indices, y_indices)), dtype="float32")
     buf = _encoders.array_to_recordio_protobuf(array)
+    stream = io.BytesIO(buf)
+
     for record_data, expected_data, expected_keys in zip(
-        _read_recordio(buf), array_data, keys_data
+        _read_recordio(stream), array_data, keys_data
     ):
         record = Record()
         record.ParseFromString(record_data)

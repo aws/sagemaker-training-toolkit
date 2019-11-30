@@ -180,7 +180,7 @@ def array_to_recordio_protobuf(array_like, labels=None):
     else:
         _write_numpy_to_dense_tensor(buffer, array_like, labels)
     buffer.seek(0)
-    return buffer
+    return buffer.getvalue()
 
 
 _encoders_map = {
