@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.6.1 (2019-11-30)
+
+### Bug fixes and other changes
+
+ * bug-fix: array_to_recordio_protobuf should return byte buffer instead of Stream
+ * bug-fix: Typo in the execution-parameters routing rule
+
 ## v2.6.0 (2019-11-25)
 
 ### Features
