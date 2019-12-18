@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.6.2 (2019-12-18)
+
+### Bug fixes and other changes
+
+ * Add `scipy` to requried packages
+
 ## v2.6.1 (2019-11-30)
 
 ### Bug fixes and other changes
