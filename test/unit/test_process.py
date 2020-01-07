@@ -19,7 +19,7 @@ import sys
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_containers import _env, _errors, _process
+from sagemaker_training_toolkit import _env, _errors, _process
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def test_check_error(popen):
 
 
 @patch("subprocess.Popen")
-@patch("sagemaker_containers._logging.log_script_invocation")
+@patch("sagemaker_training_toolkit._logging.log_script_invocation")
 def test_run_bash(log, popen, entry_point_type_script):
     with pytest.raises(_errors.ExecuteUserScriptError):
         _process.ProcessRunner("launcher.sh", ["--lr", "13"], {}).run()
@@ -72,7 +72,7 @@ def test_run_bash(log, popen, entry_point_type_script):
 
 
 @patch("subprocess.Popen")
-@patch("sagemaker_containers._logging.log_script_invocation")
+@patch("sagemaker_training_toolkit._logging.log_script_invocation")
 def test_run_python_capture_error(log, popen, entry_point_type_script):
     mock_process = MagicMock()
     mock_process.stdout.readline.return_value = b"stdout"
@@ -93,7 +93,7 @@ def test_run_python_capture_error(log, popen, entry_point_type_script):
 
 
 @patch("subprocess.Popen")
-@patch("sagemaker_containers._logging.log_script_invocation")
+@patch("sagemaker_training_toolkit._logging.log_script_invocation")
 def test_run_module(log, popen, entry_point_type_module):
     with pytest.raises(_errors.ExecuteUserScriptError):
         _process.ProcessRunner("module.py", ["--lr", "13"], {}).run()
@@ -103,7 +103,7 @@ def test_run_module(log, popen, entry_point_type_module):
     log.assert_called_with(cmd, {})
 
 
-@patch("sagemaker_containers.training_env", lambda: {})
+@patch("sagemaker_training_toolkit.training_env", lambda: {})
 def test_run_error():
     with pytest.raises(_errors.ExecuteUserScriptError) as e:
         _process.ProcessRunner("wrong module", [], {}).run()

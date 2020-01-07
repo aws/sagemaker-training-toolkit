@@ -21,7 +21,7 @@ import socket
 from mock import patch
 import pytest
 
-from sagemaker_containers import _env
+from sagemaker_training_toolkit import _env
 
 logging.getLogger("boto3").setLevel(logging.INFO)
 logging.getLogger("s3transfer").setLevel(logging.INFO)
@@ -61,5 +61,5 @@ def patch_exit_process():
         if error_code:
             raise ValueError(error_code)
 
-    with patch("sagemaker_containers._trainer._exit_processes", _exit):
+    with patch("sagemaker_training_toolkit._trainer._exit_processes", _exit):
         yield _exit

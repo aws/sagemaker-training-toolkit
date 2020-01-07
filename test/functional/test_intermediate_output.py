@@ -19,7 +19,7 @@ import boto3
 from botocore.exceptions import ClientError
 import numpy as np
 
-from sagemaker_containers import _env, _files, _intermediate_output
+from sagemaker_training_toolkit import _env, _files, _intermediate_output
 import test
 
 intermediate_path = _env.output_intermediate_dir

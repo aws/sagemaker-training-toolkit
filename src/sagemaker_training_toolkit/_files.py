@@ -23,7 +23,7 @@ import tempfile
 import boto3
 from six.moves.urllib import parse
 
-from sagemaker_containers import _env, _params
+from sagemaker_training_toolkit import _env, _params
 
 
 def write_success_file():  # type: () -> None

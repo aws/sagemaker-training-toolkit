@@ -17,7 +17,7 @@ import sys
 import numpy as np
 from scipy.sparse import issparse
 
-from sagemaker_containers.record_pb2 import Record
+from sagemaker_training_toolkit.record_pb2 import Record
 
 
 def _resolve_type(dtype):

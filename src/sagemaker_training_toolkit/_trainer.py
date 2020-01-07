@@ -17,8 +17,8 @@ import importlib
 import os
 import traceback
 
-import sagemaker_containers
-from sagemaker_containers import (
+import sagemaker_training_toolkit
+from sagemaker_training_toolkit import (
     _errors,
     _files,
     _intermediate_output,
@@ -62,7 +62,7 @@ def train():
     intermediate_sync = None
     exit_code = SUCCESS_CODE
     try:
-        env = sagemaker_containers.training_env()
+        env = sagemaker_training_toolkit.training_env()
 
         region = os.environ.get("AWS_REGION", os.environ.get(_params.REGION_NAME_ENV))
         intermediate_sync = _intermediate_output.start_sync(env.sagemaker_s3_output(), region)

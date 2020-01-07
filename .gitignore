@@ -7,7 +7,7 @@ dist/
 .pytest_cache/
 .tox/
 htmlcov
-**/sagemaker_containers.egg-info
+**/sagemaker_training_toolkit.egg-info
 **/*.pyc
 .mypy_cache/**
 .DS_Store

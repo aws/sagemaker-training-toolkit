@@ -20,7 +20,7 @@ from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from retrying import retry
 
-from sagemaker_containers import _entry_point_type, _env, _files, _modules, _runner
+from sagemaker_training_toolkit import _entry_point_type, _env, _files, _modules, _runner
 
 
 def run(
@@ -44,10 +44,10 @@ def run(
         - Any other: executes the command as >>> env_vars /bin/sh -c ./module_name + args
 
     Example:
-         >>>import sagemaker_containers
-         >>>from sagemaker_containers.beta.framework import entry_point
+         >>>import sagemaker_training_toolkit
+         >>>from sagemaker_training_toolkit.beta.framework import entry_point
 
-         >>>env = sagemaker_containers.training_env()
+         >>>env = sagemaker_training_toolkit.training_env()
          {'channel-input-dirs': {'training': '/opt/ml/input/training'},
           'model_dir': '/opt/ml/model', ...}
 
@@ -76,13 +76,13 @@ def run(
             (default: True).
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
-        runner (sagemaker_containers.beta.framework.runner.RunnerType): the type of runner object to
-            be created (default: sagemaker_containers.beta.framework.runner.ProcessRunnerType).
+        runner (sagemaker_training_toolkit.beta.framework.runner.RunnerType): the type of runner object to
+            be created (default: sagemaker_training_toolkit.beta.framework.runner.ProcessRunnerType).
         extra_opts (dict): Additional options for running the entry point (default: None).
             Currently, this only applies for MPI.
 
     Returns:
-        sagemaker_containers.beta.framework.process.ProcessRunner: the runner object responsible for
+        sagemaker_training_toolkit.beta.framework.process.ProcessRunner: the runner object responsible for
             executing the entry point.
     """
     env_vars = env_vars or {}

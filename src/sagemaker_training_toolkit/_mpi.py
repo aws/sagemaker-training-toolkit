@@ -23,7 +23,7 @@ import paramiko
 import psutil
 
 import gethostname
-from sagemaker_containers import _logging, _process, _timeout
+from sagemaker_training_toolkit import _logging, _process, _timeout
 
 logger = _logging.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)

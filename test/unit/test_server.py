@@ -15,7 +15,7 @@ import os
 from mock import call, Mock, patch, PropertyMock
 import pytest
 
-from sagemaker_containers import _env, _server
+from sagemaker_training_toolkit import _env, _server
 
 
 FIRST_PORT = "1111"
@@ -26,7 +26,7 @@ SAFE_PORT_RANGE = "{}-{}".format(FIRST_PORT, LAST_PORT)
 @patch.object(_env.ServingEnv, "model_server_workers", PropertyMock(return_value=2))
 @patch.object(_env.ServingEnv, "model_server_timeout", PropertyMock(return_value=100))
 @patch.object(_env.ServingEnv, "use_nginx", PropertyMock(return_value=False))
-@patch("sagemaker_containers._env.num_gpus", lambda: 0)
+@patch("sagemaker_training_toolkit._env.num_gpus", lambda: 0)
 @patch("os.wait", lambda: (-1, 0))
 @patch("subprocess.Popen")
 @patch("sys.path", ["/opt/folder", "/lib/another/folder"])
@@ -62,11 +62,11 @@ def test_start_no_nginx(popen):
 @patch.object(_env.ServingEnv, "model_server_workers", PropertyMock(return_value=2))
 @patch.object(_env.ServingEnv, "model_server_timeout", PropertyMock(return_value=100))
 @patch.object(_env.ServingEnv, "use_nginx", PropertyMock(return_value=True))
-@patch("sagemaker_containers._env.num_gpus", lambda: 0)
-@patch("sagemaker_containers._server.nginx_config_file", "/tmp/nginx.conf")
-@patch("sagemaker_containers._server.nginx_config_template_file", "/tmp/nginx.conf.template")
-@patch("sagemaker_containers._files.read_file", lambda x: "random_string")
-@patch("sagemaker_containers._files.write_file", Mock())
+@patch("sagemaker_training_toolkit._env.num_gpus", lambda: 0)
+@patch("sagemaker_training_toolkit._server.nginx_config_file", "/tmp/nginx.conf")
+@patch("sagemaker_training_toolkit._server.nginx_config_template_file", "/tmp/nginx.conf.template")
+@patch("sagemaker_training_toolkit._files.read_file", lambda x: "random_string")
+@patch("sagemaker_training_toolkit._files.write_file", Mock())
 @patch("os.wait", lambda: (-1, 0))
 @patch("subprocess.Popen")
 @patch("sys.path", ["/opt/folder", "/lib/another/folder"])
@@ -126,17 +126,17 @@ def test_next_safe_port_less_than_range_exception():
 
 
 @patch(
-    "sagemaker_containers._files.read_file",
+    "sagemaker_training_toolkit._files.read_file",
     lambda x: "nginx_timeout=%NGINX_PROXY_READ_TIMEOUT%, nginx_port=%NGINX_HTTP_PORT%",
 )
-@patch("sagemaker_containers._server.nginx_config_template_file", "/tmp/nginx.conf.template")
+@patch("sagemaker_training_toolkit._server.nginx_config_template_file", "/tmp/nginx.conf.template")
 @patch.object(_env.ServingEnv, "model_server_timeout", PropertyMock(return_value=4567))
 @patch.object(_env.ServingEnv, "http_port", PropertyMock(return_value="1234"))
 def test_create_nginx_config(tmpdir):
     nginx_config_file = os.path.join(str(tmpdir), "nginx.conf")
     serving_env = _env.ServingEnv()
 
-    with patch("sagemaker_containers._server.nginx_config_file", nginx_config_file):
+    with patch("sagemaker_training_toolkit._server.nginx_config_file", nginx_config_file):
         _server._create_nginx_config(serving_env)
         assert os.path.exists(nginx_config_file)
         with open(nginx_config_file, "r") as f:

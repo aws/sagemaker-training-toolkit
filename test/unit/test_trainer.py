@@ -15,7 +15,7 @@ import os
 
 from mock import MagicMock, Mock, patch
 
-from sagemaker_containers import _errors, _runner, _trainer
+from sagemaker_training_toolkit import _errors, _runner, _trainer
 
 
 class TrainingEnv(Mock):
@@ -44,7 +44,7 @@ class ScriptTrainingEnv(TrainingEnv):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_containers.training_env", TrainingEnv)
+@patch("sagemaker_training_toolkit.training_env", TrainingEnv)
 def test_train(import_module):
     framework = Mock()
     import_module.return_value = framework
@@ -57,8 +57,8 @@ def test_train(import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_containers.training_env", TrainingEnv)
-@patch("sagemaker_containers._trainer._exit_processes")
+@patch("sagemaker_training_toolkit.training_env", TrainingEnv)
+@patch("sagemaker_training_toolkit._trainer._exit_processes")
 def test_train_with_success(_exit, import_module):
     def success():
         pass
@@ -74,8 +74,8 @@ def test_train_with_success(_exit, import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_containers.training_env", TrainingEnv)
-@patch("sagemaker_containers._trainer._exit_processes")
+@patch("sagemaker_training_toolkit.training_env", TrainingEnv)
+@patch("sagemaker_training_toolkit._trainer._exit_processes")
 def test_train_fails(_exit, import_module):
     def fail():
         raise OSError(os.errno.ENOENT, "No such file or directory")
@@ -91,8 +91,8 @@ def test_train_fails(_exit, import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_containers.training_env", TrainingEnv)
-@patch("sagemaker_containers._trainer._exit_processes")
+@patch("sagemaker_training_toolkit.training_env", TrainingEnv)
+@patch("sagemaker_training_toolkit._trainer._exit_processes")
 def test_train_fails_with_no_error_number(_exit, import_module):
     def fail():
         raise Exception("No errno defined.")
@@ -108,8 +108,8 @@ def test_train_fails_with_no_error_number(_exit, import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_containers.training_env", TrainingEnv)
-@patch("sagemaker_containers._trainer._exit_processes")
+@patch("sagemaker_training_toolkit.training_env", TrainingEnv)
+@patch("sagemaker_training_toolkit._trainer._exit_processes")
 def test_train_fails_with_invalid_error_number(_exit, import_module):
     class InvalidErrorNumberException(Exception):
         def __init__(self, *args, **kwargs):  # real signature unknown
@@ -129,8 +129,8 @@ def test_train_fails_with_invalid_error_number(_exit, import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_containers.training_env", TrainingEnv)
-@patch("sagemaker_containers._trainer._exit_processes")
+@patch("sagemaker_training_toolkit.training_env", TrainingEnv)
+@patch("sagemaker_training_toolkit._trainer._exit_processes")
 def test_train_with_client_error(_exit, import_module):
     def fail():
         raise _errors.ClientError(os.errno.ENOENT, "No such file or directory")
@@ -145,9 +145,9 @@ def test_train_with_client_error(_exit, import_module):
 
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
-@patch("sagemaker_containers.entry_point.run")
-@patch("sagemaker_containers.training_env", new_callable=ScriptTrainingEnv)
-@patch("sagemaker_containers._trainer._exit_processes")
+@patch("sagemaker_training_toolkit.entry_point.run")
+@patch("sagemaker_training_toolkit.training_env", new_callable=ScriptTrainingEnv)
+@patch("sagemaker_training_toolkit._trainer._exit_processes")
 def test_train_script(_exit, training_env, run):
     _trainer.train()
 
@@ -164,8 +164,8 @@ def test_train_script(_exit, training_env, run):
 
 
 @patch("importlib.import_module")
-@patch("sagemaker_containers._intermediate_output.start_sync")
-@patch("sagemaker_containers.training_env", TrainingEnvNoIntermediate)
+@patch("sagemaker_training_toolkit._intermediate_output.start_sync")
+@patch("sagemaker_training_toolkit.training_env", TrainingEnvNoIntermediate)
 def test_train_no_intermediate(start_intermediate_folder_sync, import_module):
     framework = Mock()
     import_module.return_value = framework

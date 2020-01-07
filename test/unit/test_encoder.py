@@ -19,9 +19,9 @@ import pytest
 from scipy import sparse
 from six import BytesIO
 
-from sagemaker_containers import _content_types, _encoders, _errors
-from sagemaker_containers._recordio import _read_recordio
-from sagemaker_containers.record_pb2 import Record
+from sagemaker_training_toolkit import _content_types, _encoders, _errors
+from sagemaker_training_toolkit._recordio import _read_recordio
+from sagemaker_training_toolkit.record_pb2 import Record
 
 
 @pytest.mark.parametrize(

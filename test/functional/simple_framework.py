@@ -14,12 +14,12 @@ from __future__ import absolute_import
 
 import os
 
-import sagemaker_containers
-from sagemaker_containers.beta.framework import functions, modules
+import sagemaker_training_toolkit
+from sagemaker_training_toolkit.beta.framework import functions, modules
 
 
 def train():
-    training_env = sagemaker_containers.training_env()
+    training_env = sagemaker_training_toolkit.training_env()
 
     script = modules.import_module(training_env.module_dir, training_env.module_name)
 

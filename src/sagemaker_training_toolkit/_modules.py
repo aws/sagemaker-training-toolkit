@@ -24,7 +24,7 @@ import warnings
 
 import six
 
-from sagemaker_containers import _env, _errors, _files, _logging, _process
+from sagemaker_training_toolkit import _env, _errors, _files, _logging, _process
 
 logger = _logging.get_logger()
 
@@ -124,7 +124,7 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
 def s3_download(url, dst):  # type: (str, str) -> None
     """Download a file from S3.
 
-    This method acts as an alias for :meth:`~sagemaker_containers.beta.framework.files.s3_download`
+    This method acts as an alias for :meth:`~sagemaker_training_toolkit.beta.framework.files.s3_download`
     for backward-compatibility purposes.
 
     Args:
@@ -143,7 +143,7 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
     into a module before installing it.
 
     This method is the predecessor of
-    :meth:`~sagemaker_containers.beta.framework.files.download_and_extract`
+    :meth:`~sagemaker_training_toolkit.beta.framework.files.download_and_extract`
     and has been kept for backward-compatibility purposes.
 
     Args:
@@ -198,10 +198,10 @@ def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
 
     Example:
 
-        >>>import sagemaker_containers
-        >>>from sagemaker_containers.beta.framework import mapping, modules
+        >>>import sagemaker_training_toolkit
+        >>>from sagemaker_training_toolkit.beta.framework import mapping, modules
 
-        >>>env = sagemaker_containers.training_env()
+        >>>env = sagemaker_training_toolkit.training_env()
         {'channel-input-dirs': {'training': '/opt/ml/input/training'},
          'model_dir': '/opt/ml/model', ...}
 

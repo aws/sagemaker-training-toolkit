@@ -28,7 +28,7 @@ def read_version():
 
 
 packages = setuptools.find_packages(where="src", exclude=("test",))
-packages.append("sagemaker_containers.etc")
+packages.append("sagemaker_training_toolkit.etc")
 
 required_packages = [
     "numpy",
@@ -54,26 +54,29 @@ if sys.version_info < (3, 4):
 
 gethostname = setuptools.Extension(
     "gethostname",
-    sources=["src/sagemaker_containers/c/gethostname.c", "src/sagemaker_containers/c/jsmn.c"],
-    include_dirs=["src/sagemaker_containers/c"],
+    sources=[
+        "src/sagemaker_training_toolkit/c/gethostname.c",
+        "src/sagemaker_training_toolkit/c/jsmn.c",
+    ],
+    include_dirs=["src/sagemaker_training_toolkit/c"],
     extra_compile_args=["-Wall", "-shared", "-export-dynamic", "-ldl"],
 )
 
 setuptools.setup(
-    name="sagemaker_containers",
+    name="sagemaker_training_toolkit",
     version=read_version(),
     description="Open source library for creating containers to run on Amazon SageMaker.",
     packages=packages,
     package_dir={
-        "sagemaker_containers": "src/sagemaker_containers",
-        "sagemaker_containers.etc": "etc",
+        "sagemaker_training_toolkit": "src/sagemaker_training_toolkit",
+        "sagemaker_training_toolkit.etc": "etc",
     },
-    package_data={"sagemaker_containers.etc": ["*"]},
+    package_data={"sagemaker_training_toolkit.etc": ["*"]},
     py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob("src/*.py")],
     ext_modules=[gethostname],
     long_description=read("README.rst"),
     author="Amazon Web Services",
-    url="https://github.com/aws/sagemaker-containers/",
+    url="https://github.com/aws/sagemaker-training-toolkit/",
     license="Apache License 2.0",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -97,8 +100,8 @@ setuptools.setup(
     },
     entry_points={
         "console_scripts": [
-            "serve=sagemaker_containers.cli.serve:main",
-            "train=sagemaker_containers.cli.train:main",
+            "serve=sagemaker_training_toolkit.cli.serve:main",
+            "train=sagemaker_training_toolkit.cli.train:main",
         ]
     },
 )
