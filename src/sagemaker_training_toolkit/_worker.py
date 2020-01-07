@@ -66,8 +66,8 @@ class Worker(flask.Flask):
                                      Follows the signature:
 
                 * Returns:
-                    `sagemaker_training_toolkit.transformers.TransformSpec`: named tuple with prediction
-                                                                       data.
+                    `sagemaker_training_toolkit.transformers.TransformSpec`: named tuple
+                        with prediction data.
 
 
             initialize_fn (function, optional): this function is called when the Flask application
@@ -86,8 +86,8 @@ class Worker(flask.Flask):
                     `flask.app.Response`: response object with new healthcheck response.
 
             module_name (str): the module name which implements the worker. If not specified, it
-                               will use sagemaker_training_toolkit.ServingEnv().module_name as the default
-                               module name.
+                               will use sagemaker_training_toolkit.ServingEnv().module_name as
+                               the default module name.
         """
         super(Worker, self).__init__(module_name or env.module_name)
 
