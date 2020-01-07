@@ -1,19 +1,19 @@
 .. _header-n795:
 
-Using SageMaker Containers for SageMaker Training
+Using SageMaker Training Toolkit for SageMaker Training
 =================================================
 
-This document discusses in detail how to use SageMaker Containers for training. 
+This document discusses in detail how to use SageMaker Training Toolkit for training.
 
 .. contents::
 
 .. _header-n860:
 
 
-Building and training your own algorithm container using SageMaker Containers
+Building and training your own algorithm container using SageMaker Training Toolkit
 -----------------------------------------------------------------------------
 
-SageMaker Containers makes easier the process to bring your own container (BYOC). In this scenario, ``SAGEMAKER_PROGRAM``, containing the name of the
+SageMaker Training Toolkit makes easier the process to bring your own container (BYOC). In this scenario, ``SAGEMAKER_PROGRAM``, containing the name of the
 entry point script located under ``/opt/ml/code`` folder is the only
 environment variable required. Alternatively, a hyperparameter named
 ``sagemaker_program`` can be used. The workflow to train a BYOC
@@ -129,12 +129,12 @@ and needs to download it from S3. The workflow is as follows:
    :alt: framework containers training workflow
 
 The subsections below will detail the integration between the SageMaker
-Python SDK and SageMaker Containers and how to create a framework
+Python SDK and SageMaker Training Toolkit and how to create a framework
 container.
 
 .. _header-n819:
 
-Integration between the SageMaker Python SDK and SageMaker Containers
+Integration between the SageMaker Python SDK and SageMaker Training Toolkit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When the SageMaker Python SDK is used to create a training job with a
@@ -172,7 +172,7 @@ hyperparameters and invoke the training job as follow:
      # user provided hyperparameters
      'lr': '0.3',
 
-     # hyperparameters created by the Python SDK and used by SageMaker Containers
+     # hyperparameters created by the Python SDK and used by SageMaker Training Toolkit
      'sagemaker_job_name': 'JOB_NAME',
      'sagemaker_program': 'train_horovod_imagenet.sh',
      'sagemaker_region': 'us-west-2',
@@ -189,7 +189,7 @@ hyperparameters and invoke the training job as follow:
 
 As you can see in the example, in addition to user-provided
 hyperparameters, the SageMaker Python SDK includes hyperparameters that will be
-used by SageMaker Containers and or the framework container. The most
+used by SageMaker Training Toolkit and or the framework container. The most
 important SageMaker hyperparameters for training are:
 
 -  ``sagemaker_program``: name of the user-provided entry point, it is
@@ -223,7 +223,7 @@ Creating the Dockerfile
 
    FROM mxnet/python
 
-   # install SageMaker Containers and SageMaker MXNet Container
+   # install SageMaker Training Toolkit and SageMaker MXNet Container
    RUN pip install sagemaker-training-toolkit sagemaker_mxnet_container
 
    # set sagemaker_mxnet_container.training.main as framework entry point
@@ -231,7 +231,7 @@ Creating the Dockerfile
 
 In the example above, MXNet and Python libraries are already installed
 in the base container. The framework container only needs to install
-SageMaker Containers and the SageMaker MXNet container package. The
+SageMaker Training Toolkit and the SageMaker MXNet container package. The
 environment variable ``SAGEMAKER_TRAINING_MODULE`` determines that the
 function ``train`` under the module ``training`` of the container
 package is going to be invoked when the container starts.
