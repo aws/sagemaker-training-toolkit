@@ -1,7 +1,7 @@
 .. _header-n957:
 
 SageMaker Training Toolkit
-====================
+==========================
 
 .. image:: https://img.shields.io/badge/code_style-black-000000.svg
    :target: https://github.com/python/black
@@ -27,7 +27,7 @@ Getting Started
 .. _header-n962:
 
 Creating a container using SageMaker Training Toolkit
------------------------------------------------
+-----------------------------------------------------
 
 Here we'll demonstrate how to create a Docker image using SageMaker Training Toolkit in order to show the simplicity of using this library.
 
@@ -418,7 +418,7 @@ The number of gpus available in the current container. Usage example:
 .. _header-n1042:
 
 List of provided environment variables by SageMaker Training Toolkit
---------------------------------------------------------------
+--------------------------------------------------------------------
 
 .. _header-n1043:
 
