@@ -18,7 +18,6 @@ import os
 import shlex
 import subprocess  # pylint: disable=unused-import
 import sys
-import tarfile
 import textwrap
 import warnings
 
