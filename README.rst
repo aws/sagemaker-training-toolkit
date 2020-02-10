@@ -1,13 +1,13 @@
 .. _header-n957:
 
-SageMaker Containers
-====================
+SageMaker Training Toolkit
+==========================
 
 .. image:: https://img.shields.io/badge/code_style-black-000000.svg
    :target: https://github.com/python/black
    :alt: Code style: black
 
-SageMaker Containers gives you tools to create SageMaker-compatible Docker containers, and has additional tools for letting you create Frameworks
+SageMaker Training Toolkit gives you tools to create SageMaker-compatible Docker containers, and has additional tools for letting you create Frameworks
 (SageMaker-compatible Docker containers that can run arbitrary Python or shell scripts).
 
 Currently, this library is used by the following containers: `TensorFlow
@@ -26,10 +26,10 @@ Getting Started
 
 .. _header-n962:
 
-Creating a container using SageMaker Containers
------------------------------------------------
+Creating a container using SageMaker Training Toolkit
+-----------------------------------------------------
 
-Here we'll demonstrate how to create a Docker image using SageMaker Containers in order to show the simplicity of using this library.
+Here we'll demonstrate how to create a Docker image using SageMaker Training Toolkit in order to show the simplicity of using this library.
 
 Let's suppose we need to train a model with the following training script ``train.py`` using TF 2.0 in SageMaker:
 
@@ -69,7 +69,7 @@ program that will be executed in SageMaker:
 
    FROM tensorflow/tensorflow:2.0.0a0
 
-   RUN pip install sagemaker-containers
+   RUN pip install sagemaker-training-toolkit
 
    # Copies the training code inside the container
    COPY train.py /opt/ml/code/train.py
@@ -210,7 +210,7 @@ path were the channel is located:
      args = parser.parse_args()
      ...
 
-When training starts, SageMaker Containers will print all available
+When training starts, SageMaker Training Toolkit will print all available
 environment variables.
 
 .. _header-n997:
@@ -417,8 +417,8 @@ The number of gpus available in the current container. Usage example:
 
 .. _header-n1042:
 
-List of provided environment variables by SageMaker Containers
---------------------------------------------------------------
+List of provided environment variables by SageMaker Training Toolkit
+--------------------------------------------------------------------
 
 .. _header-n1043:
 

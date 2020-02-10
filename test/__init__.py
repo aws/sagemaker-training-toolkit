@@ -27,7 +27,7 @@ import werkzeug.test as werkzeug_test
 
 DEFAULT_REGION = "us-west-2"
 
-from sagemaker_containers import (  # noqa ignore=E402 module level import not at top of file
+from sagemaker_training import (  # noqa ignore=E402 module level import not at top of file
     _env,
     _files,
     _params,
@@ -203,7 +203,7 @@ class UserModule(object):
         self._s3 = session.boto_session.resource("s3")
         self.bucket = bucket or default_bucket(session)
         self.key = key or os.path.join(
-            "test", "sagemaker-containers", str(time.time()), "sourcedir.tar.gz"
+            "test", "sagemaker-training-toolkit", str(time.time()), "sourcedir.tar.gz"
         )
         self._files = [main_file]
 

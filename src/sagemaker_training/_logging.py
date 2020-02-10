@@ -16,14 +16,14 @@ from __future__ import absolute_import
 import json
 import logging
 
-import sagemaker_containers
+import sagemaker_training
 
 
 def get_logger():
-    """Returns a logger with the name 'sagemaker-containers',
+    """Returns a logger with the name 'sagemaker-training-toolkit',
     creating it if necessary.
     """
-    return logging.getLogger("sagemaker-containers")
+    return logging.getLogger("sagemaker-training-toolkit")
 
 
 def configure_logger(level, log_format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s"):
@@ -47,7 +47,7 @@ def log_script_invocation(cmd, env_vars, logger=None):
     logger = logger or get_logger()
 
     prefix = "\n".join(["%s=%s" % (key, value) for key, value in env_vars.items()])
-    env = sagemaker_containers.training_env()
+    env = sagemaker_training.training_env()
     message = """Invoking user script
 
 Training Env:

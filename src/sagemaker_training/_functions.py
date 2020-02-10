@@ -19,7 +19,7 @@ from typing import Callable
 
 import six
 
-from sagemaker_containers import _mapping
+from sagemaker_training import _mapping
 
 
 def matching_args(fn, dictionary):  # type: (Callable, _mapping.Mapping) -> dict

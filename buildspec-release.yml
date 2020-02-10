@@ -29,6 +29,6 @@ phases:
 
 artifacts:
   files:
-    - dist/sagemaker_containers*.tar.gz
+    - dist/sagemaker_training*.tar.gz
   name: ARTIFACT_1
   discard-paths: yes

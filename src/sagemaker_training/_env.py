@@ -26,7 +26,7 @@ import time
 
 import boto3
 
-from sagemaker_containers import _content_types, _logging, _mapping, _params
+from sagemaker_training import _content_types, _logging, _mapping, _params
 
 logger = _logging.get_logger()
 
@@ -35,7 +35,7 @@ BASE_PATH_ENV = "SAGEMAKER_BASE_DIR"  # type: str
 
 
 def _write_json(obj, path):  # type: (object, str) -> None
-    """Writes a serializeable object as a JSON file"""
+    """Writes a serializeable object as a JSON file."""
     with open(path, "w") as f:
         json.dump(obj, f)
 
@@ -426,9 +426,9 @@ class TrainingEnv(_Env):
     It is a dictionary like object, allowing any builtin function that works with dictionary.
 
     Example on how a script can use training environment:
-            >>>import sagemaker_containers
+            >>>import sagemaker_training
 
-            >>>env = sagemaker_containers.training_env()
+            >>>env = sagemaker_training.training_env()
 
             get the path of the channel 'training' from the inputdataconfig.json file
             >>>training_dir = env.channel_input_dirs['training']
@@ -869,7 +869,7 @@ class ServingEnv(_Env):
        It is a dictionary like object, allowing any builtin function that works with dictionary.
 
        Example on how to print the state of the container:
-           >>> from sagemaker_containers import _env
+           >>> from sagemaker_training import _env
 
            >>> print(str(_env.ServingEnv()))
        Example on how a script can use training environment:

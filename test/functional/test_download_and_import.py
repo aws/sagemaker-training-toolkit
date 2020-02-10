@@ -21,7 +21,7 @@ import textwrap
 import pytest
 import six
 
-from sagemaker_containers.beta.framework import errors, modules
+from sagemaker_training.beta.framework import errors, modules
 import test
 
 data = [

@@ -20,8 +20,8 @@ from mock import Mock, patch
 import pytest
 import six
 
-import sagemaker_containers
-from sagemaker_containers import _env, _params
+import sagemaker_training
+from sagemaker_training import _env, _params
 import test
 
 builtins_open = "__builtin__.open" if six.PY2 else "builtins.open"
@@ -85,7 +85,7 @@ def test_read_value_serialized_and_non_value_serialized_hyperparameters():
     assert _env.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
-@patch("sagemaker_containers._env._read_json", lambda x: {"a": 1})
+@patch("sagemaker_training._env._read_json", lambda x: {"a": 1})
 @patch("json.loads")
 def test_read_exception(loads):
     loads.side_effect = ValueError("Unable to read.")
@@ -128,27 +128,27 @@ def test_cpu_count():
 
 @pytest.fixture(name="training_env")
 def create_training_env():
-    with patch("sagemaker_containers._env.read_resource_config", lambda: RESOURCE_CONFIG), patch(
-        "sagemaker_containers._env.read_input_data_config", lambda: INPUT_DATA_CONFIG
-    ), patch("sagemaker_containers._env.read_hyperparameters", lambda: ALL_HYPERPARAMETERS), patch(
-        "sagemaker_containers._env.num_cpus", lambda: 8
+    with patch("sagemaker_training._env.read_resource_config", lambda: RESOURCE_CONFIG), patch(
+        "sagemaker_training._env.read_input_data_config", lambda: INPUT_DATA_CONFIG
+    ), patch("sagemaker_training._env.read_hyperparameters", lambda: ALL_HYPERPARAMETERS), patch(
+        "sagemaker_training._env.num_cpus", lambda: 8
     ), patch(
-        "sagemaker_containers._env.num_gpus", lambda: 4
+        "sagemaker_training._env.num_gpus", lambda: 4
     ):
         session_mock = Mock()
         session_mock.region_name = "us-west-2"
         old_environ = os.environ.copy()
         os.environ[_params.TRAINING_JOB_ENV] = "training-job-42"
 
-        yield sagemaker_containers.training_env()
+        yield sagemaker_training.training_env()
 
         os.environ = old_environ
 
 
 @pytest.fixture(name="serving_env")
 def create_serving_env():
-    with patch("sagemaker_containers._env.num_cpus", lambda: 8), patch(
-        "sagemaker_containers._env.num_gpus", lambda: 4
+    with patch("sagemaker_training._env.num_cpus", lambda: 8), patch(
+        "sagemaker_training._env.num_gpus", lambda: 4
     ):
         old_environ = os.environ.copy()
         os.environ[_params.USE_NGINX_ENV] = "false"
@@ -165,7 +165,7 @@ def create_serving_env():
 
 
 def test_create_training_env_without_training_files_and_directories_should_not_fail():
-    training_env = sagemaker_containers.training_env()
+    training_env = sagemaker_training.training_env()
     hostname = socket.gethostname()
     assert training_env.current_host == hostname
     assert training_env.hosts == [hostname]
@@ -282,8 +282,8 @@ def test_request_properties(serving_env):
     }
 
 
-@patch("sagemaker_containers._env.num_cpus", lambda: 8)
-@patch("sagemaker_containers._env.num_gpus", lambda: 4)
+@patch("sagemaker_training._env.num_cpus", lambda: 8)
+@patch("sagemaker_training._env.num_gpus", lambda: 4)
 def test_env_dictionary():
     session_mock = Mock()
     session_mock.region_name = "us-west-2"

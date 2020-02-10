@@ -19,7 +19,7 @@ import traceback
 
 from six.moves import http_client
 
-from sagemaker_containers import _content_types, _encoders, _env, _errors, _functions, _worker
+from sagemaker_training import _content_types, _encoders, _env, _errors, _functions, _worker
 
 
 def default_model_fn(model_dir):
@@ -107,7 +107,7 @@ class Transformer(object):
 
     Examples:
     >>>import os
-    >>>from sagemaker_containers import _env, _modules, _transformer
+    >>>from sagemaker_training import _env, _modules, _transformer
     >>>import Keras
     >>>ServingEnv = _env.ServingEnv()
     >>>
@@ -175,7 +175,7 @@ class Transformer(object):
     def initialize(self):  # type: () -> None
         """Execute any initialization necessary to start making predictions with the Transformer.
         The default implementation is used to load the model.
-        This function is called by sagemaker_containers.beta.framework.worker.Worker,
+        This function is called by sagemaker_training.beta.framework.worker.Worker,
         before starting the Flask application.
         The gunicorn server forks multiple workers, executing multiple Flask applications in
         parallel.
@@ -189,7 +189,7 @@ class Transformer(object):
         serialized response.
 
         Returns:
-            sagemaker_containers.beta.framework.worker.Response: a Flask response object with
+            sagemaker_training.beta.framework.worker.Response: a Flask response object with
                 the following args:
 
                 * response: the serialized data to return
@@ -219,7 +219,7 @@ class Transformer(object):
             accept (str): accept content-type expected by the client.
 
         Returns:
-            sagemaker_containers.beta.framework.worker.Response or tuple:
+            sagemaker_training.beta.framework.worker.Response or tuple:
                 the serialized response data and its content type, either as a Response object or
                 a tuple of the form (response_data, content_type)
         """

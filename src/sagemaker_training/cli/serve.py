@@ -11,7 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Placeholder docstring"""
-from sagemaker_containers.beta.framework import env, server
+from sagemaker_training.beta.framework import env, server
 
 
 def main():

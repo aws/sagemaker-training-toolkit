@@ -18,7 +18,7 @@ from inotify_simple import Event, flags
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_containers import _env, _files, _intermediate_output
+from sagemaker_training import _env, _files, _intermediate_output
 
 REGION = "us-west"
 S3_BUCKET = "s3://mybucket/"
