@@ -165,20 +165,20 @@ class MappingMixin(collections.Mapping):
         return isinstance(getattr(type(self), _property), property)
 
     def __getitem__(self, k):
-        """Placeholder docstring"""
+        """Built-in method override"""
         if not self._is_property(k):
             raise KeyError("Trying to access non property %s" % k)
         return getattr(self, k)
 
     def __len__(self):
-        """Placeholder docstring"""
+        """Built-in method override"""
         return len(self.properties())
 
     def __iter__(self):
-        """Placeholder docstring"""
+        """Built-in method override"""
         items = {_property: getattr(self, _property) for _property in self.properties()}
         return iter(items)
 
     def __str__(self):
-        """Placeholder docstring"""
+        """Built-in method override"""
         return str(dict(self))
