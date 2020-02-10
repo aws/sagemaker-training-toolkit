@@ -35,7 +35,7 @@ BASE_PATH_ENV = "SAGEMAKER_BASE_DIR"  # type: str
 
 
 def _write_json(obj, path):  # type: (object, str) -> None
-    """Writes a serializeable object as a JSON file"""
+    """Writes a serializeable object as a JSON file."""
     with open(path, "w") as f:
         json.dump(obj, f)
 
