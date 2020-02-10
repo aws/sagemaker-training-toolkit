@@ -24,7 +24,7 @@ import boto3.s3.transfer as s3transfer
 import inotify_simple
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_training_toolkit import _env, _logging
+from sagemaker_training import _env, _logging
 
 logger = _logging.get_logger()
 

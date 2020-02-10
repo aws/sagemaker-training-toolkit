@@ -28,7 +28,7 @@ def read_version():
 
 
 packages = setuptools.find_packages(where="src", exclude=("test",))
-packages.append("sagemaker_training_toolkit.etc")
+packages.append("sagemaker_training.etc")
 
 required_packages = [
     "numpy",
@@ -54,24 +54,18 @@ if sys.version_info < (3, 4):
 
 gethostname = setuptools.Extension(
     "gethostname",
-    sources=[
-        "src/sagemaker_training_toolkit/c/gethostname.c",
-        "src/sagemaker_training_toolkit/c/jsmn.c",
-    ],
-    include_dirs=["src/sagemaker_training_toolkit/c"],
+    sources=["src/sagemaker_training/c/gethostname.c", "src/sagemaker_training/c/jsmn.c"],
+    include_dirs=["src/sagemaker_training/c"],
     extra_compile_args=["-Wall", "-shared", "-export-dynamic", "-ldl"],
 )
 
 setuptools.setup(
-    name="sagemaker_training_toolkit",
+    name="sagemaker_training",
     version=read_version(),
     description="Open source library for creating containers to run on Amazon SageMaker.",
     packages=packages,
-    package_dir={
-        "sagemaker_training_toolkit": "src/sagemaker_training_toolkit",
-        "sagemaker_training_toolkit.etc": "etc",
-    },
-    package_data={"sagemaker_training_toolkit.etc": ["*"]},
+    package_dir={"sagemaker_training": "src/sagemaker_training", "sagemaker_training.etc": "etc"},
+    package_data={"sagemaker_training.etc": ["*"]},
     py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob("src/*.py")],
     ext_modules=[gethostname],
     long_description=read("README.rst"),
@@ -100,8 +94,8 @@ setuptools.setup(
     },
     entry_points={
         "console_scripts": [
-            "serve=sagemaker_training_toolkit.cli.serve:main",
-            "train=sagemaker_training_toolkit.cli.train:main",
+            "serve=sagemaker_training.cli.serve:main",
+            "train=sagemaker_training.cli.train:main",
         ]
     },
 )

@@ -16,7 +16,7 @@ from __future__ import absolute_import
 import json
 import logging
 
-import sagemaker_training_toolkit
+import sagemaker_training
 
 
 def get_logger():
@@ -47,7 +47,7 @@ def log_script_invocation(cmd, env_vars, logger=None):
     logger = logger or get_logger()
 
     prefix = "\n".join(["%s=%s" % (key, value) for key, value in env_vars.items()])
-    env = sagemaker_training_toolkit.training_env()
+    env = sagemaker_training.training_env()
     message = """Invoking user script
 
 Training Env:

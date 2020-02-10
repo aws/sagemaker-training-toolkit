@@ -11,12 +11,12 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Placeholder docstring"""
-from sagemaker_training_toolkit.beta.framework import trainer
+from sagemaker_training.beta.framework import env, server
 
 
 def main():
     """Placeholder docstring"""
-    trainer.train()
+    server.start(env.ServingEnv().framework_module)
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ RUN cat /etc/ssh/ssh_config | grep -v StrictHostKeyChecking > /etc/ssh/ssh_confi
     mv /etc/ssh/ssh_config.new /etc/ssh/ssh_config
 RUN pip install mpi4py==3.0.0
 
-ENV SAGEMAKER_TRAINING_TOOLKIT=$(ls sagemaker_training_toolkit-*.tar.gz)
-COPY ${SAGEMAKER_TRAINING_TOOLKIT} ${SAGEMAKER_TRAINING_TOOLKIT}
+ENV SAGEMAKER_training=$(ls sagemaker_training-*.tar.gz)
+COPY ${SAGEMAKER_training} ${SAGEMAKER_training}
 
-RUN pip install ${SAGEMAKER_TRAINING_TOOLKIT}
+RUN pip install ${SAGEMAKER_training}

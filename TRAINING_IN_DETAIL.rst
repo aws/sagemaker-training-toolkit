@@ -23,16 +23,16 @@ container is a follows:
    :alt: byoc training workflow
 
 SageMaker invokes the CLI binary
-`train <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training_toolkit/cli/train.py#L17>`__
+`train <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/cli/train.py#L17>`__
 when training starts. This binary invokes
-`trainer.train() <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training_toolkit/_trainer.py#L41>`__,
+`trainer.train() <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/_trainer.py#L41>`__,
 the function responsible for creating the training environment,
 executing the entry point, and reporting results.
 
 **Training environment** creation is encapsulated by
-`training_env() <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training_toolkit/__init__.py#L16>`__
+`training_env() <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/__init__.py#L16>`__
 function call, this function returns an
-`TrainingEnv <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training_toolkit/_env.py#L413>`__
+`TrainingEnv <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/_env.py#L413>`__
 object. The ``TrainingEnv`` provides access to aspects of the training
 environment relevant to training jobs, including hyperparameters, system
 characteristics, filesystem locations, environment variables and
@@ -42,9 +42,9 @@ Example on how a script can use TrainingEnv:
 
 .. code:: python
 
-   import sagemaker_training_toolkit
+   import sagemaker_training
 
-   env = sagemaker_training_toolkit.training_env()
+   env = sagemaker_training.training_env()
 
    # get the path of the channel 'training' from the ``inputdataconfig.json`` file
    training_dir = env.channel_input_dirs['training']
@@ -63,7 +63,7 @@ Example on how a script can use TrainingEnv:
    #save the model in the end of training
    model.save(os.path.join(model_dir, 'saved_model'))
 
-**Entry point execution** is encapsulted by `entry_point.run(uri, user_entry_point, args, env_vars) <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training_toolkit/entry_point.py#L22>`__,
+**Entry point execution** is encapsulted by `entry_point.run(uri, user_entry_point, args, env_vars) <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/entry_point.py#L22>`__,
 it prepares and executes the user entry point, passing ``env_vars`` as
 environment variables and ``args`` as command arguments. If the entry
 point is:
@@ -78,10 +78,10 @@ Usage example:
 
 .. code:: python
 
-   import sagemaker_training_toolkit
-   from sagemaker_training_toolkit.beta.framework import entry_point
+   import sagemaker_training
+   from sagemaker_training.beta.framework import entry_point
 
-   env = sagemaker_training_toolkit.training_env()
+   env = sagemaker_training.training_env()
    # {'channel-input-dirs': {'training': '/opt/ml/input/training'}, 'model_dir': '/opt/ml/model', ...}
 
    # reading hyperparameters as a dictionary
@@ -202,7 +202,7 @@ important SageMaker hyperparameters for training are:
    ``/opt/ml/code`` folder.
 
 The complete list of hyperparameters is available
-`here <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training_toolkit/_params.py>`__.
+`here <https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/_params.py>`__.
 
 .. _header-n831:
 
@@ -240,7 +240,7 @@ package is going to be invoked when the container starts.
 
 .. code:: python
 
-   from sagemaker_training_toolkit.beta import framework
+   from sagemaker_training.beta import framework
 
    # name of the user entry point from sagemaker hyperparameter
    user_entry_point = env.module_name

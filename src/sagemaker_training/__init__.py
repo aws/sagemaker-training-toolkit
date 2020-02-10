@@ -21,7 +21,7 @@ def training_env():  # type: () -> _env.TrainingEnv
         TrainingEnv: an instance of TrainingEnv
     """
 
-    from sagemaker_training_toolkit import _env
+    from sagemaker_training import _env
 
     return _env.TrainingEnv(
         resource_config=_env.read_resource_config(),

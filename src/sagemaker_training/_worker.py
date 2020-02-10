@@ -18,7 +18,7 @@ import warnings
 import flask
 from six.moves import http_client
 
-from sagemaker_training_toolkit import _content_types, _env, _logging, _mapping
+from sagemaker_training import _content_types, _env, _logging, _mapping
 
 env = _env.ServingEnv()
 
@@ -66,7 +66,7 @@ class Worker(flask.Flask):
                                      Follows the signature:
 
                 * Returns:
-                    `sagemaker_training_toolkit.transformers.TransformSpec`: named tuple
+                    `sagemaker_training.transformers.TransformSpec`: named tuple
                         with prediction data.
 
 
@@ -86,7 +86,7 @@ class Worker(flask.Flask):
                     `flask.app.Response`: response object with new healthcheck response.
 
             module_name (str): the module name which implements the worker. If not specified, it
-                               will use sagemaker_training_toolkit.ServingEnv().module_name as
+                               will use sagemaker_training.ServingEnv().module_name as
                                the default module name.
         """
         super(Worker, self).__init__(module_name or env.module_name)
@@ -150,7 +150,7 @@ class Request(flask.Request, _mapping.MappingMixin):
 
     42
 
-    >>> from sagemaker_training_toolkit import _env
+    >>> from sagemaker_training import _env
 
     >>> request = Request()
     >>> data = request.data

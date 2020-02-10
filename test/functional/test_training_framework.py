@@ -22,15 +22,8 @@ import mock
 import numpy as np
 import pytest
 
-import sagemaker_training_toolkit
-from sagemaker_training_toolkit.beta.framework import (
-    entry_point,
-    env,
-    errors,
-    functions,
-    modules,
-    trainer,
-)
+import sagemaker_training
+from sagemaker_training.beta.framework import entry_point, env, errors, functions, modules, trainer
 import test
 from test import fake_ml_framework
 
@@ -197,7 +190,7 @@ setup(packages=[''],
 
 
 def framework_training_fn():
-    training_env = sagemaker_training_toolkit.training_env()
+    training_env = sagemaker_training.training_env()
 
     mod = modules.import_module(training_env.module_dir, training_env.module_name, False)
 
@@ -364,7 +357,7 @@ def test_trainer_report_failure():
 
 
 def framework_training_with_script_mode_fn(capture_error):
-    training_env = sagemaker_training_toolkit.training_env()
+    training_env = sagemaker_training.training_env()
 
     entry_point.run(
         training_env.module_dir,
@@ -376,7 +369,7 @@ def framework_training_with_script_mode_fn(capture_error):
 
 
 def mpi_training_with_script_mode_fn(capture_error):
-    training_env = sagemaker_training_toolkit.training_env()
+    training_env = sagemaker_training.training_env()
 
     entry_point.run(
         training_env.module_dir,
@@ -389,7 +382,7 @@ def mpi_training_with_script_mode_fn(capture_error):
 
 
 def framework_training_with_run_modules_fn(capture_error):
-    training_env = sagemaker_training_toolkit.training_env()
+    training_env = sagemaker_training.training_env()
 
     modules.run_module(
         training_env.module_dir,
@@ -409,7 +402,7 @@ def test_parameter_server():
         hyperparameters=hyperparameters,
         channels=[test.Channel.create(name="training")],
     )
-    training_env = sagemaker_training_toolkit.training_env()
+    training_env = sagemaker_training.training_env()
     process = entry_point.run(
         training_env.module_dir,
         training_env.user_entry_point,

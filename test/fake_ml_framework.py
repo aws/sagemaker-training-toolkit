@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 import numpy as np
 
-from sagemaker_training_toolkit import _files
+from sagemaker_training import _files
 import test
 
 

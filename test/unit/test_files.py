@@ -19,7 +19,7 @@ from mock import mock_open, patch
 import pytest
 import six
 
-from sagemaker_training_toolkit import _env, _files
+from sagemaker_training import _env, _files
 import test
 
 builtins_open = "__builtin__.open" if six.PY2 else "builtins.open"
@@ -118,7 +118,7 @@ def test_write_failure_file():
     open().write.assert_called_with(failure_msg)
 
 
-@patch("sagemaker_training_toolkit._files.s3_download")
+@patch("sagemaker_training._files.s3_download")
 @patch("os.path.isdir", lambda x: True)
 @patch("shutil.rmtree")
 @patch("shutil.copytree")
@@ -131,7 +131,7 @@ def test_download_and_extract_source_dir(copy, rmtree, s3_download):
     copy.assert_called_with(uri, _env.code_dir)
 
 
-@patch("sagemaker_training_toolkit._files.s3_download")
+@patch("sagemaker_training._files.s3_download")
 @patch("os.path.isdir", lambda x: False)
 @patch("shutil.copy2")
 def test_download_and_extract_file(copy, s3_download):
@@ -142,7 +142,7 @@ def test_download_and_extract_file(copy, s3_download):
     copy.assert_called_with(uri, _env.code_dir)
 
 
-@patch("sagemaker_training_toolkit._files.s3_download")
+@patch("sagemaker_training._files.s3_download")
 @patch("os.path.isdir", lambda x: False)
 @patch("tarfile.TarFile.extractall")
 def test_download_and_extract_tar(extractall, s3_download):

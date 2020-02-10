@@ -27,7 +27,7 @@ import werkzeug.test as werkzeug_test
 
 DEFAULT_REGION = "us-west-2"
 
-from sagemaker_training_toolkit import (  # noqa ignore=E402 module level import not at top of file
+from sagemaker_training import (  # noqa ignore=E402 module level import not at top of file
     _env,
     _files,
     _params,

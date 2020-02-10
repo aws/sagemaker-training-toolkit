@@ -16,8 +16,8 @@ from __future__ import absolute_import
 import enum
 from typing import Dict, List  # noqa ignore=F401 imported but unused
 
-import sagemaker_training_toolkit
-from sagemaker_training_toolkit import _mpi, _params, _process
+import sagemaker_training
+from sagemaker_training import _mpi, _params, _process
 
 
 class RunnerType(enum.Enum):
@@ -44,7 +44,7 @@ def _get_by_runner_type(
     identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None
 ):
     """Placeholder docstring"""
-    env = sagemaker_training_toolkit.training_env()
+    env = sagemaker_training.training_env()
     user_entry_point = user_entry_point or env.user_entry_point
     args = args or env.to_cmd_args()
     env_vars = env_vars or env.to_env_vars()

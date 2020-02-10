@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from mock import patch
 import pytest
 
-from sagemaker_training_toolkit import _entry_point_type
+from sagemaker_training import _entry_point_type
 
 
 @pytest.fixture

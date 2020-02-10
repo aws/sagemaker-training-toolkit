@@ -16,7 +16,7 @@ import time
 
 import urllib3
 
-from sagemaker_training_toolkit.beta.framework import env, params, server
+from sagemaker_training.beta.framework import env, params, server
 
 
 def test_server_with_a_simple_app():

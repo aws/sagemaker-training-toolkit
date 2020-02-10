@@ -14,25 +14,25 @@
 from __future__ import absolute_import
 
 # flake8: noqa ignore=F401 imported but unused
-import sagemaker_training_toolkit
-from sagemaker_training_toolkit import _content_types as content_types
-from sagemaker_training_toolkit import _encoders as encoders
-from sagemaker_training_toolkit import _errors as errors
-from sagemaker_training_toolkit import _env as env
-from sagemaker_training_toolkit import _mpi as mpi
-from sagemaker_training_toolkit import _files as files
-from sagemaker_training_toolkit import _functions as functions
-from sagemaker_training_toolkit import _logging as logging
-from sagemaker_training_toolkit import _mapping as mapping
-from sagemaker_training_toolkit import _modules as modules
-from sagemaker_training_toolkit import entry_point
-from sagemaker_training_toolkit import _params as params
-from sagemaker_training_toolkit import _process as process
-from sagemaker_training_toolkit import _runner as runner
-from sagemaker_training_toolkit import _server as server
-from sagemaker_training_toolkit import _trainer as trainer
-from sagemaker_training_toolkit import _transformer as transformer
-from sagemaker_training_toolkit import _worker as worker
+import sagemaker_training
+from sagemaker_training import _content_types as content_types
+from sagemaker_training import _encoders as encoders
+from sagemaker_training import _errors as errors
+from sagemaker_training import _env as env
+from sagemaker_training import _mpi as mpi
+from sagemaker_training import _files as files
+from sagemaker_training import _functions as functions
+from sagemaker_training import _logging as logging
+from sagemaker_training import _mapping as mapping
+from sagemaker_training import _modules as modules
+from sagemaker_training import entry_point
+from sagemaker_training import _params as params
+from sagemaker_training import _process as process
+from sagemaker_training import _runner as runner
+from sagemaker_training import _server as server
+from sagemaker_training import _trainer as trainer
+from sagemaker_training import _transformer as transformer
+from sagemaker_training import _worker as worker
 
 
 def training_env(resource_config=None, input_data_config=None, hyperparameters=None):

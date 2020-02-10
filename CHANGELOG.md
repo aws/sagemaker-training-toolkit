@@ -114,7 +114,7 @@
 
 ### Bug fixes and other changes
 
- * Detailed documentation for SageMaker Training Toolkit - training
+ * Detailed documentation for SageMaker Containers - training
  * download_and_extract local tar file
 
 ## v2.4.9 (2019-05-08)
@@ -155,7 +155,7 @@
 ## v2.4.4.post2
 
 * doc-fix: Convert README to RST
-* doc-fix: Update README with newer frameworks using SageMaker Training Toolkit
+* doc-fix: Update README with newer frameworks using SageMaker Containers
 
 ## v2.4.4.post1
 

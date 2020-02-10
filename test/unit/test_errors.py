@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-from sagemaker_training_toolkit import _errors
+from sagemaker_training import _errors
 
 
 def test_install_module_error():
