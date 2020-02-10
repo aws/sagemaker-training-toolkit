@@ -213,13 +213,16 @@ def test_import_module(reload, import_module, install, download_and_extract):
 
 
 def test_download_and_install_local_directory():
-    uri = "/opt/ml/code"
+    uri = "/opt/ml/input/data/code/sourcedir.tar.gz"
 
     with patch("sagemaker_containers._files.s3_download") as s3_download, patch(
-        "sagemaker_containers._modules.prepare"
-    ) as prepare, patch("sagemaker_containers._modules.install") as install:
+        "tarfile.open"
+    ) as tarfile, patch("sagemaker_containers._modules.prepare") as prepare, patch(
+        "sagemaker_containers._modules.install"
+    ) as install:
         _modules.download_and_install(uri)
 
         s3_download.assert_not_called()
-        prepare.assert_called_with(uri, "default_user_module_name")
-        install.assert_called_with(uri)
+        tarfile.assert_called_with(name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz")
+        prepare.assert_called_once()
+        install.assert_called_once()
