@@ -18,7 +18,7 @@ import sys
 import pytest
 
 import gethostname
-from sagemaker_containers import _errors, _process
+from sagemaker_training import _errors, _process
 
 OPT_ML = "/opt/ml"
 INPUT_CONFIG = "/opt/ml/input/config/"

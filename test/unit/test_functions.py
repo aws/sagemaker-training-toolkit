@@ -16,7 +16,7 @@ import inspect
 
 import pytest as pytest
 
-from sagemaker_containers import _functions
+from sagemaker_training import _functions
 
 
 @pytest.mark.parametrize(

@@ -19,7 +19,7 @@ from mock import MagicMock, patch, PropertyMock
 import pytest
 from six.moves import http_client, range
 
-from sagemaker_containers import _content_types, _worker
+from sagemaker_training import _content_types, _worker
 
 
 def test_default_ping_fn():
@@ -29,9 +29,7 @@ def test_default_ping_fn():
 @pytest.mark.parametrize(
     "module_name, expected_name", [("test_module", "test_module"), (None, "user_program")]
 )
-@patch(
-    "sagemaker_containers._env.ServingEnv.module_name", PropertyMock(return_value="user_program")
-)
+@patch("sagemaker_training._env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
 def test_worker(module_name, expected_name):
     app = _worker.Worker(transform_fn=MagicMock().transform, module_name=module_name)
     assert app.import_name == expected_name
@@ -42,9 +40,7 @@ def test_worker(module_name, expected_name):
 @pytest.mark.parametrize(
     "module_name, expected_name", [("test_module", "test_module"), (None, "user_program")]
 )
-@patch(
-    "sagemaker_containers._env.ServingEnv.module_name", PropertyMock(return_value="user_program")
-)
+@patch("sagemaker_training._env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
 def test_worker_with_initialize(module_name, expected_name):
     mock = MagicMock()
     app = _worker.Worker(

@@ -22,8 +22,8 @@ import numpy as np
 from scipy.sparse import issparse
 from six import BytesIO, StringIO
 
-from sagemaker_containers import _content_types, _errors
-from sagemaker_containers._recordio import (
+from sagemaker_training import _content_types, _errors
+from sagemaker_training._recordio import (
     _write_numpy_to_dense_tensor,
     _write_spmatrix_to_sparse_tensor,
 )

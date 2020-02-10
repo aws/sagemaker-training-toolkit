@@ -21,8 +21,8 @@ import sys
 
 import pkg_resources
 
-import sagemaker_containers
-from sagemaker_containers import _env, _files, _logging, _modules
+import sagemaker_training
+from sagemaker_training import _env, _files, _logging, _modules
 
 logger = _logging.get_logger()
 
@@ -30,7 +30,7 @@ UNIX_SOCKET_BIND = "unix:/tmp/gunicorn.sock"
 
 nginx_config_file = os.path.join("/etc", "sagemaker-nginx.conf")
 nginx_config_template_file = pkg_resources.resource_filename(
-    sagemaker_containers.__name__, "/etc/nginx.conf.template"
+    sagemaker_training.__name__, "/etc/nginx.conf.template"
 )
 
 

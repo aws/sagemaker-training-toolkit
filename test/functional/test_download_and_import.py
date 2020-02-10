@@ -20,7 +20,7 @@ import textwrap
 
 import pytest
 
-from sagemaker_containers.beta.framework import errors, modules
+from sagemaker_training.beta.framework import errors, modules
 import test
 
 data = [

@@ -21,7 +21,7 @@ from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-from sagemaker_containers import _env, _errors, _files, _modules, _params
+from sagemaker_training import _env, _errors, _files, _modules, _params
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -51,7 +51,7 @@ def test_s3_download_wrong_scheme():
         _files.s3_download("c://my-bucket/my-file", "/tmp/file")
 
 
-@patch("sagemaker_containers._process.check_error", autospec=True)
+@patch("sagemaker_training._process.check_error", autospec=True)
 def test_install(check_error):
     path = "c://sagemaker-pytorch-container"
     _modules.install(path)
@@ -70,7 +70,7 @@ def test_install(check_error):
         )
 
 
-@patch("sagemaker_containers._process.check_error", autospec=True)
+@patch("sagemaker_training._process.check_error", autospec=True)
 def test_install_fails(check_error):
     check_error.side_effect = _errors.ClientError()
     with pytest.raises(_errors.ClientError):
@@ -145,7 +145,7 @@ def test_exists(import_module):
     assert not _modules.exists("my_module")
 
 
-@patch("sagemaker_containers.training_env", lambda: {})
+@patch("sagemaker_training.training_env", lambda: {})
 @pytest.mark.parametrize("capture_error", [True, False])
 def test_run_error(capture_error):
     with pytest.raises(_errors.ExecuteUserScriptError) as e:
@@ -157,9 +157,9 @@ def test_run_error(capture_error):
         assert " No module named wrong module" in message
 
 
-@patch("sagemaker_containers._process.python_executable")
-@patch("sagemaker_containers._process.check_error")
-@patch("sagemaker_containers._logging.log_script_invocation")
+@patch("sagemaker_training._process.python_executable")
+@patch("sagemaker_training._process.check_error")
+@patch("sagemaker_training._logging.log_script_invocation")
 def test_run(log_script_invocation, check_error, executable):
     _modules.run("pytest", ["--version"])
 
@@ -170,9 +170,9 @@ def test_run(log_script_invocation, check_error, executable):
     )
 
 
-@patch("sagemaker_containers._process.python_executable")
-@patch("sagemaker_containers._process.create")
-@patch("sagemaker_containers._logging.log_script_invocation")
+@patch("sagemaker_training._process.python_executable")
+@patch("sagemaker_training._process.create")
+@patch("sagemaker_training._logging.log_script_invocation")
 def test_run_no_wait(log_script_invocation, create, executable):
     _modules.run(
         "pytest", ["--version"], {"PYPATH": "/opt/ml/code"}, wait=False, capture_error=True
@@ -184,10 +184,10 @@ def test_run_no_wait(log_script_invocation, create, executable):
 
 
 @pytest.mark.parametrize("wait, cache", [[True, False], [True, False]])
-@patch("sagemaker_containers._modules.run")
-@patch("sagemaker_containers._modules.install")
-@patch("sagemaker_containers._env.write_env_vars")
-@patch("sagemaker_containers._files.download_and_extract")
+@patch("sagemaker_training._modules.run")
+@patch("sagemaker_training._modules.install")
+@patch("sagemaker_training._env.write_env_vars")
+@patch("sagemaker_training._files.download_and_extract")
 def test_run_module_wait(download_and_extract, write_env_vars, install, run, wait, cache):
     with pytest.warns(DeprecationWarning):
         _modules.run_module(uri="s3://url", args=["42"], wait=wait, cache=cache)
@@ -199,8 +199,8 @@ def test_run_module_wait(download_and_extract, write_env_vars, install, run, wai
         run.assert_called_with("default_user_module_name", ["42"], {}, True, False)
 
 
-@patch("sagemaker_containers._files.download_and_extract")
-@patch("sagemaker_containers._modules.install")
+@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training._modules.install")
 @patch("importlib.import_module")
 @patch("six.moves.reload_module")
 def test_import_module(reload, import_module, install, download_and_extract):
@@ -215,10 +215,10 @@ def test_import_module(reload, import_module, install, download_and_extract):
 def test_download_and_install_local_directory():
     uri = "/opt/ml/input/data/code/sourcedir.tar.gz"
 
-    with patch("sagemaker_containers._files.s3_download") as s3_download, patch(
+    with patch("sagemaker_training._files.s3_download") as s3_download, patch(
         "tarfile.open"
-    ) as tarfile, patch("sagemaker_containers._modules.prepare") as prepare, patch(
-        "sagemaker_containers._modules.install"
+    ) as tarfile, patch("sagemaker_training._modules.prepare") as prepare, patch(
+        "sagemaker_training._modules.install"
     ) as install:
         _modules.download_and_install(uri)
 
