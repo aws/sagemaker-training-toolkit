@@ -21,7 +21,7 @@ from typing import Dict, List, Mapping  # noqa ignore=F401 imported but unused
 
 import six
 
-from sagemaker_training import entry_point_type, env, _errors, _logging
+from sagemaker_training import entry_point_type, env, errors, _logging
 
 
 def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
@@ -158,11 +158,11 @@ class ProcessRunner(object):
 
         if wait:
             process = check_error(
-                cmd, _errors.ExecuteUserScriptError, capture_error=capture_error, cwd=env.code_dir
+                cmd, errors.ExecuteUserScriptError, capture_error=capture_error, cwd=env.code_dir
             )
         else:
             process = create(
-                cmd, _errors.ExecuteUserScriptError, capture_error=capture_error, cwd=env.code_dir
+                cmd, errors.ExecuteUserScriptError, capture_error=capture_error, cwd=env.code_dir
             )
 
         self._tear_down()

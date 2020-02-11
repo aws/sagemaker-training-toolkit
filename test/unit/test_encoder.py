@@ -19,7 +19,7 @@ import pytest
 from scipy import sparse
 from six import BytesIO
 
-from sagemaker_training import content_types, encoders, _errors
+from sagemaker_training import content_types, encoders, errors
 from sagemaker_training._recordio import _read_recordio
 from sagemaker_training.record_pb2 import Record
 
@@ -111,7 +111,7 @@ def test_csv_to_numpy(target, expected):
 
 
 def test_csv_to_numpy_error():
-    with pytest.raises(_errors.ClientError):
+    with pytest.raises(errors.ClientError):
         encoders.csv_to_numpy("a\n", dtype="float")
 
 
@@ -144,12 +144,12 @@ def test_encode(content_type):
 
 
 def test_encode_error():
-    with pytest.raises(_errors.UnsupportedFormatError):
+    with pytest.raises(errors.UnsupportedFormatError):
         encoders.encode(42, content_types.OCTET_STREAM)
 
 
 def test_decode_error():
-    with pytest.raises(_errors.UnsupportedFormatError):
+    with pytest.raises(errors.UnsupportedFormatError):
         encoders.decode(42, content_types.OCTET_STREAM)
 
 

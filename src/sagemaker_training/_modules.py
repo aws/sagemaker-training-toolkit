@@ -23,7 +23,7 @@ import warnings
 
 import six
 
-from sagemaker_training import env, _errors, _files, _logging, _process
+from sagemaker_training import env, errors, _files, _logging, _process
 
 logger = _logging.get_logger()
 
@@ -116,7 +116,7 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
     logger.info("Installing module with the following command:\n%s", cmd)
 
     _process.check_error(
-        shlex.split(cmd), _errors.InstallModuleError, cwd=path, capture_error=capture_error
+        shlex.split(cmd), errors.InstallModuleError, cwd=path, capture_error=capture_error
     )
 
 
@@ -228,12 +228,10 @@ def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
     _logging.log_script_invocation(cmd, env_vars)
 
     if wait:
-        return _process.check_error(
-            cmd, _errors.ExecuteUserScriptError, capture_error=capture_error
-        )
+        return _process.check_error(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
 
     else:
-        return _process.create(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
+        return _process.create(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
 
 
 def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str, bool) -> module
@@ -262,7 +260,7 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
 
         return module
     except Exception as e:  # pylint: disable=broad-except
-        six.reraise(_errors.ImportModuleError, _errors.ImportModuleError(e), sys.exc_info()[2])
+        six.reraise(errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2])
 
 
 def run_module(

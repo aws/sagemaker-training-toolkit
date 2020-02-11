@@ -15,7 +15,7 @@ import os
 
 from mock import MagicMock, Mock, patch
 
-from sagemaker_training import _errors, _runner, _trainer
+from sagemaker_training import errors, _runner, _trainer
 
 
 class TrainingEnv(Mock):
@@ -133,7 +133,7 @@ def test_train_fails_with_invalid_error_number(_exit, import_module):
 @patch("sagemaker_training._trainer._exit_processes")
 def test_train_with_client_error(_exit, import_module):
     def fail():
-        raise _errors.ClientError(os.errno.ENOENT, "No such file or directory")
+        raise errors.ClientError(os.errno.ENOENT, "No such file or directory")
 
     framework = Mock(entry_point=fail)
     import_module.return_value = framework

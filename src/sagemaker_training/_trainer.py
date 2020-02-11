@@ -19,7 +19,7 @@ import traceback
 
 import sagemaker_training
 from sagemaker_training import (
-    _errors,
+    errors,
     _files,
     _intermediate_output,
     _logging,
@@ -96,7 +96,7 @@ def train():
         logger.info("Reporting training SUCCESS")
 
         _files.write_success_file()
-    except _errors.ClientError as e:
+    except errors.ClientError as e:
 
         failure_message = str(e)
         _files.write_failure_file(failure_message)

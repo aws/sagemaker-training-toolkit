@@ -19,7 +19,7 @@ from mock import call, MagicMock, patch, PropertyMock
 import pytest
 from six import PY2
 
-from sagemaker_training import env, _errors, _process, _runner, entry_point
+from sagemaker_training import env, errors, _process, _runner, entry_point
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -48,14 +48,14 @@ def test_install_module(check_error, entry_point_type_module):
     entry_point.install("python_module.py", path)
 
     cmd = [sys.executable, "-m", "pip", "install", "."]
-    check_error.assert_called_with(cmd, _errors.InstallModuleError, capture_error=False, cwd=path)
+    check_error.assert_called_with(cmd, errors.InstallModuleError, capture_error=False, cwd=path)
 
     with patch("os.path.exists", return_value=True):
         entry_point.install("python_module.py", path)
 
         check_error.assert_called_with(
             cmd + ["-r", "requirements.txt"],
-            _errors.InstallModuleError,
+            errors.InstallModuleError,
             cwd=path,
             capture_error=False,
         )
@@ -72,8 +72,8 @@ def test_install_script(check_error, entry_point_type_module, has_requirements):
 
 @patch("sagemaker_training._process.check_error", autospec=True)
 def test_install_fails(check_error, entry_point_type_module):
-    check_error.side_effect = _errors.ClientError()
-    with pytest.raises(_errors.ClientError):
+    check_error.side_effect = errors.ClientError()
+    with pytest.raises(errors.ClientError):
         entry_point.install("git://aws/container-support", "script")
 
 

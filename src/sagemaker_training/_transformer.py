@@ -19,7 +19,7 @@ import traceback
 
 from six.moves import http_client
 
-from sagemaker_training import content_types, encoders, env, _errors, _functions, _worker
+from sagemaker_training import content_types, encoders, env, errors, _functions, _worker
 
 
 def default_model_fn(model_dir):
@@ -130,7 +130,7 @@ class Transformer(object):
         predict_fn=None,
         output_fn=None,
         transform_fn=None,
-        error_class=_errors.ClientError,
+        error_class=errors.ClientError,
     ):
         """Default constructor. Wraps the any non default framework function in an error class to
         isolate framework from user errors.
@@ -225,14 +225,14 @@ class Transformer(object):
         """
         try:
             data = self._input_fn(content, content_type)
-        except _errors.UnsupportedFormatError as e:
+        except errors.UnsupportedFormatError as e:
             return self._error_response(e, http_client.UNSUPPORTED_MEDIA_TYPE)
 
         prediction = self._predict_fn(data, model)
 
         try:
             result = self._output_fn(prediction, accept)
-        except _errors.UnsupportedFormatError as e:
+        except errors.UnsupportedFormatError as e:
             return self._error_response(e, http_client.NOT_ACCEPTABLE)
 
         return result

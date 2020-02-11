@@ -21,7 +21,7 @@ from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-from sagemaker_training import env, _errors, _files, _modules, _params
+from sagemaker_training import env, errors, _files, _modules, _params
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -57,14 +57,14 @@ def test_install(check_error):
     _modules.install(path)
 
     cmd = [sys.executable, "-m", "pip", "install", "."]
-    check_error.assert_called_with(cmd, _errors.InstallModuleError, cwd=path, capture_error=False)
+    check_error.assert_called_with(cmd, errors.InstallModuleError, cwd=path, capture_error=False)
 
     with patch("os.path.exists", return_value=True):
         _modules.install(path)
 
         check_error.assert_called_with(
             cmd + ["-r", "requirements.txt"],
-            _errors.InstallModuleError,
+            errors.InstallModuleError,
             capture_error=False,
             cwd=path,
         )
@@ -72,8 +72,8 @@ def test_install(check_error):
 
 @patch("sagemaker_training._process.check_error", autospec=True)
 def test_install_fails(check_error):
-    check_error.side_effect = _errors.ClientError()
-    with pytest.raises(_errors.ClientError):
+    check_error.side_effect = errors.ClientError()
+    with pytest.raises(errors.ClientError):
         _modules.install("git://aws/container-support")
 
 
@@ -148,7 +148,7 @@ def test_exists(import_module):
 @patch("sagemaker_training.training_env", lambda: {})
 @pytest.mark.parametrize("capture_error", [True, False])
 def test_run_error(capture_error):
-    with pytest.raises(_errors.ExecuteUserScriptError) as e:
+    with pytest.raises(errors.ExecuteUserScriptError) as e:
         _modules.run("wrong module", capture_error=capture_error)
 
     message = str(e.value)
@@ -165,9 +165,7 @@ def test_run(log_script_invocation, check_error, executable):
 
     expected_cmd = [executable(), "-m", "pytest", "--version"]
     log_script_invocation.assert_called_with(expected_cmd, {})
-    check_error.assert_called_with(
-        expected_cmd, _errors.ExecuteUserScriptError, capture_error=False
-    )
+    check_error.assert_called_with(expected_cmd, errors.ExecuteUserScriptError, capture_error=False)
 
 
 @patch("sagemaker_training._process.python_executable")
@@ -180,7 +178,7 @@ def test_run_no_wait(log_script_invocation, create, executable):
 
     expected_cmd = [executable(), "-m", "pytest", "--version"]
     log_script_invocation.assert_called_with(expected_cmd, {"PYPATH": "/opt/ml/code"})
-    create.assert_called_with(expected_cmd, _errors.ExecuteUserScriptError, capture_error=True)
+    create.assert_called_with(expected_cmd, errors.ExecuteUserScriptError, capture_error=True)
 
 
 @pytest.mark.parametrize("wait, cache", [[True, False], [True, False]])
