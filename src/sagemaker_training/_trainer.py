@@ -20,7 +20,7 @@ import traceback
 import sagemaker_training
 from sagemaker_training import (
     errors,
-    _files,
+    files,
     _intermediate_output,
     _logging,
     _params,
@@ -95,11 +95,11 @@ def train():
 
         logger.info("Reporting training SUCCESS")
 
-        _files.write_success_file()
+        files.write_success_file()
     except errors.ClientError as e:
 
         failure_message = str(e)
-        _files.write_failure_file(failure_message)
+        files.write_failure_file(failure_message)
 
         logger.error(failure_message)
 
@@ -110,7 +110,7 @@ def train():
     except Exception as e:  # pylint: disable=broad-except
         failure_msg = "framework error: \n%s\n%s" % (traceback.format_exc(), str(e))
 
-        _files.write_failure_file(failure_msg)
+        files.write_failure_file(failure_msg)
         logger.error("Reporting training FAILURE")
 
         logger.error(failure_msg)

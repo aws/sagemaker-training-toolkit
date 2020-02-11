@@ -22,7 +22,7 @@ import sys
 import pkg_resources
 
 import sagemaker_training
-from sagemaker_training import env, _files, _logging, _modules
+from sagemaker_training import env, files, _logging, _modules
 
 logger = _logging.get_logger()
 
@@ -36,7 +36,7 @@ nginx_config_template_file = pkg_resources.resource_filename(
 
 def _create_nginx_config(serving_env):
     """Placeholder docstring"""
-    template = _files.read_file(nginx_config_template_file)
+    template = files.read_file(nginx_config_template_file)
 
     pattern = re.compile(r"%(\w+)%")
     template_values = {
@@ -48,7 +48,7 @@ def _create_nginx_config(serving_env):
 
     logger.info("nginx config: \n%s\n", config)
 
-    _files.write_file(nginx_config_file, config)
+    files.write_file(nginx_config_file, config)
 
 
 def _add_sigterm_handler(nginx, gunicorn):

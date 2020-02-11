@@ -20,7 +20,7 @@ from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from retrying import retry
 
-from sagemaker_training import entry_point_type, env, _files, _modules, _runner
+from sagemaker_training import entry_point_type, env, files, _modules, _runner
 
 
 def run(
@@ -88,7 +88,7 @@ def run(
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    _files.download_and_extract(uri, env.code_dir)
+    files.download_and_extract(uri, env.code_dir)
 
     install(user_entry_point, env.code_dir, capture_error)
 

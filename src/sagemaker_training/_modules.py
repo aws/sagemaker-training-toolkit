@@ -23,7 +23,7 @@ import warnings
 
 import six
 
-from sagemaker_training import env, errors, _files, _logging, _process
+from sagemaker_training import env, errors, files, _logging, _process
 
 logger = _logging.get_logger()
 
@@ -74,7 +74,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logger.info("Module %s does not provide a setup.py. \nGenerating setup.py" % name)
 
-        _files.write_file(setup_path, data)
+        files.write_file(setup_path, data)
 
         data = textwrap.dedent(
             """
@@ -85,7 +85,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logger.info("Generating setup.cfg")
 
-        _files.write_file(os.path.join(path, "setup.cfg"), data)
+        files.write_file(os.path.join(path, "setup.cfg"), data)
 
         data = textwrap.dedent(
             """
@@ -98,7 +98,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logger.info("Generating MANIFEST.in")
 
-        _files.write_file(os.path.join(path, "MANIFEST.in"), data)
+        files.write_file(os.path.join(path, "MANIFEST.in"), data)
 
 
 def install(path, capture_error=False):  # type: (str, bool) -> None
@@ -130,7 +130,7 @@ def s3_download(url, dst):  # type: (str, str) -> None
         url (str): the S3 URL of the file.
         dst (str): the destination where the file will be saved.
     """
-    _files.s3_download(url, dst)
+    files.s3_download(url, dst)
 
 
 def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
@@ -154,9 +154,9 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
     should_use_cache = cache and exists(name)
 
     if not should_use_cache:
-        with _files.tmpdir() as tmpdir:
+        with files.tmpdir() as tmpdir:
             dst = os.path.join(tmpdir, "tar_file")
-            _files.download_and_extract(uri, dst)
+            files.download_and_extract(uri, dst)
             module_path = os.path.join(tmpdir, "module_dir")
             os.makedirs(module_path)
             prepare(module_path, name)
@@ -250,7 +250,7 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
         (module): the imported module
     """
     _warning_cache_deprecation(cache)
-    _files.download_and_extract(uri, env.code_dir)
+    files.download_and_extract(uri, env.code_dir)
 
     prepare(env.code_dir, name)
     install(env.code_dir)
@@ -287,7 +287,7 @@ def run_module(
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    _files.download_and_extract(uri, env.code_dir)
+    files.download_and_extract(uri, env.code_dir)
 
     prepare(env.code_dir, name)
     install(env.code_dir)

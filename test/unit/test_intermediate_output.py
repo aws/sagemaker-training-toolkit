@@ -18,7 +18,7 @@ from inotify_simple import Event, flags
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_training import env, _files, _intermediate_output
+from sagemaker_training import env, files, _intermediate_output
 
 REGION = "us-west"
 S3_BUCKET = "s3://mybucket/"
@@ -67,7 +67,7 @@ def test_non_write_ignored(process_mock, upload_file, inotify_mock, copy2):
 
     process.start.side_effect = watch
 
-    _files.write_success_file()
+    files.write_success_file()
     _intermediate_output.start_sync(S3_BUCKET, REGION)
 
     inotify.add_watch.assert_called()
@@ -97,7 +97,7 @@ def test_modification_triggers_upload(process_mock, upload_file, inotify_mock, c
 
     process.start.side_effect = watch
 
-    _files.write_success_file()
+    files.write_success_file()
     _intermediate_output.start_sync(S3_BUCKET, REGION)
 
     inotify.add_watch.assert_called()
@@ -131,7 +131,7 @@ def test_new_folders_are_watched(process_mock, upload_file, inotify_mock, copy2)
 
     process.start.side_effect = watch
 
-    _files.write_success_file()
+    files.write_success_file()
     _intermediate_output.start_sync(S3_BUCKET, REGION)
 
     watch_flags = flags.CLOSE_WRITE | flags.CREATE

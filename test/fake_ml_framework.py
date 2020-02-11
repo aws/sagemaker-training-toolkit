@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 import numpy as np
 
-from sagemaker_training import _files
+from sagemaker_training import files
 import test
 
 
@@ -38,7 +38,7 @@ class Model(object):
     @classmethod
     def load(cls, model_dir):
         clazz = cls()
-        clazz.__dict__ = _files.read_json(model_dir)
+        clazz.__dict__ = files.read_json(model_dir)
         return clazz
 
     def predict(self, data):

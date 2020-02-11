@@ -29,7 +29,7 @@ DEFAULT_REGION = "us-west-2"
 
 from sagemaker_training import (  # noqa ignore=E402 module level import not at top of file
     env,
-    _files,
+    files,
     _params,
     _worker,
 )
@@ -204,10 +204,10 @@ class UserModule(object):
         self.key = key or os.path.join(
             "test", "sagemaker-training-toolkit", str(time.time()), "sourcedir.tar.gz"
         )
-        self._files = [main_file]
+        self.files = [main_file]
 
     def add_file(self, file):  # type: (File) -> UserModule
-        self._files.append(file)
+        self.files.append(file)
         return self
 
     @property
@@ -218,7 +218,7 @@ class UserModule(object):
         dir_path = dir_path or os.path.dirname(os.path.realpath(__file__))
         tar_name = os.path.join(dir_path, "sourcedir.tar.gz")
         with tarfile.open(tar_name, mode="w:gz") as tar:
-            for _file in self._files:
+            for _file in self.files:
                 name = os.path.join(dir_path, _file.name)
                 with open(name, "w+") as f:
 
@@ -234,13 +234,13 @@ class UserModule(object):
         return tar_name
 
     def upload(self):  # type: () -> UserModule
-        with _files.tmpdir() as tmpdir:
+        with files.tmpdir() as tmpdir:
             tar_name = self.create_tar(dir_path=tmpdir)
             self._s3.Object(self.bucket, self.key).upload_file(tar_name)
         return self
 
     def create_tmp_dir_with_files(self, tmp_dir_path):
-        for _file in self._files:
+        for _file in self.files:
             name = os.path.join(tmp_dir_path, _file.name)
             with open(name, "w+") as f:
 

@@ -85,7 +85,7 @@ def test_install_no_python_executable(check_error, has_requirements, entry_point
     assert str(e.value) == "Failed to retrieve the real path for the Python executable binary"
 
 
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.files.download_and_extract")
 @patch("os.chmod")
 @patch("sagemaker_training._process.check_error", autospec=True)
 @patch("socket.gethostbyname")
@@ -105,7 +105,7 @@ def test_run_module_wait(gethostbyname, check_error, chmod, download_and_extract
     chmod.assert_called_with(os.path.join(env.code_dir, "launcher.sh"), 511)
 
 
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training._modules.install")
 @patch.object(
     env.TrainingEnv, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
@@ -119,7 +119,7 @@ def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_a
     gethostbyname.assert_any_call("algo-1")
 
 
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training._modules.install")
 @patch.object(
     env.TrainingEnv, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
@@ -135,7 +135,7 @@ def test_run_waits_hostname_resolution(gethostbyname, hosts, install, download_a
     gethostbyname.assert_has_calls([call("algo-1"), call("algo-1"), call("algo-1"), call("algo-2")])
 
 
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.files.download_and_extract")
 @patch("os.chmod")
 @patch("socket.gethostbyname")
 def test_run_module_no_wait(gethostbyname, chmod, download_and_extract):
@@ -151,7 +151,7 @@ def test_run_module_no_wait(gethostbyname, chmod, download_and_extract):
 
 @patch("sys.path")
 @patch("sagemaker_training._runner.get")
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.files.download_and_extract")
 @patch("os.chmod")
 @patch("socket.gethostbyname")
 def test_run_module_with_env_vars(gethostbyname, chmod, download_and_extract, get_runner, sys_path):
@@ -169,7 +169,7 @@ def test_run_module_with_env_vars(gethostbyname, chmod, download_and_extract, ge
 
 @patch("sys.path")
 @patch("sagemaker_training._runner.get")
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.files.download_and_extract")
 @patch("os.chmod")
 @patch("socket.gethostbyname")
 def test_run_module_with_extra_opts(

@@ -21,7 +21,7 @@ from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-from sagemaker_training import env, errors, _files, _modules, _params
+from sagemaker_training import env, errors, files, _modules, _params
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -38,7 +38,7 @@ def test_s3_download(resource, url, bucket_name, key, dst):
     region = "us-west-2"
     os.environ[_params.REGION_NAME_ENV] = region
 
-    _files.s3_download(url, dst)
+    files.s3_download(url, dst)
 
     chain = call("s3", region_name=region).Bucket(bucket_name).download_file(key, dst)
     assert resource.mock_calls == chain.call_list()
@@ -48,7 +48,7 @@ def test_s3_download_wrong_scheme():
     with pytest.raises(
         ValueError, message="Expecting 's3' scheme, got: c in c://my-bucket/my-file"
     ):
-        _files.s3_download("c://my-bucket/my-file", "/tmp/file")
+        files.s3_download("c://my-bucket/my-file", "/tmp/file")
 
 
 @patch("sagemaker_training._process.check_error", autospec=True)
@@ -185,7 +185,7 @@ def test_run_no_wait(log_script_invocation, create, executable):
 @patch("sagemaker_training._modules.run")
 @patch("sagemaker_training._modules.install")
 @patch("sagemaker_training.env.write_env_vars")
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.files.download_and_extract")
 def test_run_module_wait(download_and_extract, write_env_vars, install, run, wait, cache):
     with pytest.warns(DeprecationWarning):
         _modules.run_module(uri="s3://url", args=["42"], wait=wait, cache=cache)
@@ -197,7 +197,7 @@ def test_run_module_wait(download_and_extract, write_env_vars, install, run, wai
         run.assert_called_with("default_user_module_name", ["42"], {}, True, False)
 
 
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training._modules.install")
 @patch("importlib.import_module")
 @patch("six.moves.reload_module")
@@ -213,7 +213,7 @@ def test_import_module(reload, import_module, install, download_and_extract):
 def test_download_and_install_local_directory():
     uri = "/opt/ml/input/data/code/sourcedir.tar.gz"
 
-    with patch("sagemaker_training._files.s3_download") as s3_download, patch(
+    with patch("sagemaker_training.files.s3_download") as s3_download, patch(
         "tarfile.open"
     ) as tarfile, patch("sagemaker_training._modules.prepare") as prepare, patch(
         "sagemaker_training._modules.install"

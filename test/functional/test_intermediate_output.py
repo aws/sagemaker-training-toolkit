@@ -19,7 +19,7 @@ import boto3
 from botocore.exceptions import ClientError
 import numpy as np
 
-from sagemaker_training import env, _files, _intermediate_output
+from sagemaker_training import env, files, _intermediate_output
 import test
 
 intermediate_path = env.output_intermediate_dir
@@ -74,7 +74,7 @@ def test_intermediate_upload():
     file5 = os.path.join(intermediate_path, "file5.txt")
     write_file(file5, "file5!")
 
-    _files.write_success_file()
+    files.write_success_file()
 
     p.join()
 
@@ -165,7 +165,7 @@ def test_nested_delayed_file():
     file2 = os.path.join(dir3, "file2.txt")
     write_file(file2, "file2")
 
-    _files.write_success_file()
+    files.write_success_file()
     p.join()
 
     # assert that all files that should be under intermediate are still there
@@ -196,7 +196,7 @@ def test_large_files():
     _generate_large_npy_file(file_size, file_to_modify)
     content_to_assert = _generate_large_npy_file(file_size, file_to_modify)
 
-    _files.write_failure_file("Failure!!")
+    files.write_failure_file("Failure!!")
     p.join()
 
     assert os.path.exists(file)

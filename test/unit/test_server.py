@@ -65,8 +65,8 @@ def test_start_no_nginx(popen):
 @patch("sagemaker_training.env.num_gpus", lambda: 0)
 @patch("sagemaker_training._server.nginx_config_file", "/tmp/nginx.conf")
 @patch("sagemaker_training._server.nginx_config_template_file", "/tmp/nginx.conf.template")
-@patch("sagemaker_training._files.read_file", lambda x: "random_string")
-@patch("sagemaker_training._files.write_file", Mock())
+@patch("sagemaker_training.files.read_file", lambda x: "random_string")
+@patch("sagemaker_training.files.write_file", Mock())
 @patch("os.wait", lambda: (-1, 0))
 @patch("subprocess.Popen")
 @patch("sys.path", ["/opt/folder", "/lib/another/folder"])
@@ -126,7 +126,7 @@ def test_next_safe_port_less_than_range_exception():
 
 
 @patch(
-    "sagemaker_training._files.read_file",
+    "sagemaker_training.files.read_file",
     lambda x: "nginx_timeout=%NGINX_PROXY_READ_TIMEOUT%, nginx_port=%NGINX_HTTP_PORT%",
 )
 @patch("sagemaker_training._server.nginx_config_template_file", "/tmp/nginx.conf.template")
