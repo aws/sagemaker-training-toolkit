@@ -18,27 +18,27 @@ from inotify_simple import Event, flags
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_training import env, files, _intermediate_output
+from sagemaker_training import env, files, intermediate_output
 
 REGION = "us-west"
 S3_BUCKET = "s3://mybucket/"
 
 
 def test_accept_file_output_no_process():
-    intemediate_sync = _intermediate_output.start_sync("file://my/favorite/file", REGION)
+    intemediate_sync = intermediate_output.start_sync("file://my/favorite/file", REGION)
     assert intemediate_sync is None
 
 
 def test_wrong_output():
     with pytest.raises(ValueError) as e:
-        _intermediate_output.start_sync("tcp://my/favorite/url", REGION)
+        intermediate_output.start_sync("tcp://my/favorite/url", REGION)
     assert "Expecting 's3' scheme" in str(e)
 
 
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 def test_daemon_process():
-    intemediate_sync = _intermediate_output.start_sync(S3_BUCKET, REGION)
+    intemediate_sync = intermediate_output.start_sync(S3_BUCKET, REGION)
     assert intemediate_sync.daemon is True
 
 
@@ -61,14 +61,14 @@ def test_non_write_ignored(process_mock, upload_file, inotify_mock, copy2):
     def watch():
         call = process_mock.call_args
         args, kwargs = call
-        _intermediate_output._watch(
+        intermediate_output._watch(
             kwargs["args"][0], kwargs["args"][1], kwargs["args"][2], kwargs["args"][3]
         )
 
     process.start.side_effect = watch
 
     files.write_success_file()
-    _intermediate_output.start_sync(S3_BUCKET, REGION)
+    intermediate_output.start_sync(S3_BUCKET, REGION)
 
     inotify.add_watch.assert_called()
     inotify.read.assert_called()
@@ -91,14 +91,14 @@ def test_modification_triggers_upload(process_mock, upload_file, inotify_mock, c
     def watch():
         call = process_mock.call_args
         args, kwargs = call
-        _intermediate_output._watch(
+        intermediate_output._watch(
             kwargs["args"][0], kwargs["args"][1], kwargs["args"][2], kwargs["args"][3]
         )
 
     process.start.side_effect = watch
 
     files.write_success_file()
-    _intermediate_output.start_sync(S3_BUCKET, REGION)
+    intermediate_output.start_sync(S3_BUCKET, REGION)
 
     inotify.add_watch.assert_called()
     inotify.read.assert_called()
@@ -125,14 +125,14 @@ def test_new_folders_are_watched(process_mock, upload_file, inotify_mock, copy2)
 
         call = process_mock.call_args
         args, kwargs = call
-        _intermediate_output._watch(
+        intermediate_output._watch(
             kwargs["args"][0], kwargs["args"][1], kwargs["args"][2], kwargs["args"][3]
         )
 
     process.start.side_effect = watch
 
     files.write_success_file()
-    _intermediate_output.start_sync(S3_BUCKET, REGION)
+    intermediate_output.start_sync(S3_BUCKET, REGION)
 
     watch_flags = flags.CLOSE_WRITE | flags.CREATE
     inotify.add_watch.assert_any_call(env.output_intermediate_dir, watch_flags)

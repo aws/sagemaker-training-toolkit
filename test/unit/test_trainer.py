@@ -164,7 +164,7 @@ def test_train_script(_exit, training_env, run):
 
 
 @patch("importlib.import_module")
-@patch("sagemaker_training._intermediate_output.start_sync")
+@patch("sagemaker_training.intermediate_output.start_sync")
 @patch("sagemaker_training.training_env", TrainingEnvNoIntermediate)
 def test_train_no_intermediate(start_intermediate_folder_sync, import_module):
     framework = Mock()

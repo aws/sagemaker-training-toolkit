@@ -19,7 +19,7 @@ import boto3
 from botocore.exceptions import ClientError
 import numpy as np
 
-from sagemaker_training import env, files, _intermediate_output
+from sagemaker_training import env, files, intermediate_output
 import test
 
 intermediate_path = env.output_intermediate_dir
@@ -34,7 +34,7 @@ def _timestamp():
 
 def test_intermediate_upload():
     os.environ["TRAINING_JOB_NAME"] = _timestamp()
-    p = _intermediate_output.start_sync(bucket_uri, region)
+    p = intermediate_output.start_sync(bucket_uri, region)
 
     file1 = os.path.join(intermediate_path, "file1.txt")
     write_file(file1, "file1!")
@@ -142,7 +142,7 @@ def test_intermediate_upload():
 
 def test_nested_delayed_file():
     os.environ["TRAINING_JOB_NAME"] = _timestamp()
-    p = _intermediate_output.start_sync(bucket_uri, region)
+    p = intermediate_output.start_sync(bucket_uri, region)
 
     os.makedirs(os.path.join(intermediate_path, "dir1"))
     dir1 = os.path.join(intermediate_path, "dir1")
@@ -185,7 +185,7 @@ def test_nested_delayed_file():
 
 def test_large_files():
     os.environ["TRAINING_JOB_NAME"] = _timestamp()
-    p = _intermediate_output.start_sync(bucket_uri, region)
+    p = intermediate_output.start_sync(bucket_uri, region)
 
     file_size = 1024 * 256 * 17  # 17MB
 

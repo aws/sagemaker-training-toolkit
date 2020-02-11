@@ -21,7 +21,7 @@ import sagemaker_training
 from sagemaker_training import (
     errors,
     files,
-    _intermediate_output,
+    intermediate_output,
     _logging,
     _params,
     _runner,
@@ -65,7 +65,7 @@ def train():
         env = sagemaker_training.training_env()
 
         region = os.environ.get("AWS_REGION", os.environ.get(_params.REGION_NAME_ENV))
-        intermediate_sync = _intermediate_output.start_sync(env.sagemaker_s3_output(), region)
+        intermediate_sync = intermediate_output.start_sync(env.sagemaker_s3_output(), region)
 
         if env.framework_module:
             framework_name, entry_point_name = env.framework_module.split(":")
