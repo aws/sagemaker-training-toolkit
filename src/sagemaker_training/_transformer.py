@@ -19,7 +19,7 @@ import traceback
 
 from six.moves import http_client
 
-from sagemaker_training import content_types, encoders, env, errors, _functions, _worker
+from sagemaker_training import content_types, encoders, env, errors, functions, _worker
 
 
 def default_model_fn(model_dir):
@@ -148,7 +148,7 @@ class Transformer(object):
         """
         self._model = None
         self._model_fn = (
-            _functions.error_wrapper(model_fn, error_class) if model_fn else default_model_fn
+            functions.error_wrapper(model_fn, error_class) if model_fn else default_model_fn
         )
 
         if transform_fn and (input_fn or predict_fn or output_fn):
@@ -157,18 +157,18 @@ class Transformer(object):
             )
 
         if transform_fn is not None:
-            self._transform_fn = _functions.error_wrapper(transform_fn, error_class)
+            self._transform_fn = functions.error_wrapper(transform_fn, error_class)
         else:
             self._transform_fn = self._default_transform_fn
 
         self._input_fn = (
-            _functions.error_wrapper(input_fn, error_class) if input_fn else default_input_fn
+            functions.error_wrapper(input_fn, error_class) if input_fn else default_input_fn
         )
         self._predict_fn = (
-            _functions.error_wrapper(predict_fn, error_class) if predict_fn else default_predict_fn
+            functions.error_wrapper(predict_fn, error_class) if predict_fn else default_predict_fn
         )
         self._output_fn = (
-            _functions.error_wrapper(output_fn, error_class) if output_fn else default_output_fn
+            functions.error_wrapper(output_fn, error_class) if output_fn else default_output_fn
         )
         self._error_class = error_class
 

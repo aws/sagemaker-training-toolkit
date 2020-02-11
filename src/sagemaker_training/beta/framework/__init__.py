@@ -21,7 +21,7 @@ from sagemaker_training import errors
 from sagemaker_training import env
 from sagemaker_training import _mpi as mpi
 from sagemaker_training import files
-from sagemaker_training import _functions as functions
+from sagemaker_training import functions
 from sagemaker_training import _logging as logging
 from sagemaker_training import _mapping as mapping
 from sagemaker_training import _modules as modules
