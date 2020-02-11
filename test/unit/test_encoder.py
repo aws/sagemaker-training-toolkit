@@ -19,7 +19,7 @@ import pytest
 from scipy import sparse
 from six import BytesIO
 
-from sagemaker_training import _content_types, _encoders, _errors
+from sagemaker_training import content_types, _encoders, _errors
 from sagemaker_training._recordio import _read_recordio
 from sagemaker_training.record_pb2 import Record
 
@@ -134,9 +134,7 @@ def test_array_to_csv(target, expected):
     np.testing.assert_equal(actual, expected)
 
 
-@pytest.mark.parametrize(
-    "content_type", [_content_types.JSON, _content_types.CSV, _content_types.NPY]
-)
+@pytest.mark.parametrize("content_type", [content_types.JSON, content_types.CSV, content_types.NPY])
 def test_encode(content_type):
     encoder = Mock()
     with patch.dict(_encoders._encoders_map, {content_type: encoder}, clear=True):
@@ -147,17 +145,15 @@ def test_encode(content_type):
 
 def test_encode_error():
     with pytest.raises(_errors.UnsupportedFormatError):
-        _encoders.encode(42, _content_types.OCTET_STREAM)
+        _encoders.encode(42, content_types.OCTET_STREAM)
 
 
 def test_decode_error():
     with pytest.raises(_errors.UnsupportedFormatError):
-        _encoders.decode(42, _content_types.OCTET_STREAM)
+        _encoders.decode(42, content_types.OCTET_STREAM)
 
 
-@pytest.mark.parametrize(
-    "content_type", [_content_types.JSON, _content_types.CSV, _content_types.NPY]
-)
+@pytest.mark.parametrize("content_type", [content_types.JSON, content_types.CSV, content_types.NPY])
 def test_decode(content_type):
     decoder = Mock()
     with patch.dict(_encoders._decoders_map, {content_type: decoder}, clear=True):

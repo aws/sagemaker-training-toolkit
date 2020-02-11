@@ -19,7 +19,7 @@ from mock import MagicMock, patch, PropertyMock
 import pytest
 from six.moves import http_client, range
 
-from sagemaker_training import _content_types, _worker
+from sagemaker_training import content_types, _worker
 
 
 def test_default_ping_fn():
@@ -51,7 +51,7 @@ def test_worker_with_initialize(module_name, expected_name):
     assert app.request_class == _worker.Request
 
 
-@pytest.mark.parametrize("content_type", [_content_types.JSON, _content_types.ANY])
+@pytest.mark.parametrize("content_type", [content_types.JSON, content_types.ANY])
 def test_invocations(content_type):
     def transform_fn():
         return _worker.Response(response="fake data", mimetype=content_type)
@@ -73,7 +73,7 @@ def test_ping():
         for _ in range(9):
             response = client.get("/ping")
             assert response.status_code == http_client.OK
-            assert response.mimetype == _content_types.JSON
+            assert response.mimetype == content_types.JSON
 
 
 def test_response_accept_deprecated():

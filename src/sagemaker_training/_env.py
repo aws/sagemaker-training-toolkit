@@ -26,7 +26,7 @@ import time
 
 import boto3
 
-from sagemaker_training import _content_types, _logging, _mapping, _params
+from sagemaker_training import content_types, _logging, _mapping, _params
 
 logger = _logging.get_logger()
 
@@ -900,7 +900,7 @@ class ServingEnv(_Env):
         model_server_timeout = int(os.environ.get(_params.MODEL_SERVER_TIMEOUT_ENV, "60"))
         model_server_workers = int(os.environ.get(_params.MODEL_SERVER_WORKERS_ENV, num_cpus()))
         framework_module = os.environ.get(_params.FRAMEWORK_SERVING_MODULE_ENV, None)
-        default_accept = os.environ.get(_params.DEFAULT_INVOCATIONS_ACCEPT_ENV, _content_types.JSON)
+        default_accept = os.environ.get(_params.DEFAULT_INVOCATIONS_ACCEPT_ENV, content_types.JSON)
         http_port = os.environ.get(_params.SAGEMAKER_BIND_TO_PORT_ENV, "8080")
         safe_port_range = os.environ.get(_params.SAGEMAKER_SAFE_PORT_RANGE_ENV)
 

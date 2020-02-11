@@ -16,22 +16,22 @@ from mock import MagicMock, patch
 import pytest
 from six.moves import http_client
 
-from sagemaker_training import _content_types, _env, _errors, _transformer
+from sagemaker_training import content_types, _env, _errors, _transformer
 import test
 
 
 @patch("sagemaker_training._encoders.decode")
 def test_default_input_fn(loads):
-    assert _transformer.default_input_fn(42, _content_types.JSON)
+    assert _transformer.default_input_fn(42, content_types.JSON)
 
-    loads.assert_called_with(42, _content_types.JSON)
+    loads.assert_called_with(42, content_types.JSON)
 
 
 @patch("sagemaker_training._encoders.encode", lambda prediction, accept: prediction ** 2)
 def test_default_output_fn():
-    response = _transformer.default_output_fn(2, _content_types.CSV)
+    response = _transformer.default_output_fn(2, content_types.CSV)
     assert response.response == 4
-    assert response.mimetype == _content_types.CSV
+    assert response.mimetype == content_types.CSV
 
 
 def test_default_model_fn():
@@ -44,7 +44,7 @@ def test_predict_fn():
         _transformer.default_predict_fn("data", "model")
 
 
-request = test.request(data="42", headers={"ContentType": _content_types.JSON})
+request = test.request(data="42", headers={"ContentType": content_types.JSON})
 
 
 def test_transformer_initialize_with_default_model_fn():
@@ -128,7 +128,7 @@ def test_initialize():
 
 @patch(
     "sagemaker_training._worker.Request",
-    lambda: MagicMock(content="42", content_type=_content_types.JSON, accept=_content_types.NPY),
+    lambda: MagicMock(content="42", content_type=content_types.JSON, accept=content_types.NPY),
 )
 def test_transformer_transform():
     model_fn, input_fn, predict_fn = (MagicMock(), MagicMock(), MagicMock())
@@ -141,21 +141,21 @@ def test_transformer_transform():
     transform.initialize()
     assert transform.transform() == "response"
 
-    input_fn.assert_called_with("42", _content_types.JSON)
+    input_fn.assert_called_with("42", content_types.JSON)
     predict_fn.assert_called_with(input_fn(), model_fn())
-    output_fn.assert_called_with(predict_fn(), _content_types.NPY)
+    output_fn.assert_called_with(predict_fn(), content_types.NPY)
 
 
 @patch(
     "sagemaker_training._worker.Request",
-    lambda: MagicMock(content="13", content_type=_content_types.CSV, accept=_content_types.ANY),
+    lambda: MagicMock(content="13", content_type=content_types.CSV, accept=content_types.ANY),
 )
 def test_transformer_transform_backwards_compatibility():
     model_fn, input_fn, predict_fn, output_fn = (
         MagicMock(),
         MagicMock(),
         MagicMock(),
-        MagicMock(return_value=(0, _content_types.ANY)),
+        MagicMock(return_value=(0, content_types.ANY)),
     )
 
     transform = _transformer.Transformer(
@@ -166,14 +166,14 @@ def test_transformer_transform_backwards_compatibility():
 
     assert transform.transform().status_code == http_client.OK
 
-    input_fn.assert_called_with("13", _content_types.CSV)
+    input_fn.assert_called_with("13", content_types.CSV)
     predict_fn.assert_called_with(input_fn(), model_fn())
-    output_fn.assert_called_with(predict_fn(), _content_types.ANY)
+    output_fn.assert_called_with(predict_fn(), content_types.ANY)
 
 
 @patch(
     "sagemaker_training._worker.Request",
-    lambda: MagicMock(content="13", content_type=_content_types.CSV, accept=_content_types.ANY),
+    lambda: MagicMock(content="13", content_type=content_types.CSV, accept=content_types.ANY),
 )
 def test_transformer_with_custom_transform_fn():
     model = MagicMock()
@@ -187,7 +187,7 @@ def test_transformer_with_custom_transform_fn():
     transform.initialize()
     transform.transform()
 
-    transform_fn.assert_called_with(model, "13", _content_types.CSV, _content_types.ANY)
+    transform_fn.assert_called_with(model, "13", content_types.CSV, content_types.ANY)
 
 
 def test_transformer_too_many_custom_methods():

@@ -18,7 +18,7 @@ from mock import patch, PropertyMock
 import pytest
 from six.moves import http_client, range
 
-from sagemaker_training import _content_types, _worker
+from sagemaker_training import content_types, _worker
 
 
 class Transformer(object):
@@ -30,7 +30,7 @@ class Transformer(object):
 
     def transform(self):
         self.calls["transform"] += 1
-        return _worker.Response(response=json.dumps(self.calls), mimetype=_content_types.JSON)
+        return _worker.Response(response=json.dumps(self.calls), mimetype=content_types.JSON)
 
 
 def test_worker_with_initialize():
@@ -50,7 +50,7 @@ def test_worker_with_initialize():
             assert response.status_code == http_client.OK
 
         response = client.post("/invocations")
-        assert response.mimetype == _content_types.JSON
+        assert response.mimetype == content_types.JSON
         assert json.loads(response.get_data(as_text=True)) == dict(initialize=1, transform=10)
 
 
@@ -73,7 +73,7 @@ def test_worker(module_name, expected_name):
             assert response.status_code == http_client.OK
 
         response = client.post("/invocations")
-        assert response.mimetype == _content_types.JSON
+        assert response.mimetype == content_types.JSON
         assert json.loads(response.get_data(as_text=True)) == dict(initialize=0, transform=10)
 
 

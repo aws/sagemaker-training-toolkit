@@ -19,7 +19,7 @@ import traceback
 
 from six.moves import http_client
 
-from sagemaker_training import _content_types, _encoders, _env, _errors, _functions, _worker
+from sagemaker_training import content_types, _encoders, _env, _errors, _functions, _worker
 
 
 def default_model_fn(model_dir):
@@ -246,4 +246,4 @@ class Transformer(object):
                 "stack-trace": traceback.format_exc(),
             }
         )
-        return _worker.Response(response=body, status=status_code, mimetype=_content_types.JSON)
+        return _worker.Response(response=body, status=status_code, mimetype=content_types.JSON)
