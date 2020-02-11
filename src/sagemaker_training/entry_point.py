@@ -20,7 +20,7 @@ from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from retrying import retry
 
-from sagemaker_training import entry_point_type, _env, _files, _modules, _runner
+from sagemaker_training import entry_point_type, env, _files, _modules, _runner
 
 
 def run(
@@ -88,11 +88,11 @@ def run(
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    _files.download_and_extract(uri, _env.code_dir)
+    _files.download_and_extract(uri, env.code_dir)
 
-    install(user_entry_point, _env.code_dir, capture_error)
+    install(user_entry_point, env.code_dir, capture_error)
 
-    _env.write_env_vars(env_vars)
+    env.write_env_vars(env_vars)
 
     _wait_hostname_resolution()
 
@@ -133,5 +133,5 @@ def _wait_hostname_resolution():
     boots up and has been documented here:
      https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-dist-training
     """
-    for host in _env.TrainingEnv().hosts:
+    for host in env.TrainingEnv().hosts:
         _dns_lookup(host)

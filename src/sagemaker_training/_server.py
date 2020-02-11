@@ -22,7 +22,7 @@ import sys
 import pkg_resources
 
 import sagemaker_training
-from sagemaker_training import _env, _files, _logging, _modules
+from sagemaker_training import env, _files, _logging, _modules
 
 logger = _logging.get_logger()
 
@@ -71,27 +71,27 @@ def _add_sigterm_handler(nginx, gunicorn):
 
 def start(module_app):
     """Placeholder docstring"""
-    env = _env.ServingEnv()
-    gunicorn_bind_address = "0.0.0.0:{}".format(env.http_port)
+    serving_env = env.ServingEnv()
+    gunicorn_bind_address = "0.0.0.0:{}".format(serving_env.http_port)
 
     nginx = None
 
-    if env.use_nginx:
+    if serving_env.use_nginx:
         gunicorn_bind_address = UNIX_SOCKET_BIND
-        _create_nginx_config(env)
+        _create_nginx_config(serving_env)
         nginx = subprocess.Popen(["nginx", "-c", nginx_config_file])
 
     # Install user module before starting GUnicorn
-    if env.module_name:
-        _modules.import_module(env.module_dir, env.module_name)
+    if serving_env.module_name:
+        _modules.import_module(serving_env.module_dir, serving_env.module_name)
 
-    pythonpath = ",".join(sys.path + [_env.code_dir])
+    pythonpath = ",".join(sys.path + [env.code_dir])
 
     gunicorn = subprocess.Popen(
         [
             "gunicorn",
             "--timeout",
-            str(env.model_server_timeout),
+            str(serving_env.model_server_timeout),
             "-k",
             "gevent",
             "--pythonpath",
@@ -99,9 +99,9 @@ def start(module_app):
             "-b",
             gunicorn_bind_address,
             "--worker-connections",
-            str(1000 * env.model_server_workers),
+            str(1000 * serving_env.model_server_workers),
             "-w",
-            str(env.model_server_workers),
+            str(serving_env.model_server_workers),
             "--log-level",
             "info",
             module_app,

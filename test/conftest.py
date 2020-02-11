@@ -21,7 +21,7 @@ import socket
 from mock import patch
 import pytest
 
-from sagemaker_training import _env
+from sagemaker_training import env
 
 logging.getLogger("boto3").setLevel(logging.INFO)
 logging.getLogger("s3transfer").setLevel(logging.INFO)
@@ -38,21 +38,21 @@ def _write_json(obj, path):  # type: (object, str) -> None
 @pytest.fixture(autouse=True)
 def create_base_path():
 
-    yield str(os.environ[_env.BASE_PATH_ENV])
+    yield str(os.environ[env.BASE_PATH_ENV])
 
-    shutil.rmtree(os.environ[_env.BASE_PATH_ENV])
+    shutil.rmtree(os.environ[env.BASE_PATH_ENV])
 
-    os.makedirs(_env.model_dir)
-    os.makedirs(_env.input_config_dir)
-    os.makedirs(_env.code_dir)
-    os.makedirs(_env.output_data_dir)
+    os.makedirs(env.model_dir)
+    os.makedirs(env.input_config_dir)
+    os.makedirs(env.code_dir)
+    os.makedirs(env.output_data_dir)
 
-    _write_json({}, _env.hyperparameters_file_dir)
-    _write_json({}, _env.input_data_config_file_dir)
+    _write_json({}, env.hyperparameters_file_dir)
+    _write_json({}, env.input_data_config_file_dir)
     host_name = socket.gethostname()
 
     resources_dict = {"current_host": host_name, "hosts": [host_name]}
-    _write_json(resources_dict, _env.resource_config_file_dir)
+    _write_json(resources_dict, env.resource_config_file_dir)
 
 
 @pytest.fixture(autouse=True)

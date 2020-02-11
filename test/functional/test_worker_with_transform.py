@@ -54,7 +54,7 @@ def test_worker_with_initialize():
         assert json.loads(response.get_data(as_text=True)) == dict(initialize=1, transform=10)
 
 
-@patch("sagemaker_training._env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
+@patch("sagemaker_training.env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
 @pytest.mark.parametrize(
     "module_name,expected_name", [("my_module", "my_module"), (None, "user_program")]
 )

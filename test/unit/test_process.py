@@ -19,7 +19,7 @@ import sys
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_training import _env, _errors, _process
+from sagemaker_training import env, _errors, _process
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def test_run_bash(log, popen, entry_point_type_script):
         _process.ProcessRunner("launcher.sh", ["--lr", "13"], {}).run()
 
     cmd = ["/bin/sh", "-c", "./launcher.sh --lr 13"]
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stdout=None, stderr=None)
+    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stdout=None, stderr=None)
     log.assert_called_with(cmd, {})
 
 
@@ -87,7 +87,7 @@ def test_run_python_capture_error(log, popen, entry_point_type_script):
 
     cmd = [sys.executable, "launcher.py", "--lr", "13"]
     popen.assert_called_with(
-        cmd, cwd=_env.code_dir, env=os.environ, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        cmd, cwd=env.code_dir, env=os.environ, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     log.assert_called_with(cmd, {})
 
@@ -99,7 +99,7 @@ def test_run_module(log, popen, entry_point_type_module):
         _process.ProcessRunner("module.py", ["--lr", "13"], {}).run()
 
     cmd = [sys.executable, "-m", "module", "--lr", "13"]
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stdout=None, stderr=None)
+    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stdout=None, stderr=None)
     log.assert_called_with(cmd, {})
 
 

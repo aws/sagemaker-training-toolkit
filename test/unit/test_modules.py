@@ -21,7 +21,7 @@ from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-from sagemaker_training import _env, _errors, _files, _modules, _params
+from sagemaker_training import env, _errors, _files, _modules, _params
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -186,15 +186,15 @@ def test_run_no_wait(log_script_invocation, create, executable):
 @pytest.mark.parametrize("wait, cache", [[True, False], [True, False]])
 @patch("sagemaker_training._modules.run")
 @patch("sagemaker_training._modules.install")
-@patch("sagemaker_training._env.write_env_vars")
+@patch("sagemaker_training.env.write_env_vars")
 @patch("sagemaker_training._files.download_and_extract")
 def test_run_module_wait(download_and_extract, write_env_vars, install, run, wait, cache):
     with pytest.warns(DeprecationWarning):
         _modules.run_module(uri="s3://url", args=["42"], wait=wait, cache=cache)
 
-        download_and_extract.assert_called_with("s3://url", _env.code_dir)
+        download_and_extract.assert_called_with("s3://url", env.code_dir)
         write_env_vars.assert_called_with({})
-        install.assert_called_with(_env.code_dir)
+        install.assert_called_with(env.code_dir)
 
         run.assert_called_with("default_user_module_name", ["42"], {}, True, False)
 
@@ -207,8 +207,8 @@ def test_import_module(reload, import_module, install, download_and_extract):
 
     _modules.import_module("s3://bucket/my-module")
 
-    download_and_extract.assert_called_with("s3://bucket/my-module", _env.code_dir)
-    install.assert_called_with(_env.code_dir)
+    download_and_extract.assert_called_with("s3://bucket/my-module", env.code_dir)
+    install.assert_called_with(env.code_dir)
     reload.assert_called_with(import_module(_modules.DEFAULT_MODULE_NAME))
 
 

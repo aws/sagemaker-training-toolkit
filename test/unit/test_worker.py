@@ -29,7 +29,7 @@ def test_default_ping_fn():
 @pytest.mark.parametrize(
     "module_name, expected_name", [("test_module", "test_module"), (None, "user_program")]
 )
-@patch("sagemaker_training._env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
+@patch("sagemaker_training.env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
 def test_worker(module_name, expected_name):
     app = _worker.Worker(transform_fn=MagicMock().transform, module_name=module_name)
     assert app.import_name == expected_name
@@ -40,7 +40,7 @@ def test_worker(module_name, expected_name):
 @pytest.mark.parametrize(
     "module_name, expected_name", [("test_module", "test_module"), (None, "user_program")]
 )
-@patch("sagemaker_training._env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
+@patch("sagemaker_training.env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
 def test_worker_with_initialize(module_name, expected_name):
     mock = MagicMock()
     app = _worker.Worker(

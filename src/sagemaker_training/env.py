@@ -869,11 +869,11 @@ class ServingEnv(_Env):
        It is a dictionary like object, allowing any builtin function that works with dictionary.
 
        Example on how to print the state of the container:
-           >>> from sagemaker_training import _env
+           >>> from sagemaker_training import env
 
-           >>> print(str(_env.ServingEnv()))
+           >>> print(str(env.ServingEnv()))
        Example on how a script can use training environment:
-           >>>ServingEnv = _env.ServingEnv()
+           >>>ServingEnv = env.ServingEnv()
 
 
         Attributes:

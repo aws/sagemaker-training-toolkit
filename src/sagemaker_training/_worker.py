@@ -18,9 +18,9 @@ import warnings
 import flask
 from six.moves import http_client
 
-from sagemaker_training import content_types, _env, _logging, _mapping
+from sagemaker_training import content_types, env, _logging, _mapping
 
-env = _env.ServingEnv()
+env = env.ServingEnv()
 
 
 def default_healthcheck_fn():  # type: () -> Response
@@ -150,7 +150,7 @@ class Request(flask.Request, _mapping.MappingMixin):
 
     42
 
-    >>> from sagemaker_training import _env
+    >>> from sagemaker_training import env
 
     >>> request = Request()
     >>> data = request.data
@@ -165,7 +165,7 @@ class Request(flask.Request, _mapping.MappingMixin):
 
     default_mimetype = content_types.JSON
 
-    def __init__(self, environ=None, serving_env=None):  # type: (dict, _env.ServingEnv) -> None
+    def __init__(self, environ=None, serving_env=None):  # type: (dict, env.ServingEnv) -> None
         """Placeholder docstring"""
         super(Request, self).__init__(environ=environ or flask.request.environ)
 

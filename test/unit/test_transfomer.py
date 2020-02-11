@@ -16,7 +16,7 @@ from mock import MagicMock, patch
 import pytest
 from six.moves import http_client
 
-from sagemaker_training import content_types, _env, _errors, _transformer
+from sagemaker_training import content_types, env, _errors, _transformer
 import test
 
 
@@ -123,7 +123,7 @@ def test_initialize():
 
     _transformer.Transformer(model_fn=model_fn).initialize()
 
-    model_fn.assert_called_with(_env.model_dir)
+    model_fn.assert_called_with(env.model_dir)
 
 
 @patch(

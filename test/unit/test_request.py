@@ -42,7 +42,7 @@ def test_request(content_type_header):
     np.testing.assert_array_equal(result, np.array([6, 9.3]))
 
 
-@patch("sagemaker_training._env.ServingEnv")
+@patch("sagemaker_training.env.ServingEnv")
 def test_request_without_accept(serving_env):
     serving_env.default_accept = "application/json"
 
@@ -50,7 +50,7 @@ def test_request_without_accept(serving_env):
     assert request.accept == "application/json"
 
 
-@patch("sagemaker_training._env.ServingEnv")
+@patch("sagemaker_training.env.ServingEnv")
 def test_request_with_accept_any(serving_env):
     serving_env.default_accept = "application/NPY"
 
@@ -61,7 +61,7 @@ def test_request_with_accept_any(serving_env):
     assert request.accept == "application/NPY"
 
 
-@patch("sagemaker_training._env.ServingEnv")
+@patch("sagemaker_training.env.ServingEnv")
 def test_request_with_accept(serving_env):
     serving_env.default_accept = "application/NPY"
 

@@ -19,7 +19,7 @@ import traceback
 
 from six.moves import http_client
 
-from sagemaker_training import content_types, encoders, _env, _errors, _functions, _worker
+from sagemaker_training import content_types, encoders, env, _errors, _functions, _worker
 
 
 def default_model_fn(model_dir):
@@ -107,9 +107,9 @@ class Transformer(object):
 
     Examples:
     >>>import os
-    >>>from sagemaker_training import _env, _modules, _transformer
+    >>>from sagemaker_training import env, _modules, _transformer
     >>>import Keras
-    >>>ServingEnv = _env.ServingEnv()
+    >>>ServingEnv = env.ServingEnv()
     >>>
     >>>def predict_fn(model, data):
     >>>     return model.predict(data)
@@ -182,7 +182,7 @@ class Transformer(object):
         This function will be called once per each worker.
         It does not have return type or arguments.
         """
-        self._model = self._model_fn(_env.model_dir)
+        self._model = self._model_fn(env.model_dir)
 
     def transform(self):  # type: () -> _worker.Response
         """Take a request with input data, deserialize it, make a prediction, and return a

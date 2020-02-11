@@ -19,7 +19,7 @@ from mock import call, MagicMock, patch, PropertyMock
 import pytest
 from six import PY2
 
-from sagemaker_training import _env, _errors, _process, _runner, entry_point
+from sagemaker_training import env, _errors, _process, _runner, entry_point
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -100,15 +100,15 @@ def test_run_module_wait(gethostbyname, check_error, chmod, download_and_extract
         runner=runner,
     )
 
-    download_and_extract.assert_called_with("s3://url", _env.code_dir)
+    download_and_extract.assert_called_with("s3://url", env.code_dir)
     runner.run.assert_called_with(True, True)
-    chmod.assert_called_with(os.path.join(_env.code_dir, "launcher.sh"), 511)
+    chmod.assert_called_with(os.path.join(env.code_dir, "launcher.sh"), 511)
 
 
 @patch("sagemaker_training._files.download_and_extract")
 @patch("sagemaker_training._modules.install")
 @patch.object(
-    _env.TrainingEnv, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
+    env.TrainingEnv, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
 )
 @patch("socket.gethostbyname")
 def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_and_extract):
@@ -122,7 +122,7 @@ def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_a
 @patch("sagemaker_training._files.download_and_extract")
 @patch("sagemaker_training._modules.install")
 @patch.object(
-    _env.TrainingEnv, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
+    env.TrainingEnv, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
 )
 @patch("socket.gethostbyname")
 def test_run_waits_hostname_resolution(gethostbyname, hosts, install, download_and_extract):

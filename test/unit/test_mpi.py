@@ -18,7 +18,7 @@ import os
 from mock import ANY, MagicMock, patch
 
 import gethostname
-from sagemaker_training import _env, _mpi
+from sagemaker_training import env, _mpi
 
 
 def does_not_connect():
@@ -164,7 +164,7 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
                 "-c",
                 "./train.sh -v --lr 35",
             ],
-            cwd=_env.code_dir,
+            cwd=env.code_dir,
             env=ANY,
             stdout=None,
             stderr=None,
@@ -260,7 +260,7 @@ def test_mpi_master_run_python(
                 "--lr",
                 "35",
             ],
-            cwd=_env.code_dir,
+            cwd=env.code_dir,
             env=ANY,
             stdout=None,
             stderr=None,

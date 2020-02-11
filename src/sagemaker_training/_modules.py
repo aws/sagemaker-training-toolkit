@@ -23,7 +23,7 @@ import warnings
 
 import six
 
-from sagemaker_training import _env, _errors, _files, _logging, _process
+from sagemaker_training import env, _errors, _files, _logging, _process
 
 logger = _logging.get_logger()
 
@@ -252,10 +252,10 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
         (module): the imported module
     """
     _warning_cache_deprecation(cache)
-    _files.download_and_extract(uri, _env.code_dir)
+    _files.download_and_extract(uri, env.code_dir)
 
-    prepare(_env.code_dir, name)
-    install(_env.code_dir)
+    prepare(env.code_dir, name)
+    install(env.code_dir)
     try:
         module = importlib.import_module(name)
         six.moves.reload_module(module)  # pylint: disable=too-many-function-args
@@ -289,12 +289,12 @@ def run_module(
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    _files.download_and_extract(uri, _env.code_dir)
+    _files.download_and_extract(uri, env.code_dir)
 
-    prepare(_env.code_dir, name)
-    install(_env.code_dir)
+    prepare(env.code_dir, name)
+    install(env.code_dir)
 
-    _env.write_env_vars(env_vars)
+    env.write_env_vars(env_vars)
 
     return run(name, args, env_vars, wait, capture_error)
 
