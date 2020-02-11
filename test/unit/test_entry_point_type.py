@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from mock import patch
 import pytest
 
-from sagemaker_training import _entry_point_type
+from sagemaker_training import entry_point_type
 
 
 @pytest.fixture
@@ -37,12 +37,12 @@ def has_requirements():
 
 
 def test_get_package(entry_point_type_module):
-    assert _entry_point_type.get("bla", "program.py") == _entry_point_type.PYTHON_PACKAGE
+    assert entry_point_type.get("bla", "program.py") == entry_point_type.PYTHON_PACKAGE
 
 
 def test_get_command(entry_point_type_script):
-    assert _entry_point_type.get("bla", "program.sh") == _entry_point_type.COMMAND
+    assert entry_point_type.get("bla", "program.sh") == entry_point_type.COMMAND
 
 
 def test_get_program():
-    assert _entry_point_type.get("bla", "program.py") == _entry_point_type.PYTHON_PROGRAM
+    assert entry_point_type.get("bla", "program.py") == entry_point_type.PYTHON_PROGRAM
