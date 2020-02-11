@@ -16,7 +16,7 @@ from mock import patch
 import numpy as np
 import pytest
 
-from sagemaker_training import content_types, _encoders, _worker
+from sagemaker_training import content_types, encoders, _worker
 import test
 
 
@@ -32,13 +32,13 @@ def test_request(content_type_header):
 
     headers = {content_type_header: content_types.NPY, "Accept": content_types.CSV}
     request = _worker.Request(
-        test.environ(data=_encoders.encode([6, 9.3], content_types.NPY), headers=headers)
+        test.environ(data=encoders.encode([6, 9.3], content_types.NPY), headers=headers)
     )
 
     assert request.content_type == content_types.NPY
     assert request.accept == content_types.CSV
 
-    result = _encoders.decode(request.data, content_types.NPY)
+    result = encoders.decode(request.data, content_types.NPY)
     np.testing.assert_array_equal(result, np.array([6, 9.3]))
 
 

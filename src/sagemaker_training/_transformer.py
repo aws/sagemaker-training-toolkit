@@ -19,7 +19,7 @@ import traceback
 
 from six.moves import http_client
 
-from sagemaker_training import content_types, _encoders, _env, _errors, _functions, _worker
+from sagemaker_training import content_types, encoders, _env, _errors, _functions, _worker
 
 
 def default_model_fn(model_dir):
@@ -60,7 +60,7 @@ def default_input_fn(input_data, content_type):
     Returns:
         (obj): data ready for prediction.
     """
-    return _encoders.decode(input_data, content_type)
+    return encoders.decode(input_data, content_type)
 
 
 def default_predict_fn(data, model):
@@ -97,7 +97,7 @@ def default_output_fn(prediction, accept):
                 response: the serialized data to return
                 accept: the content-type that the data was transformed to.
     """
-    return _worker.Response(response=_encoders.encode(prediction, accept), mimetype=accept)
+    return _worker.Response(response=encoders.encode(prediction, accept), mimetype=accept)
 
 
 class Transformer(object):

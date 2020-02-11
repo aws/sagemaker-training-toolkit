@@ -20,14 +20,14 @@ from sagemaker_training import content_types, _env, _errors, _transformer
 import test
 
 
-@patch("sagemaker_training._encoders.decode")
+@patch("sagemaker_training.encoders.decode")
 def test_default_input_fn(loads):
     assert _transformer.default_input_fn(42, content_types.JSON)
 
     loads.assert_called_with(42, content_types.JSON)
 
 
-@patch("sagemaker_training._encoders.encode", lambda prediction, accept: prediction ** 2)
+@patch("sagemaker_training.encoders.encode", lambda prediction, accept: prediction ** 2)
 def test_default_output_fn():
     response = _transformer.default_output_fn(2, content_types.CSV)
     assert response.response == 4

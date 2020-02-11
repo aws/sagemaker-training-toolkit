@@ -16,7 +16,7 @@ from __future__ import absolute_import
 # flake8: noqa ignore=F401 imported but unused
 import sagemaker_training
 from sagemaker_training import content_types
-from sagemaker_training import _encoders as encoders
+from sagemaker_training import encoders
 from sagemaker_training import _errors as errors
 from sagemaker_training import _env as env
 from sagemaker_training import _mpi as mpi

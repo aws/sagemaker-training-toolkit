@@ -183,7 +183,7 @@ def array_to_recordio_protobuf(array_like, labels=None):
     return buffer.getvalue()
 
 
-_encoders_map = {
+encoders_map = {
     content_types.NPY: array_to_npy,
     content_types.CSV: array_to_csv,
     content_types.JSON: array_to_json,
@@ -228,7 +228,7 @@ def encode(array_like, content_type):
         (np.array): object converted as numpy array.
     """
     try:
-        encoder = _encoders_map[content_type]
+        encoder = encoders_map[content_type]
         return encoder(array_like)
     except KeyError:
         raise _errors.UnsupportedFormatError(content_type)

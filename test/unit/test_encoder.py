@@ -19,7 +19,7 @@ import pytest
 from scipy import sparse
 from six import BytesIO
 
-from sagemaker_training import content_types, _encoders, _errors
+from sagemaker_training import content_types, encoders, _errors
 from sagemaker_training._recordio import _read_recordio
 from sagemaker_training.record_pb2 import Record
 
@@ -33,7 +33,7 @@ def test_npy_to_numpy(target):
     np.save(buffer, target)
     input_data = buffer.getvalue()
 
-    actual = _encoders.npy_to_numpy(input_data)
+    actual = encoders.npy_to_numpy(input_data)
 
     np.testing.assert_equal(actual, np.array(target))
 
@@ -45,11 +45,11 @@ def test_npy_to_numpy(target):
 def test_array_to_npy(target):
     input_data = np.array(target)
 
-    actual = _encoders.array_to_npy(input_data)
+    actual = encoders.array_to_npy(input_data)
 
     np.testing.assert_equal(np.load(BytesIO(actual), allow_pickle=True), np.array(target))
 
-    actual = _encoders.array_to_npy(target)
+    actual = encoders.array_to_npy(target)
 
     np.testing.assert_equal(np.load(BytesIO(actual), allow_pickle=True), np.array(target))
 
@@ -64,12 +64,12 @@ def test_array_to_npy(target):
     ],
 )
 def test_json_to_numpy(target, expected):
-    actual = _encoders.json_to_numpy(target)
+    actual = encoders.json_to_numpy(target)
     np.testing.assert_equal(actual, expected)
 
-    np.testing.assert_equal(_encoders.json_to_numpy(target, dtype=int), expected.astype(int))
+    np.testing.assert_equal(encoders.json_to_numpy(target, dtype=int), expected.astype(int))
 
-    np.testing.assert_equal(_encoders.json_to_numpy(target, dtype=float), expected.astype(float))
+    np.testing.assert_equal(encoders.json_to_numpy(target, dtype=float), expected.astype(float))
 
 
 @pytest.mark.parametrize(
@@ -82,16 +82,16 @@ def test_json_to_numpy(target, expected):
     ],
 )
 def test_array_to_json(target, expected):
-    actual = _encoders.array_to_json(target)
+    actual = encoders.array_to_json(target)
     np.testing.assert_equal(actual, expected)
 
-    actual = _encoders.array_to_json(np.array(target))
+    actual = encoders.array_to_json(np.array(target))
     np.testing.assert_equal(actual, expected)
 
 
 def test_array_to_json_exception():
     with pytest.raises(TypeError):
-        _encoders.array_to_json(lambda x: 3)
+        encoders.array_to_json(lambda x: 3)
 
 
 @pytest.mark.parametrize(
@@ -106,13 +106,13 @@ def test_array_to_json_exception():
     ],
 )
 def test_csv_to_numpy(target, expected):
-    actual = _encoders.csv_to_numpy(target)
+    actual = encoders.csv_to_numpy(target)
     np.testing.assert_equal(actual, expected)
 
 
 def test_csv_to_numpy_error():
     with pytest.raises(_errors.ClientError):
-        _encoders.csv_to_numpy("a\n", dtype="float")
+        encoders.csv_to_numpy("a\n", dtype="float")
 
 
 @pytest.mark.parametrize(
@@ -127,44 +127,44 @@ def test_csv_to_numpy_error():
     ],
 )
 def test_array_to_csv(target, expected):
-    actual = _encoders.array_to_csv(target)
+    actual = encoders.array_to_csv(target)
     np.testing.assert_equal(actual, expected)
 
-    actual = _encoders.array_to_csv(np.array(target))
+    actual = encoders.array_to_csv(np.array(target))
     np.testing.assert_equal(actual, expected)
 
 
 @pytest.mark.parametrize("content_type", [content_types.JSON, content_types.CSV, content_types.NPY])
 def test_encode(content_type):
     encoder = Mock()
-    with patch.dict(_encoders._encoders_map, {content_type: encoder}, clear=True):
-        _encoders.encode(42, content_type)
+    with patch.dict(encoders.encoders_map, {content_type: encoder}, clear=True):
+        encoders.encode(42, content_type)
 
         encoder.assert_called_once_with(42)
 
 
 def test_encode_error():
     with pytest.raises(_errors.UnsupportedFormatError):
-        _encoders.encode(42, content_types.OCTET_STREAM)
+        encoders.encode(42, content_types.OCTET_STREAM)
 
 
 def test_decode_error():
     with pytest.raises(_errors.UnsupportedFormatError):
-        _encoders.decode(42, content_types.OCTET_STREAM)
+        encoders.decode(42, content_types.OCTET_STREAM)
 
 
 @pytest.mark.parametrize("content_type", [content_types.JSON, content_types.CSV, content_types.NPY])
 def test_decode(content_type):
     decoder = Mock()
-    with patch.dict(_encoders._decoders_map, {content_type: decoder}, clear=True):
-        _encoders.decode(42, content_type)
+    with patch.dict(encoders._decoders_map, {content_type: decoder}, clear=True):
+        encoders.decode(42, content_type)
 
         decoder.assert_called_once_with(42)
 
 
 def test_array_to_recordio_dense():
     array_data = [[1.0, 2.0, 3.0], [10.0, 20.0, 30.0]]
-    buf = _encoders.array_to_recordio_protobuf(np.array(array_data))
+    buf = encoders.array_to_recordio_protobuf(np.array(array_data))
     stream = io.BytesIO(buf)
 
     for record_data, expected in zip(_read_recordio(stream), array_data):
@@ -184,7 +184,7 @@ def test_sparse_int_write_spmatrix_to_sparse_tensor():
     x_indices = list(itertools.chain.from_iterable(x_indices))
 
     array = sparse.coo_matrix((flatten_data, (x_indices, y_indices)), dtype="int")
-    buf = _encoders.array_to_recordio_protobuf(array)
+    buf = encoders.array_to_recordio_protobuf(array)
     stream = io.BytesIO(buf)
 
     for record_data, expected_data, expected_keys in zip(
@@ -208,7 +208,7 @@ def test_sparse_float32_write_spmatrix_to_sparse_tensor():
     x_indices = list(itertools.chain.from_iterable(x_indices))
 
     array = sparse.coo_matrix((flatten_data, (x_indices, y_indices)), dtype="float32")
-    buf = _encoders.array_to_recordio_protobuf(array)
+    buf = encoders.array_to_recordio_protobuf(array)
     stream = io.BytesIO(buf)
 
     for record_data, expected_data, expected_keys in zip(
