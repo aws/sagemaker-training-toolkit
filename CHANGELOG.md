@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.0.0 (2020-02-11)
+
+### Breaking Changes
+
+ * rename package from sagemaker_containers to sagemaker_training_toolkit
+
+### Bug Fixes and Other Changes
+
+ * modify download_and_install to work with local tarball
+ * change scipy version pin to lower bound
+
 ## v2.6.2 (2019-12-18)
 
 ### Bug fixes and other changes
