@@ -16,7 +16,7 @@ from mock import patch
 import numpy as np
 import pytest
 
-from sagemaker_training import content_types, encoders, _worker
+from sagemaker_training import content_types, encoders, worker
 import test
 
 
@@ -24,14 +24,14 @@ import test
 def test_request(content_type_header):
     headers = {content_type_header: content_types.JSON, "Accept": content_types.CSV}
 
-    request = _worker.Request(test.environ(data="42", headers=headers))
+    request = worker.Request(test.environ(data="42", headers=headers))
 
     assert request.content_type == content_types.JSON
     assert request.accept == content_types.CSV
     assert request.content == "42"
 
     headers = {content_type_header: content_types.NPY, "Accept": content_types.CSV}
-    request = _worker.Request(
+    request = worker.Request(
         test.environ(data=encoders.encode([6, 9.3], content_types.NPY), headers=headers)
     )
 
@@ -46,7 +46,7 @@ def test_request(content_type_header):
 def test_request_without_accept(serving_env):
     serving_env.default_accept = "application/json"
 
-    request = _worker.Request(test.environ(), serving_env=serving_env)
+    request = worker.Request(test.environ(), serving_env=serving_env)
     assert request.accept == "application/json"
 
 
@@ -54,7 +54,7 @@ def test_request_without_accept(serving_env):
 def test_request_with_accept_any(serving_env):
     serving_env.default_accept = "application/NPY"
 
-    request = _worker.Request(
+    request = worker.Request(
         test.environ(headers={"Accept": content_types.ANY}), serving_env=serving_env
     )
 
@@ -65,7 +65,7 @@ def test_request_with_accept_any(serving_env):
 def test_request_with_accept(serving_env):
     serving_env.default_accept = "application/NPY"
 
-    request = _worker.Request(
+    request = worker.Request(
         test.environ(headers={"Accept": content_types.CSV}), serving_env=serving_env
     )
 
@@ -77,5 +77,5 @@ def test_request_content_type(content_type_header):
     response = test.request(headers={content_type_header: content_types.CSV})
     assert response.content_type == content_types.CSV
 
-    response = _worker.Request(test.environ(headers={"ContentType": content_types.NPY}))
+    response = worker.Request(test.environ(headers={"ContentType": content_types.NPY}))
     assert response.content_type == content_types.NPY

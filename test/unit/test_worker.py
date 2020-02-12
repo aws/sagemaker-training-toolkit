@@ -19,11 +19,11 @@ from mock import MagicMock, patch, PropertyMock
 import pytest
 from six.moves import http_client, range
 
-from sagemaker_training import content_types, _worker
+from sagemaker_training import content_types, worker
 
 
 def test_default_ping_fn():
-    assert _worker.default_healthcheck_fn().status_code == http_client.OK
+    assert worker.default_healthcheck_fn().status_code == http_client.OK
 
 
 @pytest.mark.parametrize(
@@ -31,10 +31,10 @@ def test_default_ping_fn():
 )
 @patch("sagemaker_training.env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
 def test_worker(module_name, expected_name):
-    app = _worker.Worker(transform_fn=MagicMock().transform, module_name=module_name)
+    app = worker.Worker(transform_fn=MagicMock().transform, module_name=module_name)
     assert app.import_name == expected_name
     assert app.before_first_request_funcs == []
-    assert app.request_class == _worker.Request
+    assert app.request_class == worker.Request
 
 
 @pytest.mark.parametrize(
@@ -43,20 +43,20 @@ def test_worker(module_name, expected_name):
 @patch("sagemaker_training.env.ServingEnv.module_name", PropertyMock(return_value="user_program"))
 def test_worker_with_initialize(module_name, expected_name):
     mock = MagicMock()
-    app = _worker.Worker(
+    app = worker.Worker(
         transform_fn=mock.transform, initialize_fn=mock.initialize, module_name=module_name
     )
     assert app.import_name == expected_name
     assert app.before_first_request_funcs == [mock.initialize]
-    assert app.request_class == _worker.Request
+    assert app.request_class == worker.Request
 
 
 @pytest.mark.parametrize("content_type", [content_types.JSON, content_types.ANY])
 def test_invocations(content_type):
     def transform_fn():
-        return _worker.Response(response="fake data", mimetype=content_type)
+        return worker.Response(response="fake data", mimetype=content_type)
 
-    app = _worker.Worker(transform_fn=transform_fn, module_name="test_module")
+    app = worker.Worker(transform_fn=transform_fn, module_name="test_module")
 
     with app.test_client() as client:
         for _ in range(9):
@@ -67,7 +67,7 @@ def test_invocations(content_type):
 
 
 def test_ping():
-    app = _worker.Worker(transform_fn=MagicMock(), module_name="test_module")
+    app = worker.Worker(transform_fn=MagicMock(), module_name="test_module")
 
     with app.test_client() as client:
         for _ in range(9):
@@ -78,9 +78,9 @@ def test_ping():
 
 def test_response_accept_deprecated():
     def transform_fn():
-        return _worker.Response(response="fake data", accept="deprecated accept arg")
+        return worker.Response(response="fake data", accept="deprecated accept arg")
 
-    app = _worker.Worker(transform_fn=transform_fn, module_name="test_module")
+    app = worker.Worker(transform_fn=transform_fn, module_name="test_module")
     with app.test_client() as client:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -90,7 +90,7 @@ def test_response_accept_deprecated():
 
 
 def test_no_execution_parameters_fn():
-    app = _worker.Worker(transform_fn=MagicMock(), module_name="test_module")
+    app = worker.Worker(transform_fn=MagicMock(), module_name="test_module")
     with app.test_client() as client:
         response = client.get("/execution-parameters")
         assert response.status_code == http_client.NOT_FOUND
@@ -101,7 +101,7 @@ def test_user_execution_parameters_fn():
     expected_response_string = json.dumps(expected_json)
     test_execution_parameters_fn = MagicMock(return_value=expected_response_string)
 
-    app = _worker.Worker(
+    app = worker.Worker(
         transform_fn=MagicMock(),
         module_name="test_module",
         execution_parameters_fn=test_execution_parameters_fn,

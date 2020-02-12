@@ -73,7 +73,7 @@ def test_transformer_initialize_with_client_error():
         (MagicMock(), MagicMock(), fn_with_error),
     ],
 )
-@patch("sagemaker_training._worker.Request", lambda: request)
+@patch("sagemaker_training.worker.Request", lambda: request)
 def test_transformer_transform_with_client_error(input_fn, predict_fn, output_fn):
     with pytest.raises(errors.ClientError) as e:
         transform = transformer.Transformer(
@@ -86,7 +86,7 @@ def test_transformer_transform_with_client_error(input_fn, predict_fn, output_fn
 
 def test_transformer_transform_with_unsupported_content_type():
     bad_request = test.request(data=None, headers={"ContentType": "fake/content-type"})
-    with patch("sagemaker_training._worker.Request", lambda: bad_request):
+    with patch("sagemaker_training.worker.Request", lambda: bad_request):
         response = transformer.Transformer().transform()
 
     assert response.status_code == http_client.UNSUPPORTED_MEDIA_TYPE
@@ -101,7 +101,7 @@ def test_transformer_transform_with_unsupported_accept_type():
         pass
 
     bad_request = test.request(data=None, headers={"Accept": "fake/content-type"})
-    with patch("sagemaker_training._worker.Request", lambda: bad_request):
+    with patch("sagemaker_training.worker.Request", lambda: bad_request):
         t = transformer.Transformer(model_fn=empty_fn, input_fn=empty_fn, predict_fn=empty_fn)
         response = t.transform()
 
@@ -112,7 +112,7 @@ def test_transformer_transform_with_unsupported_accept_type():
     assert bad_request.accept in response_body["error-message"]
 
 
-@patch("sagemaker_training._worker.Request", lambda: request)
+@patch("sagemaker_training.worker.Request", lambda: request)
 def test_transformer_with_default_predict_fn():
     with pytest.raises(NotImplementedError):
         transformer.Transformer().transform()
@@ -127,7 +127,7 @@ def test_initialize():
 
 
 @patch(
-    "sagemaker_training._worker.Request",
+    "sagemaker_training.worker.Request",
     lambda: MagicMock(content="42", content_type=content_types.JSON, accept=content_types.NPY),
 )
 def test_transformer_transform():
@@ -147,7 +147,7 @@ def test_transformer_transform():
 
 
 @patch(
-    "sagemaker_training._worker.Request",
+    "sagemaker_training.worker.Request",
     lambda: MagicMock(content="13", content_type=content_types.CSV, accept=content_types.ANY),
 )
 def test_transformer_transform_backwards_compatibility():
@@ -172,7 +172,7 @@ def test_transformer_transform_backwards_compatibility():
 
 
 @patch(
-    "sagemaker_training._worker.Request",
+    "sagemaker_training.worker.Request",
     lambda: MagicMock(content="13", content_type=content_types.CSV, accept=content_types.ANY),
 )
 def test_transformer_with_custom_transform_fn():

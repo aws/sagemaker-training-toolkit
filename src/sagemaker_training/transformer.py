@@ -19,7 +19,7 @@ import traceback
 
 from six.moves import http_client
 
-from sagemaker_training import content_types, encoders, env, errors, functions, _worker
+from sagemaker_training import content_types, encoders, env, errors, functions, worker
 
 
 def default_model_fn(model_dir):
@@ -97,7 +97,7 @@ def default_output_fn(prediction, accept):
                 response: the serialized data to return
                 accept: the content-type that the data was transformed to.
     """
-    return _worker.Response(response=encoders.encode(prediction, accept), mimetype=accept)
+    return worker.Response(response=encoders.encode(prediction, accept), mimetype=accept)
 
 
 class Transformer(object):
@@ -184,7 +184,7 @@ class Transformer(object):
         """
         self._model = self._model_fn(env.model_dir)
 
-    def transform(self):  # type: () -> _worker.Response
+    def transform(self):  # type: () -> worker.Response
         """Take a request with input data, deserialize it, make a prediction, and return a
         serialized response.
 
@@ -195,14 +195,14 @@ class Transformer(object):
                 * response: the serialized data to return
                 * accept: the content type that the data was serialized into
         """
-        request = _worker.Request()
+        request = worker.Request()
         result = self._transform_fn(
             self._model, request.content, request.content_type, request.accept
         )
 
         if isinstance(result, tuple):
             # transforms tuple in Response for backwards compatibility
-            return _worker.Response(response=result[0], mimetype=result[1])
+            return worker.Response(response=result[0], mimetype=result[1])
 
         return result
 
@@ -246,4 +246,4 @@ class Transformer(object):
                 "stack-trace": traceback.format_exc(),
             }
         )
-        return _worker.Response(response=body, status=status_code, mimetype=content_types.JSON)
+        return worker.Response(response=body, status=status_code, mimetype=content_types.JSON)

@@ -32,7 +32,7 @@ from sagemaker_training import _runner as runner
 from sagemaker_training import server
 from sagemaker_training import trainer
 from sagemaker_training import transformer
-from sagemaker_training import _worker as worker
+from sagemaker_training import worker
 
 
 def training_env(resource_config=None, input_data_config=None, hyperparameters=None):

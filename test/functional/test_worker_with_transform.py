@@ -18,7 +18,7 @@ from mock import patch, PropertyMock
 import pytest
 from six.moves import http_client, range
 
-from sagemaker_training import content_types, _worker
+from sagemaker_training import content_types, worker
 
 
 class Transformer(object):
@@ -30,13 +30,13 @@ class Transformer(object):
 
     def transform(self):
         self.calls["transform"] += 1
-        return _worker.Response(response=json.dumps(self.calls), mimetype=content_types.JSON)
+        return worker.Response(response=json.dumps(self.calls), mimetype=content_types.JSON)
 
 
 def test_worker_with_initialize():
     transformer = Transformer()
 
-    with _worker.Worker(
+    with worker.Worker(
         transform_fn=transformer.transform,
         initialize_fn=transformer.initialize,
         module_name="worker_with_initialize",
@@ -61,7 +61,7 @@ def test_worker_with_initialize():
 def test_worker(module_name, expected_name):
     transformer = Transformer()
 
-    with _worker.Worker(
+    with worker.Worker(
         transform_fn=transformer.transform, module_name=module_name
     ).test_client() as client:
         assert client.application.import_name == expected_name
@@ -83,7 +83,7 @@ def test_worker_with_custom_ping():
     def custom_ping():
         return "ping", http_client.ACCEPTED
 
-    with _worker.Worker(
+    with worker.Worker(
         transform_fn=transformer.transform, healthcheck_fn=custom_ping, module_name="custom_ping"
     ).test_client() as client:
         response = client.get("/ping")

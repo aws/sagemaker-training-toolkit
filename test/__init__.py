@@ -31,7 +31,7 @@ from sagemaker_training import (  # noqa ignore=E402 module level import not at 
     env,
     files,
     params,
-    _worker,
+    worker,
 )
 
 DEFAULT_CONFIG = dict(
@@ -162,7 +162,7 @@ def request(
         mimetype,
     )
 
-    return _worker.Request(_environ)
+    return worker.Request(_environ)
 
 
 def environ(
