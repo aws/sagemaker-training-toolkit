@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_training import _mpi, _process, _runner
+from sagemaker_training import mpi, _process, _runner
 
 USER_SCRIPT = "script"
 CMD_ARGS = ["--some-arg", 42]
@@ -30,7 +30,7 @@ MPI_OPTS = {
 
 
 @pytest.mark.parametrize(
-    "runner_class", [_process.ProcessRunner, _mpi.MasterRunner, _mpi.WorkerRunner]
+    "runner_class", [_process.ProcessRunner, mpi.MasterRunner, mpi.WorkerRunner]
 )
 def test_get_runner_returns_runnner_itself(runner_class):
     runner = MagicMock(spec=runner_class)
@@ -68,14 +68,14 @@ def test_get_runner_by_mpi_returns_runnner(training_env):
 
     runner = _runner.get(_runner.MPIRunnerType)
 
-    assert isinstance(runner, _mpi.MasterRunner)
+    assert isinstance(runner, mpi.MasterRunner)
     training_env().to_cmd_args.assert_called()
     training_env().to_env_vars.assert_called()
 
     training_env().is_master = False
     runner = _runner.get(_runner.MPIRunnerType)
 
-    assert isinstance(runner, _mpi.WorkerRunner)
+    assert isinstance(runner, mpi.WorkerRunner)
     training_env().to_cmd_args.assert_called()
     training_env().to_env_vars.assert_called()
 
@@ -87,7 +87,7 @@ def test_runnner_with_default_cpu_processes_per_host(training_env):
 
     runner = _runner.get(_runner.MPIRunnerType)
 
-    assert isinstance(runner, _mpi.MasterRunner)
+    assert isinstance(runner, mpi.MasterRunner)
     assert runner._process_per_host == 1
 
 
@@ -98,7 +98,7 @@ def test_runnner_with_default_gpu_processes_per_host(training_env):
 
     runner = _runner.get(_runner.MPIRunnerType)
 
-    assert isinstance(runner, _mpi.MasterRunner)
+    assert isinstance(runner, mpi.MasterRunner)
     assert runner._process_per_host == 2
 
 
@@ -108,7 +108,7 @@ def test_get_runner_by_mpi_with_extra_args(training_env):
 
     runner = _runner.get(_runner.MPIRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS, MPI_OPTS)
 
-    assert isinstance(runner, _mpi.MasterRunner)
+    assert isinstance(runner, mpi.MasterRunner)
 
     assert runner._user_entry_point == USER_SCRIPT
     assert runner._args == CMD_ARGS
@@ -125,7 +125,7 @@ def test_get_runner_by_mpi_with_extra_args(training_env):
     training_env().is_master = False
     runner = _runner.get(_runner.MPIRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS)
 
-    assert isinstance(runner, _mpi.WorkerRunner)
+    assert isinstance(runner, mpi.WorkerRunner)
 
     assert runner._user_entry_point == USER_SCRIPT
     assert runner._args == CMD_ARGS

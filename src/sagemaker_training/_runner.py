@@ -17,7 +17,7 @@ import enum
 from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 import sagemaker_training
-from sagemaker_training import _mpi, _params, _process
+from sagemaker_training import mpi, _params, _process
 
 
 class RunnerType(enum.Enum):
@@ -60,7 +60,7 @@ def _get_by_runner_type(
         num_processes = _mpi_param_value(mpi_args, env, _params.MPI_NUM_PROCESSES)
         custom_mpi_options = _mpi_param_value(mpi_args, env, _params.MPI_CUSTOM_OPTIONS, "")
 
-        return _mpi.MasterRunner(
+        return mpi.MasterRunner(
             user_entry_point,
             args,
             env_vars,
@@ -72,7 +72,7 @@ def _get_by_runner_type(
             num_processes=num_processes,
         )
     elif identifier is RunnerType.MPI:
-        return _mpi.WorkerRunner(user_entry_point, args, env_vars, env.master_hostname)
+        return mpi.WorkerRunner(user_entry_point, args, env_vars, env.master_hostname)
     elif identifier is RunnerType.Process:
         return _process.ProcessRunner(user_entry_point, args, env_vars)
     else:

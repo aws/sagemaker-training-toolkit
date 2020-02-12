@@ -19,7 +19,7 @@ from sagemaker_training import content_types
 from sagemaker_training import encoders
 from sagemaker_training import errors
 from sagemaker_training import env
-from sagemaker_training import _mpi as mpi
+from sagemaker_training import mpi
 from sagemaker_training import files
 from sagemaker_training import functions
 from sagemaker_training import _logging as logging
