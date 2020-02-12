@@ -28,7 +28,7 @@ from sagemaker_training import modules
 from sagemaker_training import entry_point
 from sagemaker_training import params
 from sagemaker_training import process
-from sagemaker_training import _runner as runner
+from sagemaker_training import runner
 from sagemaker_training import server
 from sagemaker_training import trainer
 from sagemaker_training import transformer

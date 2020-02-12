@@ -24,7 +24,7 @@ from sagemaker_training import (
     intermediate_output,
     _logging,
     params,
-    _runner,
+    runner,
     entry_point,
 )
 
@@ -83,14 +83,14 @@ def train():
             _logging.configure_logger(env.log_level)
 
             mpi_enabled = env.additional_framework_parameters.get(params.MPI_ENABLED)
-            runner_type = _runner.RunnerType.MPI if mpi_enabled else _runner.RunnerType.Process
+            runner_type = runner.RunnerType.MPI if mpi_enabled else runner.RunnerType.Process
 
             entry_point.run(
                 env.module_dir,
                 env.user_entry_point,
                 env.to_cmd_args(),
                 env.to_env_vars(),
-                runner=runner_type,
+                runner_type=runner_type,
             )
 
         logger.info("Reporting training SUCCESS")
