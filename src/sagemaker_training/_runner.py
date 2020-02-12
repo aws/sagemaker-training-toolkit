@@ -17,7 +17,7 @@ import enum
 from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 import sagemaker_training
-from sagemaker_training import mpi, _params, _process
+from sagemaker_training import mpi, params, _process
 
 
 class RunnerType(enum.Enum):
@@ -55,10 +55,10 @@ def _get_by_runner_type(
         # Default to single process for CPU
         default_processes_per_host = env.num_gpus if env.num_gpus > 0 else 1
         processes_per_host = _mpi_param_value(
-            mpi_args, env, _params.MPI_PROCESSES_PER_HOST, default_processes_per_host
+            mpi_args, env, params.MPI_PROCESSES_PER_HOST, default_processes_per_host
         )
-        num_processes = _mpi_param_value(mpi_args, env, _params.MPI_NUM_PROCESSES)
-        custom_mpi_options = _mpi_param_value(mpi_args, env, _params.MPI_CUSTOM_OPTIONS, "")
+        num_processes = _mpi_param_value(mpi_args, env, params.MPI_NUM_PROCESSES)
+        custom_mpi_options = _mpi_param_value(mpi_args, env, params.MPI_CUSTOM_OPTIONS, "")
 
         return mpi.MasterRunner(
             user_entry_point,

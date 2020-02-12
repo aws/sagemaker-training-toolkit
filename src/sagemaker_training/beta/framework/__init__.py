@@ -26,7 +26,7 @@ from sagemaker_training import _logging as logging
 from sagemaker_training import mapping
 from sagemaker_training import modules
 from sagemaker_training import entry_point
-from sagemaker_training import _params as params
+from sagemaker_training import params
 from sagemaker_training import _process as process
 from sagemaker_training import _runner as runner
 from sagemaker_training import _server as server

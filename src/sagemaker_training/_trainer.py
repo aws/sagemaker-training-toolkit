@@ -23,7 +23,7 @@ from sagemaker_training import (
     files,
     intermediate_output,
     _logging,
-    _params,
+    params,
     _runner,
     entry_point,
 )
@@ -64,7 +64,7 @@ def train():
     try:
         env = sagemaker_training.training_env()
 
-        region = os.environ.get("AWS_REGION", os.environ.get(_params.REGION_NAME_ENV))
+        region = os.environ.get("AWS_REGION", os.environ.get(params.REGION_NAME_ENV))
         intermediate_sync = intermediate_output.start_sync(env.sagemaker_s3_output(), region)
 
         if env.framework_module:
@@ -82,7 +82,7 @@ def train():
         else:
             _logging.configure_logger(env.log_level)
 
-            mpi_enabled = env.additional_framework_parameters.get(_params.MPI_ENABLED)
+            mpi_enabled = env.additional_framework_parameters.get(params.MPI_ENABLED)
             runner_type = _runner.RunnerType.MPI if mpi_enabled else _runner.RunnerType.Process
 
             entry_point.run(

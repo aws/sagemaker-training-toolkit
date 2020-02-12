@@ -21,7 +21,7 @@ import pytest
 import six
 
 import sagemaker_training
-from sagemaker_training import env, _params
+from sagemaker_training import env, params
 import test
 
 builtins_open = "__builtin__.open" if six.PY2 else "builtins.open"
@@ -138,7 +138,7 @@ def create_training_env():
         session_mock = Mock()
         session_mock.region_name = "us-west-2"
         old_environ = os.environ.copy()
-        os.environ[_params.TRAINING_JOB_ENV] = "training-job-42"
+        os.environ[params.TRAINING_JOB_ENV] = "training-job-42"
 
         yield sagemaker_training.training_env()
 
@@ -151,13 +151,13 @@ def create_serving_env():
         "sagemaker_training.env.num_gpus", lambda: 4
     ):
         old_environ = os.environ.copy()
-        os.environ[_params.USE_NGINX_ENV] = "false"
-        os.environ[_params.MODEL_SERVER_TIMEOUT_ENV] = "20"
-        os.environ[_params.CURRENT_HOST_ENV] = "algo-1"
-        os.environ[_params.USER_PROGRAM_ENV] = "main.py"
-        os.environ[_params.SUBMIT_DIR_ENV] = "my_dir"
-        os.environ[_params.ENABLE_METRICS_ENV] = "true"
-        os.environ[_params.REGION_NAME_ENV] = "us-west-2"
+        os.environ[params.USE_NGINX_ENV] = "false"
+        os.environ[params.MODEL_SERVER_TIMEOUT_ENV] = "20"
+        os.environ[params.CURRENT_HOST_ENV] = "algo-1"
+        os.environ[params.USER_PROGRAM_ENV] = "main.py"
+        os.environ[params.SUBMIT_DIR_ENV] = "my_dir"
+        os.environ[params.ENABLE_METRICS_ENV] = "true"
+        os.environ[params.REGION_NAME_ENV] = "us-west-2"
 
         yield env.ServingEnv()
 
@@ -287,7 +287,7 @@ def test_request_properties(serving_env):
 def test_env_dictionary():
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
-    os.environ[_params.USER_PROGRAM_ENV] = "my_app.py"
+    os.environ[params.USER_PROGRAM_ENV] = "my_app.py"
     test_env = env._Env()
 
     assert len(test_env) == len(test_env.properties())
@@ -300,9 +300,9 @@ def test_env_dictionary():
 def test_env_module_name(sagemaker_program):
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
-    os.environ[_params.USER_PROGRAM_ENV] = sagemaker_program
+    os.environ[params.USER_PROGRAM_ENV] = sagemaker_program
     module_name = env._Env().module_name
 
-    del os.environ[_params.USER_PROGRAM_ENV]
+    del os.environ[params.USER_PROGRAM_ENV]
 
     assert module_name == "program"

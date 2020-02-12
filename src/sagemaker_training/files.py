@@ -23,7 +23,7 @@ import tempfile
 import boto3
 from six.moves.urllib import parse
 
-from sagemaker_training import env, _params
+from sagemaker_training import env, params
 
 
 def write_success_file():  # type: () -> None
@@ -158,7 +158,7 @@ def s3_download(url, dst):  # type: (str, str) -> None
 
     bucket, key = url.netloc, url.path.lstrip("/")
 
-    region = os.environ.get("AWS_REGION", os.environ.get(_params.REGION_NAME_ENV))
+    region = os.environ.get("AWS_REGION", os.environ.get(params.REGION_NAME_ENV))
     s3 = boto3.resource("s3", region_name=region)
 
     s3.Bucket(bucket).download_file(key, dst)

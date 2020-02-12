@@ -21,7 +21,7 @@ from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-from sagemaker_training import env, errors, files, modules, _params
+from sagemaker_training import env, errors, files, modules, params
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -36,7 +36,7 @@ builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 )
 def test_s3_download(resource, url, bucket_name, key, dst):
     region = "us-west-2"
-    os.environ[_params.REGION_NAME_ENV] = region
+    os.environ[params.REGION_NAME_ENV] = region
 
     files.s3_download(url, dst)
 

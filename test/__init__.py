@@ -30,7 +30,7 @@ DEFAULT_REGION = "us-west-2"
 from sagemaker_training import (  # noqa ignore=E402 module level import not at top of file
     env,
     files,
-    _params,
+    params,
     _worker,
 )
 
@@ -125,9 +125,7 @@ def create_input_data_config(channels=None):  # type: (list) -> None
 def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hyperparameters=None):
     # type: (dict, str, dict) -> None
 
-    all_hyperparameters = {
-        _params.SUBMIT_DIR_PARAM: submit_dir or _params.DEFAULT_MODULE_NAME_PARAM
-    }
+    all_hyperparameters = {params.SUBMIT_DIR_PARAM: submit_dir or params.DEFAULT_MODULE_NAME_PARAM}
 
     all_hyperparameters.update(sagemaker_hyperparameters or DEFAULT_HYPERPARAMETERS.copy())
 
