@@ -175,7 +175,7 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
 
 
 @patch("os.path.exists")
-@patch("sagemaker_training._process.python_executable", return_value="usr/bin/python3")
+@patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")

@@ -23,13 +23,13 @@ import paramiko
 import psutil
 
 import gethostname
-from sagemaker_training import _logging, _process, _timeout
+from sagemaker_training import _logging, process, _timeout
 
 logger = _logging.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
 
-class WorkerRunner(_process.ProcessRunner):
+class WorkerRunner(process.ProcessRunner):
     """Runner responsible for preparing MPI distributed training and waiting for MPI
      master execution to finish.
     """
@@ -89,7 +89,7 @@ def _orted_process():  # pylint: disable=inconsistent-return-statements
         time.sleep(1)
 
 
-class MasterRunner(_process.ProcessRunner):
+class MasterRunner(process.ProcessRunner):
     """Responsible to prepare MPI distributed training and syncronize work with the Workers.
     """
 

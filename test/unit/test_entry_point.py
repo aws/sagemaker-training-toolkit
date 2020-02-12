@@ -19,7 +19,7 @@ from mock import call, MagicMock, patch, PropertyMock
 import pytest
 from six import PY2
 
-from sagemaker_training import env, errors, _process, _runner, entry_point
+from sagemaker_training import env, errors, process, _runner, entry_point
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -42,7 +42,7 @@ def has_requirements():
         yield
 
 
-@patch("sagemaker_training._process.check_error", autospec=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
 def test_install_module(check_error, entry_point_type_module):
     path = "c://sagemaker-pytorch-container"
     entry_point.install("python_module.py", path)
@@ -61,7 +61,7 @@ def test_install_module(check_error, entry_point_type_module):
         )
 
 
-@patch("sagemaker_training._process.check_error", autospec=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
 def test_install_script(check_error, entry_point_type_module, has_requirements):
     path = "c://sagemaker-pytorch-container"
     entry_point.install("train.py", path)
@@ -70,7 +70,7 @@ def test_install_script(check_error, entry_point_type_module, has_requirements):
         entry_point.install(path, "python_module.py")
 
 
-@patch("sagemaker_training._process.check_error", autospec=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
 def test_install_fails(check_error, entry_point_type_module):
     check_error.side_effect = errors.ClientError()
     with pytest.raises(errors.ClientError):
@@ -78,7 +78,7 @@ def test_install_fails(check_error, entry_point_type_module):
 
 
 @patch("sys.executable", None)
-@patch("sagemaker_training._process.check_error", autospec=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
 def test_install_no_python_executable(check_error, has_requirements, entry_point_type_module):
     with pytest.raises(RuntimeError) as e:
         entry_point.install("train.py", "git://aws/container-support")
@@ -87,10 +87,10 @@ def test_install_no_python_executable(check_error, has_requirements, entry_point
 
 @patch("sagemaker_training.files.download_and_extract")
 @patch("os.chmod")
-@patch("sagemaker_training._process.check_error", autospec=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
 @patch("socket.gethostbyname")
 def test_run_module_wait(gethostbyname, check_error, chmod, download_and_extract):
-    runner = MagicMock(spec=_process.ProcessRunner)
+    runner = MagicMock(spec=process.ProcessRunner)
 
     entry_point.run(
         uri="s3://url",
@@ -112,7 +112,7 @@ def test_run_module_wait(gethostbyname, check_error, chmod, download_and_extract
 )
 @patch("socket.gethostbyname")
 def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_and_extract):
-    runner = MagicMock(spec=_process.ProcessRunner)
+    runner = MagicMock(spec=process.ProcessRunner)
     entry_point.run(uri="s3://url", user_entry_point="launcher.py", args=["42"], runner=runner)
 
     gethostbyname.assert_called_with("algo-2")
@@ -129,7 +129,7 @@ def test_run_waits_hostname_resolution(gethostbyname, hosts, install, download_a
 
     gethostbyname.side_effect = [ValueError(), ValueError(), True, True]
 
-    runner = MagicMock(spec=_process.ProcessRunner)
+    runner = MagicMock(spec=process.ProcessRunner)
     entry_point.run(uri="s3://url", user_entry_point="launcher.py", args=["42"], runner=runner)
 
     gethostbyname.assert_has_calls([call("algo-1"), call("algo-1"), call("algo-1"), call("algo-2")])
@@ -139,7 +139,7 @@ def test_run_waits_hostname_resolution(gethostbyname, hosts, install, download_a
 @patch("os.chmod")
 @patch("socket.gethostbyname")
 def test_run_module_no_wait(gethostbyname, chmod, download_and_extract):
-    runner = MagicMock(spec=_process.ProcessRunner)
+    runner = MagicMock(spec=process.ProcessRunner)
 
     module_name = "default_user_module_name"
     entry_point.run(

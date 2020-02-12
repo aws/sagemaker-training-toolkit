@@ -17,7 +17,7 @@ import enum
 from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 import sagemaker_training
-from sagemaker_training import mpi, params, _process
+from sagemaker_training import mpi, params, process
 
 
 class RunnerType(enum.Enum):
@@ -32,9 +32,9 @@ MPIRunnerType = RunnerType.MPI
 
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
-    # type: (RunnerType, str, List[str], Dict[str]) -> _process.Runner
+    # type: (RunnerType, str, List[str], Dict[str]) -> process.Runner
     """Placeholder docstring"""
-    if isinstance(identifier, _process.ProcessRunner):
+    if isinstance(identifier, process.ProcessRunner):
         return identifier
     else:
         return _get_by_runner_type(identifier, user_entry_point, args, env_vars, extra_opts)
@@ -74,7 +74,7 @@ def _get_by_runner_type(
     elif identifier is RunnerType.MPI:
         return mpi.WorkerRunner(user_entry_point, args, env_vars, env.master_hostname)
     elif identifier is RunnerType.Process:
-        return _process.ProcessRunner(user_entry_point, args, env_vars)
+        return process.ProcessRunner(user_entry_point, args, env_vars)
     else:
         raise ValueError("Invalid identifier %s" % identifier)
 

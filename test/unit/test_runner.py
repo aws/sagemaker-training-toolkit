@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_training import mpi, _process, _runner
+from sagemaker_training import mpi, process, _runner
 
 USER_SCRIPT = "script"
 CMD_ARGS = ["--some-arg", 42]
@@ -30,7 +30,7 @@ MPI_OPTS = {
 
 
 @pytest.mark.parametrize(
-    "runner_class", [_process.ProcessRunner, mpi.MasterRunner, mpi.WorkerRunner]
+    "runner_class", [process.ProcessRunner, mpi.MasterRunner, mpi.WorkerRunner]
 )
 def test_get_runner_returns_runnner_itself(runner_class):
     runner = MagicMock(spec=runner_class)
@@ -42,7 +42,7 @@ def test_get_runner_returns_runnner_itself(runner_class):
 def test_get_runner_by_process_returns_runnner(training_env):
     runner = _runner.get(_runner.ProcessRunnerType)
 
-    assert isinstance(runner, _process.ProcessRunner)
+    assert isinstance(runner, process.ProcessRunner)
     training_env().to_cmd_args.assert_called()
     training_env().to_env_vars.assert_called()
 
@@ -51,7 +51,7 @@ def test_get_runner_by_process_returns_runnner(training_env):
 def test_get_runner_by_process_with_extra_args(training_env):
     runner = _runner.get(_runner.ProcessRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS)
 
-    assert isinstance(runner, _process.ProcessRunner)
+    assert isinstance(runner, process.ProcessRunner)
 
     assert runner._user_entry_point == USER_SCRIPT
     assert runner._args == CMD_ARGS

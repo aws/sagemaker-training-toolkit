@@ -18,7 +18,7 @@ import sys
 import pytest
 
 import gethostname
-from sagemaker_training import errors, _process
+from sagemaker_training import errors, process
 
 OPT_ML = "/opt/ml"
 INPUT_CONFIG = "/opt/ml/input/config/"
@@ -64,4 +64,4 @@ def test_gethostname_with_env_not_set(opt_ml_input_config):
     py_cmd = "import gethostname\nassert gethostname.call(30) == 'algo-9'"
 
     with pytest.raises(errors.ExecuteUserScriptError):
-        _process.check_error([sys.executable, "-c", py_cmd], errors.ExecuteUserScriptError)
+        process.check_error([sys.executable, "-c", py_cmd], errors.ExecuteUserScriptError)

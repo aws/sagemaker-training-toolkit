@@ -51,7 +51,7 @@ def test_s3_download_wrong_scheme():
         files.s3_download("c://my-bucket/my-file", "/tmp/file")
 
 
-@patch("sagemaker_training._process.check_error", autospec=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
 def test_install(check_error):
     path = "c://sagemaker-pytorch-container"
     modules.install(path)
@@ -70,7 +70,7 @@ def test_install(check_error):
         )
 
 
-@patch("sagemaker_training._process.check_error", autospec=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
 def test_install_fails(check_error):
     check_error.side_effect = errors.ClientError()
     with pytest.raises(errors.ClientError):
@@ -157,8 +157,8 @@ def test_run_error(capture_error):
         assert " No module named wrong module" in message
 
 
-@patch("sagemaker_training._process.python_executable")
-@patch("sagemaker_training._process.check_error")
+@patch("sagemaker_training.process.python_executable")
+@patch("sagemaker_training.process.check_error")
 @patch("sagemaker_training._logging.log_script_invocation")
 def test_run(log_script_invocation, check_error, executable):
     modules.run("pytest", ["--version"])
@@ -168,8 +168,8 @@ def test_run(log_script_invocation, check_error, executable):
     check_error.assert_called_with(expected_cmd, errors.ExecuteUserScriptError, capture_error=False)
 
 
-@patch("sagemaker_training._process.python_executable")
-@patch("sagemaker_training._process.create")
+@patch("sagemaker_training.process.python_executable")
+@patch("sagemaker_training.process.create")
 @patch("sagemaker_training._logging.log_script_invocation")
 def test_run_no_wait(log_script_invocation, create, executable):
     modules.run("pytest", ["--version"], {"PYPATH": "/opt/ml/code"}, wait=False, capture_error=True)

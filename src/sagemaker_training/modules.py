@@ -23,7 +23,7 @@ import warnings
 
 import six
 
-from sagemaker_training import env, errors, files, _logging, _process
+from sagemaker_training import env, errors, files, _logging, process
 
 logger = _logging.get_logger()
 
@@ -108,14 +108,14 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
     """
-    cmd = "%s -m pip install . " % _process.python_executable()
+    cmd = "%s -m pip install . " % process.python_executable()
 
     if has_requirements(path):
         cmd += "-r requirements.txt"
 
     logger.info("Installing module with the following command:\n%s", cmd)
 
-    _process.check_error(
+    process.check_error(
         shlex.split(cmd), errors.InstallModuleError, cwd=path, capture_error=capture_error
     )
 
@@ -223,15 +223,15 @@ def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
     args = args or []
     env_vars = env_vars or {}
 
-    cmd = [_process.python_executable(), "-m", module_name] + args
+    cmd = [process.python_executable(), "-m", module_name] + args
 
     _logging.log_script_invocation(cmd, env_vars)
 
     if wait:
-        return _process.check_error(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
+        return process.check_error(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
 
     else:
-        return _process.create(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
+        return process.create(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
 
 
 def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str, bool) -> module
