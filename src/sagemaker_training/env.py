@@ -26,7 +26,7 @@ import time
 
 import boto3
 
-from sagemaker_training import content_types, _logging, _mapping, _params
+from sagemaker_training import content_types, _logging, mapping, _params
 
 logger = _logging.get_logger()
 
@@ -309,7 +309,7 @@ def num_cpus():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
-class _Env(_mapping.MappingMixin):
+class _Env(mapping.MappingMixin):
     """Base Class which provides access to aspects of the environment including
     system characteristics, filesystem locations, environment variables and configuration settings.
 
@@ -552,7 +552,7 @@ class TrainingEnv(_Env):
         input_data_config = input_data_config or read_input_data_config()
 
         all_hyperparameters = hyperparameters or read_hyperparameters()
-        split_result = _mapping.split_by_criteria(
+        split_result = mapping.split_by_criteria(
             all_hyperparameters,
             keys=_params.SAGEMAKER_HYPERPARAMETERS,
             prefix=_params.SAGEMAKER_PREFIX,
@@ -659,7 +659,7 @@ class TrainingEnv(_Env):
         Returns:
             (list): List of cmd arguments
         """
-        return _mapping.to_cmd_args(self.hyperparameters)
+        return mapping.to_cmd_args(self.hyperparameters)
 
     def to_env_vars(self):
         """Environment variable representation of the training environment
@@ -700,7 +700,7 @@ class TrainingEnv(_Env):
         for key, value in self.hyperparameters.items():
             env["hp_%s" % key] = value
 
-        return _mapping.to_env_vars(env)
+        return mapping.to_env_vars(env)
 
     @property
     def hosts(self):  # type: () -> list

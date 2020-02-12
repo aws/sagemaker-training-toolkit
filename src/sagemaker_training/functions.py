@@ -19,10 +19,10 @@ from typing import Callable
 
 import six
 
-from sagemaker_training import _mapping
+from sagemaker_training import mapping
 
 
-def matching_args(fn, dictionary):  # type: (Callable, _mapping.Mapping) -> dict
+def matching_args(fn, dictionary):  # type: (Callable, mapping.Mapping) -> dict
     """Given a function fn and a dict dictionary, returns the function
     arguments that match the dict keys.
 
@@ -48,7 +48,7 @@ def matching_args(fn, dictionary):  # type: (Callable, _mapping.Mapping) -> dict
     if arg_spec.keywords:
         return dictionary
 
-    return _mapping.split_by_criteria(dictionary, arg_spec.args).included
+    return mapping.split_by_criteria(dictionary, arg_spec.args).included
 
 
 def getargspec(  # pylint: disable=inconsistent-return-statements

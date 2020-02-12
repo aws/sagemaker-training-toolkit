@@ -18,7 +18,7 @@ import warnings
 import flask
 from six.moves import http_client
 
-from sagemaker_training import content_types, env, _logging, _mapping
+from sagemaker_training import content_types, env, _logging, mapping
 
 env = env.ServingEnv()
 
@@ -139,7 +139,7 @@ class Response(flask.Response):
         )
 
 
-class Request(flask.Request, _mapping.MappingMixin):
+class Request(flask.Request, mapping.MappingMixin):
     """The Request object used to read request data.
 
     Example:
