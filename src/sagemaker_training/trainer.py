@@ -19,13 +19,13 @@ import traceback
 
 import sagemaker_training
 from sagemaker_training import (
+    entry_point,
     errors,
     files,
     intermediate_output,
     logging_config,
     params,
     runner,
-    entry_point,
 )
 
 logger = logging_config.get_logger()

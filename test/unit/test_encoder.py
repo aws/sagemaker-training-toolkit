@@ -20,8 +20,8 @@ from scipy import sparse
 from six import BytesIO
 
 from sagemaker_training import content_types, encoders, errors
-from sagemaker_training.recordio import _read_recordio
 from sagemaker_training.record_pb2 import Record
+from sagemaker_training.recordio import _read_recordio
 
 
 @pytest.mark.parametrize(

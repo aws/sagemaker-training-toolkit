@@ -19,7 +19,7 @@ from mock import call, MagicMock, patch, PropertyMock
 import pytest
 from six import PY2
 
-from sagemaker_training import env, errors, process, runner, entry_point
+from sagemaker_training import entry_point, env, errors, process, runner
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
