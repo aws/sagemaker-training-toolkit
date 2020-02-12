@@ -23,7 +23,7 @@ from scipy.sparse import issparse
 from six import BytesIO, StringIO
 
 from sagemaker_training import content_types, errors
-from sagemaker_training._recordio import (
+from sagemaker_training.recordio import (
     _write_numpy_to_dense_tensor,
     _write_spmatrix_to_sparse_tensor,
 )
