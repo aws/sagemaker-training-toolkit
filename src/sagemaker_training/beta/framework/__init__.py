@@ -30,7 +30,7 @@ from sagemaker_training import params
 from sagemaker_training import process
 from sagemaker_training import _runner as runner
 from sagemaker_training import server
-from sagemaker_training import _trainer as trainer
+from sagemaker_training import trainer
 from sagemaker_training import _transformer as transformer
 from sagemaker_training import _worker as worker
 

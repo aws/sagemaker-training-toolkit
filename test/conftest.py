@@ -61,5 +61,5 @@ def patch_exit_process():
         if error_code:
             raise ValueError(error_code)
 
-    with patch("sagemaker_training._trainer._exit_processes", _exit):
+    with patch("sagemaker_training.trainer._exit_processes", _exit):
         yield _exit

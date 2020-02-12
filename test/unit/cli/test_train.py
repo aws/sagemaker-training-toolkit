@@ -17,7 +17,7 @@ from sagemaker_training.cli import train as train_cli
 
 
 @patch.object(env.ServingEnv, "framework_module", PropertyMock(return_value="my_flask_app"))
-@patch("sagemaker_training._trainer.train")
+@patch("sagemaker_training.trainer.train")
 def test_entry_point(train):
     train_cli.main()
     train.assert_called()
