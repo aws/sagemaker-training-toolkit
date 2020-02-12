@@ -107,7 +107,7 @@ class Transformer(object):
 
     Examples:
     >>>import os
-    >>>from sagemaker_training import env, modules, _transformer
+    >>>from sagemaker_training import env, modules, transformer
     >>>import Keras
     >>>ServingEnv = env.ServingEnv()
     >>>
@@ -117,7 +117,7 @@ class Transformer(object):
     >>>def model_fn(model_dir):
     >>>     return Keras.models.load_model(os.path.join(model_dir, 'minimlmodel'))
     >>>
-    >>>transformer = _transformer.Transformer(predict_fn=predict_fn, model_fn=model_fn)
+    >>>transform = transformer.Transformer(predict_fn=predict_fn, model_fn=model_fn)
     >>>
     >>>mod = modules.download_and_import(ServingEnv.module_dir, ServingEnv.module_name)
     >>>transformer.load_user_fns(mod)
