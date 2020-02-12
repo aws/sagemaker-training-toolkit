@@ -26,9 +26,9 @@ import time
 
 import boto3
 
-from sagemaker_training import content_types, _logging, mapping, params
+from sagemaker_training import content_types, logging_config, mapping, params
 
-logger = _logging.get_logger()
+logger = logging_config.get_logger()
 
 SAGEMAKER_BASE_PATH = os.path.join("/opt", "ml")  # type: str
 BASE_PATH_ENV = "SAGEMAKER_BASE_DIR"  # type: str

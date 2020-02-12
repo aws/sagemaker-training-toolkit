@@ -23,9 +23,9 @@ import warnings
 
 import six
 
-from sagemaker_training import env, errors, files, _logging, process
+from sagemaker_training import env, errors, files, logging_config, process
 
-logger = _logging.get_logger()
+logger = logging_config.get_logger()
 
 DEFAULT_MODULE_NAME = "default_user_module_name"
 
@@ -225,7 +225,7 @@ def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
 
     cmd = [process.python_executable(), "-m", module_name] + args
 
-    _logging.log_script_invocation(cmd, env_vars)
+    logging_config.log_script_invocation(cmd, env_vars)
 
     if wait:
         return process.check_error(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)

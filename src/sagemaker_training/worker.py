@@ -18,7 +18,7 @@ import warnings
 import flask
 from six.moves import http_client
 
-from sagemaker_training import content_types, env, _logging, mapping
+from sagemaker_training import content_types, env, logging_config, mapping
 
 env = env.ServingEnv()
 
@@ -93,7 +93,7 @@ class Worker(flask.Flask):
 
         # the logger is configured after importing the framework library, allowing the framework to
         # configure logging at import time.
-        _logging.configure_logger(env.log_level)
+        logging_config.configure_logger(env.log_level)
 
         if initialize_fn:
             self.before_first_request(initialize_fn)

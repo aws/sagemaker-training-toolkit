@@ -22,7 +22,7 @@ from sagemaker_training import env
 from sagemaker_training import mpi
 from sagemaker_training import files
 from sagemaker_training import functions
-from sagemaker_training import _logging as logging
+from sagemaker_training import logging_config
 from sagemaker_training import mapping
 from sagemaker_training import modules
 from sagemaker_training import entry_point

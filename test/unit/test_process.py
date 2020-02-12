@@ -61,7 +61,7 @@ def test_check_error(popen):
 
 
 @patch("subprocess.Popen")
-@patch("sagemaker_training._logging.log_script_invocation")
+@patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_bash(log, popen, entry_point_type_script):
     with pytest.raises(errors.ExecuteUserScriptError):
         process.ProcessRunner("launcher.sh", ["--lr", "13"], {}).run()
@@ -72,7 +72,7 @@ def test_run_bash(log, popen, entry_point_type_script):
 
 
 @patch("subprocess.Popen")
-@patch("sagemaker_training._logging.log_script_invocation")
+@patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_python_capture_error(log, popen, entry_point_type_script):
     mock_process = MagicMock()
     mock_process.stdout.readline.return_value = b"stdout"
@@ -93,7 +93,7 @@ def test_run_python_capture_error(log, popen, entry_point_type_script):
 
 
 @patch("subprocess.Popen")
-@patch("sagemaker_training._logging.log_script_invocation")
+@patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_module(log, popen, entry_point_type_module):
     with pytest.raises(errors.ExecuteUserScriptError):
         process.ProcessRunner("module.py", ["--lr", "13"], {}).run()

@@ -22,9 +22,9 @@ import sys
 import pkg_resources
 
 import sagemaker_training
-from sagemaker_training import env, files, _logging, modules
+from sagemaker_training import env, files, logging_config, modules
 
-logger = _logging.get_logger()
+logger = logging_config.get_logger()
 
 UNIX_SOCKET_BIND = "unix:/tmp/gunicorn.sock"
 

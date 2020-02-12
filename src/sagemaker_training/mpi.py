@@ -23,9 +23,9 @@ import paramiko
 import psutil
 
 import gethostname
-from sagemaker_training import _logging, process, timeout
+from sagemaker_training import logging_config, process, timeout
 
-logger = _logging.get_logger()
+logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
 

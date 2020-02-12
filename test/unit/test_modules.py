@@ -159,7 +159,7 @@ def test_run_error(capture_error):
 
 @patch("sagemaker_training.process.python_executable")
 @patch("sagemaker_training.process.check_error")
-@patch("sagemaker_training._logging.log_script_invocation")
+@patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run(log_script_invocation, check_error, executable):
     modules.run("pytest", ["--version"])
 
@@ -170,7 +170,7 @@ def test_run(log_script_invocation, check_error, executable):
 
 @patch("sagemaker_training.process.python_executable")
 @patch("sagemaker_training.process.create")
-@patch("sagemaker_training._logging.log_script_invocation")
+@patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_no_wait(log_script_invocation, create, executable):
     modules.run("pytest", ["--version"], {"PYPATH": "/opt/ml/code"}, wait=False, capture_error=True)
 

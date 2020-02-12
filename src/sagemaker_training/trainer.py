@@ -22,13 +22,13 @@ from sagemaker_training import (
     errors,
     files,
     intermediate_output,
-    _logging,
+    logging_config,
     params,
     runner,
     entry_point,
 )
 
-logger = _logging.get_logger()
+logger = logging_config.get_logger()
 
 SUCCESS_CODE = 0
 DEFAULT_FAILURE_CODE = 1
@@ -74,13 +74,13 @@ def train():
 
             # the logger is configured after importing the framework library, allowing
             # the framework to configure logging at import time.
-            _logging.configure_logger(env.log_level)
+            logging_config.configure_logger(env.log_level)
             logger.info("Imported framework %s", framework_name)
 
             entrypoint = getattr(framework, entry_point_name)
             entrypoint()
         else:
-            _logging.configure_logger(env.log_level)
+            logging_config.configure_logger(env.log_level)
 
             mpi_enabled = env.additional_framework_parameters.get(params.MPI_ENABLED)
             runner_type = runner.RunnerType.MPI if mpi_enabled else runner.RunnerType.Process

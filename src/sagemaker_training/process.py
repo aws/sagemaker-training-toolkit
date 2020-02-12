@@ -21,7 +21,7 @@ from typing import Dict, List, Mapping  # noqa ignore=F401 imported but unused
 
 import six
 
-from sagemaker_training import entry_point_type, env, errors, _logging
+from sagemaker_training import entry_point_type, env, errors, logging_config
 
 
 def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
@@ -154,7 +154,7 @@ class ProcessRunner(object):
 
         cmd = self._create_command()
 
-        _logging.log_script_invocation(cmd, self._env_vars)
+        logging_config.log_script_invocation(cmd, self._env_vars)
 
         if wait:
             process = check_error(
