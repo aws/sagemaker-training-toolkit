@@ -45,7 +45,7 @@ def run(
 
     Example:
          >>>import sagemaker_training
-         >>>from sagemaker_training.beta.framework import entry_point
+         >>>from sagemaker_training import entry_point
 
          >>>env = sagemaker_training.training_env()
          {'channel-input-dirs': {'training': '/opt/ml/input/training'},
@@ -76,13 +76,13 @@ def run(
             (default: True).
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
-        runner_type (sagemaker_training.beta.framework.runner.RunnerType): the type of runner object to
-            be created (default: sagemaker_training.beta.framework.runner.ProcessRunnerType).
+        runner_type (sagemaker_training.runner.RunnerType): the type of runner object to
+            be created (default: sagemaker_training.runner.ProcessRunnerType).
         extra_opts (dict): Additional options for running the entry point (default: None).
             Currently, this only applies for MPI.
 
     Returns:
-        sagemaker_training.beta.framework.process.ProcessRunner: the runner object responsible for
+        sagemaker_training.process.ProcessRunner: the runner object responsible for
             executing the entry point.
     """
     env_vars = env_vars or {}

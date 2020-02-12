@@ -23,7 +23,7 @@ import numpy as np
 import pytest
 
 import sagemaker_training
-from sagemaker_training.beta.framework import entry_point, env, errors, functions, modules, trainer
+from sagemaker_training import entry_point, env, errors, functions, modules, trainer
 import test
 from test import fake_ml_framework
 

@@ -175,7 +175,7 @@ class Transformer(object):
     def initialize(self):  # type: () -> None
         """Execute any initialization necessary to start making predictions with the Transformer.
         The default implementation is used to load the model.
-        This function is called by sagemaker_training.beta.framework.worker.Worker,
+        This function is called by sagemaker_training.worker.Worker,
         before starting the Flask application.
         The gunicorn server forks multiple workers, executing multiple Flask applications in
         parallel.
@@ -189,7 +189,7 @@ class Transformer(object):
         serialized response.
 
         Returns:
-            sagemaker_training.beta.framework.worker.Response: a Flask response object with
+            sagemaker_training.worker.Response: a Flask response object with
                 the following args:
 
                 * response: the serialized data to return
@@ -219,7 +219,7 @@ class Transformer(object):
             accept (str): accept content-type expected by the client.
 
         Returns:
-            sagemaker_training.beta.framework.worker.Response or tuple:
+            sagemaker_training.worker.Response or tuple:
                 the serialized response data and its content type, either as a Response object or
                 a tuple of the form (response_data, content_type)
         """

@@ -17,7 +17,7 @@ import os
 import numpy as np
 from six.moves import http_client
 
-from sagemaker_training.beta.framework import content_types, encoders, env, transformer, worker
+from sagemaker_training import content_types, encoders, env, transformer, worker
 import test
 from test import fake_ml_framework
 

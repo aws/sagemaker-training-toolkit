@@ -17,7 +17,7 @@ import os
 
 import pytest
 
-import sagemaker_training.beta.framework as framework
+import sagemaker_training as framework
 
 
 @pytest.mark.parametrize(
