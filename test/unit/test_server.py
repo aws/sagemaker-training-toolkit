@@ -15,7 +15,7 @@ import os
 from mock import call, Mock, patch, PropertyMock
 import pytest
 
-from sagemaker_training import env, _server
+from sagemaker_training import env, server
 
 
 FIRST_PORT = "1111"
@@ -55,7 +55,7 @@ def test_start_no_nginx(popen):
         )
     ]
 
-    _server.start("my_module")
+    server.start("my_module")
     popen.assert_has_calls(calls)
 
 
@@ -63,8 +63,8 @@ def test_start_no_nginx(popen):
 @patch.object(env.ServingEnv, "model_server_timeout", PropertyMock(return_value=100))
 @patch.object(env.ServingEnv, "use_nginx", PropertyMock(return_value=True))
 @patch("sagemaker_training.env.num_gpus", lambda: 0)
-@patch("sagemaker_training._server.nginx_config_file", "/tmp/nginx.conf")
-@patch("sagemaker_training._server.nginx_config_template_file", "/tmp/nginx.conf.template")
+@patch("sagemaker_training.server.nginx_config_file", "/tmp/nginx.conf")
+@patch("sagemaker_training.server.nginx_config_template_file", "/tmp/nginx.conf.template")
 @patch("sagemaker_training.files.read_file", lambda x: "random_string")
 @patch("sagemaker_training.files.write_file", Mock())
 @patch("os.wait", lambda: (-1, 0))
@@ -95,17 +95,17 @@ def test_start_with_nginx(popen):
             ]
         ),
     ]
-    _server.start("my_module")
+    server.start("my_module")
     popen.assert_has_calls(calls)
 
 
 def test_next_safe_port_first():
-    safe_port = _server.next_safe_port(SAFE_PORT_RANGE)
+    safe_port = server.next_safe_port(SAFE_PORT_RANGE)
     assert safe_port == FIRST_PORT
 
 
 def test_next_safe_port_after():
-    safe_port = _server.next_safe_port(SAFE_PORT_RANGE, FIRST_PORT)
+    safe_port = server.next_safe_port(SAFE_PORT_RANGE, FIRST_PORT)
     next_safe_port = str(int(FIRST_PORT) + 1)
 
     assert safe_port == next_safe_port
@@ -115,29 +115,29 @@ def test_next_safe_port_greater_than_range_exception():
     current_port = str(int(LAST_PORT) + 1)
 
     with pytest.raises(ValueError):
-        _server.next_safe_port(SAFE_PORT_RANGE, current_port)
+        server.next_safe_port(SAFE_PORT_RANGE, current_port)
 
 
 def test_next_safe_port_less_than_range_exception():
     current_port = str(int(FIRST_PORT) - 100)
 
     with pytest.raises(ValueError):
-        _server.next_safe_port(SAFE_PORT_RANGE, current_port)
+        server.next_safe_port(SAFE_PORT_RANGE, current_port)
 
 
 @patch(
     "sagemaker_training.files.read_file",
     lambda x: "nginx_timeout=%NGINX_PROXY_READ_TIMEOUT%, nginx_port=%NGINX_HTTP_PORT%",
 )
-@patch("sagemaker_training._server.nginx_config_template_file", "/tmp/nginx.conf.template")
+@patch("sagemaker_training.server.nginx_config_template_file", "/tmp/nginx.conf.template")
 @patch.object(env.ServingEnv, "model_server_timeout", PropertyMock(return_value=4567))
 @patch.object(env.ServingEnv, "http_port", PropertyMock(return_value="1234"))
 def test_create_nginx_config(tmpdir):
     nginx_config_file = os.path.join(str(tmpdir), "nginx.conf")
     serving_env = env.ServingEnv()
 
-    with patch("sagemaker_training._server.nginx_config_file", nginx_config_file):
-        _server._create_nginx_config(serving_env)
+    with patch("sagemaker_training.server.nginx_config_file", nginx_config_file):
+        server._create_nginx_config(serving_env)
         assert os.path.exists(nginx_config_file)
         with open(nginx_config_file, "r") as f:
             data = f.readline()
