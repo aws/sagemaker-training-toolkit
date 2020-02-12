@@ -22,7 +22,7 @@ import sys
 import pkg_resources
 
 import sagemaker_training
-from sagemaker_training import env, files, _logging, _modules
+from sagemaker_training import env, files, _logging, modules
 
 logger = _logging.get_logger()
 
@@ -83,7 +83,7 @@ def start(module_app):
 
     # Install user module before starting GUnicorn
     if serving_env.module_name:
-        _modules.import_module(serving_env.module_dir, serving_env.module_name)
+        modules.import_module(serving_env.module_dir, serving_env.module_name)
 
     pythonpath = ",".join(sys.path + [env.code_dir])
 

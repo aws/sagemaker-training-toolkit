@@ -24,7 +24,7 @@ from sagemaker_training import files
 from sagemaker_training import functions
 from sagemaker_training import _logging as logging
 from sagemaker_training import mapping
-from sagemaker_training import _modules as modules
+from sagemaker_training import modules
 from sagemaker_training import entry_point
 from sagemaker_training import _params as params
 from sagemaker_training import _process as process
