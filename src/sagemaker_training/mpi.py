@@ -23,7 +23,7 @@ import paramiko
 import psutil
 
 import gethostname
-from sagemaker_training import _logging, process, _timeout
+from sagemaker_training import _logging, process, timeout
 
 logger = _logging.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
@@ -133,7 +133,7 @@ class MasterRunner(process.ProcessRunner):
         logger.info("Waiting for MPI workers to establish their SSH connections")
 
         workers = [host for host in self._hosts if host != self._master_hostname]
-        with _timeout.timeout(seconds=self.timeout_in_seconds):
+        with timeout.timeout(seconds=self.timeout_in_seconds):
             for host in workers:
                 while not _can_connect(host):
                     time.sleep(self._interval)
