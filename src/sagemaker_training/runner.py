@@ -17,7 +17,7 @@ import enum
 from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 import sagemaker_training
-from sagemaker_training import _mpi, _params, _process
+from sagemaker_training import mpi, params, process
 
 
 class RunnerType(enum.Enum):
@@ -32,9 +32,9 @@ MPIRunnerType = RunnerType.MPI
 
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
-    # type: (RunnerType, str, List[str], Dict[str]) -> _process.Runner
+    # type: (RunnerType, str, List[str], Dict[str]) -> process.Runner
     """Placeholder docstring"""
-    if isinstance(identifier, _process.ProcessRunner):
+    if isinstance(identifier, process.ProcessRunner):
         return identifier
     else:
         return _get_by_runner_type(identifier, user_entry_point, args, env_vars, extra_opts)
@@ -55,12 +55,12 @@ def _get_by_runner_type(
         # Default to single process for CPU
         default_processes_per_host = env.num_gpus if env.num_gpus > 0 else 1
         processes_per_host = _mpi_param_value(
-            mpi_args, env, _params.MPI_PROCESSES_PER_HOST, default_processes_per_host
+            mpi_args, env, params.MPI_PROCESSES_PER_HOST, default_processes_per_host
         )
-        num_processes = _mpi_param_value(mpi_args, env, _params.MPI_NUM_PROCESSES)
-        custom_mpi_options = _mpi_param_value(mpi_args, env, _params.MPI_CUSTOM_OPTIONS, "")
+        num_processes = _mpi_param_value(mpi_args, env, params.MPI_NUM_PROCESSES)
+        custom_mpi_options = _mpi_param_value(mpi_args, env, params.MPI_CUSTOM_OPTIONS, "")
 
-        return _mpi.MasterRunner(
+        return mpi.MasterRunner(
             user_entry_point,
             args,
             env_vars,
@@ -72,9 +72,9 @@ def _get_by_runner_type(
             num_processes=num_processes,
         )
     elif identifier is RunnerType.MPI:
-        return _mpi.WorkerRunner(user_entry_point, args, env_vars, env.master_hostname)
+        return mpi.WorkerRunner(user_entry_point, args, env_vars, env.master_hostname)
     elif identifier is RunnerType.Process:
-        return _process.ProcessRunner(user_entry_point, args, env_vars)
+        return process.ProcessRunner(user_entry_point, args, env_vars)
     else:
         raise ValueError("Invalid identifier %s" % identifier)
 

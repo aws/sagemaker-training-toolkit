@@ -22,8 +22,8 @@ import numpy as np
 from scipy.sparse import issparse
 from six import BytesIO, StringIO
 
-from sagemaker_training import _content_types, _errors
-from sagemaker_training._recordio import (
+from sagemaker_training import content_types, errors
+from sagemaker_training.recordio import (
     _write_numpy_to_dense_tensor,
     _write_spmatrix_to_sparse_tensor,
 )
@@ -118,11 +118,11 @@ def csv_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
         array = array.astype(dtype)
     except ValueError as e:
         if dtype is not None:
-            raise _errors.ClientError(
+            raise errors.ClientError(
                 "Error while writing numpy array: {}. dtype is: {}".format(e, dtype)
             )
     except Exception as e:
-        raise _errors.ClientError("Error while decoding csv: {}".format(e))
+        raise errors.ClientError("Error while decoding csv: {}".format(e))
     return array
 
 
@@ -150,7 +150,7 @@ def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) ->
         writer.writerows(array)
         return stream.getvalue()
     except csv.Error as e:
-        raise _errors.ClientError("Error while encoding csv: {}".format(e))
+        raise errors.ClientError("Error while encoding csv: {}".format(e))
 
 
 def array_to_recordio_protobuf(array_like, labels=None):
@@ -183,15 +183,15 @@ def array_to_recordio_protobuf(array_like, labels=None):
     return buffer.getvalue()
 
 
-_encoders_map = {
-    _content_types.NPY: array_to_npy,
-    _content_types.CSV: array_to_csv,
-    _content_types.JSON: array_to_json,
+encoders_map = {
+    content_types.NPY: array_to_npy,
+    content_types.CSV: array_to_csv,
+    content_types.JSON: array_to_json,
 }
 _decoders_map = {
-    _content_types.NPY: npy_to_numpy,
-    _content_types.CSV: csv_to_numpy,
-    _content_types.JSON: json_to_numpy,
+    content_types.NPY: npy_to_numpy,
+    content_types.CSV: csv_to_numpy,
+    content_types.JSON: json_to_numpy,
 }
 
 
@@ -210,7 +210,7 @@ def decode(obj, content_type):
         decoder = _decoders_map[content_type]
         return decoder(obj)
     except KeyError:
-        raise _errors.UnsupportedFormatError(content_type)
+        raise errors.UnsupportedFormatError(content_type)
 
 
 def encode(array_like, content_type):
@@ -228,7 +228,7 @@ def encode(array_like, content_type):
         (np.array): object converted as numpy array.
     """
     try:
-        encoder = _encoders_map[content_type]
+        encoder = encoders_map[content_type]
         return encoder(array_like)
     except KeyError:
-        raise _errors.UnsupportedFormatError(content_type)
+        raise errors.UnsupportedFormatError(content_type)

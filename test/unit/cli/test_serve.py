@@ -12,12 +12,12 @@
 # language governing permissions and limitations under the License.
 from mock import patch, PropertyMock
 
-from sagemaker_training import _env
+from sagemaker_training import env
 from sagemaker_training.cli import serve
 
 
-@patch.object(_env.ServingEnv, "framework_module", PropertyMock(return_value="my_flask_app"))
-@patch("sagemaker_training._server.start")
+@patch.object(env.ServingEnv, "framework_module", PropertyMock(return_value="my_flask_app"))
+@patch("sagemaker_training.server.start")
 def test_entry_point(start):
     serve.main()
     start.assert_called_with("my_flask_app")

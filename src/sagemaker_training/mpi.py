@@ -23,13 +23,13 @@ import paramiko
 import psutil
 
 import gethostname
-from sagemaker_training import _logging, _process, _timeout
+from sagemaker_training import logging_config, process, timeout
 
-logger = _logging.get_logger()
+logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
 
-class WorkerRunner(_process.ProcessRunner):
+class WorkerRunner(process.ProcessRunner):
     """Runner responsible for preparing MPI distributed training and waiting for MPI
      master execution to finish.
     """
@@ -89,7 +89,7 @@ def _orted_process():  # pylint: disable=inconsistent-return-statements
         time.sleep(1)
 
 
-class MasterRunner(_process.ProcessRunner):
+class MasterRunner(process.ProcessRunner):
     """Responsible to prepare MPI distributed training and syncronize work with the Workers.
     """
 
@@ -133,7 +133,7 @@ class MasterRunner(_process.ProcessRunner):
         logger.info("Waiting for MPI workers to establish their SSH connections")
 
         workers = [host for host in self._hosts if host != self._master_hostname]
-        with _timeout.timeout(seconds=self.timeout_in_seconds):
+        with timeout.timeout(seconds=self.timeout_in_seconds):
             for host in workers:
                 while not _can_connect(host):
                     time.sleep(self._interval)

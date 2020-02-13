@@ -14,17 +14,23 @@
 from __future__ import absolute_import
 
 
-def training_env():  # type: () -> _env.TrainingEnv
+def training_env(
+    resource_config=None, input_data_config=None, hyperparameters=None
+):  # type: () -> env.TrainingEnv
     """Create a TrainingEnv.
 
     Returns:
         TrainingEnv: an instance of TrainingEnv
     """
 
-    from sagemaker_training import _env
+    from sagemaker_training import env
 
-    return _env.TrainingEnv(
-        resource_config=_env.read_resource_config(),
-        input_data_config=_env.read_input_data_config(),
-        hyperparameters=_env.read_hyperparameters(),
+    resource_config = resource_config or env.read_resource_config()
+    input_data_config = input_data_config or env.read_input_data_config()
+    hyperparameters = hyperparameters or env.read_hyperparameters()
+
+    return env.TrainingEnv(
+        resource_config=resource_config,
+        input_data_config=input_data_config,
+        hyperparameters=hyperparameters,
     )

@@ -19,7 +19,7 @@ from mock import mock_open, patch
 import pytest
 import six
 
-from sagemaker_training import _env, _files
+from sagemaker_training import env, files
 import test
 
 builtins_open = "__builtin__.open" if six.PY2 else "builtins.open"
@@ -57,26 +57,26 @@ ALL_HYPERPARAMETERS = dict(
 
 
 def test_read_json():
-    test.write_json(ALL_HYPERPARAMETERS, _env.hyperparameters_file_dir)
+    test.write_json(ALL_HYPERPARAMETERS, env.hyperparameters_file_dir)
 
-    assert _files.read_json(_env.hyperparameters_file_dir) == ALL_HYPERPARAMETERS
+    assert files.read_json(env.hyperparameters_file_dir) == ALL_HYPERPARAMETERS
 
 
 def test_read_json_throws_exception():
     with pytest.raises(IOError):
-        _files.read_json("non-existent.json")
+        files.read_json("non-existent.json")
 
 
 def test_read_file():
-    test.write_json("test", _env.hyperparameters_file_dir)
+    test.write_json("test", env.hyperparameters_file_dir)
 
-    assert _files.read_file(_env.hyperparameters_file_dir) == '"test"'
+    assert files.read_file(env.hyperparameters_file_dir) == '"test"'
 
 
 @patch("tempfile.mkdtemp")
 @patch("shutil.rmtree")
 def test_tmpdir(rmtree, mkdtemp):
-    with _files.tmpdir():
+    with files.tmpdir():
         mkdtemp.assert_called()
     rmtree.assert_called()
 
@@ -84,74 +84,74 @@ def test_tmpdir(rmtree, mkdtemp):
 @patch("tempfile.mkdtemp")
 @patch("shutil.rmtree")
 def test_tmpdir_with_args(rmtree, mkdtemp):
-    with _files.tmpdir("suffix", "prefix", "/tmp"):
+    with files.tmpdir("suffix", "prefix", "/tmp"):
         mkdtemp.assert_called_with(dir="/tmp", prefix="prefix", suffix="suffix")
     rmtree.assert_called()
 
 
 @patch(builtins_open, mock_open())
 def test_write_file():
-    _files.write_file("/tmp/my-file", "42")
+    files.write_file("/tmp/my-file", "42")
     open.assert_called_with("/tmp/my-file", "w")
     open().write.assert_called_with("42")
 
-    _files.write_file("/tmp/my-file", "42", "a")
+    files.write_file("/tmp/my-file", "42", "a")
     open.assert_called_with("/tmp/my-file", "a")
     open().write.assert_called_with("42")
 
 
 @patch(builtins_open, mock_open())
 def test_write_success_file():
-    file_path = os.path.join(_env.output_dir, "success")
+    file_path = os.path.join(env.output_dir, "success")
     empty_msg = ""
-    _files.write_success_file()
+    files.write_success_file()
     open.assert_called_with(file_path, "w")
     open().write.assert_called_with(empty_msg)
 
 
 @patch(builtins_open, mock_open())
 def test_write_failure_file():
-    file_path = os.path.join(_env.output_dir, "failure")
+    file_path = os.path.join(env.output_dir, "failure")
     failure_msg = "This is a failure"
-    _files.write_failure_file(failure_msg)
+    files.write_failure_file(failure_msg)
     open.assert_called_with(file_path, "w")
     open().write.assert_called_with(failure_msg)
 
 
-@patch("sagemaker_training._files.s3_download")
+@patch("sagemaker_training.files.s3_download")
 @patch("os.path.isdir", lambda x: True)
 @patch("shutil.rmtree")
 @patch("shutil.copytree")
 def test_download_and_extract_source_dir(copy, rmtree, s3_download):
-    uri = _env.channel_path("code")
-    _files.download_and_extract(uri, _env.code_dir)
+    uri = env.channel_path("code")
+    files.download_and_extract(uri, env.code_dir)
     s3_download.assert_not_called()
 
-    rmtree.assert_any_call(_env.code_dir)
-    copy.assert_called_with(uri, _env.code_dir)
+    rmtree.assert_any_call(env.code_dir)
+    copy.assert_called_with(uri, env.code_dir)
 
 
-@patch("sagemaker_training._files.s3_download")
+@patch("sagemaker_training.files.s3_download")
 @patch("os.path.isdir", lambda x: False)
 @patch("shutil.copy2")
 def test_download_and_extract_file(copy, s3_download):
     uri = __file__
-    _files.download_and_extract(uri, _env.code_dir)
+    files.download_and_extract(uri, env.code_dir)
 
     s3_download.assert_not_called()
-    copy.assert_called_with(uri, _env.code_dir)
+    copy.assert_called_with(uri, env.code_dir)
 
 
-@patch("sagemaker_training._files.s3_download")
+@patch("sagemaker_training.files.s3_download")
 @patch("os.path.isdir", lambda x: False)
 @patch("tarfile.TarFile.extractall")
 def test_download_and_extract_tar(extractall, s3_download):
     t = tarfile.open(name="test.tar.gz", mode="w:gz")
     t.close()
     uri = t.name
-    _files.download_and_extract(uri, _env.code_dir)
+    files.download_and_extract(uri, env.code_dir)
 
     s3_download.assert_not_called()
-    extractall.assert_called_with(path=_env.code_dir)
+    extractall.assert_called_with(path=env.code_dir)
 
     os.remove(uri)

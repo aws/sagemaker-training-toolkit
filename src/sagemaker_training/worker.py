@@ -18,9 +18,9 @@ import warnings
 import flask
 from six.moves import http_client
 
-from sagemaker_training import _content_types, _env, _logging, _mapping
+from sagemaker_training import content_types, env, logging_config, mapping
 
-env = _env.ServingEnv()
+env = env.ServingEnv()
 
 
 def default_healthcheck_fn():  # type: () -> Response
@@ -93,7 +93,7 @@ class Worker(flask.Flask):
 
         # the logger is configured after importing the framework library, allowing the framework to
         # configure logging at import time.
-        _logging.configure_logger(env.log_level)
+        logging_config.configure_logger(env.log_level)
 
         if initialize_fn:
             self.before_first_request(initialize_fn)
@@ -118,7 +118,7 @@ class Worker(flask.Flask):
 class Response(flask.Response):
     """Placeholder docstring"""
 
-    default_mimetype = _content_types.JSON
+    default_mimetype = content_types.JSON
 
     def __init__(
         self,
@@ -139,7 +139,7 @@ class Response(flask.Response):
         )
 
 
-class Request(flask.Request, _mapping.MappingMixin):
+class Request(flask.Request, mapping.MappingMixin):
     """The Request object used to read request data.
 
     Example:
@@ -150,7 +150,7 @@ class Request(flask.Request, _mapping.MappingMixin):
 
     42
 
-    >>> from sagemaker_training import _env
+    >>> from sagemaker_training import env
 
     >>> request = Request()
     >>> data = request.data
@@ -163,9 +163,9 @@ class Request(flask.Request, _mapping.MappingMixin):
 
     """
 
-    default_mimetype = _content_types.JSON
+    default_mimetype = content_types.JSON
 
-    def __init__(self, environ=None, serving_env=None):  # type: (dict, _env.ServingEnv) -> None
+    def __init__(self, environ=None, serving_env=None):  # type: (dict, env.ServingEnv) -> None
         """Placeholder docstring"""
         super(Request, self).__init__(environ=environ or flask.request.environ)
 
@@ -184,7 +184,7 @@ class Request(flask.Request, _mapping.MappingMixin):
         return (
             self.headers.get("ContentType")
             or self.headers.get("Content-Type")
-            or _content_types.JSON
+            or content_types.JSON
         )
 
     @property
@@ -197,7 +197,7 @@ class Request(flask.Request, _mapping.MappingMixin):
         """
         accept = self.headers.get("Accept")
 
-        if not accept or accept == _content_types.ANY:
+        if not accept or accept == content_types.ANY:
             return self._default_accept
         else:
             return accept
@@ -211,6 +211,6 @@ class Request(flask.Request, _mapping.MappingMixin):
         Returns:
             (obj): incoming data
         """
-        as_text = self.content_type in _content_types.UTF8_TYPES
+        as_text = self.content_type in content_types.UTF8_TYPES
 
         return self.get_data(as_text=as_text)

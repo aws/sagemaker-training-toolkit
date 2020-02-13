@@ -21,7 +21,7 @@ from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-from sagemaker_training import _env, _errors, _files, _modules, _params
+from sagemaker_training import env, errors, files, modules, params
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -36,9 +36,9 @@ builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 )
 def test_s3_download(resource, url, bucket_name, key, dst):
     region = "us-west-2"
-    os.environ[_params.REGION_NAME_ENV] = region
+    os.environ[params.REGION_NAME_ENV] = region
 
-    _files.s3_download(url, dst)
+    files.s3_download(url, dst)
 
     chain = call("s3", region_name=region).Bucket(bucket_name).download_file(key, dst)
     assert resource.mock_calls == chain.call_list()
@@ -48,39 +48,39 @@ def test_s3_download_wrong_scheme():
     with pytest.raises(
         ValueError, message="Expecting 's3' scheme, got: c in c://my-bucket/my-file"
     ):
-        _files.s3_download("c://my-bucket/my-file", "/tmp/file")
+        files.s3_download("c://my-bucket/my-file", "/tmp/file")
 
 
-@patch("sagemaker_training._process.check_error", autospec=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
 def test_install(check_error):
     path = "c://sagemaker-pytorch-container"
-    _modules.install(path)
+    modules.install(path)
 
     cmd = [sys.executable, "-m", "pip", "install", "."]
-    check_error.assert_called_with(cmd, _errors.InstallModuleError, cwd=path, capture_error=False)
+    check_error.assert_called_with(cmd, errors.InstallModuleError, cwd=path, capture_error=False)
 
     with patch("os.path.exists", return_value=True):
-        _modules.install(path)
+        modules.install(path)
 
         check_error.assert_called_with(
             cmd + ["-r", "requirements.txt"],
-            _errors.InstallModuleError,
+            errors.InstallModuleError,
             capture_error=False,
             cwd=path,
         )
 
 
-@patch("sagemaker_training._process.check_error", autospec=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
 def test_install_fails(check_error):
-    check_error.side_effect = _errors.ClientError()
-    with pytest.raises(_errors.ClientError):
-        _modules.install("git://aws/container-support")
+    check_error.side_effect = errors.ClientError()
+    with pytest.raises(errors.ClientError):
+        modules.install("git://aws/container-support")
 
 
 @patch("sys.executable", None)
 def test_install_no_python_executable():
     with pytest.raises(RuntimeError) as e:
-        _modules.install("git://aws/container-support")
+        modules.install("git://aws/container-support")
     assert str(e.value) == "Failed to retrieve the real path for the Python executable binary"
 
 
@@ -92,7 +92,7 @@ def patch_tmpdir():
 @patch(builtins_open, mock_open())
 @patch("os.path.exists", lambda x: False)
 def test_prepare():
-    _modules.prepare("c:/path/to/", "my-module")
+    modules.prepare("c:/path/to/", "my-module")
 
     open.assert_any_call("c:/path/to/setup.py", "w")
     open.assert_any_call("c:/path/to/setup.cfg", "w")
@@ -132,24 +132,24 @@ def test_prepare():
 @patch(builtins_open, mock_open())
 @patch("os.path.exists", lambda x: True)
 def test_prepare_already_prepared():
-    _modules.prepare("c:/path/to/", "my-module")
+    modules.prepare("c:/path/to/", "my-module")
     open.assert_not_called()
 
 
 @patch("importlib.import_module")
 def test_exists(import_module):
-    assert _modules.exists("my_module")
+    assert modules.exists("my_module")
 
     import_module.side_effect = ImportError()
 
-    assert not _modules.exists("my_module")
+    assert not modules.exists("my_module")
 
 
 @patch("sagemaker_training.training_env", lambda: {})
 @pytest.mark.parametrize("capture_error", [True, False])
 def test_run_error(capture_error):
-    with pytest.raises(_errors.ExecuteUserScriptError) as e:
-        _modules.run("wrong module", capture_error=capture_error)
+    with pytest.raises(errors.ExecuteUserScriptError) as e:
+        modules.run("wrong module", capture_error=capture_error)
 
     message = str(e.value)
     assert "ExecuteUserScriptError:" in message
@@ -157,70 +157,66 @@ def test_run_error(capture_error):
         assert " No module named wrong module" in message
 
 
-@patch("sagemaker_training._process.python_executable")
-@patch("sagemaker_training._process.check_error")
-@patch("sagemaker_training._logging.log_script_invocation")
+@patch("sagemaker_training.process.python_executable")
+@patch("sagemaker_training.process.check_error")
+@patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run(log_script_invocation, check_error, executable):
-    _modules.run("pytest", ["--version"])
+    modules.run("pytest", ["--version"])
 
     expected_cmd = [executable(), "-m", "pytest", "--version"]
     log_script_invocation.assert_called_with(expected_cmd, {})
-    check_error.assert_called_with(
-        expected_cmd, _errors.ExecuteUserScriptError, capture_error=False
-    )
+    check_error.assert_called_with(expected_cmd, errors.ExecuteUserScriptError, capture_error=False)
 
 
-@patch("sagemaker_training._process.python_executable")
-@patch("sagemaker_training._process.create")
-@patch("sagemaker_training._logging.log_script_invocation")
+@patch("sagemaker_training.process.python_executable")
+@patch("sagemaker_training.process.create")
+@patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_no_wait(log_script_invocation, create, executable):
-    _modules.run(
-        "pytest", ["--version"], {"PYPATH": "/opt/ml/code"}, wait=False, capture_error=True
-    )
+    modules.run("pytest", ["--version"], {"PYPATH": "/opt/ml/code"}, wait=False, capture_error=True)
 
     expected_cmd = [executable(), "-m", "pytest", "--version"]
     log_script_invocation.assert_called_with(expected_cmd, {"PYPATH": "/opt/ml/code"})
-    create.assert_called_with(expected_cmd, _errors.ExecuteUserScriptError, capture_error=True)
+    create.assert_called_with(expected_cmd, errors.ExecuteUserScriptError, capture_error=True)
 
 
 @pytest.mark.parametrize("wait, cache", [[True, False], [True, False]])
-@patch("sagemaker_training._modules.run")
-@patch("sagemaker_training._modules.install")
-@patch("sagemaker_training._env.write_env_vars")
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.modules.run")
+@patch("sagemaker_training.modules.install")
+@patch("sagemaker_training.env.write_env_vars")
+@patch("sagemaker_training.files.download_and_extract")
 def test_run_module_wait(download_and_extract, write_env_vars, install, run, wait, cache):
     with pytest.warns(DeprecationWarning):
-        _modules.run_module(uri="s3://url", args=["42"], wait=wait, cache=cache)
+        modules.run_module(uri="s3://url", args=["42"], wait=wait, cache=cache)
 
-        download_and_extract.assert_called_with("s3://url", _env.code_dir)
+        download_and_extract.assert_called_with("s3://url", env.code_dir)
         write_env_vars.assert_called_with({})
-        install.assert_called_with(_env.code_dir)
+        install.assert_called_with(env.code_dir)
 
         run.assert_called_with("default_user_module_name", ["42"], {}, True, False)
 
 
-@patch("sagemaker_training._files.download_and_extract")
-@patch("sagemaker_training._modules.install")
+@patch("sagemaker_training.files.download_and_extract")
+@patch("sagemaker_training.modules.install")
 @patch("importlib.import_module")
 @patch("six.moves.reload_module")
 def test_import_module(reload, import_module, install, download_and_extract):
 
-    _modules.import_module("s3://bucket/my-module")
+    modules.import_module("s3://bucket/my-module")
 
-    download_and_extract.assert_called_with("s3://bucket/my-module", _env.code_dir)
-    install.assert_called_with(_env.code_dir)
-    reload.assert_called_with(import_module(_modules.DEFAULT_MODULE_NAME))
+    download_and_extract.assert_called_with("s3://bucket/my-module", env.code_dir)
+    install.assert_called_with(env.code_dir)
+    reload.assert_called_with(import_module(modules.DEFAULT_MODULE_NAME))
 
 
 def test_download_and_install_local_directory():
     uri = "/opt/ml/input/data/code/sourcedir.tar.gz"
 
-    with patch("sagemaker_training._files.s3_download") as s3_download, patch(
+    with patch("sagemaker_training.files.s3_download") as s3_download, patch(
         "tarfile.open"
-    ) as tarfile, patch("sagemaker_training._modules.prepare") as prepare, patch(
-        "sagemaker_training._modules.install"
+    ) as tarfile, patch("sagemaker_training.modules.prepare") as prepare, patch(
+        "sagemaker_training.modules.install"
     ) as install:
-        _modules.download_and_install(uri)
+        modules.download_and_install(uri)
 
         s3_download.assert_not_called()
         tarfile.assert_called_with(name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz")

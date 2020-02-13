@@ -20,7 +20,7 @@ from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from retrying import retry
 
-from sagemaker_training import _entry_point_type, _env, _files, _modules, _runner
+from sagemaker_training import entry_point_type, env, files, modules, runner
 
 
 def run(
@@ -30,10 +30,10 @@ def run(
     env_vars=None,
     wait=True,
     capture_error=False,
-    runner=_runner.ProcessRunnerType,
+    runner_type=runner.ProcessRunnerType,
     extra_opts=None,
 ):
-    # type: (str, str, List[str], Dict[str, str], bool, bool, _runner.RunnerType,Dict[str, str]) -> None  # pylint: disable=line-too-long # noqa ignore=E501
+    # type: (str, str, List[str], Dict[str, str], bool, bool, runner.RunnerType,Dict[str, str]) -> None  # pylint: disable=line-too-long # noqa ignore=E501
     """Download, prepare and executes a compressed tar file from S3 or provided directory as an user
     entrypoint. Runs the user entry point, passing env_vars as environment variables and args
     as command arguments.
@@ -45,7 +45,7 @@ def run(
 
     Example:
          >>>import sagemaker_training
-         >>>from sagemaker_training.beta.framework import entry_point
+         >>>from sagemaker_training import entry_point
 
          >>>env = sagemaker_training.training_env()
          {'channel-input-dirs': {'training': '/opt/ml/input/training'},
@@ -76,27 +76,27 @@ def run(
             (default: True).
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
-        runner (sagemaker_training.beta.framework.runner.RunnerType): the type of runner object to
-            be created (default: sagemaker_training.beta.framework.runner.ProcessRunnerType).
+        runner_type (sagemaker_training.runner.RunnerType): the type of runner object to
+            be created (default: sagemaker_training.runner.ProcessRunnerType).
         extra_opts (dict): Additional options for running the entry point (default: None).
             Currently, this only applies for MPI.
 
     Returns:
-        sagemaker_training.beta.framework.process.ProcessRunner: the runner object responsible for
+        sagemaker_training.process.ProcessRunner: the runner object responsible for
             executing the entry point.
     """
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    _files.download_and_extract(uri, _env.code_dir)
+    files.download_and_extract(uri, env.code_dir)
 
-    install(user_entry_point, _env.code_dir, capture_error)
+    install(user_entry_point, env.code_dir, capture_error)
 
-    _env.write_env_vars(env_vars)
+    env.write_env_vars(env_vars)
 
     _wait_hostname_resolution()
 
-    return _runner.get(runner, user_entry_point, args, env_vars, extra_opts).run(
+    return runner.get(runner_type, user_entry_point, args, env_vars, extra_opts).run(
         wait, capture_error
     )
 
@@ -115,10 +115,10 @@ def install(name, dst, capture_error=False):
     if dst not in sys.path:
         sys.path.insert(0, dst)
 
-    entrypoint_type = _entry_point_type.get(dst, name)
-    if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
-        _modules.install(dst, capture_error)
-    if entrypoint_type is _entry_point_type.COMMAND:
+    entrypoint_type = entry_point_type.get(dst, name)
+    if entrypoint_type is entry_point_type.PYTHON_PACKAGE:
+        modules.install(dst, capture_error)
+    if entrypoint_type is entry_point_type.COMMAND:
         os.chmod(os.path.join(dst, name), 511)
 
 
@@ -133,5 +133,5 @@ def _wait_hostname_resolution():
     boots up and has been documented here:
      https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-dist-training
     """
-    for host in _env.TrainingEnv().hosts:
+    for host in env.TrainingEnv().hosts:
         _dns_lookup(host)

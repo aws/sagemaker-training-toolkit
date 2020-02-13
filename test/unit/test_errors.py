@@ -12,23 +12,23 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-from sagemaker_training import _errors
+from sagemaker_training import errors
 
 
 def test_install_module_error():
-    error = _errors.InstallModuleError(["python", "-m", "42"], return_code=42)
+    error = errors.InstallModuleError(["python", "-m", "42"], return_code=42)
 
     assert str(error) == "InstallModuleError:\nCommand \"['python', '-m', '42']\""
 
 
 def test_execute_user_script_error():
-    error = _errors.ExecuteUserScriptError(["python", "-m", "42"], return_code=42)
+    error = errors.ExecuteUserScriptError(["python", "-m", "42"], return_code=42)
 
     assert str(error) == "ExecuteUserScriptError:\nCommand \"['python', '-m', '42']\""
 
 
 def test_install_module_error_with_output():
-    error = _errors.InstallModuleError(["python", "-m", "42"], return_code=42, output=b"42")
+    error = errors.InstallModuleError(["python", "-m", "42"], return_code=42, output=b"42")
 
     assert (
         str(error)
@@ -39,7 +39,7 @@ Command "['python', '-m', '42']"
 
 
 def test_execute_user_script_error_with_output():
-    error = _errors.ExecuteUserScriptError(["python", "-m", "42"], return_code=42, output=b"42")
+    error = errors.ExecuteUserScriptError(["python", "-m", "42"], return_code=42, output=b"42")
 
     assert (
         str(error)

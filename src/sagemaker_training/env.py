@@ -26,9 +26,9 @@ import time
 
 import boto3
 
-from sagemaker_training import _content_types, _logging, _mapping, _params
+from sagemaker_training import content_types, logging_config, mapping, params
 
-logger = _logging.get_logger()
+logger = logging_config.get_logger()
 
 SAGEMAKER_BASE_PATH = os.path.join("/opt", "ml")  # type: str
 BASE_PATH_ENV = "SAGEMAKER_BASE_DIR"  # type: str
@@ -309,7 +309,7 @@ def num_cpus():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
-class _Env(_mapping.MappingMixin):
+class _Env(mapping.MappingMixin):
     """Base Class which provides access to aspects of the environment including
     system characteristics, filesystem locations, environment variables and configuration settings.
 
@@ -325,10 +325,10 @@ class _Env(_mapping.MappingMixin):
 
     def __init__(self):
         """Placeholder docstring"""
-        current_host = os.environ.get(_params.CURRENT_HOST_ENV)
-        module_name = os.environ.get(_params.USER_PROGRAM_ENV, None)
-        module_dir = os.environ.get(_params.SUBMIT_DIR_ENV, code_dir)
-        log_level = int(os.environ.get(_params.LOG_LEVEL_ENV, logging.INFO))
+        current_host = os.environ.get(params.CURRENT_HOST_ENV)
+        module_name = os.environ.get(params.USER_PROGRAM_ENV, None)
+        module_dir = os.environ.get(params.SUBMIT_DIR_ENV, code_dir)
+        log_level = int(os.environ.get(params.LOG_LEVEL_ENV, logging.INFO))
 
         self._current_host = current_host
         self._num_gpus = num_gpus()
@@ -552,26 +552,26 @@ class TrainingEnv(_Env):
         input_data_config = input_data_config or read_input_data_config()
 
         all_hyperparameters = hyperparameters or read_hyperparameters()
-        split_result = _mapping.split_by_criteria(
+        split_result = mapping.split_by_criteria(
             all_hyperparameters,
-            keys=_params.SAGEMAKER_HYPERPARAMETERS,
-            prefix=_params.SAGEMAKER_PREFIX,
+            keys=params.SAGEMAKER_HYPERPARAMETERS,
+            prefix=params.SAGEMAKER_PREFIX,
         )
 
         sagemaker_hyperparameters = split_result.included
         additional_framework_parameters = {
             k: sagemaker_hyperparameters[k]
             for k in sagemaker_hyperparameters.keys()
-            if k not in _params.SAGEMAKER_HYPERPARAMETERS
+            if k not in params.SAGEMAKER_HYPERPARAMETERS
         }
 
         sagemaker_region = sagemaker_hyperparameters.get(
-            _params.REGION_NAME_PARAM, boto3.session.Session().region_name
+            params.REGION_NAME_PARAM, boto3.session.Session().region_name
         )
 
-        os.environ[_params.JOB_NAME_ENV] = sagemaker_hyperparameters.get(_params.JOB_NAME_PARAM, "")
-        os.environ[_params.CURRENT_HOST_ENV] = current_host
-        os.environ[_params.REGION_NAME_ENV] = sagemaker_region or ""
+        os.environ[params.JOB_NAME_ENV] = sagemaker_hyperparameters.get(params.JOB_NAME_PARAM, "")
+        os.environ[params.CURRENT_HOST_ENV] = current_host
+        os.environ[params.REGION_NAME_ENV] = sagemaker_region or ""
 
         self._hosts = hosts
 
@@ -592,22 +592,22 @@ class TrainingEnv(_Env):
 
         # override base class attributes
         if self._module_name is None:
-            self._module_name = str(sagemaker_hyperparameters.get(_params.USER_PROGRAM_PARAM, None))
+            self._module_name = str(sagemaker_hyperparameters.get(params.USER_PROGRAM_PARAM, None))
         self._user_entry_point = self._user_entry_point or sagemaker_hyperparameters.get(
-            _params.USER_PROGRAM_PARAM
+            params.USER_PROGRAM_PARAM
         )
 
-        self._module_dir = str(sagemaker_hyperparameters.get(_params.SUBMIT_DIR_PARAM, code_dir))
-        self._log_level = sagemaker_hyperparameters.get(_params.LOG_LEVEL_PARAM, logging.INFO)
+        self._module_dir = str(sagemaker_hyperparameters.get(params.SUBMIT_DIR_PARAM, code_dir))
+        self._log_level = sagemaker_hyperparameters.get(params.LOG_LEVEL_PARAM, logging.INFO)
         self._sagemaker_s3_output = sagemaker_hyperparameters.get(
-            _params.S3_OUTPUT_LOCATION_PARAM, None
+            params.S3_OUTPUT_LOCATION_PARAM, None
         )
-        self._framework_module = os.environ.get(_params.FRAMEWORK_TRAINING_MODULE_ENV, None)
+        self._framework_module = os.environ.get(params.FRAMEWORK_TRAINING_MODULE_ENV, None)
 
         self._input_dir = input_dir
         self._input_config_dir = input_config_dir
         self._output_dir = output_dir
-        self._job_name = os.environ.get(_params.TRAINING_JOB_ENV.upper(), None)
+        self._job_name = os.environ.get(params.TRAINING_JOB_ENV.upper(), None)
 
         self._master_hostname = list(hosts)[0]
         self._is_master = current_host == self._master_hostname
@@ -659,7 +659,7 @@ class TrainingEnv(_Env):
         Returns:
             (list): List of cmd arguments
         """
-        return _mapping.to_cmd_args(self.hyperparameters)
+        return mapping.to_cmd_args(self.hyperparameters)
 
     def to_env_vars(self):
         """Environment variable representation of the training environment
@@ -700,7 +700,7 @@ class TrainingEnv(_Env):
         for key, value in self.hyperparameters.items():
             env["hp_%s" % key] = value
 
-        return _mapping.to_env_vars(env)
+        return mapping.to_env_vars(env)
 
     @property
     def hosts(self):  # type: () -> list
@@ -869,11 +869,11 @@ class ServingEnv(_Env):
        It is a dictionary like object, allowing any builtin function that works with dictionary.
 
        Example on how to print the state of the container:
-           >>> from sagemaker_training import _env
+           >>> from sagemaker_training import env
 
-           >>> print(str(_env.ServingEnv()))
+           >>> print(str(env.ServingEnv()))
        Example on how a script can use training environment:
-           >>>ServingEnv = _env.ServingEnv()
+           >>>ServingEnv = env.ServingEnv()
 
 
         Attributes:
@@ -896,13 +896,13 @@ class ServingEnv(_Env):
     def __init__(self):
         super(ServingEnv, self).__init__()
 
-        use_nginx = util.strtobool(os.environ.get(_params.USE_NGINX_ENV, "true")) == 1
-        model_server_timeout = int(os.environ.get(_params.MODEL_SERVER_TIMEOUT_ENV, "60"))
-        model_server_workers = int(os.environ.get(_params.MODEL_SERVER_WORKERS_ENV, num_cpus()))
-        framework_module = os.environ.get(_params.FRAMEWORK_SERVING_MODULE_ENV, None)
-        default_accept = os.environ.get(_params.DEFAULT_INVOCATIONS_ACCEPT_ENV, _content_types.JSON)
-        http_port = os.environ.get(_params.SAGEMAKER_BIND_TO_PORT_ENV, "8080")
-        safe_port_range = os.environ.get(_params.SAGEMAKER_SAFE_PORT_RANGE_ENV)
+        use_nginx = util.strtobool(os.environ.get(params.USE_NGINX_ENV, "true")) == 1
+        model_server_timeout = int(os.environ.get(params.MODEL_SERVER_TIMEOUT_ENV, "60"))
+        model_server_workers = int(os.environ.get(params.MODEL_SERVER_WORKERS_ENV, num_cpus()))
+        framework_module = os.environ.get(params.FRAMEWORK_SERVING_MODULE_ENV, None)
+        default_accept = os.environ.get(params.DEFAULT_INVOCATIONS_ACCEPT_ENV, content_types.JSON)
+        http_port = os.environ.get(params.SAGEMAKER_BIND_TO_PORT_ENV, "8080")
+        safe_port_range = os.environ.get(params.SAGEMAKER_SAFE_PORT_RANGE_ENV)
 
         self._use_nginx = use_nginx
         self._model_server_timeout = model_server_timeout

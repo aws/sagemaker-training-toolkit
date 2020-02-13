@@ -28,10 +28,10 @@ import werkzeug.test as werkzeug_test
 DEFAULT_REGION = "us-west-2"
 
 from sagemaker_training import (  # noqa ignore=E402 module level import not at top of file
-    _env,
-    _files,
-    _params,
-    _worker,
+    env,
+    files,
+    params,
+    worker,
 )
 
 DEFAULT_CONFIG = dict(
@@ -107,12 +107,11 @@ def create_resource_config(
                 hosts=hosts or ["algo-1"],
                 network_interface_name=network_interface_name,
             ),
-            _env.resource_config_file_dir,
+            env.resource_config_file_dir,
         )
     else:
         write_json(
-            dict(current_host=current_host, hosts=hosts or ["algo-1"]),
-            _env.resource_config_file_dir,
+            dict(current_host=current_host, hosts=hosts or ["algo-1"]), env.resource_config_file_dir
         )
 
 
@@ -120,21 +119,19 @@ def create_input_data_config(channels=None):  # type: (list) -> None
     channels = channels or []
     input_data_config = {channel.name: channel.config for channel in channels}
 
-    write_json(input_data_config, _env.input_data_config_file_dir)
+    write_json(input_data_config, env.input_data_config_file_dir)
 
 
 def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hyperparameters=None):
     # type: (dict, str, dict) -> None
 
-    all_hyperparameters = {
-        _params.SUBMIT_DIR_PARAM: submit_dir or _params.DEFAULT_MODULE_NAME_PARAM
-    }
+    all_hyperparameters = {params.SUBMIT_DIR_PARAM: submit_dir or params.DEFAULT_MODULE_NAME_PARAM}
 
     all_hyperparameters.update(sagemaker_hyperparameters or DEFAULT_HYPERPARAMETERS.copy())
 
     all_hyperparameters.update(hyperparameters)
 
-    write_json(all_hyperparameters, _env.hyperparameters_file_dir)
+    write_json(all_hyperparameters, env.hyperparameters_file_dir)
 
 
 File = collections.namedtuple("File", ["name", "data"])  # type: (str, str or list) -> File
@@ -165,7 +162,7 @@ def request(
         mimetype,
     )
 
-    return _worker.Request(_environ)
+    return worker.Request(_environ)
 
 
 def environ(
@@ -205,10 +202,10 @@ class UserModule(object):
         self.key = key or os.path.join(
             "test", "sagemaker-training-toolkit", str(time.time()), "sourcedir.tar.gz"
         )
-        self._files = [main_file]
+        self.files = [main_file]
 
     def add_file(self, file):  # type: (File) -> UserModule
-        self._files.append(file)
+        self.files.append(file)
         return self
 
     @property
@@ -219,7 +216,7 @@ class UserModule(object):
         dir_path = dir_path or os.path.dirname(os.path.realpath(__file__))
         tar_name = os.path.join(dir_path, "sourcedir.tar.gz")
         with tarfile.open(tar_name, mode="w:gz") as tar:
-            for _file in self._files:
+            for _file in self.files:
                 name = os.path.join(dir_path, _file.name)
                 with open(name, "w+") as f:
 
@@ -235,13 +232,13 @@ class UserModule(object):
         return tar_name
 
     def upload(self):  # type: () -> UserModule
-        with _files.tmpdir() as tmpdir:
+        with files.tmpdir() as tmpdir:
             tar_name = self.create_tar(dir_path=tmpdir)
             self._s3.Object(self.bucket, self.key).upload_file(tar_name)
         return self
 
     def create_tmp_dir_with_files(self, tmp_dir_path):
-        for _file in self._files:
+        for _file in self.files:
             name = os.path.join(tmp_dir_path, _file.name)
             with open(name, "w+") as f:
 
@@ -271,7 +268,7 @@ class Channel(
 
     @property
     def path(self):  # type: () -> str
-        return os.path.join(_env._input_data_dir, self.name)
+        return os.path.join(env._input_data_dir, self.name)
 
 
 class TestBase(object):

@@ -19,7 +19,7 @@ import traceback
 
 from six.moves import http_client
 
-from sagemaker_training import _content_types, _encoders, _env, _errors, _functions, _worker
+from sagemaker_training import content_types, encoders, env, errors, functions, worker
 
 
 def default_model_fn(model_dir):
@@ -60,7 +60,7 @@ def default_input_fn(input_data, content_type):
     Returns:
         (obj): data ready for prediction.
     """
-    return _encoders.decode(input_data, content_type)
+    return encoders.decode(input_data, content_type)
 
 
 def default_predict_fn(data, model):
@@ -97,7 +97,7 @@ def default_output_fn(prediction, accept):
                 response: the serialized data to return
                 accept: the content-type that the data was transformed to.
     """
-    return _worker.Response(response=_encoders.encode(prediction, accept), mimetype=accept)
+    return worker.Response(response=encoders.encode(prediction, accept), mimetype=accept)
 
 
 class Transformer(object):
@@ -107,9 +107,9 @@ class Transformer(object):
 
     Examples:
     >>>import os
-    >>>from sagemaker_training import _env, _modules, _transformer
+    >>>from sagemaker_training import env, modules, transformer
     >>>import Keras
-    >>>ServingEnv = _env.ServingEnv()
+    >>>ServingEnv = env.ServingEnv()
     >>>
     >>>def predict_fn(model, data):
     >>>     return model.predict(data)
@@ -117,9 +117,9 @@ class Transformer(object):
     >>>def model_fn(model_dir):
     >>>     return Keras.models.load_model(os.path.join(model_dir, 'minimlmodel'))
     >>>
-    >>>transformer = _transformer.Transformer(predict_fn=predict_fn, model_fn=model_fn)
+    >>>transform = transformer.Transformer(predict_fn=predict_fn, model_fn=model_fn)
     >>>
-    >>>mod = _modules.download_and_import(ServingEnv.module_dir, ServingEnv.module_name)
+    >>>mod = modules.download_and_import(ServingEnv.module_dir, ServingEnv.module_name)
     >>>transformer.load_user_fns(mod)
     """
 
@@ -130,7 +130,7 @@ class Transformer(object):
         predict_fn=None,
         output_fn=None,
         transform_fn=None,
-        error_class=_errors.ClientError,
+        error_class=errors.ClientError,
     ):
         """Default constructor. Wraps the any non default framework function in an error class to
         isolate framework from user errors.
@@ -148,7 +148,7 @@ class Transformer(object):
         """
         self._model = None
         self._model_fn = (
-            _functions.error_wrapper(model_fn, error_class) if model_fn else default_model_fn
+            functions.error_wrapper(model_fn, error_class) if model_fn else default_model_fn
         )
 
         if transform_fn and (input_fn or predict_fn or output_fn):
@@ -157,52 +157,52 @@ class Transformer(object):
             )
 
         if transform_fn is not None:
-            self._transform_fn = _functions.error_wrapper(transform_fn, error_class)
+            self._transform_fn = functions.error_wrapper(transform_fn, error_class)
         else:
             self._transform_fn = self._default_transform_fn
 
         self._input_fn = (
-            _functions.error_wrapper(input_fn, error_class) if input_fn else default_input_fn
+            functions.error_wrapper(input_fn, error_class) if input_fn else default_input_fn
         )
         self._predict_fn = (
-            _functions.error_wrapper(predict_fn, error_class) if predict_fn else default_predict_fn
+            functions.error_wrapper(predict_fn, error_class) if predict_fn else default_predict_fn
         )
         self._output_fn = (
-            _functions.error_wrapper(output_fn, error_class) if output_fn else default_output_fn
+            functions.error_wrapper(output_fn, error_class) if output_fn else default_output_fn
         )
         self._error_class = error_class
 
     def initialize(self):  # type: () -> None
         """Execute any initialization necessary to start making predictions with the Transformer.
         The default implementation is used to load the model.
-        This function is called by sagemaker_training.beta.framework.worker.Worker,
+        This function is called by sagemaker_training.worker.Worker,
         before starting the Flask application.
         The gunicorn server forks multiple workers, executing multiple Flask applications in
         parallel.
         This function will be called once per each worker.
         It does not have return type or arguments.
         """
-        self._model = self._model_fn(_env.model_dir)
+        self._model = self._model_fn(env.model_dir)
 
-    def transform(self):  # type: () -> _worker.Response
+    def transform(self):  # type: () -> worker.Response
         """Take a request with input data, deserialize it, make a prediction, and return a
         serialized response.
 
         Returns:
-            sagemaker_training.beta.framework.worker.Response: a Flask response object with
+            sagemaker_training.worker.Response: a Flask response object with
                 the following args:
 
                 * response: the serialized data to return
                 * accept: the content type that the data was serialized into
         """
-        request = _worker.Request()
+        request = worker.Request()
         result = self._transform_fn(
             self._model, request.content, request.content_type, request.accept
         )
 
         if isinstance(result, tuple):
             # transforms tuple in Response for backwards compatibility
-            return _worker.Response(response=result[0], mimetype=result[1])
+            return worker.Response(response=result[0], mimetype=result[1])
 
         return result
 
@@ -219,20 +219,20 @@ class Transformer(object):
             accept (str): accept content-type expected by the client.
 
         Returns:
-            sagemaker_training.beta.framework.worker.Response or tuple:
+            sagemaker_training.worker.Response or tuple:
                 the serialized response data and its content type, either as a Response object or
                 a tuple of the form (response_data, content_type)
         """
         try:
             data = self._input_fn(content, content_type)
-        except _errors.UnsupportedFormatError as e:
+        except errors.UnsupportedFormatError as e:
             return self._error_response(e, http_client.UNSUPPORTED_MEDIA_TYPE)
 
         prediction = self._predict_fn(data, model)
 
         try:
             result = self._output_fn(prediction, accept)
-        except _errors.UnsupportedFormatError as e:
+        except errors.UnsupportedFormatError as e:
             return self._error_response(e, http_client.NOT_ACCEPTABLE)
 
         return result
@@ -246,4 +246,4 @@ class Transformer(object):
                 "stack-trace": traceback.format_exc(),
             }
         )
-        return _worker.Response(response=body, status=status_code, mimetype=_content_types.JSON)
+        return worker.Response(response=body, status=status_code, mimetype=content_types.JSON)

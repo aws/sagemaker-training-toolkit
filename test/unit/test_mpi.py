@@ -18,7 +18,7 @@ import os
 from mock import ANY, MagicMock, patch
 
 import gethostname
-from sagemaker_training import _env, _mpi
+from sagemaker_training import env, mpi
 
 
 def does_not_connect():
@@ -47,7 +47,7 @@ def test_mpi_worker_run(popen, policy, process_iter, wait_procs, ssh_client, sle
     process = MagicMock(info={"name": "orted"})
     process_iter.side_effect = lambda attrs: [process]
 
-    worker = _mpi.WorkerRunner(
+    worker = mpi.WorkerRunner(
         user_entry_point="train.sh",
         args=["-v", "--lr", "35"],
         env_vars={"LD_CONFIG_PATH": "/etc/ld"},
@@ -70,7 +70,7 @@ def test_mpi_worker_run(popen, policy, process_iter, wait_procs, ssh_client, sle
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("subprocess.Popen")
 def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists):
-    worker = _mpi.WorkerRunner(
+    worker = mpi.WorkerRunner(
         user_entry_point="train.sh",
         args=["-v", "--lr", "35"],
         env_vars={"LD_CONFIG_PATH": "/etc/ld"},
@@ -93,7 +93,7 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists):
 def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
     with patch.dict(os.environ, clear=True):
 
-        master = _mpi.MasterRunner(
+        master = mpi.MasterRunner(
             user_entry_point="train.sh",
             args=["-v", "--lr", "35"],
             env_vars={"LD_CONFIG_PATH": "/etc/ld"},
@@ -164,7 +164,7 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
                 "-c",
                 "./train.sh -v --lr 35",
             ],
-            cwd=_env.code_dir,
+            cwd=env.code_dir,
             env=ANY,
             stdout=None,
             stderr=None,
@@ -175,7 +175,7 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
 
 
 @patch("os.path.exists")
-@patch("sagemaker_training._process.python_executable", return_value="usr/bin/python3")
+@patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
@@ -185,7 +185,7 @@ def test_mpi_master_run_python(
 ):
     with patch.dict(os.environ, clear=True):
 
-        master = _mpi.MasterRunner(
+        master = mpi.MasterRunner(
             user_entry_point="train.py",
             args=["-v", "--lr", "35"],
             env_vars={"LD_CONFIG_PATH": "/etc/ld"},
@@ -260,7 +260,7 @@ def test_mpi_master_run_python(
                 "--lr",
                 "35",
             ],
-            cwd=_env.code_dir,
+            cwd=env.code_dir,
             env=ANY,
             stdout=None,
             stderr=None,

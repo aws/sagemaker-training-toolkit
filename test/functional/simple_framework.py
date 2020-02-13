@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import os
 
 import sagemaker_training
-from sagemaker_training.beta.framework import functions, modules
+from sagemaker_training import functions, modules
 
 
 def train():

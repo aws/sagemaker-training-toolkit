@@ -23,7 +23,7 @@ import tempfile
 import boto3
 from six.moves.urllib import parse
 
-from sagemaker_training import _env, _params
+from sagemaker_training import env, params
 
 
 def write_success_file():  # type: () -> None
@@ -31,7 +31,7 @@ def write_success_file():  # type: () -> None
     have any content.
     See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
     """
-    file_path = os.path.join(_env.output_dir, "success")
+    file_path = os.path.join(env.output_dir, "success")
     empty_content = ""
     write_file(file_path, empty_content)
 
@@ -45,7 +45,7 @@ def write_failure_file(failure_msg):  # type: (str) -> None
     Args:
         failure_msg: The description of failure
     """
-    file_path = os.path.join(_env.output_dir, "failure")
+    file_path = os.path.join(env.output_dir, "failure")
     write_file(file_path, failure_msg)
 
 
@@ -158,7 +158,7 @@ def s3_download(url, dst):  # type: (str, str) -> None
 
     bucket, key = url.netloc, url.path.lstrip("/")
 
-    region = os.environ.get("AWS_REGION", os.environ.get(_params.REGION_NAME_ENV))
+    region = os.environ.get("AWS_REGION", os.environ.get(params.REGION_NAME_ENV))
     s3 = boto3.resource("s3", region_name=region)
 
     s3.Bucket(bucket).download_file(key, dst)

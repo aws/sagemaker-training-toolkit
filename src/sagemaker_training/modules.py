@@ -23,9 +23,9 @@ import warnings
 
 import six
 
-from sagemaker_training import _env, _errors, _files, _logging, _process
+from sagemaker_training import env, errors, files, logging_config, process
 
-logger = _logging.get_logger()
+logger = logging_config.get_logger()
 
 DEFAULT_MODULE_NAME = "default_user_module_name"
 
@@ -74,7 +74,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logger.info("Module %s does not provide a setup.py. \nGenerating setup.py" % name)
 
-        _files.write_file(setup_path, data)
+        files.write_file(setup_path, data)
 
         data = textwrap.dedent(
             """
@@ -85,7 +85,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logger.info("Generating setup.cfg")
 
-        _files.write_file(os.path.join(path, "setup.cfg"), data)
+        files.write_file(os.path.join(path, "setup.cfg"), data)
 
         data = textwrap.dedent(
             """
@@ -98,7 +98,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
         logger.info("Generating MANIFEST.in")
 
-        _files.write_file(os.path.join(path, "MANIFEST.in"), data)
+        files.write_file(os.path.join(path, "MANIFEST.in"), data)
 
 
 def install(path, capture_error=False):  # type: (str, bool) -> None
@@ -108,29 +108,29 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
     """
-    cmd = "%s -m pip install . " % _process.python_executable()
+    cmd = "%s -m pip install . " % process.python_executable()
 
     if has_requirements(path):
         cmd += "-r requirements.txt"
 
     logger.info("Installing module with the following command:\n%s", cmd)
 
-    _process.check_error(
-        shlex.split(cmd), _errors.InstallModuleError, cwd=path, capture_error=capture_error
+    process.check_error(
+        shlex.split(cmd), errors.InstallModuleError, cwd=path, capture_error=capture_error
     )
 
 
 def s3_download(url, dst):  # type: (str, str) -> None
     """Download a file from S3.
 
-    This method acts as an alias for :meth:`~sagemaker_training.beta.framework.files.s3_download`
+    This method acts as an alias for :meth:`~sagemaker_training.files.s3_download`
     for backward-compatibility purposes.
 
     Args:
         url (str): the S3 URL of the file.
         dst (str): the destination where the file will be saved.
     """
-    _files.s3_download(url, dst)
+    files.s3_download(url, dst)
 
 
 def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
@@ -142,7 +142,7 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
     into a module before installing it.
 
     This method is the predecessor of
-    :meth:`~sagemaker_training.beta.framework.files.download_and_extract`
+    :meth:`~sagemaker_training.files.download_and_extract`
     and has been kept for backward-compatibility purposes.
 
     Args:
@@ -154,9 +154,9 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
     should_use_cache = cache and exists(name)
 
     if not should_use_cache:
-        with _files.tmpdir() as tmpdir:
+        with files.tmpdir() as tmpdir:
             dst = os.path.join(tmpdir, "tar_file")
-            _files.download_and_extract(uri, dst)
+            files.download_and_extract(uri, dst)
             module_path = os.path.join(tmpdir, "module_dir")
             os.makedirs(module_path)
             prepare(module_path, name)
@@ -190,7 +190,7 @@ def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
     Example:
 
         >>>import sagemaker_training
-        >>>from sagemaker_training.beta.framework import mapping, modules
+        >>>from sagemaker_training import mapping, modules
 
         >>>env = sagemaker_training.training_env()
         {'channel-input-dirs': {'training': '/opt/ml/input/training'},
@@ -223,17 +223,15 @@ def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
     args = args or []
     env_vars = env_vars or {}
 
-    cmd = [_process.python_executable(), "-m", module_name] + args
+    cmd = [process.python_executable(), "-m", module_name] + args
 
-    _logging.log_script_invocation(cmd, env_vars)
+    logging_config.log_script_invocation(cmd, env_vars)
 
     if wait:
-        return _process.check_error(
-            cmd, _errors.ExecuteUserScriptError, capture_error=capture_error
-        )
+        return process.check_error(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
 
     else:
-        return _process.create(cmd, _errors.ExecuteUserScriptError, capture_error=capture_error)
+        return process.create(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
 
 
 def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str, bool) -> module
@@ -252,17 +250,17 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
         (module): the imported module
     """
     _warning_cache_deprecation(cache)
-    _files.download_and_extract(uri, _env.code_dir)
+    files.download_and_extract(uri, env.code_dir)
 
-    prepare(_env.code_dir, name)
-    install(_env.code_dir)
+    prepare(env.code_dir, name)
+    install(env.code_dir)
     try:
         module = importlib.import_module(name)
         six.moves.reload_module(module)  # pylint: disable=too-many-function-args
 
         return module
     except Exception as e:  # pylint: disable=broad-except
-        six.reraise(_errors.ImportModuleError, _errors.ImportModuleError(e), sys.exc_info()[2])
+        six.reraise(errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2])
 
 
 def run_module(
@@ -289,12 +287,12 @@ def run_module(
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    _files.download_and_extract(uri, _env.code_dir)
+    files.download_and_extract(uri, env.code_dir)
 
-    prepare(_env.code_dir, name)
-    install(_env.code_dir)
+    prepare(env.code_dir, name)
+    install(env.code_dir)
 
-    _env.write_env_vars(env_vars)
+    env.write_env_vars(env_vars)
 
     return run(name, args, env_vars, wait, capture_error)
 

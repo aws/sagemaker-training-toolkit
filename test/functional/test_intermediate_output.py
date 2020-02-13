@@ -19,10 +19,10 @@ import boto3
 from botocore.exceptions import ClientError
 import numpy as np
 
-from sagemaker_training import _env, _files, _intermediate_output
+from sagemaker_training import env, files, intermediate_output
 import test
 
-intermediate_path = _env.output_intermediate_dir
+intermediate_path = env.output_intermediate_dir
 bucket = test.default_bucket()
 bucket_uri = "s3://{}".format(bucket)
 region = test.DEFAULT_REGION
@@ -34,7 +34,7 @@ def _timestamp():
 
 def test_intermediate_upload():
     os.environ["TRAINING_JOB_NAME"] = _timestamp()
-    p = _intermediate_output.start_sync(bucket_uri, region)
+    p = intermediate_output.start_sync(bucket_uri, region)
 
     file1 = os.path.join(intermediate_path, "file1.txt")
     write_file(file1, "file1!")
@@ -74,7 +74,7 @@ def test_intermediate_upload():
     file5 = os.path.join(intermediate_path, "file5.txt")
     write_file(file5, "file5!")
 
-    _files.write_success_file()
+    files.write_success_file()
 
     p.join()
 
@@ -133,7 +133,7 @@ def test_intermediate_upload():
     # check that modified file has
     s3 = boto3.resource("s3", region_name=region)
     key = os.path.join(key_prefix, os.path.relpath(file_to_modify1, intermediate_path))
-    modified_file = os.path.join(_env.output_dir, "modified_file.txt")
+    modified_file = os.path.join(env.output_dir, "modified_file.txt")
     s3.Bucket(bucket).download_file(key, modified_file)
     with open(modified_file) as f:
         content = f.read()
@@ -142,7 +142,7 @@ def test_intermediate_upload():
 
 def test_nested_delayed_file():
     os.environ["TRAINING_JOB_NAME"] = _timestamp()
-    p = _intermediate_output.start_sync(bucket_uri, region)
+    p = intermediate_output.start_sync(bucket_uri, region)
 
     os.makedirs(os.path.join(intermediate_path, "dir1"))
     dir1 = os.path.join(intermediate_path, "dir1")
@@ -165,7 +165,7 @@ def test_nested_delayed_file():
     file2 = os.path.join(dir3, "file2.txt")
     write_file(file2, "file2")
 
-    _files.write_success_file()
+    files.write_success_file()
     p.join()
 
     # assert that all files that should be under intermediate are still there
@@ -185,7 +185,7 @@ def test_nested_delayed_file():
 
 def test_large_files():
     os.environ["TRAINING_JOB_NAME"] = _timestamp()
-    p = _intermediate_output.start_sync(bucket_uri, region)
+    p = intermediate_output.start_sync(bucket_uri, region)
 
     file_size = 1024 * 256 * 17  # 17MB
 
@@ -196,7 +196,7 @@ def test_large_files():
     _generate_large_npy_file(file_size, file_to_modify)
     content_to_assert = _generate_large_npy_file(file_size, file_to_modify)
 
-    _files.write_failure_file("Failure!!")
+    files.write_failure_file("Failure!!")
     p.join()
 
     assert os.path.exists(file)
@@ -214,7 +214,7 @@ def test_large_files():
     # check that modified file has
     s3 = boto3.resource("s3", region_name=region)
     key = os.path.join(key_prefix, os.path.relpath(file_to_modify, intermediate_path))
-    modified_file = os.path.join(_env.output_dir, "modified_file.npy")
+    modified_file = os.path.join(env.output_dir, "modified_file.npy")
     s3.Bucket(bucket).download_file(key, modified_file)
     assert np.array_equal(np.load(modified_file), content_to_assert)
 
