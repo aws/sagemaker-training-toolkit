@@ -31,7 +31,6 @@ from sagemaker_training import (  # noqa ignore=E402 module level import not at 
     env,
     files,
     params,
-    worker,
 )
 
 DEFAULT_CONFIG = dict(
@@ -135,34 +134,6 @@ def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hy
 
 
 File = collections.namedtuple("File", ["name", "data"])  # type: (str, str or list) -> File
-
-
-def request(
-    path="/",
-    base_url=None,
-    query_string=None,
-    method="GET",
-    input_stream=None,
-    content_length=None,
-    headers=None,
-    data=None,
-    charset="utf-8",
-    mimetype=None,
-):
-    _environ = environ(
-        path,
-        base_url,
-        query_string,
-        method,
-        input_stream,
-        content_length,
-        headers,
-        data,
-        charset,
-        mimetype,
-    )
-
-    return worker.Request(_environ)
 
 
 def environ(

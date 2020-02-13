@@ -13,7 +13,6 @@
 """Placeholder docstring"""
 from __future__ import absolute_import
 
-from distutils import util
 import json
 import logging
 import multiprocessing
@@ -26,7 +25,7 @@ import time
 
 import boto3
 
-from sagemaker_training import content_types, logging_config, mapping, params
+from sagemaker_training import logging_config, mapping, params
 
 logger = logging_config.get_logger()
 
@@ -857,112 +856,6 @@ class TrainingEnv(_Env):
             str: Name of the framework module and entry point. For example:
                 my_module:main"""
         return self._framework_module
-
-
-class ServingEnv(_Env):
-    """Provides access to aspects of the serving environment relevant to serving containers,
-    including system characteristics, environment variables and configuration settings.
-
-       The ServingEnv is a read-only snapshot of the container environment. It does not contain any
-       form of state.
-
-       It is a dictionary like object, allowing any builtin function that works with dictionary.
-
-       Example on how to print the state of the container:
-           >>> from sagemaker_training import env
-
-           >>> print(str(env.ServingEnv()))
-       Example on how a script can use training environment:
-           >>>ServingEnv = env.ServingEnv()
-
-
-        Attributes:
-            use_nginx (bool): Whether to use nginx as a reverse proxy.
-            model_server_timeout (int): Timeout in seconds for the model server.
-            model_server_workers (int): Number of worker processes the model server will use.
-            framework_module (str):  Name of the framework module and entry point. For example:
-                my_module:main
-            default_accept (str): The desired default MIME type of the inference in the response
-                as specified in the user-supplied SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT environment
-                variable. Otherwise, returns 'application/json' by default.
-                For example: application/json
-            http_port (str): Port that SageMaker will use to handle invocations and pings against
-                             the running Docker container. Default is 8080. For example: 8080
-            safe_port_range (str): HTTP port range that can be used by customers to avoid collisions
-                with the HTTP port specified by SageMaker for handling pings and invocations.
-                For example: 1111-2222
-    """
-
-    def __init__(self):
-        super(ServingEnv, self).__init__()
-
-        use_nginx = util.strtobool(os.environ.get(params.USE_NGINX_ENV, "true")) == 1
-        model_server_timeout = int(os.environ.get(params.MODEL_SERVER_TIMEOUT_ENV, "60"))
-        model_server_workers = int(os.environ.get(params.MODEL_SERVER_WORKERS_ENV, num_cpus()))
-        framework_module = os.environ.get(params.FRAMEWORK_SERVING_MODULE_ENV, None)
-        default_accept = os.environ.get(params.DEFAULT_INVOCATIONS_ACCEPT_ENV, content_types.JSON)
-        http_port = os.environ.get(params.SAGEMAKER_BIND_TO_PORT_ENV, "8080")
-        safe_port_range = os.environ.get(params.SAGEMAKER_SAFE_PORT_RANGE_ENV)
-
-        self._use_nginx = use_nginx
-        self._model_server_timeout = model_server_timeout
-        self._model_server_workers = model_server_workers
-        self._framework_module = framework_module
-        self._default_accept = default_accept
-        self._http_port = http_port
-        self._safe_port_range = safe_port_range
-
-    @property
-    def use_nginx(self):  # type: () -> bool
-        """Returns:
-            bool: whether to use nginx as a reverse proxy. Default: True"""
-        return self._use_nginx
-
-    @property
-    def model_server_timeout(self):  # type: () -> int
-        """Returns:
-            int: Timeout in seconds for the model server. This is passed over to gunicorn,
-                 from the docs:
-                 Workers silent for more than this many seconds are killed and restarted.
-                 Our default value is 60. If ``use_nginx`` is True, then this same value
-                 will be used for nginx's proxy_read_timeout."""
-        return self._model_server_timeout
-
-    @property
-    def model_server_workers(self):  # type: () -> int
-        """Returns:
-            int: Number of worker processes the model server will use"""
-        return self._model_server_workers
-
-    @property
-    def framework_module(self):  # type: () -> str
-        """Returns:
-            str: Name of the framework module and entry point. For example:
-                my_module:main"""
-        return self._framework_module
-
-    @property
-    def default_accept(self):  # type: () -> str
-        """Returns:
-            str: The desired MIME type of the inference in the response. For example:
-                 application/json.
-                Default: application/json"""
-        return self._default_accept
-
-    @property
-    def http_port(self):  # type: () -> str
-        """Returns:
-            str: HTTP port that SageMaker will use to handle invocations and pings against
-                 the running Docker container. Default is 8080. For example: 8080"""
-        return self._http_port
-
-    @property
-    def safe_port_range(self):  # type: () -> str
-        """Returns:
-            str: HTTP port range that can be used by customers to avoid collisions with the
-                 HTTP port specified by SageMaker for handling pings and invocations.
-                 For example: 1111-2222"""
-        return self._safe_port_range
 
 
 def write_env_vars(env_vars=None):  # type: (dict) -> None

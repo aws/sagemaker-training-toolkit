@@ -35,8 +35,6 @@ required_packages = [
     "boto3",
     "six",
     "pip",
-    "flask==1.1.1",
-    "gunicorn",
     "typing",
     "retrying==1.3.3",
     "gevent",
