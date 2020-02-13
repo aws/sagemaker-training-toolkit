@@ -145,25 +145,6 @@ def create_training_env():
         os.environ = old_environ
 
 
-@pytest.fixture(name="serving_env")
-def create_serving_env():
-    with patch("sagemaker_training.env.num_cpus", lambda: 8), patch(
-        "sagemaker_training.env.num_gpus", lambda: 4
-    ):
-        old_environ = os.environ.copy()
-        os.environ[params.USE_NGINX_ENV] = "false"
-        os.environ[params.MODEL_SERVER_TIMEOUT_ENV] = "20"
-        os.environ[params.CURRENT_HOST_ENV] = "algo-1"
-        os.environ[params.USER_PROGRAM_ENV] = "main.py"
-        os.environ[params.SUBMIT_DIR_ENV] = "my_dir"
-        os.environ[params.ENABLE_METRICS_ENV] = "true"
-        os.environ[params.REGION_NAME_ENV] = "us-west-2"
-
-        yield env.ServingEnv()
-
-        os.environ = old_environ
-
-
 def test_create_training_env_without_training_files_and_directories_should_not_fail():
     training_env = sagemaker_training.training_env()
     hostname = socket.gethostname()
@@ -202,17 +183,6 @@ def test_training_env(training_env):
     assert training_env.additional_framework_parameters == {"sagemaker_parameter_server_num": 2}
 
 
-def test_serving_env(serving_env):
-    assert serving_env.num_gpus == 4
-    assert serving_env.num_cpus == 8
-    assert serving_env.use_nginx is False
-    assert serving_env.model_server_timeout == 20
-    assert serving_env.model_server_workers == 8
-    assert serving_env.module_name == "main"
-    assert serving_env.user_entry_point == "main.py"
-    assert serving_env.framework_module is None
-
-
 def test_env_mapping_properties(training_env):
     assert set(training_env.properties()) == {
         "additional_framework_parameters",
@@ -239,46 +209,6 @@ def test_env_mapping_properties(training_env):
         "output_intermediate_dir",
         "is_master",
         "master_hostname",
-    }
-
-
-def test_serving_env_properties(serving_env):
-    assert set(serving_env.properties()) == {
-        "current_host",
-        "default_accept",
-        "framework_module",
-        "http_port",
-        "log_level",
-        "model_dir",
-        "model_server_timeout",
-        "model_server_workers",
-        "module_dir",
-        "module_name",
-        "num_cpus",
-        "num_gpus",
-        "safe_port_range",
-        "user_entry_point",
-        "use_nginx",
-    }
-
-
-def test_request_properties(serving_env):
-    assert set(serving_env.properties()) == {
-        "current_host",
-        "default_accept",
-        "framework_module",
-        "http_port",
-        "log_level",
-        "model_dir",
-        "model_server_timeout",
-        "model_server_workers",
-        "module_dir",
-        "module_name",
-        "num_cpus",
-        "num_gpus",
-        "user_entry_point",
-        "safe_port_range",
-        "use_nginx",
     }
 
 
