@@ -65,7 +65,10 @@ def train():
         env = sagemaker_training.training_env()
 
         region = os.environ.get("AWS_REGION", os.environ.get(params.REGION_NAME_ENV))
-        intermediate_sync = intermediate_output.start_sync(env.sagemaker_s3_output(), region)
+        s3_endpoint_url = os.environ.get(params.S3_ENDPOINT_URL, None)
+        intermediate_sync = intermediate_output.start_sync(
+            env.sagemaker_s3_output(), region, endpoint_url=s3_endpoint_url
+        )
 
         if env.framework_module:
             framework_name, entry_point_name = env.framework_module.split(":")

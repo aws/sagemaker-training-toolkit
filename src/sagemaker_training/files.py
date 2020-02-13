@@ -159,6 +159,7 @@ def s3_download(url, dst):  # type: (str, str) -> None
     bucket, key = url.netloc, url.path.lstrip("/")
 
     region = os.environ.get("AWS_REGION", os.environ.get(params.REGION_NAME_ENV))
-    s3 = boto3.resource("s3", region_name=region)
+    endpoint_url = os.environ.get(params.S3_ENDPOINT_URL, None)
+    s3 = boto3.resource("s3", region_name=region, endpoint_url=endpoint_url)
 
     s3.Bucket(bucket).download_file(key, dst)
