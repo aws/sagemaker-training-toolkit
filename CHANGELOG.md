@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.1.0 (2020-02-13)
+
+### Deprecations and Removals
+
+ * Remove beta directory
+
 ## v3.0.0 (2020-02-11)
 
 ### Breaking Changes
