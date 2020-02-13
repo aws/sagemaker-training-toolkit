@@ -28,19 +28,25 @@ builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
 @patch("boto3.resource", autospec=True)
 @pytest.mark.parametrize(
-    "url,bucket_name,key,dst",
+    "url,bucket_name,key,dst,endpoint",
     [
-        ("S3://my-bucket/path/to/my-file", "my-bucket", "path/to/my-file", "/tmp/my-file"),
-        ("s3://my-bucket/my-file", "my-bucket", "my-file", "/tmp/my-file"),
+        ("S3://my-bucket/path/to/my-file", "my-bucket", "path/to/my-file", "/tmp/my-file", None),
+        ("s3://my-bucket/my-file", "my-bucket", "my-file", "/tmp/my-file", "http://localhost:9000"),
     ],
 )
-def test_s3_download(resource, url, bucket_name, key, dst):
+def test_s3_download(resource, url, bucket_name, key, dst, endpoint):
     region = "us-west-2"
     os.environ[params.REGION_NAME_ENV] = region
+    if endpoint is not None:
+        os.environ[params.S3_ENDPOINT_URL] = endpoint
 
     files.s3_download(url, dst)
 
-    chain = call("s3", region_name=region).Bucket(bucket_name).download_file(key, dst)
+    chain = (
+        call("s3", region_name=region, endpoint_url=endpoint)
+        .Bucket(bucket_name)
+        .download_file(key, dst)
+    )
     assert resource.mock_calls == chain.call_list()
 
 

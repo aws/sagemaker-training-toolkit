@@ -19,6 +19,7 @@ USER_PROGRAM_PARAM = "sagemaker_program"  # type: str
 USER_PROGRAM_ENV = USER_PROGRAM_PARAM.upper()  # type: str
 S3_OUTPUT_LOCATION_PARAM = "sagemaker_s3_output"  # type: str
 S3_OUTPUT_LOCATION_ENV = S3_OUTPUT_LOCATION_PARAM.upper()  # type: str
+S3_ENDPOINT_URL = "S3_ENDPOINT_URL"  # type: str
 TRAINING_JOB_ENV = "TRAINING_JOB_NAME"  # type: str
 SUBMIT_DIR_PARAM = "sagemaker_submit_directory"  # type: str
 SUBMIT_DIR_ENV = SUBMIT_DIR_PARAM.upper()  # type: str

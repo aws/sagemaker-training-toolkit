@@ -120,7 +120,9 @@ def _watch(inotify, watchers, watch_flags, s3_uploader):
     executor.shutdown(wait=True)
 
 
-def start_sync(s3_output_location, region):  # pylint: disable=inconsistent-return-statements
+def start_sync(
+    s3_output_location, region, endpoint_url=None
+):  # pylint: disable=inconsistent-return-statements
     """Starts intermediate folder sync which copies files from 'opt/ml/output/intermediate'
     directory to the provided s3 output location as files created or modified.
     If files are deleted it doesn't delete them from s3.
@@ -132,13 +134,14 @@ def start_sync(s3_output_location, region):  # pylint: disable=inconsistent-retu
     Args:
         s3_output_location (str): name of the script or module.
         region (str): the location of the module.
+        endpoint_url (str): an alternative endpoint URL to connect to
 
     Returns:
         (multiprocessing.Process): the intermediate output sync daemonic process.
     """
     if not s3_output_location or os.path.exists(intermediate_path):
         logger.debug("Could not initialize intermediate folder sync to s3.")
-        return
+        return None
 
     # create intermediate and intermediate_tmp directories
     os.makedirs(intermediate_path)
@@ -149,12 +152,12 @@ def start_sync(s3_output_location, region):  # pylint: disable=inconsistent-retu
     url = urlparse(s3_output_location)
     if url.scheme == "file":
         logger.debug("Local directory is used for output. No need to sync any intermediate output.")
-        return
+        return None
     elif url.scheme != "s3":
         raise ValueError("Expecting 's3' scheme, got: %s in %s" % (url.scheme, url))
 
     # create s3 transfer client
-    client = boto3.client("s3", region)
+    client = boto3.client("s3", region, endpoint_url=endpoint_url)
     s3_transfer = s3transfer.S3Transfer(client)
     s3_uploader = {
         "transfer": s3_transfer,
