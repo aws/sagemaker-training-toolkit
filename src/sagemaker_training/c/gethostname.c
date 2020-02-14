@@ -38,9 +38,8 @@ int gethostname(char *name, size_t len)
 
     char *json_string = malloc(length + 1);
     fread(json_string, 1, length, file);
-    json_string[length] = '\0';
-
     fclose(file);
+    json_string[length] = '\0';
 
     jsmn_parser parser;
     jsmntok_t token[1024];
@@ -50,16 +49,16 @@ int gethostname(char *name, size_t len)
     r = jsmn_parse(&parser, json_string, strlen(json_string), token, sizeof(token) / sizeof(token[0]));
 
 
-	if (r < 0) {
-		printf("Failed to parse JSON: %d\n", r);
-		return 1;
-	}
+    if (r < 0) {
+        printf("Failed to parse JSON: %d\n", r);
+        return 1;
+    }
 
-	/* Assume the top-level element is an object */
-	if (r < 1 || token[0].type != JSMN_OBJECT) {
-		printf("Object expected\n");
-		return 1;
-	}
+    /* Assume the top-level element is an object */
+    if (r < 1 || token[0].type != JSMN_OBJECT) {
+        printf("Object expected\n");
+        return 1;
+    }
 
     /* Loop over all keys of the root object */
     int i;
@@ -67,12 +66,18 @@ int gethostname(char *name, size_t len)
     {
         if (jsoneq(json_string, &token[i], "current_host") == 0)
         {
-            const char *val = strndup(json_string + token[i + 1].start, token[i + 1].end - token[i + 1].start);
+            // strndup guarantees that val is null terminated. See https://linux.die.net/man/3/strndup
+            char *val = strndup(json_string + token[i + 1].start, token[i + 1].end - token[i + 1].start);
 
+            // Copy val into name. If strlen(val) > strlen(name) only len characters are copied
             strncpy(name, val, len);
 
-            name[len] = '\0';
+            // As per posix (http://man7.org/linux/man-pages/man2/gethostname.2.html),
+            // len is the size of the buffer, so we null terminate the last
+            // position in the buffer
+            name[len - 1] = '\0';
 
+            free(val);
             free(json_string);
             return 0;
         }
