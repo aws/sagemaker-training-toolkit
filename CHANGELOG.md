@@ -1,5 +1,19 @@
 # Changelog
 
+## v3.2.0 (2020-02-17)
+
+### Deprecations and Removals
+
+ * Remove legacy serving stack
+
+### Features
+
+ * Support specifying S3 endpoint URL
+
+### Bug Fixes and Other Changes
+
+ * Fix memory leak in gethostname and adapt len semantics to Posix
+
 ## v3.1.0 (2020-02-13)
 
 ### Deprecations and Removals
