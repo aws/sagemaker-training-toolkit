@@ -92,7 +92,7 @@ setuptools.setup(
     },
     entry_points={
         "console_scripts": [
-            "serve=sagemaker_training.cli.serve:main",
+            "serve=sagemaker_training.cli.serve:main",  # TODO: remove this
             "train=sagemaker_training.cli.train:main",
         ]
     },
