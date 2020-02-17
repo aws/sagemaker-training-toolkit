@@ -139,6 +139,8 @@ def start_sync(
     Returns:
         (multiprocessing.Process): the intermediate output sync daemonic process.
     """
+    print("hit intermediate_output.start_sync")
+
     if not s3_output_location or os.path.exists(intermediate_path):
         logger.debug("Could not initialize intermediate folder sync to s3.")
         return None
@@ -146,6 +148,9 @@ def start_sync(
     # create intermediate and intermediate_tmp directories
     os.makedirs(intermediate_path)
     os.makedirs(tmp_dir_path)
+
+    print("intermediate_path: ", intermediate_path)
+    print("tmp_dir_path: ", tmp_dir_path)
 
     # configure unique s3 output location similar to how SageMaker platform does it
     # or link it to the local output directory
@@ -155,6 +160,8 @@ def start_sync(
         return None
     elif url.scheme != "s3":
         raise ValueError("Expecting 's3' scheme, got: %s in %s" % (url.scheme, url))
+
+    print("url: ", url)
 
     # create s3 transfer client
     client = boto3.client("s3", region, endpoint_url=endpoint_url)
@@ -166,6 +173,8 @@ def start_sync(
             url.path.lstrip("/"), os.environ.get("TRAINING_JOB_NAME", ""), "output", "intermediate"
         ),
     }
+
+    print("s3_uploader: ", s3_uploader)
 
     # Add intermediate folder to the watch list
     inotify = inotify_simple.INotify()
