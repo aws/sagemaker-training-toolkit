@@ -38,7 +38,7 @@ required_packages = [
     "typing",
     "retrying==1.3.3",
     "gevent",
-    "inotify_simple",
+    "inotify_simple==1.2.1",
     "werkzeug==0.15.5",
     "paramiko==2.4.2",
     "psutil==5.4.8",
