@@ -90,10 +90,5 @@ setuptools.setup(
             "black==19.3b0 ; python_version >= '3.6'",
         ]
     },
-    entry_points={
-        "console_scripts": [
-            "serve=sagemaker_training.cli.serve:main",
-            "train=sagemaker_training.cli.train:main",
-        ]
-    },
+    entry_points={"console_scripts": ["train=sagemaker_training.cli.train:main"]},
 )
