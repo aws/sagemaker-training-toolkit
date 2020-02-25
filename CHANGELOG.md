@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.3.0 (2020-02-25)
+
+### Deprecations and Removals
+
+ * Remove serving CLI entry point
+
+### Bug Fixes and Other Changes
+
+ * Pin inotify-simple version
+
 ## v3.2.0 (2020-02-17)
 
 ### Deprecations and Removals
