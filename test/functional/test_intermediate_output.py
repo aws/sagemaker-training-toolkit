@@ -13,11 +13,13 @@
 from __future__ import absolute_import
 
 import os
+import platform
 import time
 
 import boto3
 from botocore.exceptions import ClientError
 import numpy as np
+import pytest
 
 from sagemaker_training import env, files, intermediate_output
 import test
@@ -32,6 +34,13 @@ def _timestamp():
     return time.strftime("%Y-%m-%d-%H-%M-%S".format(time.gmtime(time.time())))
 
 
+@pytest.mark.xfail(
+    platform.system() != "Linux",
+    reason="""
+    intermediate_output.start_sync depends on inotify, which is a Linux kernel subsystem
+    and is not available on macOS or Windows.
+    """,
+)
 def test_intermediate_upload():
     os.environ["TRAINING_JOB_NAME"] = _timestamp()
     p = intermediate_output.start_sync(bucket_uri, region)
@@ -140,6 +149,13 @@ def test_intermediate_upload():
         assert content == content_to_assert
 
 
+@pytest.mark.xfail(
+    platform.system() != "Linux",
+    reason="""
+    intermediate_output.start_sync depends on inotify, which is a Linux kernel subsystem
+    and is not available on macOS or Windows.
+    """,
+)
 def test_nested_delayed_file():
     os.environ["TRAINING_JOB_NAME"] = _timestamp()
     p = intermediate_output.start_sync(bucket_uri, region)
@@ -183,6 +199,13 @@ def test_nested_delayed_file():
     )
 
 
+@pytest.mark.xfail(
+    platform.system() != "Linux",
+    reason="""
+    intermediate_output.start_sync depends on inotify, which is a Linux kernel subsystem
+    and is not available on macOS or Windows.
+    """,
+)
 def test_large_files():
     os.environ["TRAINING_JOB_NAME"] = _timestamp()
     p = intermediate_output.start_sync(bucket_uri, region)
