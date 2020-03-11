@@ -3,6 +3,9 @@ version: 0.2
 phases:
   build:
     commands:
+      # set environment variables
+      - export IS_CODEBUILD_IMAGE="true"
+
       # run linters
       - TOX_PARALLEL_NO_SPINNER=1
       - tox -e flake8,black-check,pylint --parallel all

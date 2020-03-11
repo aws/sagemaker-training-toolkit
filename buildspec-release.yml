@@ -3,6 +3,9 @@ version: 0.2
 phases:
   build:
     commands:
+      # set environment variables
+      - export IS_CODEBUILD_IMAGE="true"
+
       # prepare the release (update versions, changelog etc.)
       - git-release --prepare
 
