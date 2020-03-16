@@ -19,7 +19,6 @@ import shlex
 import subprocess  # pylint: disable=unused-import
 import sys
 import textwrap
-import warnings
 
 import six
 
@@ -234,7 +233,7 @@ def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
         return process.create(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
 
 
-def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str, bool) -> module
+def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
     """Download, prepare and install a compressed tar file from S3 or provided directory as a
     module.
     SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
@@ -244,12 +243,9 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
     Args:
         name (str): name of the script or module.
         uri (str): the location of the module.
-        cache (bool): default True. It will not download and install the module again if it is
-                      already installed.
     Returns:
         (module): the imported module
     """
-    _warning_cache_deprecation(cache)
     files.download_and_extract(uri, env.code_dir)
 
     prepare(env.code_dir, name)
@@ -263,10 +259,8 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
         six.reraise(errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2])
 
 
-def run_module(
-    uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, wait=True, capture_error=False
-):
-    # type: (str, list, dict, str, bool, bool, bool) -> subprocess.Popen
+def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, wait=True, capture_error=False):
+    # type: (str, list, dict, str, bool, bool) -> subprocess.Popen
     """Download, prepare and executes a compressed tar file from S3 or provided directory as a
     module.
 
@@ -278,12 +272,10 @@ def run_module(
         args (list):  A list of program arguments.
         env_vars (dict): A map containing the environment variables to be written.
         name (str): name of the script or module.
-        cache (bool): If True it will avoid downloading the module again, if already installed.
         wait (bool): If True run_module will wait for the user module to exit and check the exit
                      code, otherwise it will launch the user module with subprocess and return
                      the process object.
     """
-    _warning_cache_deprecation(cache)
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
@@ -295,10 +287,3 @@ def run_module(
     env.write_env_vars(env_vars)
 
     return run(name, args, env_vars, wait, capture_error)
-
-
-def _warning_cache_deprecation(cache):
-    """Placeholder docstring"""
-    if cache is not None:
-        msg = "the cache parameter is unnecessary anymore. Cache is always set to True"
-        warnings.warn(msg, DeprecationWarning)

@@ -192,7 +192,7 @@ setup(packages=[''],
 def framework_training_fn():
     training_env = sagemaker_training.training_env()
 
-    mod = modules.import_module(training_env.module_dir, training_env.module_name, False)
+    mod = modules.import_module(training_env.module_dir, training_env.module_name)
 
     model = mod.train(**functions.matching_args(mod.train, training_env))
 
