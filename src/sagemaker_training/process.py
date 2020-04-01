@@ -13,7 +13,6 @@
 """Placeholder docstring"""
 from __future__ import absolute_import
 
-import io
 import os
 import subprocess
 import sys
@@ -43,12 +42,9 @@ def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
         error_class: if there is an exception raised when creating the process
     """
     try:
-        # Capture both so that we can control the order of when stdout and stderr are streamed
-        stdout = subprocess.PIPE if capture_error else None
         stderr = subprocess.PIPE if capture_error else None
-
         return subprocess.Popen(
-            cmd, env=os.environ, cwd=cwd or env.code_dir, stdout=stdout, stderr=stderr, **kwargs
+            cmd, env=os.environ, cwd=cwd or _env.code_dir, stderr=stderr, **kwargs
         )
     except Exception as e:  # pylint: disable=broad-except
         six.reraise(error_class, error_class(e), sys.exc_info()[2])
@@ -75,32 +71,14 @@ def check_error(cmd, error_class, capture_error=False, **kwargs):
     process = create(cmd, error_class, capture_error=capture_error, **kwargs)
 
     if capture_error:
-        # Create a copy of stderr so that it can be read after being streamed
-        with io.BytesIO() as stderr_copy:
-            return_code = process.poll()
-            while return_code is None:
-                stdout = process.stdout.readline()
-                sys.stdout.write(stdout.decode("utf-8"))
-                stderr = process.stderr.readline()
-                sys.stdout.write(stderr.decode("utf-8"))
-
-                stderr_copy.write(stderr)
-                return_code = process.poll()
-
-            # Read the rest of stdout/stdin because readline() reads only one line at a time
-            stdout = process.stdout.read()
-            sys.stdout.write(stdout.decode("utf-8"))
-            stderr = process.stderr.read()
-            sys.stdout.write(stderr.decode("utf-8"))
-
-            stderr_copy.write(stderr)
-            full_stderr = stderr_copy.getvalue()
+        _, stderr = process.communicate()
+        return_code = process.poll()
     else:
-        full_stderr = None
+        stderr = None
         return_code = process.wait()
 
     if return_code:
-        raise error_class(return_code=return_code, cmd=" ".join(cmd), output=full_stderr)
+        raise error_class(return_code=return_code, cmd=" ".join(cmd), output=stderr)
     return process
 
 
