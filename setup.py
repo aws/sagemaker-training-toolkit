@@ -41,7 +41,7 @@ required_packages = [
     "inotify_simple==1.2.1",
     "werkzeug==0.15.5",
     "paramiko==2.4.2",
-    "psutil==5.4.8",
+    "psutil>=5.6.7",
     "protobuf>=3.1",
     "scipy>=1.2.2",
 ]
