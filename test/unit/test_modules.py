@@ -215,8 +215,8 @@ def test_import_module(reload, import_module, install, download_and_extract):
 
 
 @patch("sagemaker_training.modules.exists", return_value=False)
-@patch("sagemaker_training._files.tmpdir")
-@patch("sagemaker_training._files.download_and_extract")
+@patch("sagemaker_training.files.tmpdir")
+@patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training.modules.prepare")
 @patch("sagemaker_training.modules.install")
 def test_download_and_install(install, prepare, download_and_extract, files_tmpdir, module_exists):
@@ -230,7 +230,7 @@ def test_download_and_install(install, prepare, download_and_extract, files_tmpd
     install.assert_called_with(module_path)
 
 
-@patch("sagemaker_training._files.s3_download")
+@patch("sagemaker_training.files.s3_download")
 @patch("tarfile.open")
 @patch("sagemaker_training.modules.prepare")
 @patch("sagemaker_training.modules.install")
