@@ -154,10 +154,8 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
 
     if not should_use_cache:
         with files.tmpdir() as tmpdir:
-            dst = os.path.join(tmpdir, "tar_file")
-            files.download_and_extract(uri, dst)
             module_path = os.path.join(tmpdir, "module_dir")
-            os.makedirs(module_path)
+            files.download_and_extract(uri, module_path)
             prepare(module_path, name)
             install(module_path)
 

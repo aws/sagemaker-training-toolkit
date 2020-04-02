@@ -64,31 +64,23 @@ def test_check_error(popen):
 @patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_bash(log, popen, entry_point_type_script):
     with pytest.raises(errors.ExecuteUserScriptError):
-        process.ProcessRunner("launcher.sh", ["--lr", "13"], {}).run()
+        process.ProcessRunner("launcher.sh", ["--lr", "1 3"], {}).run()
 
-    cmd = ["/bin/sh", "-c", "./launcher.sh --lr 13"]
-    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stdout=None, stderr=None)
+    cmd = ["/bin/sh", "-c", "./launcher.sh --lr '1 3'"]
+    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stderr=None)
     log.assert_called_with(cmd, {})
 
 
 @patch("subprocess.Popen")
 @patch("sagemaker_training.logging_config.log_script_invocation")
-def test_run_python_capture_error(log, popen, entry_point_type_script):
-    mock_process = MagicMock()
-    mock_process.stdout.readline.return_value = b"stdout"
-    mock_process.stderr.readline.return_value = b"stderr"
-    mock_process.stdout.read.return_value = b"stdout"
-    mock_process.stderr.read.return_value = b"stderr"
-    mock_process.poll.return_value = 1
-    popen.return_value = mock_process
+def test_run_python(log, popen, entry_point_type_script):
+    popen().communicate.return_value = (None, 0)
 
     with pytest.raises(errors.ExecuteUserScriptError):
         process.ProcessRunner("launcher.py", ["--lr", "13"], {}).run(capture_error=True)
 
     cmd = [sys.executable, "launcher.py", "--lr", "13"]
-    popen.assert_called_with(
-        cmd, cwd=env.code_dir, env=os.environ, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stderr=subprocess.PIPE)
     log.assert_called_with(cmd, {})
 
 
@@ -99,7 +91,7 @@ def test_run_module(log, popen, entry_point_type_module):
         process.ProcessRunner("module.py", ["--lr", "13"], {}).run()
 
     cmd = [sys.executable, "-m", "module", "--lr", "13"]
-    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stdout=None, stderr=None)
+    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stderr=None)
     log.assert_called_with(cmd, {})
 
 
