@@ -166,7 +166,6 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
             ],
             cwd=env.code_dir,
             env=ANY,
-            stdout=None,
             stderr=None,
         )
 
@@ -262,7 +261,6 @@ def test_mpi_master_run_python(
             ],
             cwd=env.code_dir,
             env=ANY,
-            stdout=None,
             stderr=None,
         )
 
