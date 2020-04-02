@@ -44,7 +44,7 @@ def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
     try:
         stderr = subprocess.PIPE if capture_error else None
         return subprocess.Popen(
-            cmd, env=os.environ, cwd=cwd or _env.code_dir, stderr=stderr, **kwargs
+            cmd, env=os.environ, cwd=cwd or env.code_dir, stderr=stderr, **kwargs
         )
     except Exception as e:  # pylint: disable=broad-except
         six.reraise(error_class, error_class(e), sys.exc_info()[2])

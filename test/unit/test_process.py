@@ -67,7 +67,7 @@ def test_run_bash(log, popen, entry_point_type_script):
         process.ProcessRunner("launcher.sh", ["--lr", "1 3"], {}).run()
 
     cmd = ["/bin/sh", "-c", "./launcher.sh --lr '1 3'"]
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stderr=None)
+    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stderr=None)
     log.assert_called_with(cmd, {})
 
 
@@ -80,7 +80,7 @@ def test_run_python(log, popen, entry_point_type_script):
         process.ProcessRunner("launcher.py", ["--lr", "13"], {}).run(capture_error=True)
 
     cmd = [sys.executable, "launcher.py", "--lr", "13"]
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stderr=subprocess.PIPE)
+    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stderr=subprocess.PIPE)
     log.assert_called_with(cmd, {})
 
 
@@ -91,7 +91,7 @@ def test_run_module(log, popen, entry_point_type_module):
         process.ProcessRunner("module.py", ["--lr", "13"], {}).run()
 
     cmd = [sys.executable, "-m", "module", "--lr", "13"]
-    popen.assert_called_with(cmd, cwd=_env.code_dir, env=os.environ, stderr=None)
+    popen.assert_called_with(cmd, cwd=env.code_dir, env=os.environ, stderr=None)
     log.assert_called_with(cmd, {})
 
 
