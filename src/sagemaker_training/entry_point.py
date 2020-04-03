@@ -20,7 +20,7 @@ from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from retrying import retry
 
-from sagemaker_training import entry_point_type, env, files, modules, runner
+from sagemaker_training import _entry_point_type, env, files, modules, runner
 
 
 def run(
@@ -115,10 +115,10 @@ def install(name, dst, capture_error=False):
     if dst not in sys.path:
         sys.path.insert(0, dst)
 
-    entrypoint_type = entry_point_type.get(dst, name)
-    if entrypoint_type is entry_point_type.PYTHON_PACKAGE:
+    entrypoint_type = _entry_point_type.get(dst, name)
+    if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
         modules.install(dst, capture_error)
-    if entrypoint_type is entry_point_type.COMMAND:
+    if entrypoint_type is _entry_point_type.COMMAND:
         os.chmod(os.path.join(dst, name), 511)
 
 
