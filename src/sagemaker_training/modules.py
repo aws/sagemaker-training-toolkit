@@ -119,19 +119,6 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
     )
 
 
-def s3_download(url, dst):  # type: (str, str) -> None
-    """Download a file from S3.
-
-    This method acts as an alias for :meth:`~sagemaker_training.files.s3_download`
-    for backward-compatibility purposes.
-
-    Args:
-        url (str): the S3 URL of the file.
-        dst (str): the destination where the file will be saved.
-    """
-    files.s3_download(url, dst)
-
-
 def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
     # type: (str, str, bool) -> None
     """Download, prepare and install a compressed tar file from S3 or local directory as a module.
