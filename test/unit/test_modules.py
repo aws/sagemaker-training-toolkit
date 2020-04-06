@@ -185,21 +185,6 @@ def test_run_no_wait(log_script_invocation, create, executable):
     create.assert_called_with(expected_cmd, errors.ExecuteUserScriptError, capture_error=True)
 
 
-@pytest.mark.parametrize("wait", [True, True])
-@patch("sagemaker_training.modules.run")
-@patch("sagemaker_training.modules.install")
-@patch("sagemaker_training.env.write_env_vars")
-@patch("sagemaker_training.files.download_and_extract")
-def test_run_module_wait(download_and_extract, write_env_vars, install, run, wait):
-    modules.run_module(uri="s3://url", args=["42"], wait=wait)
-
-    download_and_extract.assert_called_with("s3://url", env.code_dir)
-    write_env_vars.assert_called_with({})
-    install.assert_called_with(env.code_dir)
-
-    run.assert_called_with("default_user_module_name", ["42"], {}, True, False)
-
-
 @patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training.modules.install")
 @patch("importlib.import_module")

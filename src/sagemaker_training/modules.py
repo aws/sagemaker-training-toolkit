@@ -242,33 +242,3 @@ def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
         return module
     except Exception as e:  # pylint: disable=broad-except
         six.reraise(errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2])
-
-
-def run_module(uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, wait=True, capture_error=False):
-    # type: (str, list, dict, str, bool, bool) -> subprocess.Popen
-    """Download, prepare and executes a compressed tar file from S3 or provided directory as a
-    module.
-
-    SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
-    https://github.com/aws/sagemaker-python-sdk.
-    This function downloads this compressed file, transforms it as a module, and executes it.
-    Args:
-        uri (str): the location of the module.
-        args (list):  A list of program arguments.
-        env_vars (dict): A map containing the environment variables to be written.
-        name (str): name of the script or module.
-        wait (bool): If True run_module will wait for the user module to exit and check the exit
-                     code, otherwise it will launch the user module with subprocess and return
-                     the process object.
-    """
-    env_vars = env_vars or {}
-    env_vars = env_vars.copy()
-
-    files.download_and_extract(uri, env.code_dir)
-
-    prepare(env.code_dir, name)
-    install(env.code_dir)
-
-    env.write_env_vars(env_vars)
-
-    return run(name, args, env_vars, wait, capture_error)

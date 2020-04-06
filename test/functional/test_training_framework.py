@@ -381,18 +381,6 @@ def mpi_training_with_script_mode_fn(capture_error):
     )
 
 
-def framework_training_with_run_modules_fn(capture_error):
-    training_env = sagemaker_training.training_env()
-
-    modules.run_module(
-        training_env.module_dir,
-        training_env.to_cmd_args(),
-        training_env.to_env_vars(),
-        training_env.module_name,
-        capture_error=capture_error,
-    )
-
-
 def test_parameter_server():
     module = test.UserModule(test.File(name="user_script.py", data=PARAMETER_SERVER_SCRIPT))
     hyperparameters = dict(sagemaker_program="user_script.py")
@@ -417,10 +405,7 @@ def test_parameter_server():
 
 @pytest.mark.parametrize(
     "user_script, training_fn, capture_error",
-    [
-        [USER_MODE_SCRIPT, framework_training_with_script_mode_fn, True],
-        [USER_MODE_SCRIPT, framework_training_with_run_modules_fn, False],
-    ],
+    [[USER_MODE_SCRIPT, framework_training_with_script_mode_fn, True]],
 )
 def test_script_mode(user_script, training_fn, capture_error):
     channel = test.Channel.create(name="training")
@@ -455,10 +440,7 @@ def test_script_mode(user_script, training_fn, capture_error):
 
 @pytest.mark.parametrize(
     "user_script, training_fn, capture_error",
-    [
-        [USER_MODE_SCRIPT, framework_training_with_script_mode_fn, False],
-        [USER_MODE_SCRIPT, framework_training_with_run_modules_fn, True],
-    ],
+    [[USER_MODE_SCRIPT, framework_training_with_script_mode_fn, False]],
 )
 def test_script_mode_local_directory(user_script, training_fn, capture_error, tmpdir):
     channel = test.Channel.create(name="training")
@@ -504,11 +486,7 @@ if __name__ == '__main__':
 
 
 @pytest.mark.parametrize(
-    "training_fn, capture_error",
-    [
-        (framework_training_with_script_mode_fn, True),
-        (framework_training_with_run_modules_fn, False),
-    ],
+    "training_fn, capture_error", [(framework_training_with_script_mode_fn, True)]
 )
 def test_script_mode_client_error(training_fn, capture_error):
     channel = test.Channel.create(name="training")
@@ -529,11 +507,7 @@ def test_script_mode_client_error(training_fn, capture_error):
 
 
 @pytest.mark.parametrize(
-    "training_fn, capture_error",
-    [
-        [framework_training_with_script_mode_fn, True],
-        [framework_training_with_run_modules_fn, False],
-    ],
+    "training_fn, capture_error", [[framework_training_with_script_mode_fn, True]]
 )
 def test_script_mode_client_import_error(training_fn, capture_error):
     channel = test.Channel.create(name="training")
