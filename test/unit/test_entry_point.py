@@ -42,16 +42,19 @@ def has_requirements():
         yield
 
 
+@patch("sagemaker_training.files.download_and_extract")
+@patch("sagemaker_training.modules.prepare")
 @patch("sagemaker_training.process.check_error", autospec=True)
-def test_install_module(check_error, entry_point_type_module):
+def test_install_module(check_error, download_and_extract, prepare, entry_point_type_module):
+    uri = "s3://foo/bar"
     path = "c://sagemaker-pytorch-container"
-    entry_point.install("python_module.py", path)
+    entry_point.install(uri, "python_module.py", path)
 
     cmd = [sys.executable, "-m", "pip", "install", "."]
     check_error.assert_called_with(cmd, errors.InstallModuleError, capture_error=False, cwd=path)
 
     with patch("os.path.exists", return_value=True):
-        entry_point.install("python_module.py", path)
+        entry_point.install(uri, "python_module.py", path)
 
         check_error.assert_called_with(
             cmd + ["-r", "requirements.txt"],
@@ -61,27 +64,38 @@ def test_install_module(check_error, entry_point_type_module):
         )
 
 
+@patch("sagemaker_training.files.download_and_extract")
+@patch("sagemaker_training.modules.prepare")
 @patch("sagemaker_training.process.check_error", autospec=True)
-def test_install_script(check_error, entry_point_type_module, has_requirements):
+def test_install_script(
+    check_error, download_and_extract, prepare, entry_point_type_module, has_requirements
+):
+    uri = "s3://foo/bar"
     path = "c://sagemaker-pytorch-container"
-    entry_point.install("train.py", path)
+    entry_point.install(uri, "train.py", path)
 
     with patch("os.path.exists", return_value=True):
-        entry_point.install(path, "python_module.py")
+        entry_point.install(uri, path, "python_module.py")
 
 
+@patch("sagemaker_training.files.download_and_extract")
+@patch("sagemaker_training.modules.prepare")
 @patch("sagemaker_training.process.check_error", autospec=True)
-def test_install_fails(check_error, entry_point_type_module):
+def test_install_fails(check_error, download_and_extract, prepare, entry_point_type_module):
     check_error.side_effect = errors.ClientError()
     with pytest.raises(errors.ClientError):
-        entry_point.install("git://aws/container-support", "script")
+        entry_point.install("s3://foo/bar", "git://aws/container-support", "script")
 
 
+@patch("sagemaker_training.files.download_and_extract")
+@patch("sagemaker_training.modules.prepare")
 @patch("sys.executable", None)
 @patch("sagemaker_training.process.check_error", autospec=True)
-def test_install_no_python_executable(check_error, has_requirements, entry_point_type_module):
+def test_install_no_python_executable(
+    check_error, download_and_extract, prepare, has_requirements, entry_point_type_module
+):
     with pytest.raises(RuntimeError) as e:
-        entry_point.install("train.py", "git://aws/container-support")
+        entry_point.install("s3://foo/bar", "train.py", "git://aws/container-support")
     assert str(e.value) == "Failed to retrieve the real path for the Python executable binary"
 
 
