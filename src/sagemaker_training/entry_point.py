@@ -99,7 +99,7 @@ def run(
     )
 
 
-def install(uri, name, path, capture_error=False):
+def install(uri, name=modules.DEFAULT_MODULE_NAME, path=env.code_dir, capture_error=False):
     """Install the user provided entry point to be executed as follow:
         - add the path to sys path
         - if the user entry point is a command, gives exec permissions to the script
@@ -110,7 +110,7 @@ def install(uri, name, path, capture_error=False):
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
     """
-    files.download_and_extract(uri, env.code_dir)
+    files.download_and_extract(uri, path)
 
     if path not in sys.path:
         sys.path.insert(0, path)
