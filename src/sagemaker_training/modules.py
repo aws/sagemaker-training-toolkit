@@ -16,7 +16,6 @@ from __future__ import absolute_import
 import importlib
 import os
 import shlex
-import subprocess  # pylint: disable=unused-import
 import sys
 import textwrap
 
@@ -145,77 +144,6 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
             files.download_and_extract(uri, module_path)
             prepare(module_path, name)
             install(module_path)
-
-
-def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
-    # type: (str, list, dict, bool, bool) -> subprocess.Popen
-    """Run Python module as a script.
-
-    Search sys.path for the named module and execute its contents as the __main__ module.
-
-    Since the argument is a module name, you must not give a file extension (.py). The module name
-    should be a valid absolute Python module name, but the implementation may not always enforce
-    this (e.g. it may allow you to use a name that includes a hyphen).
-
-    Package names (including namespace packages) are also permitted. When a package name is supplied
-    instead of a normal module, the interpreter will execute <pkg>.__main__ as the main module. This
-    behaviour is deliberately similar to the handling of directories and zipfiles that are passed to
-    the interpreter as the script argument.
-
-    Note This option cannot be used with built-in modules and extension modules written in C, since
-    they do not have Python module files. However, it can still be used for precompiled modules,
-    even if the original source file is not available. If this option is given, the first element
-    of sys.argv will be the full path to the module file (while the module file is being located,
-    the first element will be set to "-m"). As with the -c option, the current directory will be
-    added to the start of sys.path.
-
-    You can find more information at https://docs.python.org/3/using/cmdline.html#cmdoption-m
-
-    Example:
-
-        >>>import sagemaker_training
-        >>>from sagemaker_training import mapping, modules
-
-        >>>env = sagemaker_training.training_env()
-        {'channel-input-dirs': {'training': '/opt/ml/input/training'},
-         'model_dir': '/opt/ml/model', ...}
-
-
-        >>>hyperparameters = env.hyperparameters
-        {'batch-size': 128, 'model_dir': '/opt/ml/model'}
-
-        >>>args = mapping.to_cmd_args(hyperparameters)
-        ['--batch-size', '128', '--model_dir', '/opt/ml/model']
-
-        >>>env_vars = mapping.to_env_vars()
-        ['SAGEMAKER_CHANNELS':'training', 'SAGEMAKER_CHANNEL_TRAINING':'/opt/ml/input/training',
-        'MODEL_DIR':'/opt/ml/model', ...}
-
-        >>>modules.run('user_script', args, env_vars)
-        SAGEMAKER_CHANNELS=training SAGEMAKER_CHANNEL_TRAINING=/opt/ml/input/training \
-        SAGEMAKER_MODEL_DIR=/opt/ml/model python -m user_script --batch-size 128
-                            --model_dir /opt/ml/model
-
-    Args:
-        module_name (str): module name in the same format required by python -m <module-name>
-                           cli command.
-        args (list):  A list of program arguments.
-        env_vars (dict): A map containing the environment variables to be written.
-        capture_error (bool): Default false. If True, the running process captures the
-            stderr, and appends it to the returned Exception message in case of errors.
-    """
-    args = args or []
-    env_vars = env_vars or {}
-
-    cmd = [process.python_executable(), "-m", module_name] + args
-
-    logging_config.log_script_invocation(cmd, env_vars)
-
-    if wait:
-        return process.check_error(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
-
-    else:
-        return process.create(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
 
 
 def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
