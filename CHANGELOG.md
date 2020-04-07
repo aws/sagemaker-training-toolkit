@@ -1,5 +1,21 @@
 # Changelog
 
+## v3.3.1 (2020-04-06)
+
+### Bug Fixes and Other Changes
+
+ * Revert "change: stream stderr even when capture_error is True"
+ * Use shlex.quote to construct bash command
+ * Relax dependencies version requirements
+ * Extract module to correct location in download_and_install
+ * Upgrade psutil
+
+### Testing and Release Infrastructure
+
+ * Fix cleanup with requirements.txt functional tests
+ * create __init__.py file for Python 2 import of protobuf during tests (#260)
+ * Mark intermediate_output functional tests as xfail if not run on Linux
+
 ## v3.3.0 (2020-02-25)
 
 ### Deprecations and Removals
