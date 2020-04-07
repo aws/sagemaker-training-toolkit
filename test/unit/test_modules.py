@@ -151,56 +151,6 @@ def test_exists(import_module):
     assert not modules.exists("my_module")
 
 
-@patch("sagemaker_training.training_env", lambda: {})
-@pytest.mark.parametrize("capture_error", [True, False])
-def test_run_error(capture_error):
-    with pytest.raises(errors.ExecuteUserScriptError) as e:
-        modules.run("wrong module", capture_error=capture_error)
-
-    message = str(e.value)
-    assert "ExecuteUserScriptError:" in message
-    if capture_error:
-        assert " No module named wrong module" in message
-
-
-@patch("sagemaker_training.process.python_executable")
-@patch("sagemaker_training.process.check_error")
-@patch("sagemaker_training.logging_config.log_script_invocation")
-def test_run(log_script_invocation, check_error, executable):
-    modules.run("pytest", ["--version"])
-
-    expected_cmd = [executable(), "-m", "pytest", "--version"]
-    log_script_invocation.assert_called_with(expected_cmd, {})
-    check_error.assert_called_with(expected_cmd, errors.ExecuteUserScriptError, capture_error=False)
-
-
-@patch("sagemaker_training.process.python_executable")
-@patch("sagemaker_training.process.create")
-@patch("sagemaker_training.logging_config.log_script_invocation")
-def test_run_no_wait(log_script_invocation, create, executable):
-    modules.run("pytest", ["--version"], {"PYPATH": "/opt/ml/code"}, wait=False, capture_error=True)
-
-    expected_cmd = [executable(), "-m", "pytest", "--version"]
-    log_script_invocation.assert_called_with(expected_cmd, {"PYPATH": "/opt/ml/code"})
-    create.assert_called_with(expected_cmd, errors.ExecuteUserScriptError, capture_error=True)
-
-
-@pytest.mark.parametrize("wait, cache", [[True, False], [True, False]])
-@patch("sagemaker_training.modules.run")
-@patch("sagemaker_training.modules.install")
-@patch("sagemaker_training.env.write_env_vars")
-@patch("sagemaker_training.files.download_and_extract")
-def test_run_module_wait(download_and_extract, write_env_vars, install, run, wait, cache):
-    with pytest.warns(DeprecationWarning):
-        modules.run_module(uri="s3://url", args=["42"], wait=wait, cache=cache)
-
-        download_and_extract.assert_called_with("s3://url", env.code_dir)
-        write_env_vars.assert_called_with({})
-        install.assert_called_with(env.code_dir)
-
-        run.assert_called_with("default_user_module_name", ["42"], {}, True, False)
-
-
 @patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training.modules.install")
 @patch("importlib.import_module")

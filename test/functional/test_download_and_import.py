@@ -85,7 +85,7 @@ def test_import_module(user_module, user_module_name):
 def test_import_module_with_s3_script(user_module, user_module_name):
     user_module.upload()
 
-    module = modules.import_module(user_module.url, user_module_name, cache=False)
+    module = modules.import_module(user_module.url, user_module_name)
 
     assert module.validate()
 
@@ -99,7 +99,7 @@ def test_import_module_with_local_script(user_module, user_module_name, tmpdir):
 
     user_module.create_tmp_dir_with_files(tmp_code_dir)
 
-    module = modules.import_module(tmp_code_dir, user_module_name, cache=False)
+    module = modules.import_module(tmp_code_dir, user_module_name)
 
     assert module.validate()
 
@@ -155,7 +155,7 @@ def test_import_module_with_s3_script_with_requirements(
 ):
     user_module = user_module.add_file(requirements_file).upload()
 
-    module = modules.import_module(user_module.url, user_module_name, cache=False)
+    module = modules.import_module(user_module.url, user_module_name)
 
     assert module.say() == REQUIREMENTS_TXT_ASSERT_STR
 
@@ -186,7 +186,7 @@ def test_import_module_with_s3_script_with_error(user_module_name):
     user_module = test.UserModule(USER_SCRIPT_WITH_ERROR).add_file(SETUP_FILE).upload()
 
     with pytest.raises(errors.ImportModuleError):
-        modules.import_module(user_module.url, user_module_name, cache=False)
+        modules.import_module(user_module.url, user_module_name)
 
 
 @pytest.mark.parametrize(
@@ -202,7 +202,7 @@ def test_import_module_with_local_tar_via_download_and_extract(
     user_module = user_module.add_file(requirements_file)
     tar_name = user_module.create_tar()
 
-    module = modules.import_module(tar_name, name=user_module_name, cache=False)
+    module = modules.import_module(tar_name, name=user_module_name)
 
     assert module.say() == REQUIREMENTS_TXT_ASSERT_STR
 

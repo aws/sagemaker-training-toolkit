@@ -20,7 +20,7 @@ from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from retrying import retry
 
-from sagemaker_training import entry_point_type, env, files, modules, runner
+from sagemaker_training import _entry_point_type, env, files, modules, runner
 
 
 def run(
@@ -88,9 +88,7 @@ def run(
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    files.download_and_extract(uri, env.code_dir)
-
-    install(user_entry_point, env.code_dir, capture_error)
+    install(uri=uri, name=user_entry_point, path=env.code_dir, capture_error=capture_error)
 
     env.write_env_vars(env_vars)
 
@@ -101,25 +99,30 @@ def run(
     )
 
 
-def install(name, dst, capture_error=False):
+def install(uri, name=modules.DEFAULT_MODULE_NAME, path=env.code_dir, capture_error=False):
     """Install the user provided entry point to be executed as follow:
         - add the path to sys path
         - if the user entry point is a command, gives exec permissions to the script
 
     Args:
+        uri (str): the location of the module or script. This can be an S3 uri, a path to
+            a local directory, or a path to a local tarball.
         name (str): name of the script or module.
-        dst (str): path to directory with the script or module.
+        path (str): path to directory where the entry point will be installed.
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
     """
-    if dst not in sys.path:
-        sys.path.insert(0, dst)
+    files.download_and_extract(uri, path)
 
-    entrypoint_type = entry_point_type.get(dst, name)
-    if entrypoint_type is entry_point_type.PYTHON_PACKAGE:
-        modules.install(dst, capture_error)
-    if entrypoint_type is entry_point_type.COMMAND:
-        os.chmod(os.path.join(dst, name), 511)
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
+    entry_point_type = _entry_point_type.get(path, name)
+    if entry_point_type is _entry_point_type.PYTHON_PACKAGE:
+        modules.prepare(path, name)
+        modules.install(path, capture_error)
+    if entry_point_type is _entry_point_type.COMMAND:
+        os.chmod(os.path.join(path, name), 511)
 
 
 @retry(stop_max_delay=1000 * 60 * 15, wait_exponential_multiplier=100, wait_exponential_max=30000)

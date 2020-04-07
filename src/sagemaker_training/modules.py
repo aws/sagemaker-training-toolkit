@@ -16,10 +16,8 @@ from __future__ import absolute_import
 import importlib
 import os
 import shlex
-import subprocess  # pylint: disable=unused-import
 import sys
 import textwrap
-import warnings
 
 import six
 
@@ -120,19 +118,6 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
     )
 
 
-def s3_download(url, dst):  # type: (str, str) -> None
-    """Download a file from S3.
-
-    This method acts as an alias for :meth:`~sagemaker_training.files.s3_download`
-    for backward-compatibility purposes.
-
-    Args:
-        url (str): the S3 URL of the file.
-        dst (str): the destination where the file will be saved.
-    """
-    files.s3_download(url, dst)
-
-
 def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
     # type: (str, str, bool) -> None
     """Download, prepare and install a compressed tar file from S3 or local directory as a module.
@@ -161,78 +146,7 @@ def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
             install(module_path)
 
 
-def run(module_name, args=None, env_vars=None, wait=True, capture_error=False):
-    # type: (str, list, dict, bool, bool) -> subprocess.Popen
-    """Run Python module as a script.
-
-    Search sys.path for the named module and execute its contents as the __main__ module.
-
-    Since the argument is a module name, you must not give a file extension (.py). The module name
-    should be a valid absolute Python module name, but the implementation may not always enforce
-    this (e.g. it may allow you to use a name that includes a hyphen).
-
-    Package names (including namespace packages) are also permitted. When a package name is supplied
-    instead of a normal module, the interpreter will execute <pkg>.__main__ as the main module. This
-    behaviour is deliberately similar to the handling of directories and zipfiles that are passed to
-    the interpreter as the script argument.
-
-    Note This option cannot be used with built-in modules and extension modules written in C, since
-    they do not have Python module files. However, it can still be used for precompiled modules,
-    even if the original source file is not available. If this option is given, the first element
-    of sys.argv will be the full path to the module file (while the module file is being located,
-    the first element will be set to "-m"). As with the -c option, the current directory will be
-    added to the start of sys.path.
-
-    You can find more information at https://docs.python.org/3/using/cmdline.html#cmdoption-m
-
-    Example:
-
-        >>>import sagemaker_training
-        >>>from sagemaker_training import mapping, modules
-
-        >>>env = sagemaker_training.training_env()
-        {'channel-input-dirs': {'training': '/opt/ml/input/training'},
-         'model_dir': '/opt/ml/model', ...}
-
-
-        >>>hyperparameters = env.hyperparameters
-        {'batch-size': 128, 'model_dir': '/opt/ml/model'}
-
-        >>>args = mapping.to_cmd_args(hyperparameters)
-        ['--batch-size', '128', '--model_dir', '/opt/ml/model']
-
-        >>>env_vars = mapping.to_env_vars()
-        ['SAGEMAKER_CHANNELS':'training', 'SAGEMAKER_CHANNEL_TRAINING':'/opt/ml/input/training',
-        'MODEL_DIR':'/opt/ml/model', ...}
-
-        >>>modules.run('user_script', args, env_vars)
-        SAGEMAKER_CHANNELS=training SAGEMAKER_CHANNEL_TRAINING=/opt/ml/input/training \
-        SAGEMAKER_MODEL_DIR=/opt/ml/model python -m user_script --batch-size 128
-                            --model_dir /opt/ml/model
-
-    Args:
-        module_name (str): module name in the same format required by python -m <module-name>
-                           cli command.
-        args (list):  A list of program arguments.
-        env_vars (dict): A map containing the environment variables to be written.
-        capture_error (bool): Default false. If True, the running process captures the
-            stderr, and appends it to the returned Exception message in case of errors.
-    """
-    args = args or []
-    env_vars = env_vars or {}
-
-    cmd = [process.python_executable(), "-m", module_name] + args
-
-    logging_config.log_script_invocation(cmd, env_vars)
-
-    if wait:
-        return process.check_error(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
-
-    else:
-        return process.create(cmd, errors.ExecuteUserScriptError, capture_error=capture_error)
-
-
-def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str, bool) -> module
+def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
     """Download, prepare and install a compressed tar file from S3 or provided directory as a
     module.
     SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
@@ -242,12 +156,9 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
     Args:
         name (str): name of the script or module.
         uri (str): the location of the module.
-        cache (bool): default True. It will not download and install the module again if it is
-                      already installed.
     Returns:
         (module): the imported module
     """
-    _warning_cache_deprecation(cache)
     files.download_and_extract(uri, env.code_dir)
 
     prepare(env.code_dir, name)
@@ -259,44 +170,3 @@ def import_module(uri, name=DEFAULT_MODULE_NAME, cache=None):  # type: (str, str
         return module
     except Exception as e:  # pylint: disable=broad-except
         six.reraise(errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2])
-
-
-def run_module(
-    uri, args, env_vars=None, name=DEFAULT_MODULE_NAME, cache=None, wait=True, capture_error=False
-):
-    # type: (str, list, dict, str, bool, bool, bool) -> subprocess.Popen
-    """Download, prepare and executes a compressed tar file from S3 or provided directory as a
-    module.
-
-    SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
-    https://github.com/aws/sagemaker-python-sdk.
-    This function downloads this compressed file, transforms it as a module, and executes it.
-    Args:
-        uri (str): the location of the module.
-        args (list):  A list of program arguments.
-        env_vars (dict): A map containing the environment variables to be written.
-        name (str): name of the script or module.
-        cache (bool): If True it will avoid downloading the module again, if already installed.
-        wait (bool): If True run_module will wait for the user module to exit and check the exit
-                     code, otherwise it will launch the user module with subprocess and return
-                     the process object.
-    """
-    _warning_cache_deprecation(cache)
-    env_vars = env_vars or {}
-    env_vars = env_vars.copy()
-
-    files.download_and_extract(uri, env.code_dir)
-
-    prepare(env.code_dir, name)
-    install(env.code_dir)
-
-    env.write_env_vars(env_vars)
-
-    return run(name, args, env_vars, wait, capture_error)
-
-
-def _warning_cache_deprecation(cache):
-    """Placeholder docstring"""
-    if cache is not None:
-        msg = "the cache parameter is unnecessary anymore. Cache is always set to True"
-        warnings.warn(msg, DeprecationWarning)
