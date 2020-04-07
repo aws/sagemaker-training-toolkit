@@ -403,18 +403,14 @@ def test_parameter_server():
     process.kill()
 
 
-@pytest.mark.parametrize(
-    "user_script, training_fn, capture_error",
-    [[USER_MODE_SCRIPT, framework_training_with_script_mode_fn, True]],
-)
-def test_script_mode(user_script, training_fn, capture_error):
+def test_script_mode():
     channel = test.Channel.create(name="training")
 
     features = [1, 2, 3, 4]
     labels = [0, 1, 0, 1]
     np.savez(os.path.join(channel.path, "training_data"), features=features, labels=labels)
 
-    module = test.UserModule(test.File(name="user_script.py", data=user_script))
+    module = test.UserModule(test.File(name="user_script.py", data=USER_MODE_SCRIPT))
 
     hyperparameters = dict(
         training_data_file=os.path.join(channel.path, "training_data.npz"),
@@ -426,7 +422,10 @@ def test_script_mode(user_script, training_fn, capture_error):
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
-    assert execute_an_wrap_exit(training_fn, capture_error=capture_error) == trainer.SUCCESS_CODE
+    assert (
+        execute_an_wrap_exit(framework_training_with_script_mode_fn, capture_error=True)
+        == trainer.SUCCESS_CODE
+    )
 
     model_path = os.path.join(env.model_dir, "saved_model")
 
@@ -438,11 +437,7 @@ def test_script_mode(user_script, training_fn, capture_error):
     assert model.optimizer == "SGD"
 
 
-@pytest.mark.parametrize(
-    "user_script, training_fn, capture_error",
-    [[USER_MODE_SCRIPT, framework_training_with_script_mode_fn, False]],
-)
-def test_script_mode_local_directory(user_script, training_fn, capture_error, tmpdir):
+def test_script_mode_local_directory(tmpdir):
     channel = test.Channel.create(name="training")
 
     features = [1, 2, 3, 4]
@@ -451,7 +446,7 @@ def test_script_mode_local_directory(user_script, training_fn, capture_error, tm
 
     tmp_code_dir = str(tmpdir)
 
-    module = test.UserModule(test.File(name="user_script.py", data=user_script))
+    module = test.UserModule(test.File(name="user_script.py", data=USER_MODE_SCRIPT))
     module.create_tmp_dir_with_files(tmp_code_dir)
 
     hyperparameters = dict(
@@ -467,7 +462,10 @@ def test_script_mode_local_directory(user_script, training_fn, capture_error, tm
         user_module=module, hyperparameters=hyperparameters, channels=[channel], local=True
     )
 
-    assert execute_an_wrap_exit(training_fn, capture_error=capture_error) == trainer.SUCCESS_CODE
+    assert (
+        execute_an_wrap_exit(framework_training_with_script_mode_fn, capture_error=False)
+        == trainer.SUCCESS_CODE
+    )
 
     model_path = os.path.join(env.model_dir, "saved_model")
 
@@ -485,10 +483,7 @@ if __name__ == '__main__':
 """
 
 
-@pytest.mark.parametrize(
-    "training_fn, capture_error", [(framework_training_with_script_mode_fn, True)]
-)
-def test_script_mode_client_error(training_fn, capture_error):
+def test_script_mode_client_error():
     channel = test.Channel.create(name="training")
 
     module = test.UserModule(test.File(name="user_script.py", data=USER_MODE_SCRIPT_WITH_ERROR))
@@ -498,18 +493,14 @@ def test_script_mode_client_error(training_fn, capture_error):
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
     with pytest.raises(errors.ExecuteUserScriptError) as e:
-        training_fn(capture_error)
+        framework_training_with_script_mode_fn(capture_error=True)
 
     message = str(e.value)
     assert "ExecuteUserScriptError" in message
-    if capture_error:
-        assert "ZeroDivisionError" in message
+    assert "ZeroDivisionError" in message
 
 
-@pytest.mark.parametrize(
-    "training_fn, capture_error", [[framework_training_with_script_mode_fn, True]]
-)
-def test_script_mode_client_import_error(training_fn, capture_error):
+def test_script_mode_client_import_error():
     channel = test.Channel.create(name="training")
 
     requirements_file = test.File("requirements.txt", "invalid/module")
@@ -522,15 +513,14 @@ def test_script_mode_client_import_error(training_fn, capture_error):
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
 
     with pytest.raises(errors.InstallModuleError) as e:
-        training_fn(capture_error)
+        framework_training_with_script_mode_fn(capture_error=True)
 
     message = str(e.value)
     assert "InstallModuleError:" in message
 
     # fmt: off
-    if capture_error:
-        assert "Invalid requirement" in message
-        assert "It looks like a path" in message
+    assert "Invalid requirement" in message
+    assert "It looks like a path" in message
     # fmt: on
 
 
