@@ -105,8 +105,9 @@ def install(uri, name=modules.DEFAULT_MODULE_NAME, path=env.code_dir, capture_er
         - if the user entry point is a command, gives exec permissions to the script
 
     Args:
+        uri (str): the location of the module.
         name (str): name of the script or module.
-        dst (str): path to directory with the script or module.
+        path (str): path to directory with the script or module.
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
     """
