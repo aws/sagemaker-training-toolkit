@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.3.2 (2020-04-08)
+
+### Bug Fixes and Other Changes
+
+ * Refactor modules and entry_point (first pass)
+
 ## v3.3.1 (2020-04-06)
 
 ### Bug Fixes and Other Changes
