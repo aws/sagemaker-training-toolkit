@@ -110,7 +110,7 @@ def test_import_module_with_local_script(user_module, user_module_name, tmpdir):
     "user_module",
     [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
 )
-def test_import_module_via_download_and_install(chmod, user_module, user_module_name):
+def test_import_module_via_entry_point_install(chmod, user_module, user_module_name):
     user_module.upload()
 
     entry_point.install(uri=user_module.url, name=user_module_name)
@@ -124,7 +124,7 @@ def test_import_module_via_download_and_install(chmod, user_module, user_module_
     "user_module",
     [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
 )
-def test_import_module_with_s3_script_via_download_and_install(
+def test_import_module_with_s3_script_via_entry_point_install(
     chmod, user_module, user_module_name
 ):
     user_module.upload()
@@ -173,7 +173,7 @@ def test_import_module_with_s3_script_with_requirements(
         test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS),
     ],
 )
-def test_import_module_with_requirements_via_download_and_install(
+def test_import_module_with_requirements_via_entry_point_install(
     chmod, user_module, user_module_name, requirements_file
 ):
     user_module = user_module.add_file(requirements_file).upload()
