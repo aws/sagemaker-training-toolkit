@@ -18,9 +18,10 @@ import shlex
 import subprocess
 import textwrap
 
+from mock import patch
 import pytest
 
-from sagemaker_training import errors, modules
+from sagemaker_training import entry_point, errors, modules
 import test
 
 data = [
@@ -104,27 +105,31 @@ def test_import_module_with_local_script(user_module, user_module_name, tmpdir):
     assert module.validate()
 
 
+@patch("os.chmod")
 @pytest.mark.parametrize(
     "user_module",
     [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
 )
-def test_import_module_via_download_and_install(user_module, user_module_name):
+def test_import_module_via_download_and_install(chmod, user_module, user_module_name):
     user_module.upload()
 
-    modules.download_and_install(user_module.url, name=user_module_name, cache=False)
+    entry_point.install(uri=user_module.url, name=user_module_name)
     module = importlib.import_module(user_module_name)
 
     assert module.validate()
 
 
+@patch("os.chmod")
 @pytest.mark.parametrize(
     "user_module",
     [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
 )
-def test_import_module_with_s3_script_via_download_and_install(user_module, user_module_name):
+def test_import_module_with_s3_script_via_download_and_install(
+    chmod, user_module, user_module_name
+):
     user_module.upload()
 
-    modules.download_and_install(user_module.url, name=user_module_name, cache=False)
+    entry_point.install(uri=user_module.url, name=user_module_name)
     module = importlib.import_module(user_module_name)
 
     assert module.validate()
@@ -160,6 +165,7 @@ def test_import_module_with_s3_script_with_requirements(
     assert module.say() == REQUIREMENTS_TXT_ASSERT_STR
 
 
+@patch("os.chmod")
 @pytest.mark.parametrize(
     "user_module",
     [
@@ -168,11 +174,11 @@ def test_import_module_with_s3_script_with_requirements(
     ],
 )
 def test_import_module_with_requirements_via_download_and_install(
-    user_module, user_module_name, requirements_file
+    chmod, user_module, user_module_name, requirements_file
 ):
     user_module = user_module.add_file(requirements_file).upload()
 
-    modules.download_and_install(user_module.url, name=user_module_name, cache=False)
+    entry_point.install(uri=user_module.url, name=user_module_name)
     module = importlib.import_module(user_module_name)
 
     assert module.say() == REQUIREMENTS_TXT_ASSERT_STR
