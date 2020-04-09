@@ -119,7 +119,11 @@ def install(uri, name=modules.DEFAULT_MODULE_NAME, path=env.code_dir, capture_er
 
     entry_point_type = _entry_point_type.get(path, name)
 
-    if entry_point_type is _entry_point_type.PYTHON_PACKAGE or modules.has_requirements(path):
+    if (
+        entry_point_type is _entry_point_type.PYTHON_PACKAGE
+        or entry_point_type is _entry_point_type.PYTHON_PROGRAM
+        or modules.has_requirements(path)
+    ):
         modules.prepare(path, name)
         modules.install(path, capture_error)
 
