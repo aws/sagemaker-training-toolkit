@@ -68,7 +68,8 @@ def run(
                              --model_dir /opt/ml/model
 
     Args:
-        uri (str): the location of the module.
+        uri (str): the location of the module or script. This can be an S3 uri, a path to
+            a local directory, or a path to a local tarball.
         user_entry_point (str): name of the user provided entry point
         args (list):  A list of program arguments.
         env_vars (dict): A map containing the environment variables to be written (default: None).
@@ -88,7 +89,8 @@ def run(
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    install(uri=uri, name=user_entry_point, path=env.code_dir, capture_error=capture_error)
+    files.download_and_extract(uri=uri, path=env.code_dir)
+    install(name=user_entry_point, path=env.code_dir, capture_error=capture_error)
 
     env.write_env_vars(env_vars)
 
@@ -99,27 +101,27 @@ def run(
     )
 
 
-def install(uri, name=modules.DEFAULT_MODULE_NAME, path=env.code_dir, capture_error=False):
+def install(name, path=env.code_dir, capture_error=False):
     """Install the user provided entry point to be executed as follow:
         - add the path to sys path
         - if the user entry point is a command, gives exec permissions to the script
 
     Args:
-        uri (str): the location of the module or script. This can be an S3 uri, a path to
-            a local directory, or a path to a local tarball.
         name (str): name of the script or module.
         path (str): path to directory where the entry point will be installed.
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
     """
-    files.download_and_extract(uri, path)
-
     if path not in sys.path:
         sys.path.insert(0, path)
 
     entry_point_type = _entry_point_type.get(path, name)
 
-    if entry_point_type is _entry_point_type.PYTHON_PACKAGE or modules.has_requirements(path):
+    if (
+        entry_point_type is _entry_point_type.PYTHON_PACKAGE
+        or entry_point_type is _entry_point_type.PYTHON_PROGRAM
+        or modules.has_requirements(path)
+    ):
         modules.prepare(path, name)
         modules.install(path, capture_error)
 
