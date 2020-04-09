@@ -78,19 +78,6 @@ def test_install_script(
         entry_point.install(uri, path, "python_module.py")
 
 
-@patch("sagemaker_training.files.s3_download")
-@patch("tarfile.open")
-@patch("sagemaker_training.modules.prepare")
-@patch("sagemaker_training.modules.install")
-@patch("os.chmod")
-def test_install_local_directory(chmod, install, prepare, tarfile, s3_download):
-    uri = "/opt/ml/input/data/code/sourcedir.tar.gz"
-    entry_point.install(uri)
-
-    s3_download.assert_not_called()
-    tarfile.assert_called_with(name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz")
-
-
 @patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training.modules.prepare")
 @patch("sagemaker_training.process.check_error", autospec=True)

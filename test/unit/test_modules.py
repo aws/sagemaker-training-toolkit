@@ -162,3 +162,19 @@ def test_import_module(reload, import_module, install, download_and_extract):
     download_and_extract.assert_called_with("s3://bucket/my-module", env.code_dir)
     install.assert_called_with(env.code_dir)
     reload.assert_called_with(import_module(modules.DEFAULT_MODULE_NAME))
+
+
+@patch("sagemaker_training.files.s3_download")
+@patch("tarfile.open")
+@patch("sagemaker_training.modules.prepare")
+@patch("sagemaker_training.modules.install")
+@patch("importlib.import_module")
+@patch("six.moves.reload_module")
+def test_install_local_directory(reload, import_module, install, prepare, tarfile, s3_download):
+    uri = "/opt/ml/input/data/code/sourcedir.tar.gz"
+    modules.import_module(uri)
+
+    s3_download.assert_not_called()
+    prepare.assert_called_once()
+    install.assert_called_once()
+    tarfile.assert_called_with(name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz")
