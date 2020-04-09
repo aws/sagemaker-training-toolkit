@@ -166,9 +166,7 @@ def test_import_module_with_s3_script_with_error(user_module_name):
         test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS),
     ],
 )
-def test_import_module_with_local_tar_via_download_and_extract(
-    user_module, user_module_name, requirements_file
-):
+def test_import_module_with_local_tar(user_module, user_module_name, requirements_file):
     user_module = user_module.add_file(requirements_file)
     tar_name = user_module.create_tar()
 
