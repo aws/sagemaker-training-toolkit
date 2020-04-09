@@ -170,11 +170,13 @@ def test_import_module(reload, import_module, install, download_and_extract):
 @patch("sagemaker_training.modules.install")
 @patch("importlib.import_module")
 @patch("six.moves.reload_module")
-def test_install_local_directory(reload, import_module, install, prepare, tarfile, s3_download):
+def test_import_module_local_directory(
+    reload, import_module, install, prepare, tarfile, s3_download
+):
     uri = "/opt/ml/input/data/code/sourcedir.tar.gz"
     modules.import_module(uri)
 
     s3_download.assert_not_called()
+    tarfile.assert_called_with(name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz")
     prepare.assert_called_once()
     install.assert_called_once()
-    tarfile.assert_called_with(name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz")
