@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import importlib
 import os
 import shlex
 import subprocess
@@ -104,32 +103,6 @@ def test_import_module_with_local_script(user_module, user_module_name, tmpdir):
     assert module.validate()
 
 
-@pytest.mark.parametrize(
-    "user_module",
-    [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
-)
-def test_import_module_via_download_and_install(user_module, user_module_name):
-    user_module.upload()
-
-    modules.download_and_install(user_module.url, name=user_module_name, cache=False)
-    module = importlib.import_module(user_module_name)
-
-    assert module.validate()
-
-
-@pytest.mark.parametrize(
-    "user_module",
-    [test.UserModule(USER_SCRIPT_FILE).add_file(SETUP_FILE), test.UserModule(USER_SCRIPT_FILE)],
-)
-def test_import_module_with_s3_script_via_download_and_install(user_module, user_module_name):
-    user_module.upload()
-
-    modules.download_and_install(user_module.url, name=user_module_name, cache=False)
-    module = importlib.import_module(user_module_name)
-
-    assert module.validate()
-
-
 data = textwrap.dedent(
     """
             from pyfiglet import Figlet
@@ -167,13 +140,10 @@ def test_import_module_with_s3_script_with_requirements(
         test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS),
     ],
 )
-def test_import_module_with_requirements_via_download_and_install(
-    user_module, user_module_name, requirements_file
-):
+def test_import_module_with_requirements(user_module, user_module_name, requirements_file):
     user_module = user_module.add_file(requirements_file).upload()
 
-    modules.download_and_install(user_module.url, name=user_module_name, cache=False)
-    module = importlib.import_module(user_module_name)
+    module = modules.import_module(uri=user_module.url, name=user_module_name)
 
     assert module.say() == REQUIREMENTS_TXT_ASSERT_STR
 
@@ -196,9 +166,7 @@ def test_import_module_with_s3_script_with_error(user_module_name):
         test.UserModule(USER_SCRIPT_WITH_REQUIREMENTS),
     ],
 )
-def test_import_module_with_local_tar_via_download_and_extract(
-    user_module, user_module_name, requirements_file
-):
+def test_import_module_with_local_tar(user_module, user_module_name, requirements_file):
     user_module = user_module.add_file(requirements_file)
     tar_name = user_module.create_tar()
 

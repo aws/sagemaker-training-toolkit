@@ -118,34 +118,6 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
     )
 
 
-def download_and_install(uri, name=DEFAULT_MODULE_NAME, cache=True):
-    # type: (str, str, bool) -> None
-    """Download, prepare and install a compressed tar file from S3 or local directory as a module.
-
-    The SageMaker Python SDK saves the user provided scripts as compressed tar files in S3.
-    This function downloads this compressed file and, if provided, transforms it
-    into a module before installing it.
-
-    This method is the predecessor of
-    :meth:`~sagemaker_training.files.download_and_extract`
-    and has been kept for backward-compatibility purposes.
-
-    Args:
-        name (str): name of the script or module.
-        uri (str): the location of the module.
-        cache (bool): defaults to True. It will not download and install the module again if it is
-                      already installed.
-    """
-    should_use_cache = cache and exists(name)
-
-    if not should_use_cache:
-        with files.tmpdir() as tmpdir:
-            module_path = os.path.join(tmpdir, "module_dir")
-            files.download_and_extract(uri, module_path)
-            prepare(module_path, name)
-            install(module_path)
-
-
 def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
     """Download, prepare and install a compressed tar file from S3 or provided directory as a
     module.

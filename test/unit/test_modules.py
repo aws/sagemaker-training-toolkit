@@ -164,29 +164,17 @@ def test_import_module(reload, import_module, install, download_and_extract):
     reload.assert_called_with(import_module(modules.DEFAULT_MODULE_NAME))
 
 
-@patch("sagemaker_training.modules.exists", return_value=False)
-@patch("sagemaker_training.files.tmpdir")
-@patch("sagemaker_training.files.download_and_extract")
-@patch("sagemaker_training.modules.prepare")
-@patch("sagemaker_training.modules.install")
-def test_download_and_install(install, prepare, download_and_extract, files_tmpdir, module_exists):
-    files_tmpdir.return_value.__enter__.return_value = "tmp"
-    uri = "s3://foo/bar"
-    modules.download_and_install(uri)
-
-    module_path = os.path.join("tmp", "module_dir")
-    download_and_extract.assert_called_with(uri, module_path)
-    prepare.assert_called_with(module_path, "default_user_module_name")
-    install.assert_called_with(module_path)
-
-
 @patch("sagemaker_training.files.s3_download")
 @patch("tarfile.open")
 @patch("sagemaker_training.modules.prepare")
 @patch("sagemaker_training.modules.install")
-def test_download_and_install_local_directory(install, prepare, tarfile, s3_download):
+@patch("importlib.import_module")
+@patch("six.moves.reload_module")
+def test_import_module_local_directory(
+    reload, import_module, install, prepare, tarfile, s3_download
+):
     uri = "/opt/ml/input/data/code/sourcedir.tar.gz"
-    modules.download_and_install(uri)
+    modules.import_module(uri)
 
     s3_download.assert_not_called()
     tarfile.assert_called_with(name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz")
