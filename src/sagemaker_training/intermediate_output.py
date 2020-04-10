@@ -44,7 +44,7 @@ def _timestamp():
 
 
 def _upload_to_s3(s3_uploader, relative_path, file_path, filename):
-    """Placeholder docstring"""
+    """Upload a file to S3."""
     try:
         key = os.path.join(s3_uploader["key_prefix"], relative_path, filename)
         s3_uploader["transfer"].upload_file(file_path, s3_uploader["bucket"], key)
@@ -60,7 +60,7 @@ def _upload_to_s3(s3_uploader, relative_path, file_path, filename):
 
 
 def _copy_file(executor, s3_uploader, relative_path, filename):
-    """Placeholder docstring"""
+    """Copy a file to a temporary directory."""
     try:
         src = os.path.join(intermediate_path, relative_path, filename)
         dst = os.path.join(tmp_dir_path, relative_path, "{}.{}".format(_timestamp(), filename))
@@ -70,7 +70,7 @@ def _copy_file(executor, s3_uploader, relative_path, filename):
         # Broken link or deleted
         pass
     except Exception:  # pylint: disable=broad-except
-        logger.exception("Failed to copy file to the temporarily directory.")
+        logger.exception("Failed to copy file to the temporary directory.")
 
 
 def _watch(inotify, watchers, watch_flags, s3_uploader):
@@ -125,21 +125,21 @@ def _watch(inotify, watchers, watch_flags, s3_uploader):
 def start_sync(
     s3_output_location, region, endpoint_url=None
 ):  # pylint: disable=inconsistent-return-statements
-    """Starts intermediate folder sync which copies files from 'opt/ml/output/intermediate'
+    """Start intermediate folder sync, which copies files from 'opt/ml/output/intermediate'
     directory to the provided s3 output location as files created or modified.
-    If files are deleted it doesn't delete them from s3.
+    If files are deleted, it doesn't delete them from s3.
 
-    It starts intermediate folder behavior as a daemonic process and
-    only if the directory doesn't exists yet, if it does - it indicates
-    that platform is taking care of syncing files to S3 and container should not interfere.
+    It starts intermediate folder behavior as a daemonic process only if the directory
+    doesn't exists yet. If the directory does exist, it indicates that the platform is
+    taking care of syncing files to S3 and the container should not interfere.
 
     Args:
-        s3_output_location (str): name of the script or module.
-        region (str): the location of the module.
-        endpoint_url (str): an alternative endpoint URL to connect to
+        s3_output_location (str): Name of the script or module.
+        region (str): The location of the module.
+        endpoint_url (str): An alternative endpoint URL to connect to.
 
     Returns:
-        (multiprocessing.Process): the intermediate output sync daemonic process.
+        (multiprocessing.Process): The intermediate output sync daemonic process.
     """
     if not s3_output_location or os.path.exists(intermediate_path):
         logger.debug("Could not initialize intermediate folder sync to s3.")
