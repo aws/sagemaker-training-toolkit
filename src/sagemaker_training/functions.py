@@ -10,7 +10,9 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains utilities related to function arguments and
+function wrappers.
+"""
 from __future__ import absolute_import
 
 import inspect

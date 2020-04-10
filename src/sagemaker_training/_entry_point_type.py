@@ -10,13 +10,16 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains an enumerated type and helper functions related
+to different types of training entry points (Python package, Python
+script, bash script, etc.)
+"""
 import enum
 import os
 
 
 class _EntryPointType(enum.Enum):
-    """Placeholder docstring"""
+    """Enumerated type consisting of valid types of training entry points."""
 
     PYTHON_PACKAGE = "PYTHON_PACKAGE"
     PYTHON_PROGRAM = "PYTHON_PROGRAM"

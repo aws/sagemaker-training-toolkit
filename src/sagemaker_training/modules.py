@@ -10,7 +10,9 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains functionality related to preparing, installing,
+and importing Python modules.
+"""
 from __future__ import absolute_import
 
 import importlib

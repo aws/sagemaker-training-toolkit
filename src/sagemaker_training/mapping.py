@@ -10,7 +10,11 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains utilities related to dictionaries. These include
+transforming dictionaries into environment variables, transforming into
+command arguments, splitting dictionaries by key, and functionality from
+the collections.Mapping abstract base class.
+"""
 from __future__ import absolute_import
 
 import collections

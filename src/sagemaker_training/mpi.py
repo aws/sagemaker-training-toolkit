@@ -10,7 +10,8 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains functionality related to distributed training using
+MPI (Message Passing Interface)."""
 import argparse
 import inspect
 import logging
@@ -90,7 +91,7 @@ def _orted_process():  # pylint: disable=inconsistent-return-statements
 
 
 class MasterRunner(process.ProcessRunner):
-    """Responsible to prepare MPI distributed training and syncronize work with the Workers.
+    """Responsible to prepare MPI distributed training and synchronize work with the Workers.
     """
 
     def __init__(
