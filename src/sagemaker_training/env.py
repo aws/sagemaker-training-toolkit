@@ -38,7 +38,7 @@ BASE_PATH_ENV = "SAGEMAKER_BASE_DIR"  # type: str
 
 
 def _write_json(obj, path):  # type: (object, str) -> None
-    """Writes a serializeable object as a JSON file."""
+    """Write a serializeable object as a JSON file."""
     with open(path, "w") as f:
         json.dump(obj, f)
 
@@ -54,23 +54,19 @@ def _is_training_path_configured():  # type: () -> bool
     Outside SageMaker, the environment variable SAGEMAKER_BASE_DIR defines the location
     of the base folder.
 
-    This function checks wheter /opt/ml exists or if the base folder variable exists
+    This function checks whether /opt/ml exists or if the base folder variable exists.
 
     Returns:
-        (bool): indicating whether the training path is configured or not.
+        (bool): Whether the training path is configured.
 
     """
     return os.path.exists(SAGEMAKER_BASE_PATH) or BASE_PATH_ENV in os.environ
 
 
 def _set_base_path_env():  # type: () -> None
-    """Sets the environment variable SAGEMAKER_BASE_DIR as
+    """Set the environment variable SAGEMAKER_BASE_DIR as
     ~/sagemaker_local/{timestamp}/opt/ml
-
-    Returns:
-        (bool): indicating whe
     """
-
     local_config_dir = os.path.join(
         os.path.expanduser("~"), "sagemaker_local", "jobs", str(time.time()), "opt", "ml"
     )
@@ -153,7 +149,7 @@ resource_config_file_dir = os.path.join(input_config_dir, RESOURCE_CONFIG_FILE) 
 
 
 def _create_training_directories():
-    """Creates the directory structure and files necessary for training under the base path
+    """Create the directory structure and files necessary for training under the base path.
     """
     logger.info("Creating a new training folder under %s ." % base_dir)
 
@@ -175,7 +171,7 @@ if not _is_path_configured:
 
 
 def _create_code_dir():  # type: () -> None
-    """Creates /opt/ml/code when the module is imported."""
+    """Create /opt/ml/code when the module is imported."""
     if not os.path.exists(code_dir):
         os.makedirs(code_dir)
 
@@ -203,7 +199,7 @@ def read_hyperparameters():  # type: () -> dict
     https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-hyperparameters
 
     Returns:
-         (dict[string, object]): a dictionary containing the hyperparameters.
+         (dict[string, object]): A dictionary containing the hyperparameters.
     """
     hyperparameters = _read_json(hyperparameters_file_dir)
 
@@ -271,13 +267,13 @@ def read_input_data_config():  # type: () -> dict
 https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-dist-training
 
     Returns:
-            input_data_config (dict[string, object]): contents from /opt/ml/input/config/inputdataconfig.json.
+            input_data_config (dict[string, object]): Contents from /opt/ml/input/config/inputdataconfig.json.
     """
     return _read_json(input_data_config_file_dir)
 
 
 def channel_path(channel):  # type: (str) -> str
-    """ Returns the directory containing the channel data file(s) which is:
+    """ Return the directory containing the channel data file(s) which is:
     - <self.base_dir>/input/data/<channel>
 
     For more information about channels: https://docs.aws.amazon.com/sagemaker/latest/dg/API_Channel.html
@@ -289,10 +285,10 @@ def channel_path(channel):  # type: (str) -> str
 
 
 def num_gpus():  # type: () -> int
-    """The number of gpus available in the current container.
+    """Return the number of GPUs available in the current container.
 
     Returns:
-        int: number of gpus available in the current container.
+        int: Number of GPUs available in the current container.
     """
     try:
         cmd = shlex.split("nvidia-smi --list-gpus")
@@ -304,10 +300,10 @@ def num_gpus():  # type: () -> int
 
 
 def num_cpus():  # type: () -> int
-    """The number of cpus available in the current container.
+    """Return the number of CPUs available in the current container.
 
     Returns:
-        int: number of cpus available in the current container.
+        int: number of CPUs available in the current container.
     """
     return multiprocessing.cpu_count()
 
@@ -327,7 +323,7 @@ class _Env(mapping.MappingMixin):
     """
 
     def __init__(self):
-        """Placeholder docstring"""
+        """Initialize a read-only snapshot of the container environment."""
         current_host = os.environ.get(params.CURRENT_HOST_ENV)
         module_name = os.environ.get(params.USER_PROGRAM_ENV, None)
         module_dir = os.environ.get(params.SUBMIT_DIR_ENV, code_dir)
@@ -345,30 +341,30 @@ class _Env(mapping.MappingMixin):
     @property
     def model_dir(self):  # type: () -> str
         """Returns:
-            str: the directory where models should be saved, e.g., /opt/ml/model/"""
+            str: The directory where models should be saved, e.g., /opt/ml/model/"""
         return self._model_dir
 
     @property
     def current_host(self):  # type: () -> str
         """The name of the current container on the container network. For example, 'algo-1'.
         Returns:
-            str: current host.
+            str: Current host.
         """
         return self._current_host
 
     @property
     def num_gpus(self):  # type: () -> int
-        """The number of gpus available in the current container.
+        """The number of GPUs available in the current container.
         Returns:
-            int: number of gpus available in the current container.
+            int: Number of GPUs available in the current container.
         """
         return self._num_gpus
 
     @property
     def num_cpus(self):  # type: () -> int
-        """The number of cpus available in the current container.
+        """The number of CPUs available in the current container.
         Returns:
-            int: number of cpus available in the current container.
+            int: Number of CPUs available in the current container.
         """
         return self._num_cpus
 
@@ -376,7 +372,7 @@ class _Env(mapping.MappingMixin):
     def module_name(self):  # type: () -> str
         """The name of the user provided module.
         Returns:
-            str: name of the user provided module
+            str: Name of the user provided module.
         """
         return self._parse_module_name(self._module_name)
 
@@ -384,7 +380,7 @@ class _Env(mapping.MappingMixin):
     def module_dir(self):  # type: () -> str
         """The full path location of the user provided module.
         Returns:
-            str: full path location of the user provided module.
+            str: Full path location of the user provided module.
         """
         return self._module_dir
 
@@ -392,7 +388,7 @@ class _Env(mapping.MappingMixin):
     def log_level(self):  # type: () -> int
         """Environment logging level.
         Returns:
-            int: environment logging level.
+            int: Environment logging level.
         """
         return self._log_level
 
@@ -400,7 +396,7 @@ class _Env(mapping.MappingMixin):
     def user_entry_point(self):  # type: () -> str
         """The name of provided user entry point.
         Returns:
-            str: The name of provided user entry point
+            str: The name of provided user entry point.
         """
         return self._user_entry_point
 
@@ -411,7 +407,7 @@ class _Env(mapping.MappingMixin):
         Args:
             program_param (str): Module or script name.
         Returns:
-            str: Module name
+            str: Module name.
         """
         if program_param and program_param.endswith(".py"):
             return program_param[:-3]
@@ -541,9 +537,9 @@ class TrainingEnv(_Env):
         framework_module (str):  Name of the framework module and entry point. For example:
             my_module:main
 
-        network_interface_name (str): Name of the network interface used for distributed training
+        network_interface_name (str): Name of the network interface used for distributed training.
 
-        job_name (str): The name of the current training job
+        job_name (str): The name of the current training job.
     """
 
     def __init__(self, resource_config=None, input_data_config=None, hyperparameters=None):
@@ -617,13 +613,13 @@ class TrainingEnv(_Env):
 
     @property
     def is_master(self):  # type: () -> bool
-        """Returns True if host is master
+        """Returns True if host is master.
         """
         return self._is_master
 
     @property
     def master_hostname(self):  # type: () -> str
-        """Returns the hostname of the master node
+        """Returns the hostname of the master node.
         """
         return self._master_hostname
 
@@ -632,7 +628,7 @@ class TrainingEnv(_Env):
         """The name of the current training job.
 
         Returns:
-            str: the training job name.
+            str: The training job name.
         """
         return self._job_name
 
@@ -642,7 +638,7 @@ class TrainingEnv(_Env):
         'sagemaker_' but not in SAGEMAKER_HYPERPARAMETERS will be included here.
 
         Returns:
-            dict: additional framework hyperparameters, SageMaker Python SDK adds hyperparameters
+            dict: Additional framework hyperparameters, SageMaker Python SDK adds hyperparameters
                   with a prefix **sagemaker_** during training. These hyperparameters are
                   framework independent settings and are not defined by the user.
         """
@@ -660,15 +656,15 @@ class TrainingEnv(_Env):
         """Command line arguments representation of the training environment.
 
         Returns:
-            (list): List of cmd arguments
+            (list): List of cmd arguments.
         """
         return mapping.to_cmd_args(self.hyperparameters)
 
     def to_env_vars(self):
-        """Environment variable representation of the training environment
+        """Environment variable representation of the training environment.
 
         Returns:
-            dict: an instance of dictionary
+            dict: An instance of dictionary.
         """
 
         env = {
@@ -710,7 +706,7 @@ class TrainingEnv(_Env):
         """The list of names of all containers on the container network, sorted lexicographically.
                 For example, `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
         Returns:
-              list[str]: all the hosts in the training network.
+              list[str]: All the hosts in the training network.
         """
         return self._hosts
 
@@ -727,7 +723,7 @@ class TrainingEnv(_Env):
             - `training data path`[value](str) - the path to the directory where the training
                                                  data is saved.
         Returns:
-            dict[str, str] with the information about the channels.
+            dict[str, str] With the information about the channels.
         """
         return self._channel_input_dirs
 
@@ -735,7 +731,7 @@ class TrainingEnv(_Env):
     def network_interface_name(self):  # type: () -> str
         """Name of the network interface used for distributed training
         Returns:
-              str: name of the network interface, for example, 'ethwe'
+              str: Name of the network interface, for example, 'ethwe'.
         """
         return self._network_interface_name
 
@@ -746,7 +742,7 @@ class TrainingEnv(_Env):
         The input data directory has the following subdirectories:
             config (`input_config_dir`) and data (`input_data_dir`)
         Returns:
-            str: the path of the input directory, e.g. /opt/ml/input/
+            str: The path of the input directory, e.g. /opt/ml/input/.
         """
         return self._input_dir
 
@@ -765,7 +761,7 @@ class TrainingEnv(_Env):
                                      training More information about this files can be find here:
             https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
         Returns:
-            str: the path of the input directory, e.g. /opt/ml/input/config/
+            str: The path of the input directory, e.g. /opt/ml/input/config/.
         """
         return self._input_config_dir
 
@@ -775,7 +771,7 @@ class TrainingEnv(_Env):
         e.g. /opt/ml/output.
         To save non-model artifacts check `output_data_dir`.
         Returns:
-            str: the path to the output directory, e.g. /opt/ml/output/.
+            str: The path to the output directory, e.g. /opt/ml/output/.
         """
         return self._output_dir
 
@@ -840,7 +836,7 @@ class TrainingEnv(_Env):
         training job and model and output artifacts. Your algorithm should write this information
         to the this directory.
         Returns:
-            str: the path to output data directory, e.g. /opt/ml/output/data/algo-1.
+            str: The path to output data directory, e.g. /opt/ml/output/data/algo-1.
         """
         return self._output_data_dir
 
@@ -850,7 +846,7 @@ class TrainingEnv(_Env):
         Any files written to this directory will be uploaded to S3 by a background process
         while training is in progress, but only if sagemaker_s3_output was specified.
         Returns:
-            str: the path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
+            str: The path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
         """
         return self._output_intermediate_dir
 
@@ -866,10 +862,7 @@ def write_env_vars(env_vars=None):  # type: (dict) -> None
     """Write the dictionary env_vars in the system, as environment variables.
 
     Args:
-        env_vars ():
-
-    Returns:
-
+        env_vars (dict): A dictionary of environment variables.
     """
     env_vars = env_vars or {}
     env_vars["PYTHONPATH"] = ":".join(sys.path)
