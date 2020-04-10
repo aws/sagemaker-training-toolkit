@@ -97,7 +97,7 @@ def python_executable():
 
 
 class ProcessRunner(object):
-    """Responsible to execute the user entrypoint whithin a process.
+    """Responsible for executing the user entry point within a process.
     """
 
     def __init__(self, user_entry_point, args, env_vars):
