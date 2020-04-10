@@ -36,11 +36,11 @@ def to_env_vars(mapping):  # type: (dict) -> dict
      Args:
          mapping (dict[str, object]): A Python mapping.
      Returns:
-         (dict): Dictionary of env vars
+         (dict): Dictionary of env vars.
      """
 
     def format_key(key):
-        """Decode a key, adds a SM_ prefix to the key and upper case it"""
+        """Decode a key, adds a SM_ prefix to the key and upper case it."""
         if key:
             decoded_name = "SM_%s" % str(key).upper()
             return decoded_name
@@ -71,7 +71,7 @@ def to_cmd_args(mapping):  # type: (dict) -> list
     Args:
         mapping (dict[str, object]): A Python mapping.
     Returns:
-        (list): List of cmd arguments
+        (list): List of cmd arguments.
     """
 
     sorted_keys = sorted(mapping.keys())
@@ -101,9 +101,9 @@ def to_cmd_args(mapping):  # type: (dict) -> list
 def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode # noqa ignore=F821
     """Decode an object to unicode.
     Args:
-        obj (bytes or str or unicode or anything serializable): object to be decoded
+        obj (bytes or str or unicode or anything serializable): Object to be decoded.
     Returns:
-        object decoded in unicode.
+        Object decoded in unicode.
     """
     if obj is None:
         return u""
@@ -127,9 +127,9 @@ def split_by_criteria(
     """Split a dictionary in two by the provided keys.
 
     Args:
-        dictionary (dict[str, object]): A Python dictionary
-        keys (sequence [str]): A sequence of keys which will be added the split criteria
-        prefix (str): A prefix which will be added the split criteria
+        dictionary (dict[str, object]): A Python dictionary.
+        keys (sequence [str]): A sequence of keys which will be added the split criteria.
+        prefix (str): A prefix which will be added the split criteria.
 
     Returns:
         `SplitResultSpec` : A collections.namedtuple with the following attributes:
@@ -153,36 +153,38 @@ def split_by_criteria(
 
 
 class MappingMixin(collections.Mapping):
-    """Placeholder docstring"""
+    """A mixin class that allows for the creation of a dictionary like object,
+    with any built-in function that works with a dictionary. This is used by the
+    env._Env base class.
+    """
 
     def properties(self):  # type: () -> list
         """
             Returns:
-                (list[str]) List of public properties
+                (list[str]) List of public properties.
         """
 
         _type = type(self)
         return [_property for _property in dir(_type) if self._is_property(_property)]
 
     def _is_property(self, _property):
-        """Placeholder docstring"""
         return isinstance(getattr(type(self), _property), property)
 
     def __getitem__(self, k):
-        """Built-in method override"""
+        """Built-in method override."""
         if not self._is_property(k):
             raise KeyError("Trying to access non property %s" % k)
         return getattr(self, k)
 
     def __len__(self):
-        """Built-in method override"""
+        """Built-in method override."""
         return len(self.properties())
 
     def __iter__(self):
-        """Built-in method override"""
+        """Built-in method override."""
         items = {_property: getattr(self, _property) for _property in self.properties()}
         return iter(items)
 
     def __str__(self):
-        """Built-in method override"""
+        """Built-in method override."""
         return str(dict(self))
