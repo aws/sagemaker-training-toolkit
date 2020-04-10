@@ -34,11 +34,11 @@ COMMAND = _EntryPointType.COMMAND
 def get(path, name):  # type: (str, str) -> _EntryPointType
     """
     Args:
-        path (string): Directory where the entry point is located
-        name (string): Name of the entry point file
+        path (string): Directory where the entry point is located.
+        name (string): Name of the entry point file.
 
     Returns:
-        (_EntryPointType): The type of the entry point
+        (_EntryPointType): The type of the entry point.
     """
     if "setup.py" in os.listdir(path):
         return _EntryPointType.PYTHON_PACKAGE

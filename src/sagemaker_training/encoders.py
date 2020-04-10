@@ -30,13 +30,13 @@ from sagemaker_training.recordio import (
 
 
 def array_to_npy(array_like):  # type: (np.array or Iterable or int or float) -> object
-    """Convert an array like object to the NPY format.
+    """Convert an array-like object to the NPY format.
 
-    To understand better what an array like object is see:
+    To understand what an array-like object is, please see:
     https://docs.scipy.org/doc/numpy/user/basics.creation.html#converting-python-array-like-objects-to-numpy-arrays
 
     Args:
-        array_like (np.array or Iterable or int or float): array like object to be converted to NPY.
+        array_like (np.array or Iterable or int or float): Array-like object to be converted to NPY.
 
     Returns:
         (obj): NPY array.
@@ -50,26 +50,26 @@ def npy_to_numpy(npy_array):  # type: (object) -> np.array
     """Convert an NPY array into numpy.
 
     Args:
-        npy_array (npy array): to be converted to numpy array
+        npy_array (npy array): NPY array to be converted.
     Returns:
-        (np.array): converted numpy array.
+        (np.array): Converted numpy array.
     """
     stream = BytesIO(npy_array)
     return np.load(stream, allow_pickle=True)
 
 
 def array_to_json(array_like):  # type: (np.array or Iterable or int or float) -> str
-    """Convert an array like object to JSON.
+    """Convert an array-like object to JSON.
 
-    To understand better what an array like object is see:
+    To understand what an array-like object is, please see:
     https://docs.scipy.org/doc/numpy/user/basics.creation.html#converting-python-array-like-objects-to-numpy-arrays
 
     Args:
-        array_like (np.array or Iterable or int or float): array like object to be
+        array_like (np.array or Iterable or int or float): Array-like object to be
                                                            converted to JSON.
 
     Returns:
-        (str): object serialized to JSON
+        (str): Object serialized to JSON.
     """
 
     def default(_array_like):
@@ -92,7 +92,7 @@ def json_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
                                       'upcast' the array.  For downcasting,
                                       use the .astype(t) method.
         Returns:
-            (np.array): numpy array
+            (np.array): Numpy array.
         """
     data = json.loads(string_like)
     return np.array(data, dtype=dtype)
@@ -109,7 +109,7 @@ def csv_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
                                   only be used to 'upcast' the array.  For
                                   downcasting, use the .astype(t) method.
     Returns:
-        (np.array): numpy array
+        (np.array): Numpy array.
     """
     try:
         stream = StringIO(string_like)
@@ -129,14 +129,14 @@ def csv_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
 def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) -> str
     """Convert an array like object to CSV.
 
-    To understand better what an array like object is see:
+    To understand what an array-like object is, please see:
     https://docs.scipy.org/doc/numpy/user/basics.creation.html#converting-python-array-like-objects-to-numpy-arrays
 
     Args:
-        array_like (np.array or Iterable or int or float): array like object to be converted to CSV.
+        array_like (np.array or Iterable or int or float): Array-like object to be converted to CSV.
 
     Returns:
-        (str): object serialized to CSV
+        (str): Object serialized to CSV.
     """
     array = np.array(array_like)
     if len(array.shape) == 1:
@@ -156,17 +156,17 @@ def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) ->
 def array_to_recordio_protobuf(array_like, labels=None):
     """Convert an array like object to recordio-protobuf format.
 
-    To understand better what an array like object is see:
+    To understand what an array-like object is, please see:
     https://docs.scipy.org/doc/numpy/user/basics.creation.html#converting-python-array-like-objects-to-numpy-arrays
 
      Args:
-        array_like (np.array or scipy.sparse.csr_matrix): array like object to be
+        array_like (np.array or scipy.sparse.csr_matrix): Array-like object to be
                                                           converted to recordio-protobuf.
-        labels (np.array or scipy.sparse.csr_matrix): array like object representing
-                                                      the labels to be encoded
+        labels (np.array or scipy.sparse.csr_matrix): Array-like object representing
+                                                      the labels to be encoded.
 
     Returns:
-        buffer: bytes buffer recordio-protobuf
+        buffer: Bytes buffer recordio-protobuf.
     """
 
     if len(array_like.shape) == 1:
@@ -197,14 +197,14 @@ _decoders_map = {
 
 def decode(obj, content_type):
     # type: (np.array or Iterable or int or float, str) -> np.array
-    """Decode an object ton a one of the default content types to a numpy array.
+    """Decode an object of one of the default content types to a numpy array.
 
     Args:
-        obj (object): to be decoded.
-        content_type (str): content type to be used.
+        obj (object): Object to be decoded.
+        content_type (str): Content type to be used.
 
     Returns:
-        np.array: decoded object.
+        np.array: Decoded object.
     """
     try:
         decoder = _decoders_map[content_type]
@@ -215,17 +215,17 @@ def decode(obj, content_type):
 
 def encode(array_like, content_type):
     # type: (np.array or Iterable or int or float, str) -> np.array
-    """Encode an array like object in a specific content_type to a numpy array.
+    """Encode an array-like object in a specific content_type to a numpy array.
 
-    To understand better what an array like object is see:
+    To understand what an array-like object is, please see:
     https://docs.scipy.org/doc/numpy/user/basics.creation.html#converting-python-array-like-objects-to-numpy-arrays
 
     Args:
-        array_like (np.array or Iterable or int or float): to be converted to numpy.
-        content_type (str): content type to be used.
+        array_like (np.array or Iterable or int or float): Array-like object to be converted to numpy.
+        content_type (str): Content type to be used.
 
     Returns:
-        (np.array): object converted as numpy array.
+        (np.array): Object converted as numpy array.
     """
     try:
         encoder = encoders_map[content_type]
