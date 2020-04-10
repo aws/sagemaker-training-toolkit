@@ -36,7 +36,15 @@ class WorkerRunner(process.ProcessRunner):
     """
 
     def __init__(self, user_entry_point, args, env_vars, master_hostname):
-        """Placeholder docstring"""
+        """Initialize a WorkerRunner, which is responsible for preparing distributed
+        training with MPI and waiting for MPI master execution to finish.
+
+        Args:
+            user_entry_point (str): The name of the user entry point.
+            args ([str]): A list of arguments to include when executing the entry point.
+            env_vars (dict(str,str)): A dictionary of environment variables.
+            master_hostname (str): The master hostname.
+        """
         super(WorkerRunner, self).__init__(user_entry_point, args, env_vars)
         self._master_hostname = str(master_hostname)
 
@@ -64,24 +72,21 @@ class WorkerRunner(process.ProcessRunner):
         logger.info("MPI process finished.")
 
     def _wait_master_to_start(self):  # type: () -> None
-        """Placeholder docstring"""
         while not _can_connect(self._master_hostname):
             time.sleep(1)
 
     def _wait_master_to_finish(self):  # type: () -> None
-        """Placeholder docstring"""
         while _can_connect(self._master_hostname):
             time.sleep(30)
 
 
 def _wait_orted_process_to_finish():  # type: () -> None
-    """Placeholder docstring"""
     orted = _orted_process()
     psutil.wait_procs(orted)
 
 
 def _orted_process():  # pylint: disable=inconsistent-return-statements
-    """Waits maximum of 5 minutes for orted process to start"""
+    """Wait a maximum of 5 minutes for orted process to start."""
     for _ in range(5 * 60):
         procs = [p for p in psutil.process_iter(attrs=["name"]) if p.info["name"] == "orted"]
 
@@ -91,7 +96,8 @@ def _orted_process():  # pylint: disable=inconsistent-return-statements
 
 
 class MasterRunner(process.ProcessRunner):
-    """Responsible to prepare MPI distributed training and synchronize work with the Workers.
+    """Responsible for preparing MPI distributed training and synchronizing work
+    with the Workers.
     """
 
     def __init__(
@@ -108,7 +114,24 @@ class MasterRunner(process.ProcessRunner):
         timeout_in_seconds=60 * 60,
         num_processes=None,
     ):
-        """Placeholder docstring"""
+        """Initialize a MasterRunner, which is responsible for preparing distributed
+        training with MPI and synchronizing work among the Workers.
+
+        Args:
+            user_entry_point (str): The name of the user entry point.
+            args ([str]): A list of arguments to include when executing the entry point.
+            env_vars (dict(str,str)): A dictionary of environment variables.
+            master_hostname (str): The master hostname.
+            hosts ([str]): A list of hosts.
+            process_per_host (int): Number of processes per host.
+            custom_mpi_options (str): A string of custom MPI options to be parsed.
+            network_interface_name (str): The network interface name.
+            interval (int or float): The interval at which to check the connection in seconds.
+                Defaults to 1 second.
+            timeout_in_seconds (int): The number of seconds to wait for workers. Defaults to
+                3600 seconds (ie. 1 hour).
+            num_processes (int): The total number of processes.
+        """
 
         super(MasterRunner, self).__init__(user_entry_point, args, env_vars)
 
@@ -122,7 +145,6 @@ class MasterRunner(process.ProcessRunner):
         self.timeout_in_seconds = timeout_in_seconds
 
     def _setup(self):  # type: () -> None
-        """Placeholder docstring"""
         logger.info("Starting MPI run as worker node.")
         logger.info("Creating SSH daemon.")
         _start_sshd_daemon()
@@ -130,7 +152,6 @@ class MasterRunner(process.ProcessRunner):
         self._wait_for_workers()
 
     def _wait_for_workers(self):  # type: () -> None
-        """Placeholder docstring"""
         logger.info("Waiting for MPI workers to establish their SSH connections")
 
         workers = [host for host in self._hosts if host != self._master_hostname]
@@ -141,7 +162,6 @@ class MasterRunner(process.ProcessRunner):
                 logger.info("Worker %s available for communication", host)
 
     def _create_command(self):  # type: () -> List[str, Any]
-        """Placeholder docstring"""
         num_hosts = len(self._hosts)
         num_processes = self._num_processes or self._process_per_host * num_hosts
 
@@ -246,7 +266,6 @@ mkdir -p /root/.ssh/ && ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
 
 
 def _start_sshd_daemon():  # type: () -> None
-    """Placeholder docstring"""
     sshd_executable = "/usr/sbin/sshd"
 
     if not os.path.exists(sshd_executable):
@@ -256,7 +275,8 @@ def _start_sshd_daemon():  # type: () -> None
 
 
 def _can_connect(host, port=22):  # type: (str, int) -> bool
-    """Checks if the connection to provided ``host`` and ``port`` is possible or not.
+    """Check if the connection to provided ``host`` and ``port`` is possible.
+
        Args:
            host (str): Hostname for the host to check connection.
            port (int): Port name of the host to check connection on.
