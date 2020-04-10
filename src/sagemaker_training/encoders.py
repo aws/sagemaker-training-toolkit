@@ -221,7 +221,8 @@ def encode(array_like, content_type):
     https://docs.scipy.org/doc/numpy/user/basics.creation.html#converting-python-array-like-objects-to-numpy-arrays
 
     Args:
-        array_like (np.array or Iterable or int or float): Array-like object to be converted to numpy.
+        array_like (np.array or Iterable or int or float): Array-like object to be
+            converted to numpy.
         content_type (str): Content type to be used.
 
     Returns:
