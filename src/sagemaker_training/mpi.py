@@ -300,7 +300,7 @@ def _can_connect(host, port=22):  # type: (str, int) -> bool
 def _parse_custom_mpi_options(custom_mpi_options):
     # type: (str) -> Tuple[argparse.Namespace, List[str]]
     """Parse custom MPI options provided by user. Known options default value will be overridden
-    and unknown options would be identified separately."""
+    and unknown options will be identified separately."""
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--NCCL_DEBUG", default="INFO", type=str)

@@ -75,10 +75,10 @@ def _copy_file(executor, s3_uploader, relative_path, filename):
 
 def _watch(inotify, watchers, watch_flags, s3_uploader):
     """As soon as a user is done with a file under `/opt/ml/output/intermediate`
-    we would get notified by using inotify. We would copy this file under
+    we will be notified by inotify. We will copy this file under
     `/opt/ml/output/intermediate/.tmp.sagemaker_s3_sync` folder preserving
     the same folder structure to prevent it from being further modified.
-    As we copy the file we would add timestamp with microseconds precision
+    As we copy the file we will add timestamp with microseconds precision
     to avoid modification during s3 upload.
     After that we copy the file to s3 in a separate Thread.
     We keep the queue of the files we need to move as FIFO.
