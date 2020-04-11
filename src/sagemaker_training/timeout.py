@@ -18,7 +18,7 @@ import signal
 
 
 class TimeoutError(Exception):  # pylint: disable=redefined-builtin
-    """Overrides the Python 3 TimeoutError built-in exception.
+    """Override the Python 3 TimeoutError built-in exception.
 
     This builtin is being overridden for the purpose of compatibility with Python 2,
     since TimeoutError is not a built-in exception in Python 2.
@@ -27,16 +27,17 @@ class TimeoutError(Exception):  # pylint: disable=redefined-builtin
 
 @contextmanager
 def timeout(seconds=0, minutes=0, hours=0):
-    """
-    Add a signal-based timeout to any block of code.
+    """Add a signal-based timeout to any block of code.
     If multiple time units are specified, they will be added together to determine time limit.
+
     Usage:
     with timeout(seconds=5):
         my_slow_function(...)
+
     Args:
-        - seconds: The time limit, in seconds.
-        - minutes: The time limit, in minutes.
-        - hours: The time limit, in hours.
+        seconds (int): The time limit, in seconds.
+        minutes (int): The time limit, in minutes.
+        hours (int): The time limit, in hours.
     """
 
     limit = seconds + 60 * minutes + 3600 * hours
