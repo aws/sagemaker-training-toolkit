@@ -10,7 +10,7 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains utilities related to logging."""
 from __future__ import absolute_import
 
 import json
@@ -20,7 +20,7 @@ import sagemaker_training
 
 
 def get_logger():
-    """Returns a logger with the name 'sagemaker-training-toolkit',
+    """Return a logger with the name 'sagemaker-training-toolkit',
     creating it if necessary.
     """
     return logging.getLogger("sagemaker-training-toolkit")
@@ -31,8 +31,8 @@ def configure_logger(level, log_format="%(asctime)s %(name)-12s %(levelname)-8s 
     """Set logger configuration.
 
     Args:
-        level (int): Logger level
-        log_format (str): Logger format
+        level (int): Logger level.
+        log_format (str): Logger format.
     """
     logging.basicConfig(format=log_format, level=level)
 
@@ -43,7 +43,13 @@ def configure_logger(level, log_format="%(asctime)s %(name)-12s %(levelname)-8s 
 
 
 def log_script_invocation(cmd, env_vars, logger=None):
-    """Placeholder docstring"""
+    """Log a message with level INFO including information on the user script invoked.
+
+    Args:
+        cmd (str): Command used to invoke the script.
+        env_vars (dict): Environment variables.
+        logger (logging.Logger): Logger used to log the message.
+    """
     logger = logger or get_logger()
 
     prefix = "\n".join(["%s=%s" % (key, value) for key, value in env_vars.items()])

@@ -10,12 +10,12 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains the entry point for the image."""
 from sagemaker_training import trainer
 
 
 def main():
-    """Placeholder docstring"""
+    """Calls the function that runs training in the container."""
     trainer.train()
 
 

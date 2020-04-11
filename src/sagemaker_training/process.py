@@ -10,7 +10,9 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains functionality to spawn new processes, check for errors,
+and execute the user entry point within a process.
+"""
 from __future__ import absolute_import
 
 import os
@@ -24,22 +26,22 @@ from sagemaker_training import _entry_point_type, env, errors, logging_config
 
 
 def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
-    """Create subprocess.Popen object for the given command.
+    """Spawn a process with subprocess.Popen for the given command.
 
     Args:
         cmd (list): The command to be run.
         error_class (cls): The class to use when raising an exception.
         cwd (str): The location from which to run the command (default: None).
             If None, this defaults to the ``code_dir`` of the environment.
-        capture_error (bool): whether or not to direct stderr to a stream
+        capture_error (bool): Whether or not to direct stderr to a stream
             that can later be read (default: False).
         **kwargs: Extra arguments that are passed to the subprocess.Popen constructor.
 
     Returns:
-        subprocess.Popen: the process for the given command
+        subprocess.Popen: The process for the given command.
 
     Raises:
-        error_class: if there is an exception raised when creating the process
+        error_class: If there is an exception raised when creating the process.
     """
     try:
         stderr = subprocess.PIPE if capture_error else None
@@ -57,16 +59,16 @@ def check_error(cmd, error_class, capture_error=False, **kwargs):
     Args:
         cmd (list): The command to be run.
         error_class (cls): The class to use when raising an exception.
-        capture_error (bool): whether or not to include stderr in
+        capture_error (bool): Whether or not to include stderr in
             the exception message (default: False). In either case,
             stderr is streamed to the process's output.
         **kwargs: Extra arguments that are passed to the subprocess.Popen constructor.
 
     Returns:
-        subprocess.Popen: the process for the given command
+        subprocess.Popen: The process for the given command.
 
     Raises:
-        error_class: if there is an exception raised when creating the process
+        error_class: If there is an exception raised when creating the process.
     """
     process = create(cmd, error_class, capture_error=capture_error, **kwargs)
 
@@ -83,11 +85,11 @@ def check_error(cmd, error_class, capture_error=False, **kwargs):
 
 
 def python_executable():
-    """Returns the real path for the Python executable, if it exists.
-    Returns RuntimeError otherwise.
+    """Return the real path for the Python executable, if it exists.
+    Return RuntimeError otherwise.
 
     Returns:
-        (str): the real path of the current Python executable
+        (str): The real path of the current Python executable.
     """
     if not sys.executable:
         raise RuntimeError("Failed to retrieve the real path for the Python executable binary")
@@ -95,17 +97,24 @@ def python_executable():
 
 
 class ProcessRunner(object):
-    """Responsible to execute the user entrypoint whithin a process.
+    """Responsible for executing the user entry point within a process.
     """
 
     def __init__(self, user_entry_point, args, env_vars):
         # type: (str, List[str], Dict[str, str]) -> None
+        """Initialize a ProcessRunner, which is responsible for executing the user
+        entry point within a process.
+
+        Args:
+            user_entry_point (str): The name of the user entry point.
+            args ([str]): A list of arguments to include when executing the entry point.
+            env_vars (dict(str,str)): A dictionary of environment variables.
+        """
         self._user_entry_point = user_entry_point
         self._args = args
         self._env_vars = env_vars
 
     def _create_command(self):
-        """Placeholder docstring"""
         entrypoint_type = _entry_point_type.get(env.code_dir, self._user_entry_point)
 
         if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
@@ -121,17 +130,26 @@ class ProcessRunner(object):
             return ["/bin/sh", "-c", "./%s %s" % (self._user_entry_point, " ".join(args))]
 
     def _python_command(self):  # pylint: disable=no-self-use
-        """Placeholder docstring"""
         return [python_executable()]
 
     def _setup(self):
-        """Placeholder docstring"""
+        pass
 
     def _tear_down(self):
-        """Placeholder docstring"""
+        pass
 
     def run(self, wait=True, capture_error=False):
-        """Placeholder docstring"""
+        """Run the process.
+
+        Args:
+            wait (bool): A boolean indicating whether to wait and check for errors.
+                Defaults to True.
+            capture_error (bool): A boolean indicating whether to direct stderr to a stream
+                that can later be read. Defaults to False.
+
+        Returns:
+            process (subprocess.Popen): The spawned process.
+        """
         self._setup()
 
         cmd = self._create_command()

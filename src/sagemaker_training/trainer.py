@@ -10,7 +10,9 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains the train function, which is the main function
+responsible for running training in the container.
+"""
 from __future__ import absolute_import
 
 import importlib
@@ -35,7 +37,6 @@ DEFAULT_FAILURE_CODE = 1
 
 
 def _get_valid_failure_exit_code(exit_code):
-    """Placeholder docstring"""
     try:
         valid_exit_code = int(exit_code)
     except ValueError:
@@ -58,7 +59,7 @@ def _exit_processes(exit_code):  # type: (int) -> None
 
 
 def train():
-    """Placeholder docstring"""
+    """The main function responsible for running training in the container."""
     intermediate_sync = None
     exit_code = SUCCESS_CODE
     try:

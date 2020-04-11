@@ -10,7 +10,9 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains utilities related to reading, writing, and downloading
+files and directories.
+"""
 from __future__ import absolute_import
 
 import contextlib
@@ -43,7 +45,7 @@ def write_failure_file(failure_msg):  # type: (str) -> None
     this file as FailureReason.
     See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
     Args:
-        failure_msg: The description of failure
+        failure_msg: The description of failure.
     """
     file_path = os.path.join(env.output_dir, "failure")
     write_file(file_path, failure_msg)
@@ -64,7 +66,7 @@ def tmpdir(suffix="", prefix="tmp", directory=None):  # type: (str, str, str) ->
         directory (str):  If directory is specified, the file will be created in that directory;
                     otherwise, a default directory is used.
     Returns:
-        str: path to the directory
+        str: Path to the directory.
     """
     tmp = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=directory)
     yield tmp
@@ -75,9 +77,9 @@ def write_file(path, data, mode="w"):  # type: (str, str, str) -> None
     """Write data to a file.
 
     Args:
-        path (str): path to the file.
-        data (str): data to be written to the file.
-        mode (str): mode which the file will be open.
+        path (str): Path to the file.
+        data (str): Data to be written to the file.
+        mode (str): Mode which the file will be open.
     """
     with open(path, mode) as f:
         f.write(data)
@@ -87,7 +89,7 @@ def read_file(path, mode="r"):
     """Read data from a file.
 
     Args:
-        path (str): path to the file.
+        path (str): Path to the file.
         mode (str): mode which the file will be open.
 
     Returns:

@@ -10,7 +10,9 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains functionality to get process runners based on the
+runner type.
+"""
 from __future__ import absolute_import
 
 import enum
@@ -21,7 +23,7 @@ from sagemaker_training import mpi, params, process
 
 
 class RunnerType(enum.Enum):
-    """Placeholder docstring"""
+    """Enumerated type consisting of valid types of runners."""
 
     MPI = "MPI"
     Process = "Process"
@@ -33,7 +35,18 @@ MPIRunnerType = RunnerType.MPI
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
     # type: (RunnerType, str, List[str], Dict[str]) -> process.Runner
-    """Placeholder docstring"""
+    """Get the process runner based on the runner type.
+
+    Args:
+        identifier (RunnerType or process.ProcessRunner): The type of runner to get.
+        user_entry_point (str): The name of the user entry point.
+        args ([str]): A list of arguments to include when executing the entry point.
+        env_vars (dict(str,str)): A dictionary of environment variables.
+        extra_opts (dict): A dictionary of extra arguments for MPI.
+
+    Returns:
+        process.Runner: The process.
+    """
     if isinstance(identifier, process.ProcessRunner):
         return identifier
     else:
@@ -43,7 +56,6 @@ def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=
 def _get_by_runner_type(
     identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None
 ):
-    """Placeholder docstring"""
     env = sagemaker_training.training_env()
     user_entry_point = user_entry_point or env.user_entry_point
     args = args or env.to_cmd_args()
@@ -80,5 +92,4 @@ def _get_by_runner_type(
 
 
 def _mpi_param_value(mpi_args, env, param_name, default=None):
-    """Placeholder docstring"""
     return mpi_args.get(param_name) or env.additional_framework_parameters.get(param_name, default)

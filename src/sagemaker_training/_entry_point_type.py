@@ -10,13 +10,16 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains an enumerated type and helper functions related
+to different types of training entry points (Python package, Python
+script, bash script, etc.)
+"""
 import enum
 import os
 
 
 class _EntryPointType(enum.Enum):
-    """Placeholder docstring"""
+    """Enumerated type consisting of valid types of training entry points."""
 
     PYTHON_PACKAGE = "PYTHON_PACKAGE"
     PYTHON_PROGRAM = "PYTHON_PROGRAM"
@@ -31,11 +34,11 @@ COMMAND = _EntryPointType.COMMAND
 def get(path, name):  # type: (str, str) -> _EntryPointType
     """
     Args:
-        path (string): Directory where the entry point is located
-        name (string): Name of the entry point file
+        path (string): Directory where the entry point is located.
+        name (string): Name of the entry point file.
 
     Returns:
-        (_EntryPointType): The type of the entry point
+        (_EntryPointType): The type of the entry point.
     """
     if "setup.py" in os.listdir(path):
         return _EntryPointType.PYTHON_PACKAGE

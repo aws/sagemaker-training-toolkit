@@ -10,7 +10,9 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains utilities related to function arguments and
+function wrappers.
+"""
 from __future__ import absolute_import
 
 import inspect
@@ -37,11 +39,12 @@ def matching_args(fn, dictionary):  # type: (Callable, mapping.Mapping) -> dict
 
         train(**args)
     Args:
-        fn (function): a function
-        dictionary (dict): the dictionary with the keys
+        fn (function): A function.
+        dictionary (dict): The dictionary with the keys to compare against the
+            function arguments.
 
     Returns:
-        (dict) a dictionary with only matching arguments.
+        (dict) A dictionary with only matching arguments.
     """
     arg_spec = getargspec(fn)
 
@@ -57,16 +60,16 @@ def getargspec(  # pylint: disable=inconsistent-return-statements
     """Get the names and default values of a function's arguments.
 
     Args:
-        fn (function): a function
+        fn (function): A function.
 
     Returns:
         `inspect.ArgSpec`:  A collections.namedtuple with the following attributes:
 
             * Args:
-                args (list): a list of the argument names (it may contain nested lists).
-                varargs (str): name of the * argument or None.
-                keywords (str): names of the ** argument or None.
-                defaults (tuple): an n-tuple of the default values of the last n arguments.
+                args (list): A list of the argument names (it may contain nested lists).
+                varargs (str): Name of the * argument or None.
+                keywords (str): Names of the ** argument or None.
+                defaults (tuple): An n-tuple of the default values of the last n arguments.
     """
     if six.PY2:
         return inspect.getargspec(fn)  # pylint: disable=deprecated-method
@@ -81,11 +84,11 @@ def error_wrapper(fn, error_class):  # type: (Callable or None, Exception) -> ..
     """Wraps function fn in a try catch block that re-raises error_class.
 
     Args:
-        fn (function): function to wrapped
-        error_class (Exception): Error class to be re-raised
+        fn (function): Function to be wrapped.
+        error_class (Exception): Error class to be re-raised.
 
     Returns:
-        (object): fn wrapped in a try catch.
+        (object): Function wrapped in a try catch.
     """
 
     def wrapper(*args, **kwargs):

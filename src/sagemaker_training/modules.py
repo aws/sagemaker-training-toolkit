@@ -10,7 +10,9 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This module contains functionality related to preparing, installing,
+and importing Python modules.
+"""
 from __future__ import absolute_import
 
 import importlib
@@ -32,10 +34,10 @@ def exists(name):  # type: (str) -> bool
     """Return True if the module exists. Return False otherwise.
 
     Args:
-        name (str): module name.
+        name (str): Module name.
 
     Returns:
-        (bool): boolean indicating if the module exists or not.
+        (bool): Boolean indicating if the module exists or not.
     """
     try:
         importlib.import_module(name)
@@ -46,16 +48,24 @@ def exists(name):  # type: (str) -> bool
 
 
 def has_requirements(path):  # type: (str) -> None
-    """Placeholder docstring"""
+    """Check whether a directory contains a requirements.txt file.
+
+    Args:
+        path (str): Path to the directory to check for the requirements.txt file.
+
+    Returns:
+        (bool): Whether the directory contains a requirements.txt file.
+    """
     return os.path.exists(os.path.join(path, "requirements.txt"))
 
 
 def prepare(path, name):  # type: (str, str) -> None
     """Prepare a Python script (or module) to be imported as a module.
     If the script does not contain a setup.py file, it creates a minimal setup.
+
     Args:
-        path (str): path to directory with the script or module.
-        name (str): name of the script or module.
+        path (str): Path to directory with the script or module.
+        name (str): Name of the script or module.
     """
     setup_path = os.path.join(path, "setup.py")
     if not os.path.exists(setup_path):
@@ -101,6 +111,7 @@ def prepare(path, name):  # type: (str, str) -> None
 
 def install(path, capture_error=False):  # type: (str, bool) -> None
     """Install a Python module in the executing Python environment.
+
     Args:
         path (str):  Real path location of the Python module.
         capture_error (bool): Default false. If True, the running process captures the
@@ -123,13 +134,15 @@ def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
     module.
     SageMaker Python SDK saves the user provided scripts as compressed tar files in S3
     https://github.com/aws/sagemaker-python-sdk.
-    This function downloads this compressed file, if provided, and transforms it as a module, and
+    This function downloads this compressed file (if provided), transforms it as a module, and
     installs it.
+
     Args:
-        name (str): name of the script or module.
-        uri (str): the location of the module.
+        name (str): Name of the script or module.
+        uri (str): The location of the module.
+
     Returns:
-        (module): the imported module
+        (module): The imported module.
     """
     files.download_and_extract(uri, env.code_dir)
 
