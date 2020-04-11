@@ -303,7 +303,7 @@ def num_cpus():  # type: () -> int
     """Return the number of CPUs available in the current container.
 
     Returns:
-        int: number of CPUs available in the current container.
+        int: Number of CPUs available in the current container.
     """
     return multiprocessing.cpu_count()
 
