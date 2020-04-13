@@ -10,7 +10,10 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Placeholder docstring"""
+"""This file is executed when the sagemaker_training package is imported.
+It binds training_env from the env module to the package's namespace
+for the purpose of backwards compatibility.
+"""
 from __future__ import absolute_import
 
 from sagemaker_training.env import training_env  # noqa ignore=F401 imported but unused
