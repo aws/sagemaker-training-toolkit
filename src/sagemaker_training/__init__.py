@@ -13,24 +13,4 @@
 """Placeholder docstring"""
 from __future__ import absolute_import
 
-
-def training_env(
-    resource_config=None, input_data_config=None, hyperparameters=None
-):  # type: () -> env.TrainingEnv
-    """Create a TrainingEnv.
-
-    Returns:
-        TrainingEnv: an instance of TrainingEnv
-    """
-
-    from sagemaker_training import env
-
-    resource_config = resource_config or env.read_resource_config()
-    input_data_config = input_data_config or env.read_input_data_config()
-    hyperparameters = hyperparameters or env.read_hyperparameters()
-
-    return env.TrainingEnv(
-        resource_config=resource_config,
-        input_data_config=input_data_config,
-        hyperparameters=hyperparameters,
-    )
+from sagemaker_training.env import training_env  # noqa ignore=F401 imported but unused

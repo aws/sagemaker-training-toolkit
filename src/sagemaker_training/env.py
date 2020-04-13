@@ -869,3 +869,22 @@ def write_env_vars(env_vars=None):  # type: (dict) -> None
 
     for name, value in env_vars.items():
         os.environ[name] = value
+
+
+def training_env(
+    resource_config=None, input_data_config=None, hyperparameters=None
+):  # type: () -> TrainingEnv
+    """Create a TrainingEnv.
+
+    Returns:
+        TrainingEnv: an instance of TrainingEnv
+    """
+    resource_config = resource_config or read_resource_config()
+    input_data_config = input_data_config or read_input_data_config()
+    hyperparameters = hyperparameters or read_hyperparameters()
+
+    return TrainingEnv(
+        resource_config=resource_config,
+        input_data_config=input_data_config,
+        hyperparameters=hyperparameters,
+    )
