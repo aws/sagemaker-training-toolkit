@@ -308,12 +308,12 @@ def num_cpus():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
-class TrainingEnv(mapping.MappingMixin):  # pylint:disable=too-many-public-methods
+class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-methods
     """Provides access to aspects of the training environment relevant to training jobs, including
     hyperparameters, system characteristics, filesystem locations, environment variables and
     configuration settings.
 
-    The TrainingEnv is a read-only snapshot of the container environment during training. It does
+    The Environment is a read-only snapshot of the container environment during training. It does
     not contain any form of state.
 
     It is a dictionary like object, allowing any builtin function that works with dictionary.
@@ -321,7 +321,7 @@ class TrainingEnv(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     Example on how a script can use training environment:
             >>>from sagemaker_training import environment
 
-            >>>env = environment.TrainingEnv()
+            >>>env = environment.Environment()
 
             get the path of the channel 'training' from the inputdataconfig.json file
             >>>training_dir = environment.channel_input_dirs['training']

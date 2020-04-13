@@ -55,7 +55,7 @@ def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=
 def _get_by_runner_type(
     identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None
 ):
-    env = environment.TrainingEnv()
+    env = environment.Environment()
     user_entry_point = user_entry_point or env.user_entry_point
     args = args or env.to_cmd_args()
     env_vars = env_vars or env.to_env_vars()

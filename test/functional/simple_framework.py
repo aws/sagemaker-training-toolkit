@@ -18,7 +18,7 @@ from sagemaker_training import environment, functions, modules
 
 
 def train():
-    training_env = environment.TrainingEnv()
+    training_env = environment.Environment()
 
     script = modules.import_module(training_env.module_dir, training_env.module_name)
 

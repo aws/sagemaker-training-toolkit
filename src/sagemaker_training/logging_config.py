@@ -53,7 +53,7 @@ def log_script_invocation(cmd, env_vars, logger=None):
     logger = logger or get_logger()
 
     prefix = "\n".join(["%s=%s" % (key, value) for key, value in env_vars.items()])
-    env = sagemaker_training.environment.TrainingEnv()
+    env = sagemaker_training.environment.Environment()
     message = """Invoking user script
 
 Training Env:

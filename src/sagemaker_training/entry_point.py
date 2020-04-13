@@ -48,7 +48,7 @@ def run(
     Example:
          >>>from sagemaker_training import entry_point, environment, mapping
 
-         >>>env = environment.TrainingEnv()
+         >>>env = environment.Environment()
          {'channel-input-dirs': {'training': '/opt/ml/input/training'},
           'model_dir': '/opt/ml/model', ...}
 
@@ -141,5 +141,5 @@ def _wait_hostname_resolution():
     boots up and has been documented here:
      https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-dist-training
     """
-    for host in environment.TrainingEnv().hosts:
+    for host in environment.Environment().hosts:
         _dns_lookup(host)

@@ -143,13 +143,13 @@ def create_training_env():
         old_environ = os.environ.copy()
         os.environ[params.TRAINING_JOB_ENV] = "training-job-42"
 
-        yield environment.TrainingEnv()
+        yield environment.Environment()
 
         os.environ = old_environ
 
 
 def test_create_training_env_without_training_files_and_directories_should_not_fail():
-    training_env = environment.TrainingEnv()
+    training_env = environment.Environment()
     hostname = socket.gethostname()
     assert training_env.current_host == hostname
     assert training_env.hosts == [hostname]
@@ -221,7 +221,7 @@ def test_env_dictionary():
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
     os.environ[params.USER_PROGRAM_ENV] = "my_app.py"
-    test_env = environment.TrainingEnv()
+    test_env = environment.Environment()
 
     assert len(test_env) == len(test_env.properties())
 
@@ -234,7 +234,7 @@ def test_env_module_name(sagemaker_program):
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
     os.environ[params.USER_PROGRAM_ENV] = sagemaker_program
-    module_name = environment.TrainingEnv().module_name
+    module_name = environment.Environment().module_name
 
     del os.environ[params.USER_PROGRAM_ENV]
 

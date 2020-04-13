@@ -114,7 +114,7 @@ def test_run_module_wait(gethostbyname, check_error, chmod, download_and_extract
 @patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training.modules.install")
 @patch.object(
-    environment.TrainingEnv, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
+    environment.Environment, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
 )
 @patch("socket.gethostbyname")
 def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_and_extract):
@@ -130,7 +130,7 @@ def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_a
 @patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training.modules.install")
 @patch.object(
-    environment.TrainingEnv, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
+    environment.Environment, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
 )
 @patch("socket.gethostbyname")
 def test_run_waits_hostname_resolution(gethostbyname, hosts, install, download_and_extract):

@@ -182,7 +182,7 @@ def test_env_vars_round_trip():
 
     os.environ[params.FRAMEWORK_TRAINING_MODULE_ENV] = "test.functional.simple_framework:train"
 
-    training_env = environment.TrainingEnv(
+    training_env = environment.Environment(
         resource_config=resource_config,
         input_data_config=input_data_config,
         hyperparameters=hyperparameters,

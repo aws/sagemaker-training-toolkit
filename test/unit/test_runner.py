@@ -38,7 +38,7 @@ def test_get_runner_returns_runnner_itself(runner_class):
     assert runner.get(runner_mock) == runner_mock
 
 
-@patch("sagemaker_training.environment.TrainingEnv")
+@patch("sagemaker_training.environment.Environment")
 def test_get_runner_by_process_returns_runnner(training_env):
     test_runner = runner.get(runner.ProcessRunnerType)
 
@@ -47,7 +47,7 @@ def test_get_runner_by_process_returns_runnner(training_env):
     training_env().to_env_vars.assert_called()
 
 
-@patch("sagemaker_training.environment.TrainingEnv")
+@patch("sagemaker_training.environment.Environment")
 def test_get_runner_by_process_with_extra_args(training_env):
     test_runner = runner.get(runner.ProcessRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS)
 
@@ -62,7 +62,7 @@ def test_get_runner_by_process_with_extra_args(training_env):
     training_env().user_entry_point.assert_not_called()
 
 
-@patch("sagemaker_training.environment.TrainingEnv")
+@patch("sagemaker_training.environment.Environment")
 def test_get_runner_by_mpi_returns_runnner(training_env):
     training_env().num_gpus = 0
 
@@ -80,7 +80,7 @@ def test_get_runner_by_mpi_returns_runnner(training_env):
     training_env().to_env_vars.assert_called()
 
 
-@patch("sagemaker_training.environment.TrainingEnv")
+@patch("sagemaker_training.environment.Environment")
 def test_runnner_with_default_cpu_processes_per_host(training_env):
     training_env().additional_framework_parameters = dict()
     training_env().num_gpus = 0
@@ -91,7 +91,7 @@ def test_runnner_with_default_cpu_processes_per_host(training_env):
     assert test_runner._process_per_host == 1
 
 
-@patch("sagemaker_training.environment.TrainingEnv")
+@patch("sagemaker_training.environment.Environment")
 def test_runnner_with_default_gpu_processes_per_host(training_env):
     training_env().additional_framework_parameters = dict()
     training_env().num_gpus = 2
@@ -102,7 +102,7 @@ def test_runnner_with_default_gpu_processes_per_host(training_env):
     assert test_runner._process_per_host == 2
 
 
-@patch("sagemaker_training.environment.TrainingEnv")
+@patch("sagemaker_training.environment.Environment")
 def test_get_runner_by_mpi_with_extra_args(training_env):
     training_env().num_gpus = 0
 

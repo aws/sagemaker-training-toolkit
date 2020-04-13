@@ -189,7 +189,7 @@ setup(packages=[''],
 
 
 def framework_training_fn():
-    training_env = environment.TrainingEnv()
+    training_env = environment.Environment()
 
     mod = modules.import_module(training_env.module_dir, training_env.module_name)
 
@@ -356,7 +356,7 @@ def test_trainer_report_failure():
 
 
 def framework_training_with_script_mode_fn(capture_error):
-    training_env = environment.TrainingEnv()
+    training_env = environment.Environment()
 
     entry_point.run(
         training_env.module_dir,
@@ -368,7 +368,7 @@ def framework_training_with_script_mode_fn(capture_error):
 
 
 def mpi_training_with_script_mode_fn(capture_error):
-    training_env = environment.TrainingEnv()
+    training_env = environment.Environment()
 
     entry_point.run(
         training_env.module_dir,
@@ -389,7 +389,7 @@ def test_parameter_server():
         hyperparameters=hyperparameters,
         channels=[test.Channel.create(name="training")],
     )
-    training_env = environment.TrainingEnv()
+    training_env = environment.Environment()
     process = entry_point.run(
         training_env.module_dir,
         training_env.user_entry_point,

@@ -63,7 +63,7 @@ def train():
     intermediate_sync = None
     exit_code = SUCCESS_CODE
     try:
-        env = environment.TrainingEnv()
+        env = environment.Environment()
 
         region = os.environ.get("AWS_REGION", os.environ.get(params.REGION_NAME_ENV))
         s3_endpoint_url = os.environ.get(params.S3_ENDPOINT_URL, None)
