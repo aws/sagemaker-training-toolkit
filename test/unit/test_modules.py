@@ -21,7 +21,7 @@ from mock import call, mock_open, patch
 import pytest
 from six import PY2
 
-from sagemaker_training import env, errors, files, modules, params
+from sagemaker_training import environment, errors, files, modules, params
 
 builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 
@@ -159,8 +159,8 @@ def test_import_module(reload, import_module, install, download_and_extract):
 
     modules.import_module("s3://bucket/my-module")
 
-    download_and_extract.assert_called_with("s3://bucket/my-module", env.code_dir)
-    install.assert_called_with(env.code_dir)
+    download_and_extract.assert_called_with("s3://bucket/my-module", environment.code_dir)
+    install.assert_called_with(environment.code_dir)
     reload.assert_called_with(import_module(modules.DEFAULT_MODULE_NAME))
 
 

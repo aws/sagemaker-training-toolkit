@@ -26,13 +26,13 @@ import boto3.s3.transfer as s3transfer
 import inotify_simple
 from six.moves.urllib.parse import urlparse
 
-from sagemaker_training import env, logging_config
+from sagemaker_training import environment, logging_config
 
 logger = logging_config.get_logger()
 
-intermediate_path = env.output_intermediate_dir  # type: str
-failure_file_path = os.path.join(env.output_dir, "failure")  # type: str
-success_file_path = os.path.join(env.output_dir, "success")  # type: str
+intermediate_path = environment.output_intermediate_dir  # type: str
+failure_file_path = os.path.join(environment.output_dir, "failure")  # type: str
+success_file_path = os.path.join(environment.output_dir, "success")  # type: str
 tmp_dir_path = os.path.join(intermediate_path, ".tmp.sagemaker_s3_sync")  # type: str
 
 

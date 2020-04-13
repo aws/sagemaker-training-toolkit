@@ -21,10 +21,10 @@ from botocore.exceptions import ClientError
 import numpy as np
 import pytest
 
-from sagemaker_training import env, files, intermediate_output
+from sagemaker_training import environment, files, intermediate_output
 import test
 
-intermediate_path = env.output_intermediate_dir
+intermediate_path = environment.output_intermediate_dir
 bucket = test.default_bucket()
 bucket_uri = "s3://{}".format(bucket)
 region = test.DEFAULT_REGION
@@ -142,7 +142,7 @@ def test_intermediate_upload():
     # check that modified file has
     s3 = boto3.resource("s3", region_name=region)
     key = os.path.join(key_prefix, os.path.relpath(file_to_modify1, intermediate_path))
-    modified_file = os.path.join(env.output_dir, "modified_file.txt")
+    modified_file = os.path.join(environment.output_dir, "modified_file.txt")
     s3.Bucket(bucket).download_file(key, modified_file)
     with open(modified_file) as f:
         content = f.read()
@@ -237,7 +237,7 @@ def test_large_files():
     # check that modified file has
     s3 = boto3.resource("s3", region_name=region)
     key = os.path.join(key_prefix, os.path.relpath(file_to_modify, intermediate_path))
-    modified_file = os.path.join(env.output_dir, "modified_file.npy")
+    modified_file = os.path.join(environment.output_dir, "modified_file.npy")
     s3.Bucket(bucket).download_file(key, modified_file)
     assert np.array_equal(np.load(modified_file), content_to_assert)
 

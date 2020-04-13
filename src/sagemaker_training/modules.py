@@ -23,7 +23,7 @@ import textwrap
 
 import six
 
-from sagemaker_training import env, errors, files, logging_config, process
+from sagemaker_training import environment, errors, files, logging_config, process
 
 logger = logging_config.get_logger()
 
@@ -144,10 +144,10 @@ def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
     Returns:
         (module): The imported module.
     """
-    files.download_and_extract(uri, env.code_dir)
+    files.download_and_extract(uri, environment.code_dir)
 
-    prepare(env.code_dir, name)
-    install(env.code_dir)
+    prepare(environment.code_dir, name)
+    install(environment.code_dir)
     try:
         module = importlib.import_module(name)
         six.moves.reload_module(module)  # pylint: disable=too-many-function-args

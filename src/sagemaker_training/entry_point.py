@@ -22,7 +22,7 @@ from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from retrying import retry
 
-from sagemaker_training import _entry_point_type, env, files, modules, runner
+from sagemaker_training import _entry_point_type, environment, files, modules, runner
 
 
 def run(
@@ -54,7 +54,7 @@ def run(
           'model_dir': '/opt/ml/model', ...}
 
 
-         >>>hyperparameters = env.hyperparameters
+         >>>hyperparameters = environment.hyperparameters
          {'batch-size': 128, 'model_dir': '/opt/ml/model'}
 
          >>>args = mapping.to_cmd_args(hyperparameters)
@@ -91,10 +91,10 @@ def run(
     env_vars = env_vars or {}
     env_vars = env_vars.copy()
 
-    files.download_and_extract(uri=uri, path=env.code_dir)
-    install(name=user_entry_point, path=env.code_dir, capture_error=capture_error)
+    files.download_and_extract(uri=uri, path=environment.code_dir)
+    install(name=user_entry_point, path=environment.code_dir, capture_error=capture_error)
 
-    env.write_env_vars(env_vars)
+    environment.write_env_vars(env_vars)
 
     _wait_hostname_resolution()
 
@@ -103,7 +103,7 @@ def run(
     )
 
 
-def install(name, path=env.code_dir, capture_error=False):
+def install(name, path=environment.code_dir, capture_error=False):
     """Install the user provided entry point to be executed as follows:
         - add the path to sys path
         - if the user entry point is a command, gives exec permissions to the script
@@ -142,5 +142,5 @@ def _wait_hostname_resolution():
     boots up and has been documented here:
      https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-dist-training
     """
-    for host in env.TrainingEnv().hosts:
+    for host in environment.TrainingEnv().hosts:
         _dns_lookup(host)

@@ -16,4 +16,4 @@ for the purpose of backwards compatibility.
 """
 from __future__ import absolute_import
 
-from sagemaker_training.env import training_env  # noqa ignore=F401 imported but unused
+from sagemaker_training.environment import training_env  # noqa ignore=F401 imported but unused

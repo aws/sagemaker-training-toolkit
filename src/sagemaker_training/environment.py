@@ -430,13 +430,13 @@ class TrainingEnv(_Env):
             >>>env = sagemaker_training.training_env()
 
             get the path of the channel 'training' from the inputdataconfig.json file
-            >>>training_dir = env.channel_input_dirs['training']
+            >>>training_dir = environment.channel_input_dirs['training']
 
             get a the hyperparameter 'training_data_file' from hyperparameters.json file
-            >>>file_name = env.hyperparameters['training_data_file']
+            >>>file_name = environment.hyperparameters['training_data_file']
 
             get the folder where the model should be saved
-            >>>model_dir = env.model_dir
+            >>>model_dir = environment.model_dir
 
             >>>data = np.load(os.path.join(training_dir, file_name))
             >>>x_train, y_train = data['features'], keras.utils.to_categorical(data['labels'])

@@ -25,7 +25,7 @@ import tempfile
 import boto3
 from six.moves.urllib import parse
 
-from sagemaker_training import env, params
+from sagemaker_training import environment, params
 
 
 def write_success_file():  # type: () -> None
@@ -33,7 +33,7 @@ def write_success_file():  # type: () -> None
     have any content.
     See: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
     """
-    file_path = os.path.join(env.output_dir, "success")
+    file_path = os.path.join(environment.output_dir, "success")
     empty_content = ""
     write_file(file_path, empty_content)
 
@@ -47,7 +47,7 @@ def write_failure_file(failure_msg):  # type: (str) -> None
     Args:
         failure_msg: The description of failure.
     """
-    file_path = os.path.join(env.output_dir, "failure")
+    file_path = os.path.join(environment.output_dir, "failure")
     write_file(file_path, failure_msg)
 
 
