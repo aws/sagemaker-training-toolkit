@@ -30,7 +30,7 @@ import werkzeug.test as werkzeug_test
 DEFAULT_REGION = "us-west-2"
 
 from sagemaker_training import (  # noqa ignore=E402 module level import not at top of file
-    env,
+    environment,
     files,
     params,
 )
@@ -108,11 +108,12 @@ def create_resource_config(
                 hosts=hosts or ["algo-1"],
                 network_interface_name=network_interface_name,
             ),
-            env.resource_config_file_dir,
+            environment.resource_config_file_dir,
         )
     else:
         write_json(
-            dict(current_host=current_host, hosts=hosts or ["algo-1"]), env.resource_config_file_dir
+            dict(current_host=current_host, hosts=hosts or ["algo-1"]),
+            environment.resource_config_file_dir,
         )
 
 
@@ -120,7 +121,7 @@ def create_input_data_config(channels=None):  # type: (list) -> None
     channels = channels or []
     input_data_config = {channel.name: channel.config for channel in channels}
 
-    write_json(input_data_config, env.input_data_config_file_dir)
+    write_json(input_data_config, environment.input_data_config_file_dir)
 
 
 def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hyperparameters=None):
@@ -132,7 +133,7 @@ def create_hyperparameters_config(hyperparameters, submit_dir=None, sagemaker_hy
 
     all_hyperparameters.update(hyperparameters)
 
-    write_json(all_hyperparameters, env.hyperparameters_file_dir)
+    write_json(all_hyperparameters, environment.hyperparameters_file_dir)
 
 
 File = collections.namedtuple("File", ["name", "data"])  # type: (str, str or list) -> File
@@ -241,7 +242,7 @@ class Channel(
 
     @property
     def path(self):  # type: () -> str
-        return os.path.join(env._input_data_dir, self.name)
+        return os.path.join(environment._input_data_dir, self.name)
 
 
 class TestBase(object):

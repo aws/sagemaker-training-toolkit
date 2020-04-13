@@ -22,7 +22,7 @@ from typing import Dict, List, Mapping  # noqa ignore=F401 imported but unused
 
 import six
 
-from sagemaker_training import _entry_point_type, env, errors, logging_config
+from sagemaker_training import _entry_point_type, environment, errors, logging_config
 
 
 def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
@@ -46,7 +46,7 @@ def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
     try:
         stderr = subprocess.PIPE if capture_error else None
         return subprocess.Popen(
-            cmd, env=os.environ, cwd=cwd or env.code_dir, stderr=stderr, **kwargs
+            cmd, env=os.environ, cwd=cwd or environment.code_dir, stderr=stderr, **kwargs
         )
     except Exception as e:  # pylint: disable=broad-except
         six.reraise(error_class, error_class(e), sys.exc_info()[2])
@@ -115,7 +115,7 @@ class ProcessRunner(object):
         self._env_vars = env_vars
 
     def _create_command(self):
-        entrypoint_type = _entry_point_type.get(env.code_dir, self._user_entry_point)
+        entrypoint_type = _entry_point_type.get(environment.code_dir, self._user_entry_point)
 
         if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
             entry_module = self._user_entry_point.replace(".py", "")
@@ -158,11 +158,17 @@ class ProcessRunner(object):
 
         if wait:
             process = check_error(
-                cmd, errors.ExecuteUserScriptError, capture_error=capture_error, cwd=env.code_dir
+                cmd,
+                errors.ExecuteUserScriptError,
+                capture_error=capture_error,
+                cwd=environment.code_dir,
             )
         else:
             process = create(
-                cmd, errors.ExecuteUserScriptError, capture_error=capture_error, cwd=env.code_dir
+                cmd,
+                errors.ExecuteUserScriptError,
+                capture_error=capture_error,
+                cwd=environment.code_dir,
             )
 
         self._tear_down()

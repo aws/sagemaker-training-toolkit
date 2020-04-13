@@ -20,8 +20,7 @@ from mock import Mock, patch
 import pytest
 import six
 
-import sagemaker_training
-from sagemaker_training import env, params
+from sagemaker_training import environment, params
 import test
 
 builtins_open = "__builtin__.open" if six.PY2 else "builtins.open"
@@ -63,16 +62,16 @@ ALL_HYPERPARAMETERS = dict(
 
 
 def test_read_hyperparameters():
-    test.write_json(ALL_HYPERPARAMETERS, env.hyperparameters_file_dir)
+    test.write_json(ALL_HYPERPARAMETERS, environment.hyperparameters_file_dir)
 
-    assert env.read_hyperparameters() == ALL_HYPERPARAMETERS
+    assert environment.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
 def test_read_value_serialized_hyperparameters():
     serialized_hps = {k: json.dumps(v) for k, v in ALL_HYPERPARAMETERS.items()}
-    test.write_json(serialized_hps, env.hyperparameters_file_dir)
+    test.write_json(serialized_hps, environment.hyperparameters_file_dir)
 
-    assert env.read_hyperparameters() == ALL_HYPERPARAMETERS
+    assert environment.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
 def test_read_value_serialized_and_non_value_serialized_hyperparameters():
@@ -80,83 +79,87 @@ def test_read_value_serialized_and_non_value_serialized_hyperparameters():
 
     hyperparameters.update(USER_HYPERPARAMETERS)
 
-    test.write_json(hyperparameters, env.hyperparameters_file_dir)
+    test.write_json(hyperparameters, environment.hyperparameters_file_dir)
 
-    assert env.read_hyperparameters() == ALL_HYPERPARAMETERS
+    assert environment.read_hyperparameters() == ALL_HYPERPARAMETERS
 
 
-@patch("sagemaker_training.env._read_json", lambda x: {"a": 1})
+@patch("sagemaker_training.environment._read_json", lambda x: {"a": 1})
 @patch("json.loads")
 def test_read_exception(loads):
     loads.side_effect = ValueError("Unable to read.")
 
-    assert env.read_hyperparameters() == {"a": 1}
+    assert environment.read_hyperparameters() == {"a": 1}
 
 
 def test_resource_config():
-    test.write_json(RESOURCE_CONFIG, env.resource_config_file_dir)
+    test.write_json(RESOURCE_CONFIG, environment.resource_config_file_dir)
 
-    assert env.read_resource_config() == RESOURCE_CONFIG
+    assert environment.read_resource_config() == RESOURCE_CONFIG
 
 
 def test_input_data_config():
-    test.write_json(INPUT_DATA_CONFIG, env.input_data_config_file_dir)
+    test.write_json(INPUT_DATA_CONFIG, environment.input_data_config_file_dir)
 
-    assert env.read_input_data_config() == INPUT_DATA_CONFIG
+    assert environment.read_input_data_config() == INPUT_DATA_CONFIG
 
 
 def test_channel_input_dirs():
-    input_data_path = env._input_data_dir
-    assert env.channel_path("evaluation") == os.path.join(input_data_path, "evaluation")
-    assert env.channel_path("training") == os.path.join(input_data_path, "training")
+    input_data_path = environment._input_data_dir
+    assert environment.channel_path("evaluation") == os.path.join(input_data_path, "evaluation")
+    assert environment.channel_path("training") == os.path.join(input_data_path, "training")
 
 
 @patch("subprocess.check_output", lambda s: b"GPU 0\nGPU 1")
 def test_gpu_count_in_gpu_instance():
-    assert env.num_gpus() == 2
+    assert environment.num_gpus() == 2
 
 
 @patch("subprocess.check_output", side_effect=OSError())
 def test_gpu_count_in_cpu_instance(check_output):
-    assert env.num_gpus() == 0
+    assert environment.num_gpus() == 0
 
 
 @patch("multiprocessing.cpu_count", lambda: 2)
 def test_cpu_count():
-    assert env.num_cpus() == 2
+    assert environment.num_cpus() == 2
 
 
 @pytest.fixture(name="training_env")
 def create_training_env():
-    with patch("sagemaker_training.env.read_resource_config", lambda: RESOURCE_CONFIG), patch(
-        "sagemaker_training.env.read_input_data_config", lambda: INPUT_DATA_CONFIG
-    ), patch("sagemaker_training.env.read_hyperparameters", lambda: ALL_HYPERPARAMETERS), patch(
-        "sagemaker_training.env.num_cpus", lambda: 8
+    with patch(
+        "sagemaker_training.environment.read_resource_config", lambda: RESOURCE_CONFIG
     ), patch(
-        "sagemaker_training.env.num_gpus", lambda: 4
+        "sagemaker_training.environment.read_input_data_config", lambda: INPUT_DATA_CONFIG
+    ), patch(
+        "sagemaker_training.environment.read_hyperparameters", lambda: ALL_HYPERPARAMETERS
+    ), patch(
+        "sagemaker_training.environment.num_cpus", lambda: 8
+    ), patch(
+        "sagemaker_training.environment.num_gpus", lambda: 4
     ):
         session_mock = Mock()
         session_mock.region_name = "us-west-2"
         old_environ = os.environ.copy()
         os.environ[params.TRAINING_JOB_ENV] = "training-job-42"
 
-        yield sagemaker_training.training_env()
+        yield environment.Environment()
 
         os.environ = old_environ
 
 
 def test_create_training_env_without_training_files_and_directories_should_not_fail():
-    training_env = sagemaker_training.training_env()
+    training_env = environment.Environment()
     hostname = socket.gethostname()
     assert training_env.current_host == hostname
     assert training_env.hosts == [hostname]
 
 
 def test_env():
-    assert env.input_dir.endswith("/opt/ml/input")
-    assert env.input_config_dir.endswith("/opt/ml/input/config")
-    assert env.model_dir.endswith("/opt/ml/model")
-    assert env.output_dir.endswith("/opt/ml/output")
+    assert environment.input_dir.endswith("/opt/ml/input")
+    assert environment.input_config_dir.endswith("/opt/ml/input/config")
+    assert environment.model_dir.endswith("/opt/ml/model")
+    assert environment.output_dir.endswith("/opt/ml/output")
 
 
 def test_training_env(training_env):
@@ -212,13 +215,13 @@ def test_env_mapping_properties(training_env):
     }
 
 
-@patch("sagemaker_training.env.num_cpus", lambda: 8)
-@patch("sagemaker_training.env.num_gpus", lambda: 4)
+@patch("sagemaker_training.environment.num_cpus", lambda: 8)
+@patch("sagemaker_training.environment.num_gpus", lambda: 4)
 def test_env_dictionary():
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
     os.environ[params.USER_PROGRAM_ENV] = "my_app.py"
-    test_env = env._Env()
+    test_env = environment.Environment()
 
     assert len(test_env) == len(test_env.properties())
 
@@ -231,7 +234,7 @@ def test_env_module_name(sagemaker_program):
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
     os.environ[params.USER_PROGRAM_ENV] = sagemaker_program
-    module_name = env._Env().module_name
+    module_name = environment.Environment().module_name
 
     del os.environ[params.USER_PROGRAM_ENV]
 

@@ -16,13 +16,12 @@ import time
 
 import pytest
 
-import sagemaker_training
 from sagemaker_training import timeout
 
 
 def test_timeout():
     sec = 2
-    with pytest.raises(sagemaker_training.timeout.TimeoutError):
+    with pytest.raises(timeout.TimeoutError):
         with timeout.timeout(seconds=sec):
             print("Waiting and testing timeout, it should happen in {} seconds.".format(sec))
             time.sleep(sec + 1)

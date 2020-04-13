@@ -155,7 +155,7 @@ def split_by_criteria(
 class MappingMixin(collections.Mapping):
     """A mixin class that allows for the creation of a dictionary like object,
     with any built-in function that works with a dictionary. This is used by the
-    env._Env base class.
+    environment._Env base class.
     """
 
     def properties(self):  # type: () -> list

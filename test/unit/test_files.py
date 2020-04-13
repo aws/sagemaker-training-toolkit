@@ -19,7 +19,7 @@ from mock import mock_open, patch
 import pytest
 import six
 
-from sagemaker_training import env, files
+from sagemaker_training import environment, files
 import test
 
 builtins_open = "__builtin__.open" if six.PY2 else "builtins.open"
@@ -57,9 +57,9 @@ ALL_HYPERPARAMETERS = dict(
 
 
 def test_read_json():
-    test.write_json(ALL_HYPERPARAMETERS, env.hyperparameters_file_dir)
+    test.write_json(ALL_HYPERPARAMETERS, environment.hyperparameters_file_dir)
 
-    assert files.read_json(env.hyperparameters_file_dir) == ALL_HYPERPARAMETERS
+    assert files.read_json(environment.hyperparameters_file_dir) == ALL_HYPERPARAMETERS
 
 
 def test_read_json_throws_exception():
@@ -68,9 +68,9 @@ def test_read_json_throws_exception():
 
 
 def test_read_file():
-    test.write_json("test", env.hyperparameters_file_dir)
+    test.write_json("test", environment.hyperparameters_file_dir)
 
-    assert files.read_file(env.hyperparameters_file_dir) == '"test"'
+    assert files.read_file(environment.hyperparameters_file_dir) == '"test"'
 
 
 @patch("tempfile.mkdtemp")
@@ -102,7 +102,7 @@ def test_write_file():
 
 @patch(builtins_open, mock_open())
 def test_write_success_file():
-    file_path = os.path.join(env.output_dir, "success")
+    file_path = os.path.join(environment.output_dir, "success")
     empty_msg = ""
     files.write_success_file()
     open.assert_called_with(file_path, "w")
@@ -111,7 +111,7 @@ def test_write_success_file():
 
 @patch(builtins_open, mock_open())
 def test_write_failure_file():
-    file_path = os.path.join(env.output_dir, "failure")
+    file_path = os.path.join(environment.output_dir, "failure")
     failure_msg = "This is a failure"
     files.write_failure_file(failure_msg)
     open.assert_called_with(file_path, "w")
@@ -123,12 +123,12 @@ def test_write_failure_file():
 @patch("shutil.rmtree")
 @patch("shutil.copytree")
 def test_download_and_extract_source_dir(copy, rmtree, s3_download):
-    uri = env.channel_path("code")
-    files.download_and_extract(uri, env.code_dir)
+    uri = environment.channel_path("code")
+    files.download_and_extract(uri, environment.code_dir)
     s3_download.assert_not_called()
 
-    rmtree.assert_any_call(env.code_dir)
-    copy.assert_called_with(uri, env.code_dir)
+    rmtree.assert_any_call(environment.code_dir)
+    copy.assert_called_with(uri, environment.code_dir)
 
 
 @patch("sagemaker_training.files.s3_download")
@@ -136,10 +136,10 @@ def test_download_and_extract_source_dir(copy, rmtree, s3_download):
 @patch("shutil.copy2")
 def test_download_and_extract_file(copy, s3_download):
     uri = __file__
-    files.download_and_extract(uri, env.code_dir)
+    files.download_and_extract(uri, environment.code_dir)
 
     s3_download.assert_not_called()
-    copy.assert_called_with(uri, env.code_dir)
+    copy.assert_called_with(uri, environment.code_dir)
 
 
 @patch("sagemaker_training.files.s3_download")
@@ -149,9 +149,9 @@ def test_download_and_extract_tar(extractall, s3_download):
     t = tarfile.open(name="test.tar.gz", mode="w:gz")
     t.close()
     uri = t.name
-    files.download_and_extract(uri, env.code_dir)
+    files.download_and_extract(uri, environment.code_dir)
 
     s3_download.assert_not_called()
-    extractall.assert_called_with(path=env.code_dir)
+    extractall.assert_called_with(path=environment.code_dir)
 
     os.remove(uri)

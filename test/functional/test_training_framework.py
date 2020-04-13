@@ -22,8 +22,7 @@ import mock
 import numpy as np
 import pytest
 
-import sagemaker_training
-from sagemaker_training import entry_point, env, errors, functions, modules, trainer
+from sagemaker_training import entry_point, environment, errors, functions, modules, trainer
 import test
 from test import fake_ml_framework
 
@@ -190,7 +189,7 @@ setup(packages=[''],
 
 
 def framework_training_fn():
-    training_env = sagemaker_training.training_env()
+    training_env = environment.Environment()
 
     mod = modules.import_module(training_env.module_dir, training_env.module_name)
 
@@ -232,7 +231,7 @@ def test_training_framework(user_script, capture_error):
 
     assert execute_an_wrap_exit(framework_training_fn) == trainer.SUCCESS_CODE
 
-    model_path = os.path.join(env.model_dir, "saved_model")
+    model_path = os.path.join(environment.model_dir, "saved_model")
     model = fake_ml_framework.Model.load(model_path)
 
     assert model.epochs == 10
@@ -262,7 +261,7 @@ def test_training_framework_network_isolation(user_script, capture_error):
         test.File(name="user_script.py", data="")
     )  # dummy module for hyperparameters
 
-    submit_dir = env.input_dir + "/data/code"
+    submit_dir = environment.input_dir + "/data/code"
     hyperparameters = dict(
         training_data_file="training_data.npz",
         sagemaker_program="user_script.py",
@@ -281,7 +280,7 @@ def test_training_framework_network_isolation(user_script, capture_error):
 
     assert execute_an_wrap_exit(framework_training_fn) == trainer.SUCCESS_CODE
 
-    model_path = os.path.join(env.model_dir, "saved_model")
+    model_path = os.path.join(environment.model_dir, "saved_model")
     model = fake_ml_framework.Model.load(model_path)
 
     assert model.epochs == 10
@@ -313,14 +312,14 @@ def test_trainer_report_success(user_script, sagemaker_program):
 
     assert execute_an_wrap_exit(trainer.train) == trainer.SUCCESS_CODE
 
-    model_path = os.path.join(env.model_dir, "saved_model")
+    model_path = os.path.join(environment.model_dir, "saved_model")
 
     model = fake_ml_framework.Model.load(model_path)
 
     assert model.epochs == 10
     assert model.batch_size == 64
     assert model.optimizer == "SGD"
-    assert os.path.exists(os.path.join(env.output_dir, "success"))
+    assert os.path.exists(os.path.join(environment.output_dir, "success"))
 
 
 def test_trainer_report_failure():
@@ -347,7 +346,7 @@ def test_trainer_report_failure():
 
     assert execute_an_wrap_exit(trainer.train) == errno.ENOENT
 
-    failure_file = os.path.join(env.output_dir, "failure")
+    failure_file = os.path.join(environment.output_dir, "failure")
     assert os.path.exists(failure_file)
 
     message = failure_message()
@@ -357,7 +356,7 @@ def test_trainer_report_failure():
 
 
 def framework_training_with_script_mode_fn(capture_error):
-    training_env = sagemaker_training.training_env()
+    training_env = environment.Environment()
 
     entry_point.run(
         training_env.module_dir,
@@ -369,7 +368,7 @@ def framework_training_with_script_mode_fn(capture_error):
 
 
 def mpi_training_with_script_mode_fn(capture_error):
-    training_env = sagemaker_training.training_env()
+    training_env = environment.Environment()
 
     entry_point.run(
         training_env.module_dir,
@@ -390,7 +389,7 @@ def test_parameter_server():
         hyperparameters=hyperparameters,
         channels=[test.Channel.create(name="training")],
     )
-    training_env = sagemaker_training.training_env()
+    training_env = environment.Environment()
     process = entry_point.run(
         training_env.module_dir,
         training_env.user_entry_point,
@@ -417,7 +416,7 @@ def test_script_mode():
         sagemaker_program="user_script.py",
         epochs=10,
         batch_size=64,
-        model_dir=env.model_dir,
+        model_dir=environment.model_dir,
     )
 
     test.prepare(user_module=module, hyperparameters=hyperparameters, channels=[channel])
@@ -427,7 +426,7 @@ def test_script_mode():
         == trainer.SUCCESS_CODE
     )
 
-    model_path = os.path.join(env.model_dir, "saved_model")
+    model_path = os.path.join(environment.model_dir, "saved_model")
 
     model = fake_ml_framework.Model.load(model_path)
 
@@ -455,7 +454,7 @@ def test_script_mode_local_directory(tmpdir):
         sagemaker_submit_directory=tmp_code_dir,
         epochs=10,
         batch_size=64,
-        model_dir=env.model_dir,
+        model_dir=environment.model_dir,
     )
 
     test.prepare(
@@ -467,7 +466,7 @@ def test_script_mode_local_directory(tmpdir):
         == trainer.SUCCESS_CODE
     )
 
-    model_path = os.path.join(env.model_dir, "saved_model")
+    model_path = os.path.join(environment.model_dir, "saved_model")
 
     model = fake_ml_framework.Model.load(model_path)
 
@@ -525,7 +524,7 @@ def test_script_mode_client_import_error():
 
 
 def failure_message():
-    with open(os.path.join(env.output_dir, "failure")) as f:
+    with open(os.path.join(environment.output_dir, "failure")) as f:
         return f.read()
 
 

@@ -18,7 +18,7 @@ import os
 from mock import ANY, MagicMock, patch
 
 import gethostname
-from sagemaker_training import env, mpi
+from sagemaker_training import environment, mpi
 
 
 def does_not_connect():
@@ -89,7 +89,7 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists):
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
-@patch("sagemaker_training.training_env")
+@patch("sagemaker_training.environment.Environment")
 def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
     with patch.dict(os.environ, clear=True):
 
@@ -164,7 +164,7 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
                 "-c",
                 "./train.sh -v --lr 35",
             ],
-            cwd=env.code_dir,
+            cwd=environment.code_dir,
             env=ANY,
             stderr=None,
         )
@@ -178,7 +178,7 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
-@patch("sagemaker_training.training_env")
+@patch("sagemaker_training.environment.Environment")
 def test_mpi_master_run_python(
     training_env, popen, policy, ssh_client, python_executable, path_exists
 ):
@@ -259,7 +259,7 @@ def test_mpi_master_run_python(
                 "--lr",
                 "35",
             ],
-            cwd=env.code_dir,
+            cwd=environment.code_dir,
             env=ANY,
             stderr=None,
         )

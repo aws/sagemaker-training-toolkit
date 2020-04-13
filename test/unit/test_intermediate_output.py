@@ -18,7 +18,7 @@ from inotify_simple import Event, flags
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_training import env, files, intermediate_output
+from sagemaker_training import environment, files, intermediate_output
 
 REGION = "us-west"
 S3_BUCKET = "s3://mybucket/"
@@ -116,7 +116,7 @@ def test_new_folders_are_watched(process_mock, upload_file, inotify_mock, copy2)
     inotify = inotify_mock.return_value
 
     new_dir = "new_dir"
-    new_dir_path = os.path.join(env.output_intermediate_dir, new_dir)
+    new_dir_path = os.path.join(environment.output_intermediate_dir, new_dir)
     inotify.add_watch.return_value = 1
     inotify.read.return_value = [Event(1, flags.CREATE | flags.ISDIR, "cookie", new_dir)]
 
@@ -135,7 +135,7 @@ def test_new_folders_are_watched(process_mock, upload_file, inotify_mock, copy2)
     intermediate_output.start_sync(S3_BUCKET, REGION)
 
     watch_flags = flags.CLOSE_WRITE | flags.CREATE
-    inotify.add_watch.assert_any_call(env.output_intermediate_dir, watch_flags)
+    inotify.add_watch.assert_any_call(environment.output_intermediate_dir, watch_flags)
     inotify.add_watch.assert_any_call(new_dir_path, watch_flags)
     inotify.read.assert_called()
     copy2.assert_not_called()

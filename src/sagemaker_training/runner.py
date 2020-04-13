@@ -18,8 +18,7 @@ from __future__ import absolute_import
 import enum
 from typing import Dict, List  # noqa ignore=F401 imported but unused
 
-import sagemaker_training
-from sagemaker_training import mpi, params, process
+from sagemaker_training import environment, mpi, params, process
 
 
 class RunnerType(enum.Enum):
@@ -56,7 +55,7 @@ def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=
 def _get_by_runner_type(
     identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None
 ):
-    env = sagemaker_training.training_env()
+    env = environment.Environment()
     user_entry_point = user_entry_point or env.user_entry_point
     args = args or env.to_cmd_args()
     env_vars = env_vars or env.to_env_vars()

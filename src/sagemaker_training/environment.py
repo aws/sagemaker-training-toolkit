@@ -308,135 +308,29 @@ def num_cpus():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
-class _Env(mapping.MappingMixin):
-    """Base Class which provides access to aspects of the environment including
-    system characteristics, filesystem locations, environment variables and configuration settings.
-
-    The Env is a read-only snapshot of the container environment. It does not contain any form of
-    state. It is a dictionary like object, allowing any builtin function that works with dictionary.
-
-    Attributes:
-            current_host (str): The name of the current container on the container network. For
-                                example, 'algo-1'.
-            module_name (str): The name of the user provided module.
-            module_dir (str): The full path location of the user provided module.
-    """
-
-    def __init__(self):
-        """Initialize a read-only snapshot of the container environment."""
-        current_host = os.environ.get(params.CURRENT_HOST_ENV)
-        module_name = os.environ.get(params.USER_PROGRAM_ENV, None)
-        module_dir = os.environ.get(params.SUBMIT_DIR_ENV, code_dir)
-        log_level = int(os.environ.get(params.LOG_LEVEL_ENV, logging.INFO))
-
-        self._current_host = current_host
-        self._num_gpus = num_gpus()
-        self._num_cpus = num_cpus()
-        self._module_name = module_name
-        self._user_entry_point = module_name
-        self._module_dir = module_dir
-        self._log_level = log_level
-        self._model_dir = model_dir
-
-    @property
-    def model_dir(self):  # type: () -> str
-        """Returns:
-            str: The directory where models should be saved, e.g., /opt/ml/model/"""
-        return self._model_dir
-
-    @property
-    def current_host(self):  # type: () -> str
-        """The name of the current container on the container network. For example, 'algo-1'.
-        Returns:
-            str: Current host.
-        """
-        return self._current_host
-
-    @property
-    def num_gpus(self):  # type: () -> int
-        """The number of GPUs available in the current container.
-        Returns:
-            int: Number of GPUs available in the current container.
-        """
-        return self._num_gpus
-
-    @property
-    def num_cpus(self):  # type: () -> int
-        """The number of CPUs available in the current container.
-        Returns:
-            int: Number of CPUs available in the current container.
-        """
-        return self._num_cpus
-
-    @property
-    def module_name(self):  # type: () -> str
-        """The name of the user provided module.
-        Returns:
-            str: Name of the user provided module.
-        """
-        return self._parse_module_name(self._module_name)
-
-    @property
-    def module_dir(self):  # type: () -> str
-        """The full path location of the user provided module.
-        Returns:
-            str: Full path location of the user provided module.
-        """
-        return self._module_dir
-
-    @property
-    def log_level(self):  # type: () -> int
-        """Environment logging level.
-        Returns:
-            int: Environment logging level.
-        """
-        return self._log_level
-
-    @property
-    def user_entry_point(self):  # type: () -> str
-        """The name of provided user entry point.
-        Returns:
-            str: The name of provided user entry point.
-        """
-        return self._user_entry_point
-
-    @staticmethod
-    def _parse_module_name(program_param):
-        """Given a module name or a script name, Returns the module name.
-        This function is used for backwards compatibility.
-        Args:
-            program_param (str): Module or script name.
-        Returns:
-            str: Module name.
-        """
-        if program_param and program_param.endswith(".py"):
-            return program_param[:-3]
-        return program_param
-
-
-class TrainingEnv(_Env):
+class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-methods
     """Provides access to aspects of the training environment relevant to training jobs, including
     hyperparameters, system characteristics, filesystem locations, environment variables and
     configuration settings.
 
-    The TrainingEnv is a read-only snapshot of the container environment during training. It does
+    The Environment is a read-only snapshot of the container environment during training. It does
     not contain any form of state.
 
     It is a dictionary like object, allowing any builtin function that works with dictionary.
 
     Example on how a script can use training environment:
-            >>>import sagemaker_training
+            >>>from sagemaker_training import environment
 
-            >>>env = sagemaker_training.training_env()
+            >>>env = environment.Environment()
 
             get the path of the channel 'training' from the inputdataconfig.json file
-            >>>training_dir = env.channel_input_dirs['training']
+            >>>training_dir = environment.channel_input_dirs['training']
 
             get a the hyperparameter 'training_data_file' from hyperparameters.json file
-            >>>file_name = env.hyperparameters['training_data_file']
+            >>>file_name = environment.hyperparameters['training_data_file']
 
             get the folder where the model should be saved
-            >>>model_dir = env.model_dir
+            >>>model_dir = environment.model_dir
 
             >>>data = np.load(os.path.join(training_dir, file_name))
             >>>x_train, y_train = data['features'], keras.utils.to_categorical(data['labels'])
@@ -448,6 +342,10 @@ class TrainingEnv(_Env):
             >>>model.save(os.path.join(model_dir, 'saved_model'))
 
     Attributes:
+        current_host (str): The name of the current container on the container network. For
+                            example, 'algo-1'.
+        module_name (str): The name of the user provided module.
+        module_dir (str): The full path location of the user provided module.
         input_dir (str): The input_dir, e.g. /opt/ml/input/, is the directory where SageMaker saves
                          input data and configuration files before and during training. The input
                          data directory has the following subdirectories:
@@ -543,21 +441,74 @@ class TrainingEnv(_Env):
     """
 
     def __init__(self, resource_config=None, input_data_config=None, hyperparameters=None):
-        super(TrainingEnv, self).__init__()
+        """Initialize a read-only snapshot of the container environment.
+
+        Args:
+            resource_config (dict[string, object]): The contents from
+                /opt/ml/input/config/resourceconfig.json.
+                It has the following keys:
+                    - current_host: The name of the current container on the container network.
+                        For example, 'algo-1'.
+                    -  hosts: The list of names of all containers on the container network,
+                        sorted lexicographically. For example, `['algo-1', 'algo-2', 'algo-3']`
+                        for a three-node cluster.
+
+            input_data_config (dict[string, object]): The contents from /opt/ml/input/config/inputdataconfig.json.
+                For example, suppose that you specify three data channels (train, evaluation, and
+                validation) in your request. This dictionary will contain:
+
+                {'train': {
+                    'ContentType':  'trainingContentType',
+                    'TrainingInputMode': 'File',
+                    'S3DistributionType': 'FullyReplicated',
+                    'RecordWrapperType': 'None'
+                },
+                'evaluation' : {
+                    'ContentType': 'evalContentType',
+                    'TrainingInputMode': 'File',
+                    'S3DistributionType': 'FullyReplicated',
+                    'RecordWrapperType': 'None'
+                },
+                'validation': {
+                    'TrainingInputMode': 'File',
+                    'S3DistributionType': 'FullyReplicated',
+                    'RecordWrapperType': 'None'
+                }}
+
+                You can find more information about /opt/ml/input/config/inputdataconfig.json here:
+                https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
+
+            hyperparameters (dict[string, object]): An instance of `HyperParameters` containing the
+                training job hyperparameters.
+        """
+        current_host = os.environ.get(params.CURRENT_HOST_ENV)
+        module_name = os.environ.get(params.USER_PROGRAM_ENV, None)
+        module_dir = os.environ.get(params.SUBMIT_DIR_ENV, code_dir)
+        log_level = int(os.environ.get(params.LOG_LEVEL_ENV, logging.INFO))
+
+        self._current_host = current_host
+        self._num_gpus = num_gpus()
+        self._num_cpus = num_cpus()
+        self._module_name = module_name
+        self._user_entry_point = module_name
+        self._module_dir = module_dir
+        self._log_level = log_level
+        self._model_dir = model_dir
 
         resource_config = resource_config or read_resource_config()
+        input_data_config = input_data_config or read_input_data_config()
+        all_hyperparameters = hyperparameters or read_hyperparameters()
+
         current_host = resource_config["current_host"]
         hosts = resource_config["hosts"]
-        input_data_config = input_data_config or read_input_data_config()
 
-        all_hyperparameters = hyperparameters or read_hyperparameters()
         split_result = mapping.split_by_criteria(
             all_hyperparameters,
             keys=params.SAGEMAKER_HYPERPARAMETERS,
             prefix=params.SAGEMAKER_PREFIX,
         )
-
         sagemaker_hyperparameters = split_result.included
+
         additional_framework_parameters = {
             k: sagemaker_hyperparameters[k]
             for k in sagemaker_hyperparameters.keys()
@@ -610,6 +561,93 @@ class TrainingEnv(_Env):
 
         self._master_hostname = list(hosts)[0]
         self._is_master = current_host == self._master_hostname
+
+    @property
+    def model_dir(self):  # type: () -> str
+        """ The directory where models should be saved.
+
+        Returns:
+            str: The directory where models should be saved, e.g., /opt/ml/model/
+        """
+        return self._model_dir
+
+    @property
+    def current_host(self):  # type: () -> str
+        """The name of the current container on the container network. For example, 'algo-1'.
+
+        Returns:
+            str: Current host.
+        """
+        return self._current_host
+
+    @property
+    def num_gpus(self):  # type: () -> int
+        """The number of GPUs available in the current container.
+
+        Returns:
+            int: Number of GPUs available in the current container.
+        """
+        return self._num_gpus
+
+    @property
+    def num_cpus(self):  # type: () -> int
+        """The number of CPUs available in the current container.
+
+        Returns:
+            int: Number of CPUs available in the current container.
+        """
+        return self._num_cpus
+
+    @property
+    def module_name(self):  # type: () -> str
+        """The name of the user provided module.
+
+        Returns:
+            str: Name of the user provided module.
+        """
+        return self._parse_module_name(self._module_name)
+
+    @property
+    def module_dir(self):  # type: () -> str
+        """The full path location of the user provided module.
+
+        Returns:
+            str: Full path location of the user provided module.
+        """
+        return self._module_dir
+
+    @property
+    def log_level(self):  # type: () -> int
+        """Environment logging level.
+
+        Returns:
+            int: Environment logging level.
+        """
+        return self._log_level
+
+    @property
+    def user_entry_point(self):  # type: () -> str
+        """The name of provided user entry point.
+
+        Returns:
+            str: The name of provided user entry point.
+        """
+        return self._user_entry_point
+
+    @staticmethod
+    def _parse_module_name(program_param):
+        """Given a module name or a script name, Returns the module name.
+        This function is used for backwards compatibility.
+
+        Args:
+            program_param (str): Module or script name.
+
+        Returns:
+            str: Module name.
+        """
+        if program_param and program_param.endswith(".py"):
+            return program_param[:-3]
+        return program_param
 
     @property
     def is_master(self):  # type: () -> bool
@@ -705,6 +743,7 @@ class TrainingEnv(_Env):
     def hosts(self):  # type: () -> list
         """The list of names of all containers on the container network, sorted lexicographically.
                 For example, `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
+
         Returns:
               list[str]: All the hosts in the training network.
         """
@@ -722,6 +761,7 @@ class TrainingEnv(_Env):
             - `channel`[key](str) - the name of the channel defined in the input_data_config.
             - `training data path`[value](str) - the path to the directory where the training
                                                  data is saved.
+
         Returns:
             dict[str, str] With the information about the channels.
         """
@@ -729,7 +769,8 @@ class TrainingEnv(_Env):
 
     @property
     def network_interface_name(self):  # type: () -> str
-        """Name of the network interface used for distributed training
+        """Name of the network interface used for distributed training.
+
         Returns:
               str: Name of the network interface, for example, 'ethwe'.
         """
@@ -741,6 +782,7 @@ class TrainingEnv(_Env):
         and configuration files before and during training.
         The input data directory has the following subdirectories:
             config (`input_config_dir`) and data (`input_data_dir`)
+
         Returns:
             str: The path of the input directory, e.g. /opt/ml/input/.
         """
@@ -760,6 +802,7 @@ class TrainingEnv(_Env):
             - `resourceconfig.json`: name of the current host and all host containers in the
                                      training More information about this files can be find here:
             https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
+
         Returns:
             str: The path of the input directory, e.g. /opt/ml/input/config/.
         """
@@ -770,6 +813,7 @@ class TrainingEnv(_Env):
         """The directory where training success/failure indications will be written,
         e.g. /opt/ml/output.
         To save non-model artifacts check `output_data_dir`.
+
         Returns:
             str: The path to the output directory, e.g. /opt/ml/output/.
         """
@@ -778,6 +822,7 @@ class TrainingEnv(_Env):
     @property
     def hyperparameters(self):  # type: () -> dict
         """The dict of hyperparameters that were passed to the training job.
+
         Returns:
             dict[str, object]: An instance of `HyperParameters` containing the training job
                                                     hyperparameters.
@@ -787,44 +832,48 @@ class TrainingEnv(_Env):
     @property
     def resource_config(self):  # type: () -> dict
         """A dictionary with the contents from /opt/ml/input/config/resourceconfig.json.
-                It has the following keys:
-                    - current_host: The name of the current container on the container
-                                    network. For example, 'algo-1'.
-                    -  hosts: The list of names of all containers on the container network,
-                              sorted lexicographically. For example,
-                              `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
-                Returns:
-                    dict[str, str or list(str)]
+
+        It has the following keys:
+            - current_host: The name of the current container on the container
+                            network. For example, 'algo-1'.
+            -  hosts: The list of names of all containers on the container network,
+                      sorted lexicographically. For example,
+                      `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
+
+        Returns:
+            dict[str, str or list(str)]
         """
         return self._resource_config
 
     @property
     def input_data_config(self):  # type: () -> dict
         """A dictionary with the contents from /opt/ml/input/config/inputdataconfig.json.
-                For example, suppose that you specify three data channels (train,
-                evaluation, and validation) in your request. This dictionary will contain:
-                ```{"train": {
-                        "ContentType":  "trainingContentType",
-                        "TrainingInputMode": "File",
-                        "S3DistributionType": "FullyReplicated",
-                        "RecordWrapperType": "None"
-                    },
-                    "evaluation" : {
-                        "ContentType": "evalContentType",
-                        "TrainingInputMode": "File",
-                        "S3DistributionType": "FullyReplicated",
-                        "RecordWrapperType": "None"
-                    },
-                    "validation": {
-                        "TrainingInputMode": "File",
-                        "S3DistributionType": "FullyReplicated",
-                        "RecordWrapperType": "None"
-                    }
-                 } ```
-                You can find more information about /opt/ml/input/config/inputdataconfig.json here:
-                    https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
-                Returns:
-                    dict[str, dict[str, str]]
+
+        For example, suppose that you specify three data channels (train,
+        evaluation, and validation) in your request. This dictionary will contain:
+        ```{"train": {
+                "ContentType":  "trainingContentType",
+                "TrainingInputMode": "File",
+                "S3DistributionType": "FullyReplicated",
+                "RecordWrapperType": "None"
+            },
+            "evaluation" : {
+                "ContentType": "evalContentType",
+                "TrainingInputMode": "File",
+                "S3DistributionType": "FullyReplicated",
+                "RecordWrapperType": "None"
+            },
+            "validation": {
+                "TrainingInputMode": "File",
+                "S3DistributionType": "FullyReplicated",
+                "RecordWrapperType": "None"
+            }
+         } ```
+        You can find more information about /opt/ml/input/config/inputdataconfig.json here:
+            https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
+
+        Returns:
+            dict[str, dict[str, str]]
         """
         return self._input_data_config
 
@@ -835,6 +884,7 @@ class TrainingEnv(_Env):
         As your algorithm runs in a container, it generates output including the status of the
         training job and model and output artifacts. Your algorithm should write this information
         to the this directory.
+
         Returns:
             str: The path to output data directory, e.g. /opt/ml/output/data/algo-1.
         """
@@ -845,6 +895,7 @@ class TrainingEnv(_Env):
         """The directory for intermediate output artifacts that should be synced to S3.
         Any files written to this directory will be uploaded to S3 by a background process
         while training is in progress, but only if sagemaker_s3_output was specified.
+
         Returns:
             str: The path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
         """
@@ -852,9 +903,12 @@ class TrainingEnv(_Env):
 
     @property
     def framework_module(self):  # type: () -> str
-        """Returns:
+        """Name of the framework module and entry point.
+
+        Returns:
             str: Name of the framework module and entry point. For example:
-                my_module:main"""
+                my_module:main
+        """
         return self._framework_module
 
 
