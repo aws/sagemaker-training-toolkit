@@ -308,113 +308,7 @@ def num_cpus():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
-class _Env(mapping.MappingMixin):
-    """Base Class which provides access to aspects of the environment including
-    system characteristics, filesystem locations, environment variables and configuration settings.
-
-    The Env is a read-only snapshot of the container environment. It does not contain any form of
-    state. It is a dictionary like object, allowing any builtin function that works with dictionary.
-
-    Attributes:
-            current_host (str): The name of the current container on the container network. For
-                                example, 'algo-1'.
-            module_name (str): The name of the user provided module.
-            module_dir (str): The full path location of the user provided module.
-    """
-
-    def __init__(self):
-        """Initialize a read-only snapshot of the container environment."""
-        current_host = os.environ.get(params.CURRENT_HOST_ENV)
-        module_name = os.environ.get(params.USER_PROGRAM_ENV, None)
-        module_dir = os.environ.get(params.SUBMIT_DIR_ENV, code_dir)
-        log_level = int(os.environ.get(params.LOG_LEVEL_ENV, logging.INFO))
-
-        self._current_host = current_host
-        self._num_gpus = num_gpus()
-        self._num_cpus = num_cpus()
-        self._module_name = module_name
-        self._user_entry_point = module_name
-        self._module_dir = module_dir
-        self._log_level = log_level
-        self._model_dir = model_dir
-
-    @property
-    def model_dir(self):  # type: () -> str
-        """Returns:
-            str: The directory where models should be saved, e.g., /opt/ml/model/"""
-        return self._model_dir
-
-    @property
-    def current_host(self):  # type: () -> str
-        """The name of the current container on the container network. For example, 'algo-1'.
-        Returns:
-            str: Current host.
-        """
-        return self._current_host
-
-    @property
-    def num_gpus(self):  # type: () -> int
-        """The number of GPUs available in the current container.
-        Returns:
-            int: Number of GPUs available in the current container.
-        """
-        return self._num_gpus
-
-    @property
-    def num_cpus(self):  # type: () -> int
-        """The number of CPUs available in the current container.
-        Returns:
-            int: Number of CPUs available in the current container.
-        """
-        return self._num_cpus
-
-    @property
-    def module_name(self):  # type: () -> str
-        """The name of the user provided module.
-        Returns:
-            str: Name of the user provided module.
-        """
-        return self._parse_module_name(self._module_name)
-
-    @property
-    def module_dir(self):  # type: () -> str
-        """The full path location of the user provided module.
-        Returns:
-            str: Full path location of the user provided module.
-        """
-        return self._module_dir
-
-    @property
-    def log_level(self):  # type: () -> int
-        """Environment logging level.
-        Returns:
-            int: Environment logging level.
-        """
-        return self._log_level
-
-    @property
-    def user_entry_point(self):  # type: () -> str
-        """The name of provided user entry point.
-        Returns:
-            str: The name of provided user entry point.
-        """
-        return self._user_entry_point
-
-    @staticmethod
-    def _parse_module_name(program_param):
-        """Given a module name or a script name, Returns the module name.
-        This function is used for backwards compatibility.
-        Args:
-            program_param (str): Module or script name.
-        Returns:
-            str: Module name.
-        """
-        if program_param and program_param.endswith(".py"):
-            return program_param[:-3]
-        return program_param
-
-
-class TrainingEnv(_Env):
+class TrainingEnv(mapping.MappingMixin):  # pylint:disable=too-many-public-methods
     """Provides access to aspects of the training environment relevant to training jobs, including
     hyperparameters, system characteristics, filesystem locations, environment variables and
     configuration settings.
@@ -448,6 +342,10 @@ class TrainingEnv(_Env):
             >>>model.save(os.path.join(model_dir, 'saved_model'))
 
     Attributes:
+        current_host (str): The name of the current container on the container network. For
+                            example, 'algo-1'.
+        module_name (str): The name of the user provided module.
+        module_dir (str): The full path location of the user provided module.
         input_dir (str): The input_dir, e.g. /opt/ml/input/, is the directory where SageMaker saves
                          input data and configuration files before and during training. The input
                          data directory has the following subdirectories:
@@ -543,7 +441,19 @@ class TrainingEnv(_Env):
     """
 
     def __init__(self, resource_config=None, input_data_config=None, hyperparameters=None):
-        super(TrainingEnv, self).__init__()
+        current_host = os.environ.get(params.CURRENT_HOST_ENV)
+        module_name = os.environ.get(params.USER_PROGRAM_ENV, None)
+        module_dir = os.environ.get(params.SUBMIT_DIR_ENV, code_dir)
+        log_level = int(os.environ.get(params.LOG_LEVEL_ENV, logging.INFO))
+
+        self._current_host = current_host
+        self._num_gpus = num_gpus()
+        self._num_cpus = num_cpus()
+        self._module_name = module_name
+        self._user_entry_point = module_name
+        self._module_dir = module_dir
+        self._log_level = log_level
+        self._model_dir = model_dir
 
         resource_config = resource_config or read_resource_config()
         input_data_config = input_data_config or read_input_data_config()
@@ -611,6 +521,81 @@ class TrainingEnv(_Env):
 
         self._master_hostname = list(hosts)[0]
         self._is_master = current_host == self._master_hostname
+
+    @property
+    def model_dir(self):  # type: () -> str
+        """Returns:
+            str: The directory where models should be saved, e.g., /opt/ml/model/"""
+        return self._model_dir
+
+    @property
+    def current_host(self):  # type: () -> str
+        """The name of the current container on the container network. For example, 'algo-1'.
+        Returns:
+            str: Current host.
+        """
+        return self._current_host
+
+    @property
+    def num_gpus(self):  # type: () -> int
+        """The number of GPUs available in the current container.
+        Returns:
+            int: Number of GPUs available in the current container.
+        """
+        return self._num_gpus
+
+    @property
+    def num_cpus(self):  # type: () -> int
+        """The number of CPUs available in the current container.
+        Returns:
+            int: Number of CPUs available in the current container.
+        """
+        return self._num_cpus
+
+    @property
+    def module_name(self):  # type: () -> str
+        """The name of the user provided module.
+        Returns:
+            str: Name of the user provided module.
+        """
+        return self._parse_module_name(self._module_name)
+
+    @property
+    def module_dir(self):  # type: () -> str
+        """The full path location of the user provided module.
+        Returns:
+            str: Full path location of the user provided module.
+        """
+        return self._module_dir
+
+    @property
+    def log_level(self):  # type: () -> int
+        """Environment logging level.
+        Returns:
+            int: Environment logging level.
+        """
+        return self._log_level
+
+    @property
+    def user_entry_point(self):  # type: () -> str
+        """The name of provided user entry point.
+        Returns:
+            str: The name of provided user entry point.
+        """
+        return self._user_entry_point
+
+    @staticmethod
+    def _parse_module_name(program_param):
+        """Given a module name or a script name, Returns the module name.
+        This function is used for backwards compatibility.
+        Args:
+            program_param (str): Module or script name.
+        Returns:
+            str: Module name.
+        """
+        if program_param and program_param.endswith(".py"):
+            return program_param[:-3]
+        return program_param
 
     @property
     def is_master(self):  # type: () -> bool

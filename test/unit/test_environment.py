@@ -221,7 +221,7 @@ def test_env_dictionary():
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
     os.environ[params.USER_PROGRAM_ENV] = "my_app.py"
-    test_env = environment._Env()
+    test_env = environment.TrainingEnv()
 
     assert len(test_env) == len(test_env.properties())
 
@@ -234,7 +234,7 @@ def test_env_module_name(sagemaker_program):
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
     os.environ[params.USER_PROGRAM_ENV] = sagemaker_program
-    module_name = environment._Env().module_name
+    module_name = environment.TrainingEnv().module_name
 
     del os.environ[params.USER_PROGRAM_ENV]
 
