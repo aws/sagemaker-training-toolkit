@@ -441,6 +441,46 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     """
 
     def __init__(self, resource_config=None, input_data_config=None, hyperparameters=None):
+        """Initialize a read-only snapshot of the container environment.
+
+        Args:
+            resource_config (dict[string, object]): The contents from
+                /opt/ml/input/config/resourceconfig.json.
+                It has the following keys:
+                    - current_host: The name of the current container on the container network.
+                        For example, 'algo-1'.
+                    -  hosts: The list of names of all containers on the container network,
+                        sorted lexicographically. For example, `['algo-1', 'algo-2', 'algo-3']`
+                        for a three-node cluster.
+
+            input_data_config (dict[string, object]): The contents from /opt/ml/input/config/inputdataconfig.json.
+                For example, suppose that you specify three data channels (train, evaluation, and
+                validation) in your request. This dictionary will contain:
+
+                {'train': {
+                    'ContentType':  'trainingContentType',
+                    'TrainingInputMode': 'File',
+                    'S3DistributionType': 'FullyReplicated',
+                    'RecordWrapperType': 'None'
+                },
+                'evaluation' : {
+                    'ContentType': 'evalContentType',
+                    'TrainingInputMode': 'File',
+                    'S3DistributionType': 'FullyReplicated',
+                    'RecordWrapperType': 'None'
+                },
+                'validation': {
+                    'TrainingInputMode': 'File',
+                    'S3DistributionType': 'FullyReplicated',
+                    'RecordWrapperType': 'None'
+                }}
+
+                You can find more information about /opt/ml/input/config/inputdataconfig.json here:
+                https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
+
+            hyperparameters (dict[string, object]): An instance of `HyperParameters` containing the
+                training job hyperparameters.
+        """
         current_host = os.environ.get(params.CURRENT_HOST_ENV)
         module_name = os.environ.get(params.USER_PROGRAM_ENV, None)
         module_dir = os.environ.get(params.SUBMIT_DIR_ENV, code_dir)
@@ -524,13 +564,17 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
     @property
     def model_dir(self):  # type: () -> str
-        """Returns:
-            str: The directory where models should be saved, e.g., /opt/ml/model/"""
+        """ The directory where models should be saved.
+
+        Returns:
+            str: The directory where models should be saved, e.g., /opt/ml/model/
+        """
         return self._model_dir
 
     @property
     def current_host(self):  # type: () -> str
         """The name of the current container on the container network. For example, 'algo-1'.
+
         Returns:
             str: Current host.
         """
@@ -539,6 +583,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     @property
     def num_gpus(self):  # type: () -> int
         """The number of GPUs available in the current container.
+
         Returns:
             int: Number of GPUs available in the current container.
         """
@@ -547,6 +592,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     @property
     def num_cpus(self):  # type: () -> int
         """The number of CPUs available in the current container.
+
         Returns:
             int: Number of CPUs available in the current container.
         """
@@ -555,6 +601,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     @property
     def module_name(self):  # type: () -> str
         """The name of the user provided module.
+
         Returns:
             str: Name of the user provided module.
         """
@@ -563,6 +610,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     @property
     def module_dir(self):  # type: () -> str
         """The full path location of the user provided module.
+
         Returns:
             str: Full path location of the user provided module.
         """
@@ -571,6 +619,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     @property
     def log_level(self):  # type: () -> int
         """Environment logging level.
+
         Returns:
             int: Environment logging level.
         """
@@ -579,6 +628,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     @property
     def user_entry_point(self):  # type: () -> str
         """The name of provided user entry point.
+
         Returns:
             str: The name of provided user entry point.
         """
@@ -588,8 +638,10 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     def _parse_module_name(program_param):
         """Given a module name or a script name, Returns the module name.
         This function is used for backwards compatibility.
+
         Args:
             program_param (str): Module or script name.
+
         Returns:
             str: Module name.
         """
@@ -691,6 +743,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     def hosts(self):  # type: () -> list
         """The list of names of all containers on the container network, sorted lexicographically.
                 For example, `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
+
         Returns:
               list[str]: All the hosts in the training network.
         """
@@ -708,6 +761,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             - `channel`[key](str) - the name of the channel defined in the input_data_config.
             - `training data path`[value](str) - the path to the directory where the training
                                                  data is saved.
+
         Returns:
             dict[str, str] With the information about the channels.
         """
@@ -715,7 +769,8 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
     @property
     def network_interface_name(self):  # type: () -> str
-        """Name of the network interface used for distributed training
+        """Name of the network interface used for distributed training.
+
         Returns:
               str: Name of the network interface, for example, 'ethwe'.
         """
@@ -727,6 +782,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         and configuration files before and during training.
         The input data directory has the following subdirectories:
             config (`input_config_dir`) and data (`input_data_dir`)
+
         Returns:
             str: The path of the input directory, e.g. /opt/ml/input/.
         """
@@ -746,6 +802,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             - `resourceconfig.json`: name of the current host and all host containers in the
                                      training More information about this files can be find here:
             https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
+
         Returns:
             str: The path of the input directory, e.g. /opt/ml/input/config/.
         """
@@ -756,6 +813,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         """The directory where training success/failure indications will be written,
         e.g. /opt/ml/output.
         To save non-model artifacts check `output_data_dir`.
+
         Returns:
             str: The path to the output directory, e.g. /opt/ml/output/.
         """
@@ -764,6 +822,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     @property
     def hyperparameters(self):  # type: () -> dict
         """The dict of hyperparameters that were passed to the training job.
+
         Returns:
             dict[str, object]: An instance of `HyperParameters` containing the training job
                                                     hyperparameters.
@@ -773,44 +832,48 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
     @property
     def resource_config(self):  # type: () -> dict
         """A dictionary with the contents from /opt/ml/input/config/resourceconfig.json.
-                It has the following keys:
-                    - current_host: The name of the current container on the container
-                                    network. For example, 'algo-1'.
-                    -  hosts: The list of names of all containers on the container network,
-                              sorted lexicographically. For example,
-                              `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
-                Returns:
-                    dict[str, str or list(str)]
+
+        It has the following keys:
+            - current_host: The name of the current container on the container
+                            network. For example, 'algo-1'.
+            -  hosts: The list of names of all containers on the container network,
+                      sorted lexicographically. For example,
+                      `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
+
+        Returns:
+            dict[str, str or list(str)]
         """
         return self._resource_config
 
     @property
     def input_data_config(self):  # type: () -> dict
         """A dictionary with the contents from /opt/ml/input/config/inputdataconfig.json.
-                For example, suppose that you specify three data channels (train,
-                evaluation, and validation) in your request. This dictionary will contain:
-                ```{"train": {
-                        "ContentType":  "trainingContentType",
-                        "TrainingInputMode": "File",
-                        "S3DistributionType": "FullyReplicated",
-                        "RecordWrapperType": "None"
-                    },
-                    "evaluation" : {
-                        "ContentType": "evalContentType",
-                        "TrainingInputMode": "File",
-                        "S3DistributionType": "FullyReplicated",
-                        "RecordWrapperType": "None"
-                    },
-                    "validation": {
-                        "TrainingInputMode": "File",
-                        "S3DistributionType": "FullyReplicated",
-                        "RecordWrapperType": "None"
-                    }
-                 } ```
-                You can find more information about /opt/ml/input/config/inputdataconfig.json here:
-                    https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
-                Returns:
-                    dict[str, dict[str, str]]
+
+        For example, suppose that you specify three data channels (train,
+        evaluation, and validation) in your request. This dictionary will contain:
+        ```{"train": {
+                "ContentType":  "trainingContentType",
+                "TrainingInputMode": "File",
+                "S3DistributionType": "FullyReplicated",
+                "RecordWrapperType": "None"
+            },
+            "evaluation" : {
+                "ContentType": "evalContentType",
+                "TrainingInputMode": "File",
+                "S3DistributionType": "FullyReplicated",
+                "RecordWrapperType": "None"
+            },
+            "validation": {
+                "TrainingInputMode": "File",
+                "S3DistributionType": "FullyReplicated",
+                "RecordWrapperType": "None"
+            }
+         } ```
+        You can find more information about /opt/ml/input/config/inputdataconfig.json here:
+            https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
+
+        Returns:
+            dict[str, dict[str, str]]
         """
         return self._input_data_config
 
@@ -821,6 +884,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         As your algorithm runs in a container, it generates output including the status of the
         training job and model and output artifacts. Your algorithm should write this information
         to the this directory.
+
         Returns:
             str: The path to output data directory, e.g. /opt/ml/output/data/algo-1.
         """
@@ -831,6 +895,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         """The directory for intermediate output artifacts that should be synced to S3.
         Any files written to this directory will be uploaded to S3 by a background process
         while training is in progress, but only if sagemaker_s3_output was specified.
+
         Returns:
             str: The path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
         """
@@ -838,9 +903,12 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
     @property
     def framework_module(self):  # type: () -> str
-        """Returns:
+        """Name of the framework module and entry point.
+
+        Returns:
             str: Name of the framework module and entry point. For example:
-                my_module:main"""
+                my_module:main
+        """
         return self._framework_module
 
 
