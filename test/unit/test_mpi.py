@@ -89,7 +89,7 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists):
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
-@patch("sagemaker_training.training_env")
+@patch("sagemaker_training.environment.TrainingEnv")
 def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
     with patch.dict(os.environ, clear=True):
 
@@ -178,7 +178,7 @@ def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
-@patch("sagemaker_training.training_env")
+@patch("sagemaker_training.environment.TrainingEnv")
 def test_mpi_master_run_python(
     training_env, popen, policy, ssh_client, python_executable, path_exists
 ):

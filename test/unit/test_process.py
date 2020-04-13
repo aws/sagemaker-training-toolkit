@@ -95,7 +95,7 @@ def test_run_module(log, popen, entry_point_type_module):
     log.assert_called_with(cmd, {})
 
 
-@patch("sagemaker_training.training_env", lambda: {})
+@patch("sagemaker_training.environment.TrainingEnv", lambda: {})
 def test_run_error():
     with pytest.raises(errors.ExecuteUserScriptError) as e:
         process.ProcessRunner("wrong module", [], {}).run()

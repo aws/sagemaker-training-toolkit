@@ -17,7 +17,7 @@ import os
 
 import pytest
 
-import sagemaker_training as framework
+from sagemaker_training import environment, mapping, params
 
 
 @pytest.mark.parametrize(
@@ -30,14 +30,14 @@ import sagemaker_training as framework
     ],
 )
 def test_split_by_criteria_with_keys(dictionary, keys, expected):
-    assert framework.mapping.split_by_criteria(dictionary, keys=keys) == expected
+    assert mapping.split_by_criteria(dictionary, keys=keys) == expected
 
 
 @pytest.mark.parametrize(
     "dictionary, keys, prefix, expected", [({"x": 1, "y": 2}, "y", "x", ({"x": 1, "y": 2}, {}))]
 )
 def test_split_by_criteria_with_keys_and_criteria(dictionary, keys, prefix, expected):
-    assert framework.mapping.split_by_criteria(dictionary, keys=keys, prefix=prefix) == expected
+    assert mapping.split_by_criteria(dictionary, keys=keys, prefix=prefix) == expected
 
 
 @pytest.mark.parametrize(
@@ -50,10 +50,10 @@ def test_split_by_criteria_with_keys_and_criteria(dictionary, keys, prefix, expe
     ],
 )
 def test_split_by_criteria_with_prefix(dictionary, prefix, expected):
-    assert framework.mapping.split_by_criteria(dictionary, prefix=prefix) == expected
+    assert mapping.split_by_criteria(dictionary, prefix=prefix) == expected
 
 
-class ProcessEnvironment(framework.mapping.MappingMixin):
+class ProcessEnvironment(mapping.MappingMixin):
     @property
     def a(self):
         return 1
@@ -120,7 +120,7 @@ def test_mapping_throws_exception_trying_to_access_non_properties(property, erro
     ],
 )
 def test_to_cmd_args(target, expected):
-    actual = framework.mapping.to_cmd_args(target)
+    actual = mapping.to_cmd_args(target)
 
     assert actual == expected
 
@@ -147,7 +147,7 @@ def test_to_cmd_args(target, expected):
     ],
 )
 def test_to_env_vars(target, expected):
-    actual = framework.mapping.to_env_vars(target)
+    actual = mapping.to_env_vars(target)
 
     assert actual == expected
 
@@ -180,19 +180,17 @@ def test_env_vars_round_trip():
         },
     }
 
-    os.environ[
-        framework.params.FRAMEWORK_TRAINING_MODULE_ENV
-    ] = "test.functional.simple_framework:train"
+    os.environ[params.FRAMEWORK_TRAINING_MODULE_ENV] = "test.functional.simple_framework:train"
 
-    training_env = framework.training_env(
+    training_env = environment.TrainingEnv(
         resource_config=resource_config,
         input_data_config=input_data_config,
         hyperparameters=hyperparameters,
     )
 
-    os.environ[framework.params.FRAMEWORK_TRAINING_MODULE_ENV] = ""
+    os.environ[params.FRAMEWORK_TRAINING_MODULE_ENV] = ""
 
-    args = framework.mapping.to_cmd_args(training_env.hyperparameters)
+    args = mapping.to_cmd_args(training_env.hyperparameters)
 
     env_vars = training_env.to_env_vars()
     env_vars["SM_USER_ARGS"] = " ".join(args)

@@ -425,9 +425,9 @@ class TrainingEnv(_Env):
     It is a dictionary like object, allowing any builtin function that works with dictionary.
 
     Example on how a script can use training environment:
-            >>>import sagemaker_training
+            >>>from sagemaker_training import environment
 
-            >>>env = sagemaker_training.training_env()
+            >>>env = environment.TrainingEnv()
 
             get the path of the channel 'training' from the inputdataconfig.json file
             >>>training_dir = environment.channel_input_dirs['training']
@@ -546,18 +546,19 @@ class TrainingEnv(_Env):
         super(TrainingEnv, self).__init__()
 
         resource_config = resource_config or read_resource_config()
+        input_data_config = input_data_config or read_input_data_config()
+        all_hyperparameters = hyperparameters or read_hyperparameters()
+
         current_host = resource_config["current_host"]
         hosts = resource_config["hosts"]
-        input_data_config = input_data_config or read_input_data_config()
 
-        all_hyperparameters = hyperparameters or read_hyperparameters()
         split_result = mapping.split_by_criteria(
             all_hyperparameters,
             keys=params.SAGEMAKER_HYPERPARAMETERS,
             prefix=params.SAGEMAKER_PREFIX,
         )
-
         sagemaker_hyperparameters = split_result.included
+
         additional_framework_parameters = {
             k: sagemaker_hyperparameters[k]
             for k in sagemaker_hyperparameters.keys()
@@ -869,22 +870,3 @@ def write_env_vars(env_vars=None):  # type: (dict) -> None
 
     for name, value in env_vars.items():
         os.environ[name] = value
-
-
-def training_env(
-    resource_config=None, input_data_config=None, hyperparameters=None
-):  # type: () -> TrainingEnv
-    """Create a TrainingEnv.
-
-    Returns:
-        TrainingEnv: an instance of TrainingEnv
-    """
-    resource_config = resource_config or read_resource_config()
-    input_data_config = input_data_config or read_input_data_config()
-    hyperparameters = hyperparameters or read_hyperparameters()
-
-    return TrainingEnv(
-        resource_config=resource_config,
-        input_data_config=input_data_config,
-        hyperparameters=hyperparameters,
-    )

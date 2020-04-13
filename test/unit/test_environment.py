@@ -20,7 +20,6 @@ from mock import Mock, patch
 import pytest
 import six
 
-import sagemaker_training
 from sagemaker_training import environment, params
 import test
 
@@ -144,13 +143,13 @@ def create_training_env():
         old_environ = os.environ.copy()
         os.environ[params.TRAINING_JOB_ENV] = "training-job-42"
 
-        yield sagemaker_training.training_env()
+        yield environment.TrainingEnv()
 
         os.environ = old_environ
 
 
 def test_create_training_env_without_training_files_and_directories_should_not_fail():
-    training_env = sagemaker_training.training_env()
+    training_env = environment.TrainingEnv()
     hostname = socket.gethostname()
     assert training_env.current_host == hostname
     assert training_env.hosts == [hostname]

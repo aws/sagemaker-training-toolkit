@@ -19,9 +19,9 @@ import importlib
 import os
 import traceback
 
-import sagemaker_training
 from sagemaker_training import (
     entry_point,
+    environment,
     errors,
     files,
     intermediate_output,
@@ -63,7 +63,7 @@ def train():
     intermediate_sync = None
     exit_code = SUCCESS_CODE
     try:
-        env = sagemaker_training.training_env()
+        env = environment.TrainingEnv()
 
         region = os.environ.get("AWS_REGION", os.environ.get(params.REGION_NAME_ENV))
         s3_endpoint_url = os.environ.get(params.S3_ENDPOINT_URL, None)

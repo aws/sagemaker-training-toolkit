@@ -44,7 +44,7 @@ class ScriptTrainingEnv(TrainingEnv):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_training.training_env", TrainingEnv)
+@patch("sagemaker_training.environment.TrainingEnv", TrainingEnv)
 def test_train(import_module):
     framework = Mock()
     import_module.return_value = framework
@@ -57,7 +57,7 @@ def test_train(import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_training.training_env", TrainingEnv)
+@patch("sagemaker_training.environment.TrainingEnv", TrainingEnv)
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_with_success(_exit, import_module):
     def success():
@@ -74,7 +74,7 @@ def test_train_with_success(_exit, import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_training.training_env", TrainingEnv)
+@patch("sagemaker_training.environment.TrainingEnv", TrainingEnv)
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_fails(_exit, import_module):
     def fail():
@@ -91,7 +91,7 @@ def test_train_fails(_exit, import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_training.training_env", TrainingEnv)
+@patch("sagemaker_training.environment.TrainingEnv", TrainingEnv)
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_fails_with_no_error_number(_exit, import_module):
     def fail():
@@ -108,7 +108,7 @@ def test_train_fails_with_no_error_number(_exit, import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_training.training_env", TrainingEnv)
+@patch("sagemaker_training.environment.TrainingEnv", TrainingEnv)
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_fails_with_invalid_error_number(_exit, import_module):
     class InvalidErrorNumberException(Exception):
@@ -129,7 +129,7 @@ def test_train_fails_with_invalid_error_number(_exit, import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
-@patch("sagemaker_training.training_env", TrainingEnv)
+@patch("sagemaker_training.environment.TrainingEnv", TrainingEnv)
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_with_client_error(_exit, import_module):
     def fail():
@@ -146,7 +146,7 @@ def test_train_with_client_error(_exit, import_module):
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("sagemaker_training.entry_point.run")
-@patch("sagemaker_training.training_env", new_callable=ScriptTrainingEnv)
+@patch("sagemaker_training.environment.TrainingEnv", new_callable=ScriptTrainingEnv)
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_script(_exit, training_env, run):
     trainer.train()
@@ -165,7 +165,7 @@ def test_train_script(_exit, training_env, run):
 
 @patch("importlib.import_module")
 @patch("sagemaker_training.intermediate_output.start_sync")
-@patch("sagemaker_training.training_env", TrainingEnvNoIntermediate)
+@patch("sagemaker_training.environment.TrainingEnv", TrainingEnvNoIntermediate)
 def test_train_no_intermediate(start_intermediate_folder_sync, import_module):
     framework = Mock()
     import_module.return_value = framework

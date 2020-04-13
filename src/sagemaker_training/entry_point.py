@@ -46,10 +46,9 @@ def run(
         - Any other: executes the command as >>> env_vars /bin/sh -c ./module_name + args
 
     Example:
-         >>>import sagemaker_training
-         >>>from sagemaker_training import entry_point
+         >>>from sagemaker_training import entry_point, environment, mapping
 
-         >>>env = sagemaker_training.training_env()
+         >>>env = environment.TrainingEnv()
          {'channel-input-dirs': {'training': '/opt/ml/input/training'},
           'model_dir': '/opt/ml/model', ...}
 
