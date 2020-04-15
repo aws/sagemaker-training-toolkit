@@ -13,7 +13,6 @@
 
 import subprocess
 import sys
-import time
 
 import boto3
 import pytest
