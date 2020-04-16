@@ -28,7 +28,6 @@ def read_version():
 
 
 packages = setuptools.find_packages(where="src", exclude=("test",))
-packages.append("sagemaker_training.etc")
 
 required_packages = [
     "numpy",
@@ -62,8 +61,7 @@ setuptools.setup(
     version=read_version(),
     description="Open source library for creating containers to run on Amazon SageMaker.",
     packages=packages,
-    package_dir={"sagemaker_training": "src/sagemaker_training", "sagemaker_training.etc": "etc"},
-    package_data={"sagemaker_training.etc": ["*"]},
+    package_dir={"sagemaker_training": "src/sagemaker_training"},
     py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob("src/*.py")],
     ext_modules=[gethostname],
     long_description=read("README.rst"),
