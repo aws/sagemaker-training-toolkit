@@ -10,12 +10,12 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from __future__ import absolute_import
 
 import subprocess
 import sys
 
 import pytest
-from sagemaker import LocalSession
 from sagemaker.estimator import Estimator
 
 
@@ -41,7 +41,6 @@ def test_install_requirements(capsys):
         role="SageMakerRole",
         train_instance_count=1,
         train_instance_type="local",
-        sagemaker_session=LocalSession(),
     )
 
     estimator.fit()
