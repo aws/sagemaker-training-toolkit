@@ -14,7 +14,6 @@
 import subprocess
 import sys
 
-import boto3
 import pytest
 from sagemaker import LocalSession
 from sagemaker.estimator import Estimator
@@ -36,18 +35,13 @@ def container():
         subprocess.check_call("docker rm -f sagemaker-training-toolkit-test".split())
 
 
-@pytest.fixture(scope="session")
-def sagemaker_local_session(region="us-west-2"):
-    return LocalSession(boto_session=boto3.Session(region_name=region))
-
-
-def test_install_requirements(capsys, sagemaker_local_session):
+def test_install_requirements(capsys):
     estimator = Estimator(
         image_name="sagemaker-training-toolkit-test:dummy",
         role="SageMakerRole",
         train_instance_count=1,
         train_instance_type="local",
-        sagemaker_session=sagemaker_local_session,
+        sagemaker_session=LocalSession(),
     )
 
     estimator.fit()

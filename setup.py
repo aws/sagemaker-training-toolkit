@@ -87,7 +87,6 @@ setuptools.setup(
             "pytest-cov",
             "mock",
             "sagemaker[local]>=1.16.2",
-            "boto3",
             "black==19.3b0 ; python_version >= '3.6'",
         ]
     },
