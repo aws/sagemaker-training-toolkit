@@ -1,5 +1,24 @@
 # Changelog
 
+## v3.4.0 (2020-04-16)
+
+### Deprecations and Removals
+
+ * Remove modules.download_and_install
+
+### Bug Fixes and Other Changes
+
+ * Refactor env
+ * Refactor entry_point
+
+### Documentation Changes
+
+ * Update and add docstrings
+
+### Testing and Release Infrastructure
+
+ * Update GitHub issue and pull request templates
+
 ## v3.3.2 (2020-04-08)
 
 ### Bug Fixes and Other Changes
