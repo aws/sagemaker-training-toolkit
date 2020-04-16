@@ -6,15 +6,8 @@ ARG PYTHON_VERSION=3.6.8
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-    software-properties-common \
     build-essential \
     ca-certificates \
-    curl \
-    git \
-    libopencv-dev \
-    openssh-client \
-    openssh-server \
-    vim \
     wget \
     zlib1g-dev \
  && apt-get clean \

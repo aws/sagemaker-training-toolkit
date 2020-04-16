@@ -25,10 +25,10 @@ phases:
 
       # build dummy container
       - python setup.py sdist
-      - \cp dist/sagemaker_training-*.tar.gz test/container/dummy/sagemaker_training.tar.gz
+      - cp dist/sagemaker_training-*.tar.gz test/container/dummy/sagemaker_training.tar.gz
       - cd test/container
       - docker build -t sagemaker-training-toolkit-test:dummy -f dummy/Dockerfile .
-      - rm sagemaker_training.tar.gz
+      - rm dummy/sagemaker_training.tar.gz
 
       - cd ../..
 
