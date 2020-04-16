@@ -28,7 +28,7 @@ phases:
       - \cp dist/sagemaker_training-*.tar.gz test/container/sagemaker_training.tar.gz
       - cd test/container
       - docker build -t sagemaker-training-toolkit-test:dummy -f dummy/Dockerfile .
-      - rm sagemaker_inference.tar.gz
+      - rm sagemaker_training.tar.gz
 
       - cd ../..
 
