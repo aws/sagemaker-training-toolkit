@@ -30,112 +30,81 @@ RUN pip3 install sagemaker-training-toolkit
 
 ## :computer: Usage
 
-### Creating a container using SageMaker Training Toolkit
+### Create a Docker image and train a model 
 
-Here we'll demonstrate how to create a Docker image using SageMaker
-Training Toolkit in order to show the simplicity of using this library.
+1. Write a training script. (For example, this script named `train.py` uses Tensorflow.)
 
-Let's suppose we need to train a model with the following training
-script `train.py` using TF 2.0 in SageMaker:
+    ``` python
+    import tensorflow as tf
 
-``` python
-import tensorflow as tf
+    mnist = tf.keras.datasets.mnist
 
-mnist = tf.keras.datasets.mnist
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    x_train, x_test = x_train / 255.0, x_test / 255.0
 
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-x_train, x_test = x_train / 255.0, x_test / 255.0
+    model = tf.keras.models.Sequential([
+      tf.keras.layers.Flatten(input_shape=(28, 28)),
+      tf.keras.layers.Dense(128, activation='relu'),
+      tf.keras.layers.Dropout(0.2),
+      tf.keras.layers.Dense(10, activation='softmax')
+    ])
 
-model = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(input_shape=(28, 28)),
-  tf.keras.layers.Dense(128, activation='relu'),
-  tf.keras.layers.Dropout(0.2),
-  tf.keras.layers.Dense(10, activation='softmax')
-])
+    model.compile(optimizer='adam',
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
 
-model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
+    model.fit(x_train, y_train, epochs=1)
 
-model.fit(x_train, y_train, epochs=1)
+    model.evaluate(x_test, y_test)
+    ```
 
-model.evaluate(x_test, y_test)
-```
+2. [Define a container with a Dockerfile](https://docs.docker.com/get-started/part2/#define-a-container-with-dockerfile) that includes the training script and any dependencies.
 
-#### The Dockerfile
+    The training script must be located in the `/opt/ml/code` directory.
+    The environment variable `SAGEMAKER_PROGRAM` defines which file inside the `/opt/ml/code` directory to use as the training entry point.
+    When training starts, the interpreter executes the entry point defined by `SAGEMAKER_PROGRAM`.
+    Python and shell scripts are both supported.
+    
+    ``` docker
+    FROM tensorflow/tensorflow:2.0.0a0
 
-We then create a Dockerfile with our dependencies and define the program
-that will be executed in SageMaker:
+    RUN pip install sagemaker-training-toolkit
 
-``` docker
-FROM tensorflow/tensorflow:2.0.0a0
+    # Copies the training code inside the container
+    COPY train.py /opt/ml/code/train.py
 
-RUN pip install sagemaker-training-toolkit
+    # Defines train.py as script entry point
+    ENV SAGEMAKER_PROGRAM train.py
+    ```
 
-# Copies the training code inside the container
-COPY train.py /opt/ml/code/train.py
+3. Build and tag the Docker image.
 
-# Defines train.py as script entry point
-ENV SAGEMAKER_PROGRAM train.py
-```
+    ``` shell
+    docker build -t tf-2.0 .
+    ```
 
-More documentation on how to build a Docker container can be found
-[here](https://docs.docker.com/get-started/part2/#define-a-container-with-dockerfile)
+4. Use the Docker image to start a training job using the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
 
-#### Building the container
+    This example uses [Local Mode](https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode) to test the container locally:
 
-We then build the Docker image using `docker build`:
+    ``` python
+    from sagemaker.estimator import Estimator
 
-``` shell
-docker build -t tf-2.0 .
-```
+    estimator = Estimator(image_name='tf-2.0',
+                          role='SageMakerRole',
+                          train_instance_count=1,
+                          train_instance_type='local')
 
-#### Training with Local Mode
+    estimator.fit()
+    ```
+    
+    To train a model using the image on SageMaker, [push the image to ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html) and start a SageMaker training job with the image URI.
+    
 
-We can use [Local
-Mode](https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode)
-to test the container locally:
+### Mapping hyperparameters to script arguments
 
-``` python
-from sagemaker.estimator import Estimator
-
-estimator = Estimator(image_name='tf-2.0',
-                      role='SageMakerRole',
-                      train_instance_count=1,
-                      train_instance_type='local')
-
-estimator.fit()
-```
-
-After using Local Mode, we can push the image to ECR and run a SageMaker
-training job. To see a complete example on how to create a container
-using SageMaker Container, including pushing it to ECR, see the example
-notebook
-[tensorflow\_bring\_your\_own.ipynb](https://github.com/awslabs/amazon-sagemaker-examples/blob/master/advanced_functionality/tensorflow_bring_your_own/tensorflow_bring_your_own.ipynb).
-
-### How a script is executed inside the container
-
-The training script must be located under the folder `/opt/ml/code` and
-its relative path is defined in the environment variable
-`SAGEMAKER_PROGRAM`. The following scripts are supported:
-
-  - **Python scripts**: uses the Python interpreter for any script with
-    .py suffix
-  - **Shell scripts**: uses the Shell interpreter to execute any other
-    script
-
-When training starts, the interpreter executes the entry point, from the
-example above:
-
-``` python
-python train.py
-```
-
-#### Mapping hyperparameters to script arguments
-
-Any hyperparameters provided by the training job will be passed by the
-interpreter to the entry point as script arguments. For example the
-training job hyperparameters:
+Any hyperparameters provided by the training job will be passed by the interpreter to the entry point as script arguments.
+For example the training job hyperparameters:
 
 ``` python
 {"HyperParameters": {"batch-size": 256, "learning-rate": 0.0001, "communicator": "pure_nccl"}}
@@ -165,7 +134,7 @@ if __name__ == '__main__':
   ...
 ```
 
-#### Reading additional information from the container
+### Reading additional information from the container
 
 Very often, an entry point needs additional information from the
 container that is not available in `hyperparameters`. SageMaker

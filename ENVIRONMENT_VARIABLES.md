@@ -100,7 +100,7 @@ hyperparameters = json.loads(os.environ['SM_HPS']))
 # {"batch-size": 256, "learning-rate": 0.0001, "communicator": "pure_nccl"}
 ```
 
-### [SM\_HP](){hyperparameter\_name}
+### SM\_HP\_{hyperparameter\_name}
 
 ``` shell
 SM_HP_LEARNING-RATE=0.0001
