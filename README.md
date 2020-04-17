@@ -134,13 +134,76 @@ if __name__ == '__main__':
   ...
 ```
 
+When the SageMaker Python SDK is used to create a training job with a framework containers, it passes special hyperparameters to the training job, which are parsed by SageMaker Container and the framework containers.
+For example:
+
+``` python
+from sagemaker.tensorflow import TensorFlow
+
+model_dir = 's3://SAGEMAKER-BUCKET/hvd-job-377/model'
+
+mpi_distribution = {
+  'mpi': {
+    'enabled': True, 
+    'custom_mpi_options': '-x HOROVOD_HIERARCHICAL_ALLREDUCE=1', 
+    'processes_per_host': 8}}
+
+estimator = TensorFlow(entry_point='train_horovod_imagenet.sh',
+                       model_dir=model_dir,
+                       hyperparameters={'lr': 0.3},
+                       distributions=mpi_distribution,
+                       ...)
+```
+
+When a training job is created using the estimator above, i.e.
+`estimator.fit()` is called, the Python SDK will create additional
+hyperparameters and invoke the training job as follow:
+
+``` python
+import boto3
+
+job_hyperparameters = {
+  # user provided hyperparameters
+  'lr': '0.3',
+
+  # hyperparameters created by the Python SDK and used by SageMaker Training Toolkit
+  'sagemaker_job_name': 'JOB_NAME',
+  'sagemaker_program': 'train_horovod_imagenet.sh',
+  'sagemaker_region': 'us-west-2',
+  'sagemaker_submit_directory': 's3://SAGEMAKER-BUCKET/JOB_NAME/source.tar.gz'
+  'sagemaker_container_log_level': '20',
+  'sagemaker_mpi_enabled': 'true',
+  'sagemaker_mpi_num_of_processes_per_host': '8',
+
+  # hyperparameters created by the Python SDK and used by the TF container
+  'model_dir': 's3://SAGEMAKER-BUCKET/hvd-job-377/model'
+}
+
+boto3.client('sagemaker').create_training_job(HyperParameters=job_hyperparameters, ...)
+```
+
+As you can see in the example, in addition to user-provided
+hyperparameters, the SageMaker Python SDK includes hyperparameters that
+will be used by SageMaker Training Toolkit and or the framework
+container. The most important SageMaker hyperparameters for training
+are:
+
+  - `sagemaker_program`: name of the user-provided entry point, it is
+    **mandatory** unless environment variable `SAGEMAKER_PROGRAM` is
+    provided.
+  - `sagemaker_submit_directory`: local or S3 URI location of the
+    source.tar.gz file containing the entry point code. It is
+    **mandatory** unless the code is already located under the
+    `/opt/ml/code` folder.
+
+The complete list of hyperparameters is available
+[here](https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/_params.py).
+
 ### Reading additional information from the container
 
-Very often, an entry point needs additional information from the
-container that is not available in `hyperparameters`. SageMaker
-Containers writes this information as **environment variables** that are
-available inside the script. For example, the training job below
-includes the channels **training** and **testing**:
+Very often, an entry point needs additional information from the container that is not available in `hyperparameters`.
+SageMaker Containers writes this information as **environment variables** that are available inside the script.
+For example, the training job below includes the channels **training** and **testing**:
 
 ``` python
 from sagemaker.pytorch import PyTorch
@@ -151,8 +214,7 @@ estimator.fit({'training': 's3://bucket/path/to/training/data',
                'testing': 's3://bucket/path/to/testing/data'})
 ```
 
-The environment variable `SM_CHANNEL_{channel_name}` provides the path
-were the channel is located:
+The environment variable `SM_CHANNEL_{channel_name}` provides the path where the channel is located:
 
 ``` python
 import argparse
@@ -171,9 +233,155 @@ if __name__ == '__main__':
   ...
 ```
 
-When training starts, SageMaker Training Toolkit will print all
-available environment variables.
+When training starts, SageMaker Training Toolkit will print all available environment variables.
 
+### Get information from the container environment
+
+**Training environment** creation is initialized by [environment.Environment()](https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/__init__.py#L16) function call, this function returns an [Environment](https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/_env.py#L413) object.
+The `Environment` provides access to aspects of the training environment relevant to training jobs, including hyperparameters, system characteristics, filesystem locations, environment variables and configuration settings.
+It is a read-only snapshot of the container environment during training and it doesn't contain any form of state.
+Example on how a script can use Environment:
+
+``` python
+import sagemaker_training
+
+env = sagemaker_training.environment.Environment()
+
+# get the path of the channel 'training' from the ``inputdataconfig.json`` file
+training_dir = env.channel_input_dirs['training']
+
+# get a the hyperparameter 'training_data_file' from ``hyperparameters.json`` file
+file_name = env.hyperparameters['training_data_file']
+
+# get the folder where the model should be saved
+model_dir = env.model_dir
+data = np.load(os.path.join(training_dir, file_name))
+x_train, y_train = data['features'], keras.utils.to_categorical(data['labels'])
+model = ResNet50(weights='imagenet')
+...
+model.fit(x_train, y_train)
+
+#save the model in the end of training
+model.save(os.path.join(model_dir, 'saved_model'))
+```
+
+### Entry point execution
+
+**Entry point execution** is encapsulted by [entry\_point.run(uri, user\_entry\_point, args, env\_vars)](https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/entry_point.py#L22).
+It prepares and executes the user entry point, passing `env_vars` as environment variables and `args` as command arguments. If the entry point is:
+
+  - **A Python script:** executes the script as `ENV_VARS python entry
+    point_name ARGS`
+  - **Any other script:** executes the command as `ENV_VARS /bin/sh -c
+    ./module_name ARGS`
+
+Usage example:
+
+``` python
+import sagemaker_training
+from sagemaker_training.beta.framework import entry_point
+
+env = sagemaker_training.environment.Environment()
+# {'channel-input-dirs': {'training': '/opt/ml/input/training'}, 'model_dir': '/opt/ml/model', ...}
+
+# reading hyperparameters as a dictionary
+hyperparameters = env.hyperparameters
+# {'batch-size': 128, 'model_dir': '/opt/ml/model'}
+
+# reading hyperparameters as script arguments
+args = env.to_cmd_args(hyperparameters)
+# ['--batch-size', '128', '--model_dir', '/opt/ml/model']
+
+# reading the training environment as env vars
+env_vars = env.to_env_vars()
+# {'SAGEMAKER_CHANNELS':'training', 
+#  'SAGEMAKER_CHANNEL_TRAINING':'/opt/ml/input/training',
+#  'MODEL_DIR':'/opt/ml/model', ...}
+
+# executes user entry point named user_script.py as follow:
+#
+# SAGEMAKER_CHANNELS=training SAGEMAKER_CHANNEL_TRAINING=/opt/ml/input/training \
+# SAGEMAKER_MODEL_DIR=/opt/ml/model python user_script.py --batch-size 128 --model_dir /opt/ml/model
+entry_point.run('user_script.py', args, env_vars)
+```
+
+If the entry point execution fails, `trainer.train()` will write the error message to `/opt/ml/output/failure`.
+
+The entry point touches the sucess file under `/opt/ml/success` otherwise.
+
+### Create a framework container for training
+
+A framework container is composed by a Dockerfile and framework-specific
+logic. Let's see the MXNet container as an example:
+
+#### Creating the Dockerfile
+
+**Dockerfile**
+
+``` docker
+FROM mxnet/python
+
+# install SageMaker Training Toolkit and SageMaker MXNet Container
+RUN pip install sagemaker-training-toolkit sagemaker_mxnet_container
+
+# set sagemaker_mxnet_container.training.main as framework entry point
+ENV SAGEMAKER_TRAINING_MODULE sagemaker_mxnet_container.training:train
+```
+
+In the example above, MXNet and Python libraries are already installed
+in the base container. The framework container only needs to install
+SageMaker Training Toolkit and the SageMaker MXNet container package.
+The environment variable `SAGEMAKER_TRAINING_MODULE` determines that the
+function `train` under the module `training` of the container package is
+going to be invoked when the container starts.
+
+**The training package**
+
+``` python
+from sagemaker_training.beta import framework
+
+# name of the user entry point from sagemaker hyperparameter
+user_entry_point = env.module_name
+
+# local or S3 URI location of the source.tar.gz file
+module_dir = env.module_dir
+
+
+def train(env):
+  env = framework.environment.Environment()
+  framework.entry point.run(module_dir,
+                           user_entry_point,
+                           env.to_cmd_args(),
+                           env.to_env_vars())
+```
+
+The code above covers everything necessary for single training using
+MXNet. The following example includes framework specific logic required
+for distributed training.
+
+``` python
+def train(env):
+  env = framework.environment.Environment()
+
+  ps_port = '8000'
+
+  # starts the MXNet scheduler only in the first instance
+  if env.current_host == 'algo-1':
+      _run_mxnet_process('scheduler', env.hosts, ps_port)
+
+  # starts MXNet parameter server in all instances
+  _run_mxnet_process('server', env.hosts, ps_port)
+
+  framework.entry point.run(module_dir,
+                           user_entry_point,
+                           env.to_cmd_args(),
+                           env.to_env_vars()) 
+```
+
+The implementation of `run_mxnet_process` can be found
+[here](https://github.com/aws/sagemaker-mxnet-container/blob/64c5c8ed68e34fae50b6ac9521a0a28156fa8cff/src/sagemaker_mxnet_container/training.py#L45).
+The example above starts the mxnet **scheduler** in the first instance
+and starts the mxnet **server** in all instances.
 ## :scroll: License
 
 This library is licensed under the [Apache 2.0 License](http://aws.amazon.com/apache2.0/).

@@ -1,3 +1,39 @@
+# Reading additional information from the container
+
+Very often, an entry point needs additional information from the container that is not available in `hyperparameters`.
+SageMaker Containers writes this information as **environment variables** that are available inside the script.
+For example, the training job below includes the channels **training** and **testing**:
+
+``` python
+from sagemaker.pytorch import PyTorch
+
+estimator = PyTorch(entry_point='train.py', ...)
+
+estimator.fit({'training': 's3://bucket/path/to/training/data', 
+               'testing': 's3://bucket/path/to/testing/data'})
+```
+
+The environment variable `SM_CHANNEL_{channel_name}` provides the path where the channel is located:
+
+``` python
+import argparse
+import os
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+
+  ...
+
+  # reads input channels training and testing from the environment variables
+  parser.add_argument('--training', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
+  parser.add_argument('--testing', type=str, default=os.environ['SM_CHANNEL_TESTING'])
+
+  args = parser.parse_args()
+  ...
+```
+
+When training starts, SageMaker Training Toolkit will print all available environment variables.
+
 ## IMPORTANT ENVIRONMENT VARIABLES
 
 These environment variables are those that you're likely to use when
