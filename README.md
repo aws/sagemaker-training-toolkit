@@ -1,24 +1,36 @@
+![SageMaker](https://github.com/aws/sagemaker-training-toolkit/raw/master/branding/icon/sagemaker-banner.png)
+
 # SageMaker Training Toolkit
 
-[![Code style:
-black](https://img.shields.io/badge/code_style-black-000000.svg)](https://github.com/python/black)
+[![Latest Version](https://img.shields.io/pypi/v/sagemaker-training.svg)](https://pypi.python.org/pypi/sagemaker-training) [![Supported Python Versions](https://img.shields.io/pypi/pyversions/sagemaker-training.svg)](https://pypi.python.org/pypi/sagemaker-training) [![Code Style: Black](https://img.shields.io/badge/code_style-black-000000.svg)](https://github.com/python/black)
 
-SageMaker Training Toolkit gives you tools to create
-SageMaker-compatible Docker containers, and has additional tools for
-letting you create Frameworks (SageMaker-compatible Docker containers
-that can run arbitrary Python or shell scripts).
+Train machine learning models within a Docker container using Amazon SageMaker.
 
-Currently, this library is used by the following containers: [TensorFlow
-Script
-Mode](https://github.com/aws/sagemaker-tensorflow-container/tree/script-mode),
-[MXNet](https://github.com/aws/sagemaker-mxnet-container),
-[PyTorch](https://github.com/aws/sagemaker-pytorch-container),
-[Chainer](https://github.com/aws/sagemaker-chainer-container), and
-[Scikit-learn](https://github.com/aws/sagemaker-scikit-learn-container).
 
-# Getting Started
+## :books: Background
 
-## Creating a container using SageMaker Training Toolkit
+[Amazon SageMaker](https://aws.amazon.com/sagemaker/) is a fully managed service for data science and machine learning (ML) workflows.
+You can use Amazon SageMaker to simplify the process of building, training, and deploying ML models.
+
+To train a model, you can include your training script and dependencies in a [Docker container](https://www.docker.com/resources/what-container) that runs your training code.
+A container provides an effectively isolated environment, ensuring a consistent runtime and reliable training process. 
+
+The **SageMaker Training Toolkit** can be easily added to any Docker container, making it compatible with SageMaker for [training models](https://aws.amazon.com/sagemaker/train/).
+If you use a [prebuilt SageMaker Docker image for training](https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html), this library may already be included.
+
+For more information, see the Amazon SageMaker Developer Guide sections on [using Docker containers for training](https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html).
+
+## :hammer_and_wrench: Installation
+
+To install this library in your Docker image, add the following line to your [Dockerfile](https://docs.docker.com/engine/reference/builder/):
+
+``` dockerfile
+RUN pip3 install sagemaker-training-toolkit
+```
+
+## :computer: Usage
+
+### Creating a container using SageMaker Training Toolkit
 
 Here we'll demonstrate how to create a Docker image using SageMaker
 Training Toolkit in order to show the simplicity of using this library.
@@ -50,7 +62,7 @@ model.fit(x_train, y_train, epochs=1)
 model.evaluate(x_test, y_test)
 ```
 
-### The Dockerfile
+#### The Dockerfile
 
 We then create a Dockerfile with our dependencies and define the program
 that will be executed in SageMaker:
@@ -70,7 +82,7 @@ ENV SAGEMAKER_PROGRAM train.py
 More documentation on how to build a Docker container can be found
 [here](https://docs.docker.com/get-started/part2/#define-a-container-with-dockerfile)
 
-### Building the container
+#### Building the container
 
 We then build the Docker image using `docker build`:
 
@@ -78,7 +90,7 @@ We then build the Docker image using `docker build`:
 docker build -t tf-2.0 .
 ```
 
-### Training with Local Mode
+#### Training with Local Mode
 
 We can use [Local
 Mode](https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode)
@@ -101,7 +113,7 @@ using SageMaker Container, including pushing it to ECR, see the example
 notebook
 [tensorflow\_bring\_your\_own.ipynb](https://github.com/awslabs/amazon-sagemaker-examples/blob/master/advanced_functionality/tensorflow_bring_your_own/tensorflow_bring_your_own.ipynb).
 
-## How a script is executed inside the container
+### How a script is executed inside the container
 
 The training script must be located under the folder `/opt/ml/code` and
 its relative path is defined in the environment variable
@@ -119,7 +131,7 @@ example above:
 python train.py
 ```
 
-### Mapping hyperparameters to script arguments
+#### Mapping hyperparameters to script arguments
 
 Any hyperparameters provided by the training job will be passed by the
 interpreter to the entry point as script arguments. For example the
@@ -153,7 +165,7 @@ if __name__ == '__main__':
   ...
 ```
 
-### Reading additional information from the container
+#### Reading additional information from the container
 
 Very often, an entry point needs additional information from the
 container that is not available in `hyperparameters`. SageMaker
@@ -193,3 +205,13 @@ if __name__ == '__main__':
 When training starts, SageMaker Training Toolkit will print all
 available environment variables.
 
+## :scroll: License
+
+This library is licensed under the [Apache 2.0 License](http://aws.amazon.com/apache2.0/).
+For more details, please take a look at the [LICENSE](https://github.com/aws/sagemaker-training-toolkit/blob/master/LICENSE) file.
+
+## :handshake: Contributing
+
+Contributions are welcome!
+Please read our [contributing guidelines](https://github.com/aws/sagemaker-training-toolkit/blob/master/CONTRIBUTING.md)
+if you'd like to open an issue or submit a pull request.
