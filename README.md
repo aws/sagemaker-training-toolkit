@@ -128,68 +128,12 @@ Any hyperparameters provided by the training job will be passed to the entry poi
     {"HyperParameters": {"batch-size": 256, "learning-rate": 0.0001, "communicator": "pure_nccl"}}
     ```
 
-The SageMaker Python SDK uses this feature to pass special hyperparameters to the training job. For example:
-
-``` python
-from sagemaker.tensorflow import TensorFlow
-
-model_dir = 's3://SAGEMAKER-BUCKET/hvd-job-377/model'
-
-mpi_distribution = {
-  'mpi': {
-    'enabled': True, 
-    'custom_mpi_options': '-x HOROVOD_HIERARCHICAL_ALLREDUCE=1', 
-    'processes_per_host': 8}}
-
-estimator = TensorFlow(entry_point='train_horovod_imagenet.sh',
-                       model_dir=model_dir,
-                       hyperparameters={'lr': 0.3},
-                       distributions=mpi_distribution,
-                       ...)
-```
-
-When a training job is created using the estimator above, i.e. `estimator.fit()` is called, the Python SDK will create additional hyperparameters and invoke the training job as follow:
-
-``` python
-import boto3
-
-job_hyperparameters = {
-  # user provided hyperparameters
-  'lr': '0.3',
-
-  # hyperparameters created by the Python SDK and used by SageMaker Training Toolkit
-  'sagemaker_job_name': 'JOB_NAME',
-  'sagemaker_program': 'train_horovod_imagenet.sh',
-  'sagemaker_region': 'us-west-2',
-  'sagemaker_submit_directory': 's3://SAGEMAKER-BUCKET/JOB_NAME/source.tar.gz'
-  'sagemaker_container_log_level': '20',
-  'sagemaker_mpi_enabled': 'true',
-  'sagemaker_mpi_num_of_processes_per_host': '8',
-
-  # hyperparameters created by the Python SDK and used by the TF container
-  'model_dir': 's3://SAGEMAKER-BUCKET/hvd-job-377/model'
-}
-
-boto3.client('sagemaker').create_training_job(HyperParameters=job_hyperparameters, ...)
-```
-
-As you can see in the example, in addition to user-provided hyperparameters, the SageMaker Python SDK includes hyperparameters that will be used by SageMaker Training Toolkit and or the framework container.
-The most important SageMaker hyperparameters for training are:
-
-  - `sagemaker_program`: name of the user-provided entry point, it is
-    **mandatory** unless environment variable `SAGEMAKER_PROGRAM` is
-    provided.
-  - `sagemaker_submit_directory`: local or S3 URI location of the
-    source.tar.gz file containing the entry point code. It is
-    **mandatory** unless the code is already located under the
-    `/opt/ml/code` folder.
-
-The complete list of hyperparameters is available
-[here](https://github.com/aws/sagemaker-training-toolkit/blob/v2.4.4/src/sagemaker_training/_params.py).
+The SageMaker Python SDK uses this feature to pass special hyperparameters to the training job, including `sagemaker_program` and `sagemaker_submit_directory`. The complete list of SageMaker hyperparameters is available
+[here](https://github.com/aws/sagemaker-training-toolkit/blob/master/src/sagemaker_training/params.py).
 
 ### Read additional information using environment variables
 
-An entry point often needs additional information from the container that is not available in `hyperparameters`.
+An entry point often needs additional information not available in `hyperparameters`.
 The SageMaker Training Toolkit writes this information as environment variables that are available from within the script.
 For example, this training job includes the channels `training` and `testing`:
 
