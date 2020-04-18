@@ -189,9 +189,9 @@ The complete list of hyperparameters is available
 
 ### Read additional information using environment variables
 
-Very often, an entry point needs additional information from the container that is not available in `hyperparameters`.
-SageMaker Training Toolkit writes this information as **environment variables** that are available inside the script.
-For example, the training job below includes the channels **training** and **testing**:
+An entry point often needs additional information from the container that is not available in `hyperparameters`.
+The SageMaker Training Toolkit writes this information as environment variables that are available from within the script.
+For example, this training job includes the channels `training` and `testing`:
 
 ``` python
 from sagemaker.pytorch import PyTorch
@@ -202,7 +202,7 @@ estimator.fit({'training': 's3://bucket/path/to/training/data',
                'testing': 's3://bucket/path/to/testing/data'})
 ```
 
-The environment variable `SM_CHANNEL_{channel_name}` provides the path where the channel is located:
+The environment variables `SM_CHANNEL_TRAINING` and `SM_CHANNEL_TESTING` provide the paths to the channels:
 
 ``` python
 import argparse
@@ -221,14 +221,13 @@ if __name__ == '__main__':
   ...
 ```
 
-When training starts, SageMaker Training Toolkit will print all available environment variables.
+When training starts, SageMaker Training Toolkit will print all available environment variables. Please see the [reference on environment variables](https://github.com/aws/sagemaker-training-toolkit/blob/master/ENVIRONMENT_VARIABLES.md) for a full list of provided environment variables.
 
 ### Get information about the container environment
 
 To get information about the container environment, initialize an `Environment` object.
-The `Environment` provides access to aspects of the training environment relevant to training jobs, including hyperparameters, system characteristics, filesystem locations, environment variables and configuration settings.
-It is a read-only snapshot of the container environment during training.
-It doesn't contain any form of state.
+`Environment` provides access to aspects of the environment relevant to training jobs, including hyperparameters, system characteristics, filesystem locations, environment variables and configuration settings.
+It is a read-only snapshot of the container environment during training, and it doesn't contain any form of state.
 
 ``` python
 from sagemaker_training import environment
