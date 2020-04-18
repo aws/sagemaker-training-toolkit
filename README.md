@@ -70,7 +70,7 @@ RUN pip3 install sagemaker-training-toolkit
 
     RUN pip install sagemaker-training-toolkit
 
-    # Copies the training code inside the container
+    # Copies the training script inside the container
     COPY train.py /opt/ml/code/train.py
 
     # Defines train.py as script entry point
@@ -103,7 +103,8 @@ RUN pip3 install sagemaker-training-toolkit
 
 ### Pass arguments to the entry point using hyperparameters
 
-Any hyperparameters provided by the training job will be passed to the entry point as script arguments.
+Any hyperparameters provided by the training job will be passed to the entry point as script arguments. The SageMaker Python SDK uses this feature to pass special hyperparameters to the training job, including `sagemaker_program` and `sagemaker_submit_directory`. The complete list of SageMaker hyperparameters is available
+[here](https://github.com/aws/sagemaker-training-toolkit/blob/master/src/sagemaker_training/params.py).
 
 1. Implement an argument parser in the entry point script. For example, in a Python script:
 
@@ -127,9 +128,6 @@ Any hyperparameters provided by the training job will be passed to the entry poi
     ``` python
     {"HyperParameters": {"batch-size": 256, "learning-rate": 0.0001, "communicator": "pure_nccl"}}
     ```
-
-The SageMaker Python SDK uses this feature to pass special hyperparameters to the training job, including `sagemaker_program` and `sagemaker_submit_directory`. The complete list of SageMaker hyperparameters is available
-[here](https://github.com/aws/sagemaker-training-toolkit/blob/master/src/sagemaker_training/params.py).
 
 ### Read additional information using environment variables
 
