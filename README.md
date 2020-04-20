@@ -25,7 +25,7 @@ For more information, see the Amazon SageMaker Developer Guide sections on [usin
 To install this library in your Docker image, add the following line to your [Dockerfile](https://docs.docker.com/engine/reference/builder/):
 
 ``` dockerfile
-RUN pip3 install sagemaker-training-toolkit
+RUN pip3 install sagemaker-training
 ```
 
 ## :computer: Usage
@@ -66,9 +66,9 @@ RUN pip3 install sagemaker-training-toolkit
     Python and shell scripts are both supported.
     
     ``` docker
-    FROM tensorflow/tensorflow:2.0.0a0
+    FROM tensorflow/tensorflow:2.1.0
 
-    RUN pip install sagemaker-training-toolkit
+    RUN pip3 install sagemaker-training
 
     # Copies the training script inside the container
     COPY train.py /opt/ml/code/train.py
@@ -84,8 +84,6 @@ RUN pip3 install sagemaker-training-toolkit
     ```
 
 4. Use the Docker image to start a training job using the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
-
-    This example uses [Local Mode](https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode) to test the container locally:
 
     ``` python
     from sagemaker.estimator import Estimator
