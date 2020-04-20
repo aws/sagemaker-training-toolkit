@@ -68,6 +68,8 @@ parser.add_argument('channel_names', default=json.loads(os.environ['SM_CHANNELS'
 channel_names = json.loads(os.environ['SM_CHANNELS']))
 ```
 
+For more information, see: [Channel](https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_Channel.html).
+
 ## SM\_CHANNEL\_{channel\_name}
 
 ``` shell
