@@ -13,7 +13,7 @@ _Put an `x` in the boxes that apply. You can also fill these out after creating 
 - [ ] I have read the [CONTRIBUTING](https://github.com/aws/sagemaker-training-toolkit/blob/master/CONTRIBUTING.md) doc
 - [ ] I used the commit message format described in [CONTRIBUTING](https://github.com/aws/sagemaker-training-toolkit/blob/master/CONTRIBUTING.md#committing-your-change)
 - [ ] I have used the regional endpoint when creating S3 and/or STS clients (if appropriate)
-- [ ] I have updated any necessary documentation, including [READMEs](https://github.com/aws/sagemaker-training-toolkit/blob/master/README.rst)
+- [ ] I have updated any necessary documentation, including [READMEs](https://github.com/aws/sagemaker-training-toolkit/blob/master/README.md)
 
 #### Tests
 
