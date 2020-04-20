@@ -1,3 +1,23 @@
+# Environment variables
+- [SM\_MODEL\_DIR](#sm_model_dir)
+- [SM\_CHANNELS](#sm_channels)
+- [SM\_CHANNEL\_{channel\_name}](#sm_channel_channel_name)
+- [SM\_HPS](#sm_hps)
+- [SM\_HP\_{hyperparameter\_name}](#sm_hp_hyperparameter_name)
+- [SM\_CURRENT\_HOST](#sm_current_host)
+- [SM\_HOSTS](#sm_hosts)
+- [SM\_NUM\_GPUS](#sm_num_gpus)
+- [SM\_NUM\_CPUS](#sm_num_cpus)
+- [SM\_LOG\_LEVEL](#sm_log_level)
+- [SM\_NETWORK\_INTERFACE\_NAME](#sm_network_interface_name)
+- [SM\_USER\_ARGS](#sm_user_args)
+- [SM\_INPUT\_DIR](#sm_input_dir)
+- [SM\_INPUT\_CONFIG\_DIR](#sm_input_config_dir)
+- [SM\_OUTPUT\_DATA\_DIR](#sm_output_data_dir)
+- [SM\_RESOURCE\_CONFIG](#sm_resource_config)
+- [SM\_INPUT\_DATA\_CONFIG](#sm_input_data_config)
+- [SM\_TRAINING\_ENV](#sm_training_env)
+
 ## SM\_MODEL\_DIR
 
 ``` shell
