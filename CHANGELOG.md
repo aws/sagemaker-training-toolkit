@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.4.1 (2020-04-20)
+
+### Bug Fixes and Other Changes
+
+ * Remove etc directory
+
+### Testing and Release Infrastructure
+
+ * Add requirements.txt integration test in dummy container
+
 ## v3.4.0 (2020-04-16)
 
 ### Deprecations and Removals
