@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.4.2 (2020-04-21)
+
+### Bug Fixes and Other Changes
+
+ * Remove unused config files
+
+### Documentation Changes
+
+ * clean up README and other documentation
+
 ## v3.4.1 (2020-04-20)
 
 ### Bug Fixes and Other Changes
