@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import errno
-import os
 
 from mock import MagicMock, Mock, patch
 
@@ -78,7 +77,7 @@ def test_train_with_success(_exit, import_module):
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_fails(_exit, import_module):
     def fail():
-        raise OSError(os.errno.ENOENT, "No such file or directory")
+        raise OSError(errno.ENOENT, "No such file or directory")
 
     framework = Mock(entry_point=fail)
     import_module.return_value = framework
@@ -133,7 +132,7 @@ def test_train_fails_with_invalid_error_number(_exit, import_module):
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_with_client_error(_exit, import_module):
     def fail():
-        raise errors.ClientError(os.errno.ENOENT, "No such file or directory")
+        raise errors.ClientError(errno.ENOENT, "No such file or directory")
 
     framework = Mock(entry_point=fail)
     import_module.return_value = framework
