@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.5.0 (2020-04-27)
+
+### Features
+
+ * Add Python 3.7 support
+
 ## v3.4.2 (2020-04-21)
 
 ### Bug Fixes and Other Changes
