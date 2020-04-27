@@ -85,10 +85,10 @@ def save(model, model_dir):
 """
 
 USER_SCRIPT_WITH_EXCEPTION = """
-import os
+import errno
 
 def train(channel_input_dirs, hyperparameters):
-    raise OSError(os.errno.ENOENT, 'No such file or directory')
+    raise OSError(errno.ENOENT, 'No such file or directory')
 """
 
 MPI_USER_MODE_SCRIPT_BASIC = """
