@@ -85,7 +85,7 @@ def save(model, model_dir):
 """
 
 USER_SCRIPT_WITH_EXCEPTION = """
-import errno 
+import errno
 
 def train(channel_input_dirs, hyperparameters):
     raise OSError(errno.ENOENT, 'No such file or directory')
