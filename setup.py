@@ -76,6 +76,7 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
     install_requires=required_packages,
@@ -86,7 +87,7 @@ setuptools.setup(
             "pytest-cov",
             "mock",
             "sagemaker[local]>=1.16.2",
-            "black==19.3b0 ; python_version >= '3.7'",
+            "black==19.3b0 ; python_version >= '3.6'",
         ]
     },
     entry_points={"console_scripts": ["train=sagemaker_training.cli.train:main"]},
