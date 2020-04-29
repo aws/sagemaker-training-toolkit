@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.5.0.post0 (2020-04-29)
+
+### Testing and Release Infrastructure
+
+ * Test against Python 3.7 in PR builds
+
 ## v3.5.0 (2020-04-27)
 
 ### Features
