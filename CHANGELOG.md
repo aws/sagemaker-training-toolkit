@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.5.1 (2020-05-11)
+
+### Bug Fixes and Other Changes
+
+ * Remove typing
+
 ## v3.5.0.post0 (2020-04-29)
 
 ### Testing and Release Infrastructure
