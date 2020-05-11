@@ -18,7 +18,6 @@ from __future__ import absolute_import
 import os
 import socket
 import sys
-from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from retrying import retry
 
@@ -35,7 +34,6 @@ def run(
     runner_type=runner.ProcessRunnerType,
     extra_opts=None,
 ):
-    # type: (str, str, List[str], Dict[str, str], bool, bool, runner.RunnerType,Dict[str, str]) -> None  # pylint: disable=line-too-long # noqa ignore=E501
     """Download, prepare and execute a compressed tar file from S3 or provided directory as a user
     entry point. Run the user entry point, passing env_vars as environment variables and args
     as command arguments.
@@ -72,15 +70,16 @@ def run(
         uri (str): The location of the module or script. This can be an S3 uri, a path to
             a local directory, or a path to a local tarball.
         user_entry_point (str): Name of the user provided entry point.
-        args (list):  A list of program arguments.
-        env_vars (dict): A map containing the environment variables to be written (default: None).
+        args ([str]):  A list of program arguments.
+        env_vars (dict(str,str)): A map containing the environment variables to be written
+            (default: None).
         wait (bool): If the user entry point should be run to completion before this method returns
             (default: True).
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
         runner_type (sagemaker_training.runner.RunnerType): The type of runner object to
             be created (default: sagemaker_training.runner.ProcessRunnerType).
-        extra_opts (dict): Additional options for running the entry point (default: None).
+        extra_opts (dict(str,str)): Additional options for running the entry point (default: None).
             Currently, this only applies for MPI.
 
     Returns:

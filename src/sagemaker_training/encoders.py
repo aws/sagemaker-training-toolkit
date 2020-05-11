@@ -16,7 +16,6 @@ from __future__ import absolute_import
 import csv
 import io
 import json
-from typing import Iterable
 
 import numpy as np
 from scipy.sparse import issparse
@@ -29,7 +28,7 @@ from sagemaker_training.recordio import (
 )
 
 
-def array_to_npy(array_like):  # type: (np.array or Iterable or int or float) -> object
+def array_to_npy(array_like):
     """Convert an array-like object to the NPY format.
 
     To understand what an array-like object is, please see:
@@ -46,7 +45,7 @@ def array_to_npy(array_like):  # type: (np.array or Iterable or int or float) ->
     return buffer.getvalue()
 
 
-def npy_to_numpy(npy_array):  # type: (object) -> np.array
+def npy_to_numpy(npy_array):
     """Convert an NPY array into numpy.
 
     Args:
@@ -58,7 +57,7 @@ def npy_to_numpy(npy_array):  # type: (object) -> np.array
     return np.load(stream, allow_pickle=True)
 
 
-def array_to_json(array_like):  # type: (np.array or Iterable or int or float) -> str
+def array_to_json(array_like):
     """Convert an array-like object to JSON.
 
     To understand what an array-like object is, please see:
@@ -80,7 +79,7 @@ def array_to_json(array_like):  # type: (np.array or Iterable or int or float) -
     return json.dumps(array_like, default=default)
 
 
-def json_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
+def json_to_numpy(string_like, dtype=None):
     """Convert a JSON object to a numpy array.
 
         Args:
@@ -98,7 +97,7 @@ def json_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
     return np.array(data, dtype=dtype)
 
 
-def csv_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
+def csv_to_numpy(string_like, dtype=None):
     """Convert a CSV object to a numpy array.
 
     Args:
@@ -126,7 +125,7 @@ def csv_to_numpy(string_like, dtype=None):  # type: (str) -> np.array
     return array
 
 
-def array_to_csv(array_like):  # type: (np.array or Iterable or int or float) -> str
+def array_to_csv(array_like):
     """Convert an array like object to CSV.
 
     To understand what an array-like object is, please see:
@@ -196,7 +195,6 @@ _decoders_map = {
 
 
 def decode(obj, content_type):
-    # type: (np.array or Iterable or int or float, str) -> np.array
     """Decode an object of one of the default content types to a numpy array.
 
     Args:
@@ -214,7 +212,6 @@ def decode(obj, content_type):
 
 
 def encode(array_like, content_type):
-    # type: (np.array or Iterable or int or float, str) -> np.array
     """Encode an array-like object in a specific content_type to a numpy array.
 
     To understand what an array-like object is, please see:

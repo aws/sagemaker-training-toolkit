@@ -17,14 +17,13 @@ from __future__ import absolute_import
 
 import inspect
 import sys
-from typing import Callable
 
 import six
 
 from sagemaker_training import mapping
 
 
-def matching_args(fn, dictionary):  # type: (Callable, mapping.Mapping) -> dict
+def matching_args(fn, dictionary):
     """Given a function fn and a dict dictionary, returns the function
     arguments that match the dict keys.
 
@@ -54,9 +53,7 @@ def matching_args(fn, dictionary):  # type: (Callable, mapping.Mapping) -> dict
     return mapping.split_by_criteria(dictionary, arg_spec.args).included
 
 
-def getargspec(  # pylint: disable=inconsistent-return-statements
-    fn
-):  # type: (Callable) -> inspect.ArgSpec
+def getargspec(fn):  # pylint: disable=inconsistent-return-statements
     """Get the names and default values of a function's arguments.
 
     Args:
@@ -80,7 +77,7 @@ def getargspec(  # pylint: disable=inconsistent-return-statements
         )
 
 
-def error_wrapper(fn, error_class):  # type: (Callable or None, Exception) -> ...
+def error_wrapper(fn, error_class):
     """Wraps function fn in a try catch block that re-raises error_class.
 
     Args:
