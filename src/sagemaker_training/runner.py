@@ -32,7 +32,6 @@ MPIRunnerType = RunnerType.MPI
 
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
-    # type: (RunnerType, str, List[str], Dict[str]) -> process.Runner
     """Get the process runner based on the runner type.
 
     Args:

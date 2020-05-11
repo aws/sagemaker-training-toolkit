@@ -160,7 +160,7 @@ class MasterRunner(process.ProcessRunner):
                     time.sleep(self._interval)
                 logger.info("Worker %s available for communication", host)
 
-    def _create_command(self):  # type: () -> List[str, Any]
+    def _create_command(self):
         num_hosts = len(self._hosts)
         num_processes = self._num_processes or self._process_per_host * num_hosts
 
@@ -297,7 +297,6 @@ def _can_connect(host, port=22):  # type: (str, int) -> bool
 
 
 def _parse_custom_mpi_options(custom_mpi_options):
-    # type: (str) -> Tuple[argparse.Namespace, List[str]]
     """Parse custom MPI options provided by user. Known options default value will be overridden
     and unknown options will be identified separately."""
 

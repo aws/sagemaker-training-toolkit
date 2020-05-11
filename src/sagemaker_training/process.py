@@ -52,11 +52,10 @@ def create(cmd, error_class, cwd=None, capture_error=False, **kwargs):
 
 
 def check_error(cmd, error_class, capture_error=False, **kwargs):
-    # type: (List[str], type, bool, Mapping[str, object]) -> subprocess.Popen
     """Run a commmand, raising an exception if there is an error.
 
     Args:
-        cmd (list): The command to be run.
+        cmd ([str]): The command to be run.
         error_class (cls): The class to use when raising an exception.
         capture_error (bool): Whether or not to include stderr in
             the exception message (default: False). In either case,
@@ -100,7 +99,6 @@ class ProcessRunner(object):
     """
 
     def __init__(self, user_entry_point, args, env_vars):
-        # type: (str, List[str], Dict[str, str]) -> None
         """Initialize a ProcessRunner, which is responsible for executing the user
         entry point within a process.
 
