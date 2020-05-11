@@ -71,7 +71,8 @@ def run(
             a local directory, or a path to a local tarball.
         user_entry_point (str): Name of the user provided entry point.
         args ([str]):  A list of program arguments.
-        env_vars (dict(str,str)): A map containing the environment variables to be written (default: None).
+        env_vars (dict(str,str)): A map containing the environment variables to be written
+            (default: None).
         wait (bool): If the user entry point should be run to completion before this method returns
             (default: True).
         capture_error (bool): Default false. If True, the running process captures the
