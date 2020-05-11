@@ -16,7 +16,6 @@ runner type.
 from __future__ import absolute_import
 
 import enum
-from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from sagemaker_training import environment, mpi, params, process
 

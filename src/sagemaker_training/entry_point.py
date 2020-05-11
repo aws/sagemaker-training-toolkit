@@ -18,7 +18,6 @@ from __future__ import absolute_import
 import os
 import socket
 import sys
-from typing import Dict, List  # noqa ignore=F401 imported but unused
 
 from retrying import retry
 

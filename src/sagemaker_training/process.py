@@ -18,7 +18,6 @@ from __future__ import absolute_import
 import os
 import subprocess
 import sys
-from typing import Dict, List, Mapping  # noqa ignore=F401 imported but unused
 
 import six
 

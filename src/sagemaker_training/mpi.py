@@ -18,7 +18,6 @@ import logging
 import os
 import subprocess
 import time
-from typing import Any, List, Tuple  # noqa ignore=F401 imported but unused
 
 import paramiko
 import psutil
