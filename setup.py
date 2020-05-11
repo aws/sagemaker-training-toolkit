@@ -34,7 +34,6 @@ required_packages = [
     "boto3",
     "six",
     "pip",
-    "typing",
     "retrying>=1.3.3",
     "gevent",
     "inotify_simple==1.2.1",
