@@ -165,13 +165,14 @@ file_name = env.hyperparameters["training_data_file"]
 # get the folder where the model should be saved
 model_dir = env.model_dir
 
+# train the model
 data = np.load(os.path.join(training_dir, file_name))
 x_train, y_train = data["features"], keras.utils.to_categorical(data["labels"])
 model = ResNet50(weights="imagenet")
 ...
 model.fit(x_train, y_train)
 
-#save the model in the end of training
+#save the model to the model_dir at the end of training
 model.save(os.path.join(model_dir, "saved_model"))
 ```
 
