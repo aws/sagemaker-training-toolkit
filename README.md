@@ -30,10 +30,10 @@ RUN pip3 install sagemaker-training
 
 ## :computer: Usage
 
-### Create a Docker image and train a model
-
-The following is a brief how-to guide.
+The following are brief how-to guides.
 For complete, working examples of custom training containers built with the SageMaker Training Toolkit, please see [the example notebooks](https://github.com/awslabs/amazon-sagemaker-examples/tree/master/advanced_functionality/custom-training-containers).
+
+### Create a Docker image and train a model
 
 1. Write a training script (eg. `train.py`).
 
