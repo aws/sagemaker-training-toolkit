@@ -31,7 +31,7 @@ region = test.DEFAULT_REGION
 
 
 def _timestamp():
-    return time.strftime("%Y-%m-%d-%H-%M-%S".format(time.gmtime(time.time())))
+    return time.strftime("%Y-%m-%d-%H-%M-%S")
 
 
 @pytest.mark.xfail(

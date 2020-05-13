@@ -30,33 +30,12 @@ RUN pip3 install sagemaker-training
 
 ## :computer: Usage
 
-### Create a Docker image and train a model 
+The following are brief how-to guides.
+For complete, working examples of custom training containers built with the SageMaker Training Toolkit, please see [the example notebooks](https://github.com/awslabs/amazon-sagemaker-examples/tree/master/advanced_functionality/custom-training-containers).
 
-1. Write a training script. (For example, this script named `train.py` uses Tensorflow.)
+### Create a Docker image and train a model
 
-    ``` python
-    import tensorflow as tf
-
-    mnist = tf.keras.datasets.mnist
-
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train, x_test = x_train / 255.0, x_test / 255.0
-
-    model = tf.keras.models.Sequential([
-      tf.keras.layers.Flatten(input_shape=(28, 28)),
-      tf.keras.layers.Dense(128, activation='relu'),
-      tf.keras.layers.Dropout(0.2),
-      tf.keras.layers.Dense(10, activation='softmax')
-    ])
-
-    model.compile(optimizer='adam',
-                  loss='sparse_categorical_crossentropy',
-                  metrics=['accuracy'])
-
-    model.fit(x_train, y_train, epochs=1)
-
-    model.evaluate(x_test, y_test)
-    ```
+1. Write a training script (eg. `train.py`).
 
 2. [Define a container with a Dockerfile](https://docs.docker.com/get-started/part2/#define-a-container-with-dockerfile) that includes the training script and any dependencies.
 
@@ -66,21 +45,22 @@ RUN pip3 install sagemaker-training
     Python and shell scripts are both supported.
     
     ``` docker
-    FROM tensorflow/tensorflow:2.1.0
-
+    FROM yourbaseimage:tag
+  
+    # install the SageMaker Training Toolkit 
     RUN pip3 install sagemaker-training
 
-    # Copies the training script inside the container
+    # copy the training script inside the container
     COPY train.py /opt/ml/code/train.py
 
-    # Defines train.py as script entry point
+    # define train.py as the script entry point
     ENV SAGEMAKER_PROGRAM train.py
     ```
 
 3. Build and tag the Docker image.
 
     ``` shell
-    docker build -t tf-2.0 .
+    docker build -t custom-training-container .
     ```
 
 4. Use the Docker image to start a training job using the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
@@ -88,10 +68,10 @@ RUN pip3 install sagemaker-training
     ``` python
     from sagemaker.estimator import Estimator
 
-    estimator = Estimator(image_name='tf-2.0',
-                          role='SageMakerRole',
+    estimator = Estimator(image_name="custom-training-container",
+                          role="SageMakerRole",
                           train_instance_count=1,
-                          train_instance_type='local')
+                          train_instance_type="local")
 
     estimator.fit()
     ```
@@ -101,21 +81,22 @@ RUN pip3 install sagemaker-training
 
 ### Pass arguments to the entry point using hyperparameters
 
-Any hyperparameters provided by the training job will be passed to the entry point as script arguments. The SageMaker Python SDK uses this feature to pass special hyperparameters to the training job, including `sagemaker_program` and `sagemaker_submit_directory`. The complete list of SageMaker hyperparameters is available
-[here](https://github.com/aws/sagemaker-training-toolkit/blob/master/src/sagemaker_training/params.py).
+Any hyperparameters provided by the training job are passed to the entry point as script arguments.
+The SageMaker Python SDK uses this feature to pass special hyperparameters to the training job, including `sagemaker_program` and `sagemaker_submit_directory`.
+The complete list of SageMaker hyperparameters is available [here](https://github.com/aws/sagemaker-training-toolkit/blob/master/src/sagemaker_training/params.py).
 
 1. Implement an argument parser in the entry point script. For example, in a Python script:
 
     ``` python
     import argparse
 
-    if __name__ == '__main__':
+    if __name__ == "__main__":
       parser = argparse.ArgumentParser()
 
-      parser.add_argument('--learning-rate', type=int, default=1)
-      parser.add_argument('--batch-size', type=int, default=64)
-      parser.add_argument('--communicator', type=str)
-      parser.add_argument('--frequency', type=int, default=20)
+      parser.add_argument("--learning-rate", type=int, default=1)
+      parser.add_argument("--batch-size", type=int, default=64)
+      parser.add_argument("--communicator", type=str)
+      parser.add_argument("--frequency", type=int, default=20)
 
       args = parser.parse_args()
       ...
@@ -136,10 +117,10 @@ For example, this training job includes the channels `training` and `testing`:
 ``` python
 from sagemaker.pytorch import PyTorch
 
-estimator = PyTorch(entry_point='train.py', ...)
+estimator = PyTorch(entry_point="train.py", ...)
 
-estimator.fit({'training': 's3://bucket/path/to/training/data', 
-               'testing': 's3://bucket/path/to/testing/data'})
+estimator.fit({"training": "s3://bucket/path/to/training/data", 
+               "testing": "s3://bucket/path/to/testing/data"})
 ```
 
 The environment variables `SM_CHANNEL_TRAINING` and `SM_CHANNEL_TESTING` provide the paths to the channels:
@@ -148,16 +129,17 @@ The environment variables `SM_CHANNEL_TRAINING` and `SM_CHANNEL_TESTING` provide
 import argparse
 import os
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   parser = argparse.ArgumentParser()
 
   ...
 
   # reads input channels training and testing from the environment variables
-  parser.add_argument('--training', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
-  parser.add_argument('--testing', type=str, default=os.environ['SM_CHANNEL_TESTING'])
+  parser.add_argument("--training", type=str, default=os.environ["SM_CHANNEL_TRAINING"])
+  parser.add_argument("--testing", type=str, default=os.environ["SM_CHANNEL_TESTING"])
 
   args = parser.parse_args()
+
   ...
 ```
 
@@ -174,22 +156,24 @@ from sagemaker_training import environment
 
 env = environment.Environment()
 
-# get the path of the channel 'training' from the ``inputdataconfig.json`` file
-training_dir = env.channel_input_dirs['training']
+# get the path of the channel "training" from the `inputdataconfig.json` file
+training_dir = env.channel_input_dirs["training"]
 
-# get a the hyperparameter 'training_data_file' from ``hyperparameters.json`` file
-file_name = env.hyperparameters['training_data_file']
+# get a the hyperparameter "training_data_file" from `hyperparameters.json` file
+file_name = env.hyperparameters["training_data_file"]
 
 # get the folder where the model should be saved
 model_dir = env.model_dir
+
+# train the model
 data = np.load(os.path.join(training_dir, file_name))
-x_train, y_train = data['features'], keras.utils.to_categorical(data['labels'])
-model = ResNet50(weights='imagenet')
+x_train, y_train = data["features"], keras.utils.to_categorical(data["labels"])
+model = ResNet50(weights="imagenet")
 ...
 model.fit(x_train, y_train)
 
-#save the model in the end of training
-model.save(os.path.join(model_dir, 'saved_model'))
+#save the model to the model_dir at the end of training
+model.save(os.path.join(model_dir, "saved_model"))
 ```
 
 ### Execute the entry point
@@ -208,10 +192,10 @@ args = env.to_cmd_args()
 env_vars = env.to_env_vars()
 
 # execute the entry point
-entry_point.run(env.module_dir,
-                env.user_entry_point,
-                args,
-                env_vars)
+entry_point.run(uri=env.module_dir,
+                user_entry_point=env.user_entry_point,
+                args=args,
+                env_vars=env_vars)
 
 ```
 
