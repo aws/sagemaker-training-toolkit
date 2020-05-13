@@ -81,7 +81,7 @@ For complete, working examples of custom training containers built with the Sage
 
 ### Pass arguments to the entry point using hyperparameters
 
-Any hyperparameters provided by the training job will be passed to the entry point as script arguments.
+Any hyperparameters provided by the training job are passed to the entry point as script arguments.
 The SageMaker Python SDK uses this feature to pass special hyperparameters to the training job, including `sagemaker_program` and `sagemaker_submit_directory`.
 The complete list of SageMaker hyperparameters is available [here](https://github.com/aws/sagemaker-training-toolkit/blob/master/src/sagemaker_training/params.py).
 
