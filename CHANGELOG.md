@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.5.1.post0 (2020-05-14)
+
+### Documentation Changes
+
+ * clean up README usage examples
+
 ## v3.5.1 (2020-05-11)
 
 ### Bug Fixes and Other Changes
