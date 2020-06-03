@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.5.2 (2020-06-03)
+
+### Bug Fixes and Other Changes
+
+ * run Python script entry point as script and install from requirements.txt
+
 ## v3.5.1.post0 (2020-05-14)
 
 ### Documentation Changes
