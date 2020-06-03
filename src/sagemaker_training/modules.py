@@ -130,7 +130,7 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
 
 
 def install_requirements(path, capture_error=False):  # type: (str, bool) -> None
-    """Install dependencies from requirements.txt the executing Python environment.
+    """Install dependencies from requirements.txt in the executing Python environment.
 
     Args:
         path (str):  Real path location of the requirements.txt file.
