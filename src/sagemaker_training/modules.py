@@ -129,6 +129,23 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
     )
 
 
+def install_requirements(path, capture_error=False):  # type: (str, bool) -> None
+    """Install dependencies from requirements.txt the executing Python environment.
+
+    Args:
+        path (str):  Real path location of the requirements.txt file.
+        capture_error (bool): Default false. If True, the running process captures the
+            stderr, and appends it to the returned Exception message in case of errors.
+    """
+    cmd = "%s -m pip install -r requirements.txt" % process.python_executable()
+
+    logger.info("Installing dependencies from requirements.txt:\n%s", cmd)
+
+    process.check_error(
+        shlex.split(cmd), errors.InstallRequirementsError, cwd=path, capture_error=capture_error
+    )
+
+
 def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
     """Download, prepare and install a compressed tar file from S3 or provided directory as a
     module.

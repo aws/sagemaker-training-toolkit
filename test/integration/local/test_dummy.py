@@ -47,6 +47,6 @@ def test_install_requirements(capsys):
 
     stdout = capsys.readouterr().out
 
-    assert "Installing collected packages: pyfiglet, train.py" in stdout
-    assert "Successfully installed pyfiglet-0.8.post1 train.py-1.0.0" in stdout
+    assert "Installing collected packages: pyfiglet" in stdout
+    assert "Successfully installed pyfiglet-0.8.post1" in stdout
     assert "Reporting training SUCCESS" in stdout

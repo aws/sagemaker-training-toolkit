@@ -117,13 +117,10 @@ def install(name, path=environment.code_dir, capture_error=False):
 
     entry_point_type = _entry_point_type.get(path, name)
 
-    if (
-        entry_point_type is _entry_point_type.PYTHON_PACKAGE
-        or entry_point_type is _entry_point_type.PYTHON_PROGRAM
-        or modules.has_requirements(path)
-    ):
-        modules.prepare(path, name)
+    if entry_point_type is _entry_point_type.PYTHON_PACKAGE:
         modules.install(path, capture_error)
+    elif entry_point_type is _entry_point_type.PYTHON_PROGRAM and modules.has_requirements(path):
+        modules.install_requirements(path, capture_error)
 
     if entry_point_type is _entry_point_type.COMMAND:
         os.chmod(os.path.join(path, name), 511)
