@@ -52,6 +52,10 @@ class InstallModuleError(_CalledProcessError):
     """Error class indicating a module failed to install."""
 
 
+class InstallRequirementsError(_CalledProcessError):
+    """Error class indicating a module failed to install."""
+
+
 class ImportModuleError(ClientError):
     """Error class indicating a module failed to import."""
 

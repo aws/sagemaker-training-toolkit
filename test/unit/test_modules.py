@@ -77,6 +77,20 @@ def test_install(check_error):
 
 
 @patch("sagemaker_training.process.check_error", autospec=True)
+def test_install_requirements(check_error):
+    path = "c://sagemaker-pytorch-container"
+
+    cmd = [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
+
+    with patch("os.path.exists", return_value=True):
+        modules.install_requirements(path)
+
+        check_error.assert_called_with(
+            cmd, errors.InstallRequirementsError, cwd=path, capture_error=False
+        )
+
+
+@patch("sagemaker_training.process.check_error", autospec=True)
 def test_install_fails(check_error):
     check_error.side_effect = errors.ClientError()
     with pytest.raises(errors.ClientError):
