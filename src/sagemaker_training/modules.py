@@ -137,9 +137,9 @@ def install_requirements(path, capture_error=False):  # type: (str, bool) -> Non
         capture_error (bool): Default false. If True, the running process captures the
             stderr, and appends it to the returned Exception message in case of errors.
     """
-    cmd = "%s -m pip install -r requirements.txt" % process.python_executable()
+    cmd = "{} -m pip install -r requirements.txt".format(process.python_executable())
 
-    logger.info("Installing dependencies from requirements.txt:\n%s", cmd)
+    logger.info("Installing dependencies from requirements.txt:\n{}".format(cmd))
 
     process.check_error(
         shlex.split(cmd), errors.InstallRequirementsError, cwd=path, capture_error=capture_error
