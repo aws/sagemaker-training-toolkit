@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.6.0 (2020-06-29)
+
+### Features
+
+ * persist env vars in /etc/environment for MPI processes
+
 ## v3.5.2.post0 (2020-06-29)
 
 ### Testing and Release Infrastructure
