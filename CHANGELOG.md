@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.5.2.post0 (2020-06-29)
+
+### Testing and Release Infrastructure
+
+ * clarify feature request issue template
+
 ## v3.5.2 (2020-06-03)
 
 ### Bug Fixes and Other Changes
