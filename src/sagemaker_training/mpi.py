@@ -62,6 +62,9 @@ class WorkerRunner(process.ProcessRunner):
             self._wait_master_to_start()
         logger.info("MPI Master online, creating SSH daemon.")
 
+        logger.info("Writing environment variables to /etc/environment for the MPI process.")
+        _write_env_vars_to_file()
+
         _start_sshd_daemon()
 
         if wait:
@@ -77,6 +80,12 @@ class WorkerRunner(process.ProcessRunner):
     def _wait_master_to_finish(self):  # type: () -> None
         while _can_connect(self._master_hostname):
             time.sleep(30)
+
+
+def _write_env_vars_to_file():  # type: () -> None
+    with open("/etc/environment", "a") as f:
+        for name in os.environ:
+            f.write("{}={}\n".format(name, os.environ.get(name)))
 
 
 def _wait_orted_process_to_finish():  # type: () -> None
