@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.6.1 (2020-07-10)
+
+### Bug Fixes and Other Changes
+
+ * use '-bind-to none' flag to improve performance.
+
 ## v3.6.0 (2020-06-29)
 
 ### Features
