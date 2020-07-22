@@ -13,7 +13,6 @@
 - [SM\_USER\_ARGS](#sm_user_args)
 - [SM\_INPUT\_DIR](#sm_input_dir)
 - [SM\_INPUT\_CONFIG\_DIR](#sm_input_config_dir)
-- [SM\_OUTPUT\_DATA\_DIR](#sm_output_data_dir)
 - [SM\_RESOURCE\_CONFIG](#sm_resource_config)
 - [SM\_INPUT\_DATA\_CONFIG](#sm_input_data_config)
 - [SM\_TRAINING\_ENV](#sm_training_env)
@@ -55,7 +54,7 @@ Contains the list of input data channels in the container.
 When you run training, you can partition your training data into different logical "channels".
 Depending on your problem, some common channel ideas are: "training", "testing", "evaluation" or "images" and "labels".
 
-`SM_CHANNELS` includes the name of the available channels in the container as a JSON-encoded list. 
+`SM_CHANNELS` includes the name of the available channels in the container as a JSON-encoded list.
 
 ``` python
 import os
@@ -77,7 +76,7 @@ SM_CHANNEL_TRAINING='/opt/ml/input/data/training'
 SM_CHANNEL_TESTING='/opt/ml/input/data/testing'
 ```
 
-Contains the directory where the channel named `channel_name` is located in the container. 
+Contains the directory where the channel named `channel_name` is located in the container.
 
 ``` python
 import os
@@ -117,7 +116,7 @@ SM_HP_BATCH-SIZE=10000
 SM_HP_COMMUNICATOR=pure_nccl
 ```
 
-Contains value of the hyperparameter named `hyperparameter_name`. 
+Contains value of the hyperparameter named `hyperparameter_name`.
 
 ``` python
 learning_rate = float(os.environ['SM_HP_LEARNING-RATE'])
@@ -131,7 +130,7 @@ comminicator = os.environ['SM_HP_COMMUNICATOR']
 SM_CURRENT_HOST=algo-1
 ```
 
-The name of the current container on the container network. 
+The name of the current container on the container network.
 
 ``` python
 import os
@@ -149,7 +148,7 @@ current_host = os.environ['SM_CURRENT_HOST']
 SM_HOSTS='["algo-1","algo-2"]'
 ```
 
-JSON-encoded list containing all the hosts. 
+JSON-encoded list containing all the hosts.
 
 ``` python
 import os
@@ -168,7 +167,7 @@ hosts = json.loads(os.environ['SM_HOSTS'])
 SM_NUM_GPUS=1
 ```
 
-The number of GPUs available in the current container. 
+The number of GPUs available in the current container.
 
 ``` python
 import os
@@ -186,7 +185,7 @@ num_gpus = int(os.environ['SM_NUM_GPUS'])
 SM_NUM_CPUS=32
 ```
 
-The number of CPUs available in the current container. 
+The number of CPUs available in the current container.
 
 ``` python
 # using it in argparse
@@ -202,7 +201,7 @@ num_cpus = int(os.environ['SM_NUM_CPUS'])
 SM_LOG_LEVEL=20
 ```
 
-The current log level in the container. 
+The current log level in the container.
 
 ``` python
 import os
@@ -260,17 +259,6 @@ SageMaker training creates the following files in this folder when training star
 - `resourceconfig.json`: name of the current host and all host containers in the training.
 
 For more information about these files, see: [How Amazon SageMaker Provides Training Information](https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html).
-
-## SM\_OUTPUT\_DATA\_DIR
-
-``` shell
-SM_OUTPUT_DATA_DIR=/opt/ml/output/data/algo-1
-```
-
-The directory to write non-model training artifacts (e.g. evaluation results) that will be retained by SageMaker, e.g. `/opt/ml/output/data`.
-
-As your algorithm runs in a container, it generates output including the status of the training job and model and output artifacts.
-Your algorithm should write this information to the this directory.
 
 ## SM\_RESOURCE\_CONFIG
 
