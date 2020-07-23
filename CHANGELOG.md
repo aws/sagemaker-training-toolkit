@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.6.1.post0 (2020-07-23)
+
+### Documentation Changes
+
+ * remove unofficially-supported environment variable
+
 ## v3.6.1 (2020-07-10)
 
 ### Bug Fixes and Other Changes
