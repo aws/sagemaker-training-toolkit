@@ -40,7 +40,9 @@ def get(path, name):  # type: (str, str) -> _EntryPointType
     Returns:
         (_EntryPointType): The type of the entry point.
     """
-    if "setup.py" in os.listdir(path):
+    if name.endswith(".sh"):
+        return _EntryPointType.COMMAND
+    elif "setup.py" in os.listdir(path):
         return _EntryPointType.PYTHON_PACKAGE
     elif name.endswith(".py"):
         return _EntryPointType.PYTHON_PROGRAM

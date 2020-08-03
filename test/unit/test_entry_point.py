@@ -91,6 +91,24 @@ def test_install_no_python_executable(
     assert str(e.value) == "Failed to retrieve the real path for the Python executable binary"
 
 
+@patch("os.chmod")
+@patch("sagemaker_training.process.check_error", autospec=True)
+@patch("socket.gethostbyname")
+def test_script_entry_point_with_python_package(
+    gethostbyname, check_error, chmod, entry_point_type_module
+):
+    runner_mock = MagicMock(spec=process.ProcessRunner)
+
+    entry_point.run(
+        uri="s3://dummy-uri",
+        user_entry_point="train.sh",
+        args=["dummy_arg"],
+        runner_type=runner_mock,
+    )
+
+    chmod.assert_called_with(os.path.join(environment.code_dir, "train.sh"), 511)
+
+
 @patch("sagemaker_training.files.download_and_extract")
 @patch("os.chmod")
 @patch("sagemaker_training.process.check_error", autospec=True)
