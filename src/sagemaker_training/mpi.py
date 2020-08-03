@@ -207,7 +207,7 @@ class MasterRunner(process.ProcessRunner):
             "plm_rsh_no_tree_spawn",
             "1",
             "-bind-to",
-            "socket",
+            "none",
             "-map-by",
             "slot",
             "-mca",

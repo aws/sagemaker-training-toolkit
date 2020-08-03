@@ -1,5 +1,23 @@
 # Changelog
 
+## v3.6.1.post1 (2020-08-03)
+
+### Testing and Release Infrastructure
+
+ * pin sagemaker<2 in test dependencies
+
+## v3.6.1.post0 (2020-07-23)
+
+### Documentation Changes
+
+ * remove unofficially-supported environment variable
+
+## v3.6.1 (2020-07-10)
+
+### Bug Fixes and Other Changes
+
+ * use '-bind-to none' flag to improve performance.
+
 ## v3.6.0 (2020-06-29)
 
 ### Features
