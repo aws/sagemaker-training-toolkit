@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.6.2 (2020-08-04)
+
+### Bug Fixes and Other Changes
+
+ * check for script entry point even if setup.py is present
+
 ## v3.6.1.post1 (2020-08-03)
 
 ### Testing and Release Infrastructure
