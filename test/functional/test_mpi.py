@@ -30,9 +30,6 @@ class CustomEstimator(Framework):
         raise NotImplementedError("This methos is not supported.")
 
 
-@pytest.mark.skip(
-    reason="waiting for local mode fix on  " "https://github.com/aws/sagemaker-python-sdk/pull/559"
-)
 def test_mpi(tmpdir):
 
     estimator = CustomEstimator(
