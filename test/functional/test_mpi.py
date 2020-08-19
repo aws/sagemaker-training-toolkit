@@ -15,7 +15,6 @@ import os
 import shutil
 import subprocess
 
-import pytest
 from sagemaker.estimator import Framework
 
 logging.basicConfig(level=logging.INFO)
