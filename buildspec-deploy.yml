@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - PACKAGE_FILE="$CODEBUILD_SRC_DIR_ARTIFACT_1/sagemaker_training-*.tar.gz"
+
+      # publish to pypi
+      - publish-pypi-package $PACKAGE_FILE
