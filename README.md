@@ -211,4 +211,3 @@ For more details, please take a look at the [LICENSE](https://github.com/aws/sag
 Contributions are welcome!
 Please read our [contributing guidelines](https://github.com/aws/sagemaker-training-toolkit/blob/master/CONTRIBUTING.md)
 if you'd like to open an issue or submit a pull request.
->>>>>>> ecd9abc2405d5da6e182556307046586f503c21a
