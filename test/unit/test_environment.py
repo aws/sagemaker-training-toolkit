@@ -221,6 +221,7 @@ def test_env_dictionary():
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
     os.environ[params.USER_PROGRAM_ENV] = "my_app.py"
+    os.environ[params.LOG_LEVEL_ENV] = "20"
     test_env = environment.Environment()
 
     assert len(test_env) == len(test_env.properties())

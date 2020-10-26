@@ -37,7 +37,7 @@ def container():
 
 def test_install_requirements(capsys):
     estimator = Estimator(
-        image_name="sagemaker-training-toolkit-test:dummy",
+        image_uri="sagemaker-training-toolkit-test:dummy",
         role="SageMakerRole",
         train_instance_count=1,
         train_instance_type="local",
