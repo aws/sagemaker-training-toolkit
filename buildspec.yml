@@ -21,7 +21,7 @@ phases:
 
       # run functional tests
       - $(aws ecr get-login --no-include-email --region us-west-2)
-      - IGNORE_COVERAGE=- tox -e py36,py37,py38 -- test/functional
+      - IGNORE_COVERAGE=- tox -e py27,py36,py37 -- test/functional
 
       # build dummy container
       - python setup.py sdist
@@ -33,4 +33,4 @@ phases:
       - cd ../..
 
       # run local integration tests
-      - IGNORE_COVERAGE=- tox -e py36,py37,py38 -- test/integration/local
+      - IGNORE_COVERAGE=- tox -e py27,py36,py37 -- test/integration/local
