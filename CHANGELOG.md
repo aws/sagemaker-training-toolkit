@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.6.3 (2020-10-26)
+
+### Bug Fixes and Other Changes
+
+ * propagate log level to aws services
+
 ## v3.6.2 (2020-08-04)
 
 ### Bug Fixes and Other Changes

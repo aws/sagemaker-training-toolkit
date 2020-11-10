@@ -37,9 +37,9 @@ def configure_logger(level, log_format="%(asctime)s %(name)-12s %(levelname)-8s 
     logging.basicConfig(format=log_format, level=level)
 
     if level >= logging.INFO:
-        logging.getLogger("boto3").setLevel(logging.INFO)
-        logging.getLogger("s3transfer").setLevel(logging.INFO)
-        logging.getLogger("botocore").setLevel(logging.WARN)
+        logging.getLogger("boto3").setLevel(level)
+        logging.getLogger("s3transfer").setLevel(level)
+        logging.getLogger("botocore").setLevel(level)
 
 
 def log_script_invocation(cmd, env_vars, logger=None):
