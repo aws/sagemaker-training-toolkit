@@ -104,7 +104,7 @@ Contains a JSON-encoded dictionary with the user-provided hyperparameters.
 import os
 import json
 
-hyperparameters = json.loads(os.environ['SM_HPS']))
+hyperparameters = json.loads(os.environ['SM_HPS'])
 # {"batch-size": 256, "learning-rate": 0.0001, "communicator": "pure_nccl"}
 ```
 
