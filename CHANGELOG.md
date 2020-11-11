@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.6.3.post0 (2020-11-11)
+
+### Documentation Changes
+
+ * fix typo in ENVIRONMENT_VARIABLES.md
+
 ## v3.6.3 (2020-10-26)
 
 ### Bug Fixes and Other Changes
