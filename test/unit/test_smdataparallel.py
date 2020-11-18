@@ -37,7 +37,7 @@ def test_smdataparallel_run_multi_node_python(
         num_hosts = len(hosts)
         num_processes_per_host = 8
         num_processes = num_processes_per_host * num_hosts
-        host_list = ["%s:%s" % (host, num_processes_per_host) for host in hosts]
+        host_list = ["{}:{}".format(host, num_processes_per_host) for host in hosts]
         network_interface_name = "ethw3"
         smdataparallel_server_addr = master_hostname
         smdataparallel_server_port = 7592
