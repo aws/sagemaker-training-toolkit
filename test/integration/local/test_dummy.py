@@ -39,8 +39,8 @@ def test_install_requirements(capsys):
     estimator = Estimator(
         image_uri="sagemaker-training-toolkit-test:dummy",
         role="SageMakerRole",
-        train_instance_count=1,
-        train_instance_type="local",
+        instance_count=1,
+        instance_type="local",
     )
 
     estimator.fit()

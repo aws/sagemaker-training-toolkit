@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import enum
 
-from sagemaker_training import environment, mpi, params, process
+from sagemaker_training import environment, mpi, params, process, smdataparallel
 
 
 class RunnerType(enum.Enum):
@@ -25,10 +25,12 @@ class RunnerType(enum.Enum):
 
     MPI = "MPI"
     Process = "Process"
+    SMDataParallel = "SMDataParallel"
 
 
 ProcessRunnerType = RunnerType.Process
 MPIRunnerType = RunnerType.MPI
+SMDataParallelRunnerType = RunnerType.SMDataParallel
 
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
@@ -58,7 +60,19 @@ def _get_by_runner_type(
     args = args or env.to_cmd_args()
     env_vars = env_vars or env.to_env_vars()
 
-    if identifier is RunnerType.MPI and env.is_master:
+    if identifier is RunnerType.SMDataParallel and env.is_master:
+        mpi_args = extra_opts or {}
+        return smdataparallel.SMDataParallelRunner(
+            user_entry_point,
+            args,
+            env_vars,
+            env.master_hostname,
+            env.hosts,
+            env.network_interface_name,
+        )
+    elif identifier is RunnerType.SMDataParallel:
+        return mpi.WorkerRunner(user_entry_point, args, env_vars, env.master_hostname)
+    elif identifier is RunnerType.MPI and env.is_master:
         mpi_args = extra_opts or {}
 
         # Default to single process for CPU

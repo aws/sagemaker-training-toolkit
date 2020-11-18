@@ -70,6 +70,7 @@ class WorkerRunner(process.ProcessRunner):
         if wait:
             logger.info("Waiting for MPI process to finish.")
             _wait_orted_process_to_finish()
+            logger.info("Orted process exited")
             time.sleep(30)
         logger.info("MPI process finished.")
 
@@ -90,6 +91,8 @@ def _write_env_vars_to_file():  # type: () -> None
 
 def _wait_orted_process_to_finish():  # type: () -> None
     orted = _orted_process()
+    logger.info("Orted process found %s", orted)
+    logger.info("Waiting for orted process %s", orted)
     psutil.wait_procs(orted)
 
 
@@ -97,8 +100,8 @@ def _orted_process():  # pylint: disable=inconsistent-return-statements
     """Wait a maximum of 5 minutes for orted process to start."""
     for _ in range(5 * 60):
         procs = [p for p in psutil.process_iter(attrs=["name"]) if p.info["name"] == "orted"]
-
         if procs:
+            logger.info("Process[es]: %s", procs)
             return procs
         time.sleep(1)
 
