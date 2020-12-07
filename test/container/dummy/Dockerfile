@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM 142577830533.dkr.ecr.us-east-2.amazonaws.com/ubuntu:16.04
 
 ARG PYTHON=python3
 ARG PIP=pip3
