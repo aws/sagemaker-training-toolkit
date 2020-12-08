@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.6.4 (2020-12-08)
+
+### Bug Fixes and Other Changes
+
+ * workaround to print stderr when capturing
+
+### Testing and Release Infrastructure
+
+ * use ECR-hosted image for ubuntu:16.04
+
 ## v3.6.3.post0 (2020-11-11)
 
 ### Documentation Changes
