@@ -1,4 +1,7 @@
-FROM ubuntu:16.04
+FROM public.ecr.aws/lts/ubuntu:20.04
+
+# Disable prompts during package installation
+ENV DEBIAN_FRONTEND="noninteractive"
 
 ARG PYTHON=python3
 ARG PIP=pip3
