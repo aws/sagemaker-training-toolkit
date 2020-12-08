@@ -72,6 +72,9 @@ def check_error(cmd, error_class, capture_error=False, **kwargs):
 
     if capture_error:
         _, stderr = process.communicate()
+        # This will force the stderr to be printed after stdout
+        # If wait is false and cature error is true, we will never see the stderr.
+        print(stderr)
         return_code = process.poll()
     else:
         stderr = None
