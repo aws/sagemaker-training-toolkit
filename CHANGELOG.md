@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.7.0 (2020-12-09)
+
+### Features
+
+ * add data parallelism support (#3)
+
+### Bug Fixes and Other Changes
+
+ * update tox to use sagemaker 2.18.0 for tests
+ * use format in place of f-strings and use comment style type annotations
+
 ## v3.6.4 (2020-12-08)
 
 ### Bug Fixes and Other Changes
