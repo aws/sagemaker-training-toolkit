@@ -74,7 +74,7 @@ def test_run_bash(log, popen, entry_point_type_script):
 @patch("subprocess.Popen")
 @patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_python(log, popen, entry_point_type_script):
-    popen().communicate.return_value = (None, 0)
+    popen().communicate.return_value = (None, b"this is stderr")
 
     with pytest.raises(errors.ExecuteUserScriptError):
         process.ProcessRunner("launcher.py", ["--lr", "13"], {}).run(capture_error=True)
