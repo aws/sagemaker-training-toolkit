@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.7.1 (2020-12-17)
+
+### Bug Fixes and Other Changes
+
+ * decode binary stderr string before dumping it out
+
 ## v3.7.0 (2020-12-09)
 
 ### Features
