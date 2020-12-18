@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.7.2 (2020-12-18)
+
+### Bug Fixes and Other Changes
+
+ * set btl_vader_single_copy_mechanism to none
+
 ## v3.7.1 (2020-12-17)
 
 ### Bug Fixes and Other Changes
