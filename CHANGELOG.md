@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.7.3 (2021-02-02)
+
+### Bug Fixes and Other Changes
+
+ * set btl_vader_single_copy_mechanism to none to avoid Read -1 Warning messages
+
 ## v3.7.2 (2020-12-18)
 
 ### Bug Fixes and Other Changes
