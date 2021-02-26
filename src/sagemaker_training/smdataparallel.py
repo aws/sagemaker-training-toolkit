@@ -143,7 +143,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             "-x",
             smdataparallel_flag,
             "-x",
-            "FI_PROVIDER=sockets",
+            "FI_PROVIDER=efa",
             "-x",
             "RDMAV_FORK_SAFE=1",
             "-x",
