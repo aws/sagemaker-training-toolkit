@@ -42,6 +42,8 @@ RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSIO
 
 COPY dummy/sagemaker_training.tar.gz /sagemaker_training.tar.gz
 
+RUN ${PIP} install --upgrade pip
+
 RUN ${PIP} install --no-cache-dir \
     /sagemaker_training.tar.gz
 
