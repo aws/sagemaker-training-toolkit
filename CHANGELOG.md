@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.7.4 (2021-03-29)
+
+### Bug Fixes and Other Changes
+
+ * Update Dockerfile to accomomdate Rust dependency.
+
 ## v3.7.3 (2021-02-02)
 
 ### Bug Fixes and Other Changes
