@@ -62,8 +62,9 @@ def _get_by_runner_type(
     mpi_args = extra_opts or {}
 
     if identifier is RunnerType.SMDataParallel and env.is_master:
-        custom_mpi_options = _mpi_param_value(mpi_args, env,
-                                              params.SMDATAPARALLEL_CUSTOM_MPI_OPTIONS, "")
+        custom_mpi_options = _mpi_param_value(
+            mpi_args, env, params.SMDATAPARALLEL_CUSTOM_MPI_OPTIONS, ""
+        )
         return smdataparallel.SMDataParallelRunner(
             user_entry_point,
             args,
