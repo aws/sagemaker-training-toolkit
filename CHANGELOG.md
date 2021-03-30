@@ -1,5 +1,7 @@
 # Changelog
 
+## v3.7.5 (2021-03-30)
+
 ## v3.7.4 (2021-03-29)
 
 ### Bug Fixes and Other Changes
