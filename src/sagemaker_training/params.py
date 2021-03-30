@@ -56,4 +56,5 @@ MPI_PROCESSES_PER_HOST = "sagemaker_mpi_num_of_processes_per_host"  # type: int
 MPI_NUM_PROCESSES = "sagemaker_mpi_num_processes"  # type: int
 MPI_CUSTOM_OPTIONS = "sagemaker_mpi_custom_mpi_options"  # type: str
 SAGEMAKER_NETWORK_INTERFACE_NAME = "sagemaker_network_interface_name"  # type: str
-SMDATAPARALLEL_CUSTOM_MPI_OPTIONS = "sagemaker_distributed_dataparallel_custom_mpi_options"  # type: str
+SMDATAPARALLEL_CUSTOM_MPI_OPTIONS = \
+    "sagemaker_distributed_dataparallel_custom_mpi_options"  # type: str
