@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Contains functionality related to SM Distributed Data Parallel Training."""
+import argparse
 import inspect
 import json
 import logging
@@ -41,6 +42,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         env_vars,
         master_hostname,
         hosts,
+        custom_mpi_options,
         network_interface_name,
         interval=1,
         timeout_in_seconds=60 * 60,
@@ -56,6 +58,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             env_vars (Dict[str, str]): A dictionary of environment variables.
             master_hostname (str): The master hostname.
             hosts ([str]): A list of hosts.
+            custom_mpi_options (str): A string of custom MPI options to be parsed.
             network_interface_name (str): The network interface name.
             interval (int or float): The interval at which to check the connection in seconds.
                 Defaults to 1 second.
@@ -67,6 +70,7 @@ class SMDataParallelRunner(process.ProcessRunner):
 
         self._master_hostname = master_hostname
         self._hosts = hosts
+        self._custom_mpi_options = custom_mpi_options
         self._network_interface_name = network_interface_name
         self._interval = interval
         self.timeout_in_seconds = timeout_in_seconds
@@ -99,8 +103,11 @@ class SMDataParallelRunner(process.ProcessRunner):
     ):
         """Fetch mpi command for SMDataParallel
 
-        TODO: add flag for toggling NCCL_DEBUG
         """
+        overridden_known_options, additional_options = _parse_custom_mpi_options(
+            self._custom_mpi_options
+        )
+
         mpirun_command = [
             "mpirun",
             "--host",
@@ -137,6 +144,8 @@ class SMDataParallelRunner(process.ProcessRunner):
             "-x",
             "NCCL_SOCKET_IFNAME=%s" % self._network_interface_name,
             "-x",
+            "NCCL_DEBUG=%s" % overridden_known_options.NCCL_DEBUG,
+            "-x",
             "LD_LIBRARY_PATH",
             "-x",
             "PATH",
@@ -149,6 +158,8 @@ class SMDataParallelRunner(process.ProcessRunner):
             "-x",
             "LD_PRELOAD=%s" % inspect.getfile(gethostname),
         ]
+
+        mpirun_command.extend(additional_options)
 
         if smdataparallel_server_addr and smdataparallel_server_port:
             # in case of multi-node [distributed] training, smdataparallel_server_addr,
@@ -313,3 +324,13 @@ def _can_connect(host, port=22):
     finally:
         client.close()
         logger.info("Connection closed")
+
+
+def _parse_custom_mpi_options(custom_mpi_options):
+    """Parse custom MPI options provided by user. Known options default value will be overridden
+    and unknown options will be identified separately."""
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--NCCL_DEBUG", default="INFO", type=str)
+
+    return parser.parse_known_args(custom_mpi_options.split())

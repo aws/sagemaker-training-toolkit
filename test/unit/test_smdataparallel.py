@@ -51,6 +51,7 @@ def test_smdataparallel_run_multi_node_python(
             },
             master_hostname=master_hostname,
             hosts=hosts,
+            custom_mpi_options="--verbose",
             network_interface_name=network_interface_name,
         )
 
@@ -98,6 +99,8 @@ def test_smdataparallel_run_multi_node_python(
                 "-x",
                 "NCCL_SOCKET_IFNAME=%s" % network_interface_name,
                 "-x",
+                "NCCL_DEBUG=INFO",
+                "-x",
                 "LD_LIBRARY_PATH",
                 "-x",
                 "PATH",
@@ -109,6 +112,7 @@ def test_smdataparallel_run_multi_node_python(
                 "RDMAV_FORK_SAFE=1",
                 "-x",
                 "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+                "--verbose",
                 "-x",
                 "SMDATAPARALLEL_SERVER_ADDR=%s" % smdataparallel_server_addr,
                 "-x",
@@ -158,6 +162,7 @@ def test_smdataparallel_run_single_node_python(
             env_vars={},
             master_hostname=master_hostname,
             hosts=hosts,
+            custom_mpi_options="--verbose",
             network_interface_name=network_interface_name,
         )
 
@@ -200,6 +205,8 @@ def test_smdataparallel_run_single_node_python(
                 "-x",
                 "NCCL_SOCKET_IFNAME=%s" % network_interface_name,
                 "-x",
+                "NCCL_DEBUG=INFO",
+                "-x",
                 "LD_LIBRARY_PATH",
                 "-x",
                 "PATH",
@@ -211,6 +218,7 @@ def test_smdataparallel_run_single_node_python(
                 "RDMAV_FORK_SAFE=1",
                 "-x",
                 "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+                "--verbose",
                 "smddprun",
                 "usr/bin/python3",
                 "-m",

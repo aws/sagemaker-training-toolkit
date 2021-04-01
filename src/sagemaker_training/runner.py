@@ -59,21 +59,24 @@ def _get_by_runner_type(
     user_entry_point = user_entry_point or env.user_entry_point
     args = args or env.to_cmd_args()
     env_vars = env_vars or env.to_env_vars()
+    mpi_args = extra_opts or {}
 
     if identifier is RunnerType.SMDataParallel and env.is_master:
-        mpi_args = extra_opts or {}
+        custom_mpi_options = _mpi_param_value(
+            mpi_args, env, params.SMDATAPARALLEL_CUSTOM_MPI_OPTIONS, ""
+        )
         return smdataparallel.SMDataParallelRunner(
             user_entry_point,
             args,
             env_vars,
             env.master_hostname,
             env.hosts,
+            custom_mpi_options,
             env.network_interface_name,
         )
     elif identifier is RunnerType.SMDataParallel:
         return mpi.WorkerRunner(user_entry_point, args, env_vars, env.master_hostname)
     elif identifier is RunnerType.MPI and env.is_master:
-        mpi_args = extra_opts or {}
 
         # Default to single process for CPU
         default_processes_per_host = env.num_gpus if env.num_gpus > 0 else 1
