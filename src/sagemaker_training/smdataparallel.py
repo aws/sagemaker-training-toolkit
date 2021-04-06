@@ -174,6 +174,8 @@ class SMDataParallelRunner(process.ProcessRunner):
                     "-x",
                     "SMDATAPARALLEL_SERVER_PORT={}".format(smdataparallel_server_port),
                     "-x",
+                    "SMDATAPARALLEL_NETWORK_IF={}".format(self._network_interface_name),
+                    "-x",
                     "SAGEMAKER_INSTANCE_TYPE={}".format(instance_type),
                 ]
             )
