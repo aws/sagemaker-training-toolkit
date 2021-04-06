@@ -159,7 +159,9 @@ def test_smdataparallel_run_single_node_python(
         smdataparallel_runner = smdataparallel.SMDataParallelRunner(
             user_entry_point="train.py",
             args=["-v", "--lr", "35"],
-            env_vars={},
+            env_vars={
+                "SM_TRAINING_ENV": '{"additional_framework_parameters":{"sagemaker_instance_type":"ml.p3dn.24xlarge"}}'
+            },
             master_hostname=master_hostname,
             hosts=hosts,
             custom_mpi_options="--verbose",
@@ -219,6 +221,8 @@ def test_smdataparallel_run_single_node_python(
                 "-x",
                 "LD_PRELOAD=%s" % inspect.getfile(gethostname),
                 "--verbose",
+                "-x",
+                "FI_EFA_USE_DEVICE_RDMA=1",
                 "smddprun",
                 "usr/bin/python3",
                 "-m",
