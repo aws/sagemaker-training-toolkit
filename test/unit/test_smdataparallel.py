@@ -160,7 +160,7 @@ def test_smdataparallel_run_single_node_python(
             user_entry_point="train.py",
             args=["-v", "--lr", "35"],
             env_vars={
-                "SM_TRAINING_ENV": '{"additional_framework_parameters":{"sagemaker_instance_type":"ml.p3dn.24xlarge"}}'
+                "SM_TRAINING_ENV": '{"additional_framework_parameters":{"sagemaker_instance_type":"ml.p4d.24xlarge"}}'
             },
             master_hostname=master_hostname,
             hosts=hosts,
