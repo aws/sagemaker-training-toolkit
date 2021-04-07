@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.9.0 (2021-04-07)
+
+### Features
+
+ * smdataparallel enable EFA RDMA flag
+
 ## v3.8.0 (2021-04-05)
 
 ### Features
