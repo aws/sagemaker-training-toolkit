@@ -92,8 +92,11 @@ class SMDataParallelRunner(process.ProcessRunner):
                     while not _can_connect(host):
                         time.sleep(self._interval)
                     logger.info("Worker %s available for communication", host)
-        except TimeoutError:
-            logger.exception("Connection failed")
+        except timeout.TimeoutError:
+            logger.exception(
+                "Connection between the hosts couldn't established. Aborting the training."
+            )
+            raise
 
     def _get_mpirun_command(
         self,
