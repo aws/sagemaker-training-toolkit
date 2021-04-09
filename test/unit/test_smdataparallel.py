@@ -118,7 +118,7 @@ def test_smdataparallel_run_multi_node_python(
                 "-x",
                 "SMDATAPARALLEL_SERVER_PORT=%s" % str(smdataparallel_server_port),
                 "-x",
-                "SMDATAPARALLEL_DEVICE_NAME=%s" % network_interface_name,
+                "SMDATAPARALLEL_IF_NAME=%s" % network_interface_name,
                 "-x",
                 "SAGEMAKER_INSTANCE_TYPE=ml.p3.16xlarge",
                 "smddprun",
