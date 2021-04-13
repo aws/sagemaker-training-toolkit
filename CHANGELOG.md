@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.9.1 (2021-04-13)
+
+### Bug Fixes and Other Changes
+
+ * [smdataparallel] better messages to establish the SSH connection between workers
+
 ## v3.9.0 (2021-04-07)
 
 ### Features
