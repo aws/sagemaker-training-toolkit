@@ -221,8 +221,6 @@ def test_smdataparallel_run_single_node_python(
                 "-x",
                 "LD_PRELOAD=%s" % inspect.getfile(gethostname),
                 "--verbose",
-                "-x",
-                "FI_EFA_USE_DEVICE_RDMA=1",
                 "smddprun",
                 "usr/bin/python3",
                 "-m",
