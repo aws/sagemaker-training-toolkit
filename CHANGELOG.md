@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.9.2 (2021-04-27)
+
+### Bug Fixes and Other Changes
+
+ * Reverted -x FI_EFA_USE_DEVICE_RDMA=1 to fix a crash on PyTorch Dataloaders for Distributed training
+
 ## v3.9.1 (2021-04-13)
 
 ### Bug Fixes and Other Changes
