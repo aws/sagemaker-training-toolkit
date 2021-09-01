@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -12,13 +12,17 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import asyncio
 import inspect
 import os
+from test.unit.test_process import AsyncMock
 
 from mock import ANY, MagicMock, patch
-
+import unittest
 import gethostname
+import pytest
 from sagemaker_training import environment, mpi
+import nest_asyncio
 
 
 def does_not_connect():
@@ -29,10 +33,17 @@ def connect():
     pass
 
 
+class AsyncMockCall(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        super().__call__(*args, **kwargs)
+
+
 class MockSSHClient(MagicMock):
     def __init__(self, *args, **kw):
         super(MockSSHClient, self).__init__(*args, **kw)
-        self.connect = MagicMock(side_effect=[does_not_connect, connect, does_not_connect])
+        self.connect = MagicMock(
+            side_effect=[does_not_connect, connect, does_not_connect]
+        )
 
 
 @patch("sagemaker_training.mpi._write_env_vars_to_file")
@@ -44,7 +55,14 @@ class MockSSHClient(MagicMock):
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
 def test_mpi_worker_run(
-    popen, policy, process_iter, wait_procs, ssh_client, sleep, path_exists, write_env_vars
+    popen,
+    policy,
+    process_iter,
+    wait_procs,
+    ssh_client,
+    sleep,
+    path_exists,
+    write_env_vars,
 ):
 
     process = MagicMock(info={"name": "orted"})
@@ -54,6 +72,7 @@ def test_mpi_worker_run(
         user_entry_point="train.sh",
         args=["-v", "--lr", "35"],
         env_vars={"LD_CONFIG_PATH": "/etc/ld"},
+        processes_per_host="1",
         master_hostname="algo-1",
     )
 
@@ -80,6 +99,7 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists, write_env_vars):
         user_entry_point="train.sh",
         args=["-v", "--lr", "35"],
         env_vars={"LD_CONFIG_PATH": "/etc/ld"},
+        processes_per_host=1,
         master_hostname="algo-1",
     )
 

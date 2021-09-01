@@ -80,7 +80,9 @@ def prepare(path, name):  # type: (str, str) -> None
             % name
         )
 
-        logger.info("Module %s does not provide a setup.py. \nGenerating setup.py" % name)
+        logger.info(
+            "Module %s does not provide a setup.py. \nGenerating setup.py" % name
+        )
 
         files.write_file(setup_path, data)
 
@@ -125,7 +127,11 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
     logger.info("Installing module with the following command:\n%s", cmd)
 
     process.check_error(
-        shlex.split(cmd), errors.InstallModuleError, cwd=path, capture_error=capture_error
+        shlex.split(cmd),
+        errors.InstallModuleError,
+        1,
+        cwd=path,
+        capture_error=capture_error,
     )
 
 
@@ -142,7 +148,11 @@ def install_requirements(path, capture_error=False):  # type: (str, bool) -> Non
     logger.info("Installing dependencies from requirements.txt:\n{}".format(cmd))
 
     process.check_error(
-        shlex.split(cmd), errors.InstallRequirementsError, cwd=path, capture_error=capture_error
+        shlex.split(cmd),
+        errors.InstallRequirementsError,
+        1,
+        cwd=path,
+        capture_error=capture_error,
     )
 
 
@@ -171,4 +181,6 @@ def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
 
         return module
     except Exception as e:  # pylint: disable=broad-except
-        six.reraise(errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2])
+        six.reraise(
+            errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2]
+        )

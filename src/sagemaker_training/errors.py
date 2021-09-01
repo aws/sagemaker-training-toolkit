@@ -30,21 +30,42 @@ class _CalledProcessError(ClientError):
       cmd, return_code, output
     """
 
-    def __init__(self, cmd, return_code=None, output=None):
-        self.return_code = return_code
+    def __init__(self, cmd, return_code=None, output=None, info=None):
+        self.return_code = str(return_code)
         self.cmd = cmd
         self.output = output
+        self.extra_info = info
         super(_CalledProcessError, self).__init__()
 
     def __str__(self):
         if six.PY3 and self.output:
-            error_msg = "\n%s" % self.output.decode("latin1")
+            # error_msg = "%s" % self.output.decode("latin1")
+            if isinstance(self.output, bytes):
+                error_msg = "%s" % self.output.decode("utf-8")
+            else:
+                error_msg = "%s" % self.output
         elif self.output:
-            error_msg = "\n%s" % self.output
+            error_msg = "%s" % self.output
         else:
             error_msg = ""
-
-        message = '%s:\nCommand "%s"%s' % (type(self).__name__, self.cmd, error_msg)
+        if self.extra_info is None:
+            message = '%s:\nExitCode %s\nErrorMessage "%s"\nCommand "%s"' % (
+                type(self).__name__,
+                self.return_code,
+                error_msg,
+                self.cmd,
+            )
+        else:
+            message = (
+                '%s:\nExitCode %s\nErrorMessage "%s"\nExtraInfo "%s"\nCommand "%s"'
+                % (
+                    type(self).__name__,
+                    self.return_code,
+                    error_msg,
+                    self.extra_info,
+                    self.cmd,
+                )
+            )
         return message.strip()
 
 

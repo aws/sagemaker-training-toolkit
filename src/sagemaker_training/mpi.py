@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -31,10 +31,12 @@ logging.getLogger("paramiko").setLevel(logging.INFO)
 
 class WorkerRunner(process.ProcessRunner):
     """Runner responsible for preparing MPI distributed training and waiting for MPI
-     master execution to finish.
+    master execution to finish.
     """
 
-    def __init__(self, user_entry_point, args, env_vars, master_hostname):
+    def __init__(
+        self, user_entry_point, args, env_vars, processes_per_host, master_hostname
+    ):
         """Initialize a WorkerRunner, which is responsible for preparing distributed
         training with MPI and waiting for MPI master execution to finish.
 
@@ -44,7 +46,9 @@ class WorkerRunner(process.ProcessRunner):
             env_vars (dict(str,str)): A dictionary of environment variables.
             master_hostname (str): The master hostname.
         """
-        super(WorkerRunner, self).__init__(user_entry_point, args, env_vars)
+        super(WorkerRunner, self).__init__(
+            user_entry_point, args, env_vars, processes_per_host
+        )
         self._master_hostname = str(master_hostname)
 
     def run(
@@ -62,7 +66,9 @@ class WorkerRunner(process.ProcessRunner):
             self._wait_master_to_start()
         logger.info("MPI Master online, creating SSH daemon.")
 
-        logger.info("Writing environment variables to /etc/environment for the MPI process.")
+        logger.info(
+            "Writing environment variables to /etc/environment for the MPI process."
+        )
         _write_env_vars_to_file()
 
         _start_sshd_daemon()
@@ -99,7 +105,9 @@ def _wait_orted_process_to_finish():  # type: () -> None
 def _orted_process():  # pylint: disable=inconsistent-return-statements
     """Wait a maximum of 5 minutes for orted process to start."""
     for _ in range(5 * 60):
-        procs = [p for p in psutil.process_iter(attrs=["name"]) if p.info["name"] == "orted"]
+        procs = [
+            p for p in psutil.process_iter(attrs=["name"]) if p.info["name"] == "orted"
+        ]
         if procs:
             logger.info("Process[es]: %s", procs)
             return procs
@@ -116,14 +124,14 @@ class MasterRunner(process.ProcessRunner):
         user_entry_point,
         args,
         env_vars,
+        processes_per_host,
         master_hostname,
         hosts,
-        process_per_host,
         custom_mpi_options,
         network_interface_name,
         interval=1,
         timeout_in_seconds=60 * 60,
-        num_processes=None,
+        num_processes=1,
     ):
         """Initialize a MasterRunner, which is responsible for preparing distributed
         training with MPI and synchronizing work among the Workers.
@@ -134,7 +142,7 @@ class MasterRunner(process.ProcessRunner):
             env_vars (dict(str,str)): A dictionary of environment variables.
             master_hostname (str): The master hostname.
             hosts ([str]): A list of hosts.
-            process_per_host (int): Number of processes per host.
+            processes_per_host (int): Number of processes per host.
             custom_mpi_options (str): A string of custom MPI options to be parsed.
             network_interface_name (str): The network interface name.
             interval (int or float): The interval at which to check the connection in seconds.
@@ -144,11 +152,12 @@ class MasterRunner(process.ProcessRunner):
             num_processes (int): The total number of processes.
         """
 
-        super(MasterRunner, self).__init__(user_entry_point, args, env_vars)
+        super(MasterRunner, self).__init__(
+            user_entry_point, args, env_vars, processes_per_host
+        )
 
         self._master_hostname = master_hostname
         self._hosts = hosts
-        self._process_per_host = process_per_host
         self._num_processes = num_processes
         self._custom_mpi_options = custom_mpi_options
         self._network_interface_name = network_interface_name
@@ -174,16 +183,20 @@ class MasterRunner(process.ProcessRunner):
 
     def _create_command(self):
         num_hosts = len(self._hosts)
-        num_processes = self._num_processes or self._process_per_host * num_hosts
+        num_processes = self._num_processes or self._processes_per_host * num_hosts
 
         # By default, use one process per GPU, or one process per node (if training with CPU).
-        if self._process_per_host == 1:
+        if self._processes_per_host == 1:
             host_list = self._hosts
         else:
-            host_list = ["%s:%s" % (host, self._process_per_host) for host in self._hosts]
+            host_list = [
+                "%s:%s" % (host, self._processes_per_host) for host in self._hosts
+            ]
 
         msg = "Env Hosts: %s Hosts: %s process_per_hosts: %s num_processes: %s"
-        logger.info(msg, self._hosts, host_list, self._process_per_host, num_processes)
+        logger.info(
+            msg, self._hosts, host_list, self._processes_per_host, num_processes
+        )
 
         overridden_known_options, additional_options = _parse_custom_mpi_options(
             self._custom_mpi_options
@@ -241,7 +254,11 @@ class MasterRunner(process.ProcessRunner):
 
         command.extend(additional_options)
 
-        for credential in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]:
+        for credential in [
+            "AWS_ACCESS_KEY_ID",
+            "AWS_SECRET_ACCESS_KEY",
+            "AWS_SESSION_TOKEN",
+        ]:
             if credential in os.environ:
                 command.extend(["-x", credential])
 
@@ -291,9 +308,9 @@ def _start_sshd_daemon():  # type: () -> None
 def _can_connect(host, port=22):  # type: (str, int) -> bool
     """Check if the connection to provided ``host`` and ``port`` is possible.
 
-       Args:
-           host (str): Hostname for the host to check connection.
-           port (int): Port name of the host to check connection on.
+    Args:
+        host (str): Hostname for the host to check connection.
+        port (int): Port name of the host to check connection on.
     """
     try:
         logger.debug("Testing connection to host %s", host)

@@ -49,6 +49,7 @@ def test_smdataparallel_run_multi_node_python(
             env_vars={
                 "SM_TRAINING_ENV": '{"additional_framework_parameters":{"sagemaker_instance_type":"ml.p3.16xlarge"}}'
             },
+            processes_per_host=num_processes_per_host,
             master_hostname=master_hostname,
             hosts=hosts,
             custom_mpi_options="--verbose",
@@ -162,6 +163,7 @@ def test_smdataparallel_run_single_node_python(
             env_vars={
                 "SM_TRAINING_ENV": '{"additional_framework_parameters":{"sagemaker_instance_type":"ml.p4d.24xlarge"}}'
             },
+            processes_per_host=num_processes_per_host,
             master_hostname=master_hostname,
             hosts=hosts,
             custom_mpi_options="--verbose",

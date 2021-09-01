@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -49,7 +49,9 @@ def test_install_module(check_error, prepare, entry_point_type_module):
     entry_point.install("python_module.py", path)
 
     cmd = [sys.executable, "-m", "pip", "install", "."]
-    check_error.assert_called_with(cmd, errors.InstallModuleError, capture_error=False, cwd=path)
+    check_error.assert_called_with(
+        cmd, errors.InstallModuleError, 1, capture_error=False, cwd=path
+    )
 
     with patch("os.path.exists", return_value=True):
         entry_point.install("python_module.py", path)
@@ -57,6 +59,7 @@ def test_install_module(check_error, prepare, entry_point_type_module):
         check_error.assert_called_with(
             cmd + ["-r", "requirements.txt"],
             errors.InstallModuleError,
+            1,
             cwd=path,
             capture_error=False,
         )
@@ -64,7 +67,9 @@ def test_install_module(check_error, prepare, entry_point_type_module):
 
 @patch("sagemaker_training.modules.prepare")
 @patch("sagemaker_training.process.check_error", autospec=True)
-def test_install_script(check_error, prepare, entry_point_type_module, has_requirements):
+def test_install_script(
+    check_error, prepare, entry_point_type_module, has_requirements
+):
     path = "c://sagemaker-pytorch-container"
     entry_point.install("train.py", path)
 
@@ -88,7 +93,10 @@ def test_install_no_python_executable(
 ):
     with pytest.raises(RuntimeError) as e:
         entry_point.install("train.py", "git://aws/container-support")
-    assert str(e.value) == "Failed to retrieve the real path for the Python executable binary"
+    assert (
+        str(e.value)
+        == "Failed to retrieve the real path for the Python executable binary"
+    )
 
 
 @patch("os.chmod")
@@ -132,13 +140,21 @@ def test_run_module_wait(gethostbyname, check_error, chmod, download_and_extract
 @patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training.modules.install")
 @patch.object(
-    environment.Environment, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
+    environment.Environment,
+    "hosts",
+    return_value=["algo-1", "algo-2"],
+    new_callable=PropertyMock,
 )
 @patch("socket.gethostbyname")
-def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_and_extract):
+def test_run_calls_hostname_resolution(
+    gethostbyname, install, hosts, download_and_extract
+):
     runner_mock = MagicMock(spec=process.ProcessRunner)
     entry_point.run(
-        uri="s3://url", user_entry_point="launcher.py", args=["42"], runner_type=runner_mock
+        uri="s3://url",
+        user_entry_point="launcher.py",
+        args=["42"],
+        runner_type=runner_mock,
     )
 
     gethostbyname.assert_called_with("algo-2")
@@ -148,19 +164,29 @@ def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_a
 @patch("sagemaker_training.files.download_and_extract")
 @patch("sagemaker_training.modules.install")
 @patch.object(
-    environment.Environment, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
+    environment.Environment,
+    "hosts",
+    return_value=["algo-1", "algo-2"],
+    new_callable=PropertyMock,
 )
 @patch("socket.gethostbyname")
-def test_run_waits_hostname_resolution(gethostbyname, hosts, install, download_and_extract):
+def test_run_waits_hostname_resolution(
+    gethostbyname, hosts, install, download_and_extract
+):
 
     gethostbyname.side_effect = [ValueError(), ValueError(), True, True]
 
     runner_mock = MagicMock(spec=process.ProcessRunner)
     entry_point.run(
-        uri="s3://url", user_entry_point="launcher.py", args=["42"], runner_type=runner_mock
+        uri="s3://url",
+        user_entry_point="launcher.py",
+        args=["42"],
+        runner_type=runner_mock,
     )
 
-    gethostbyname.assert_has_calls([call("algo-1"), call("algo-1"), call("algo-1"), call("algo-2")])
+    gethostbyname.assert_has_calls(
+        [call("algo-1"), call("algo-1"), call("algo-1"), call("algo-2")]
+    )
 
 
 @patch("sagemaker_training.files.download_and_extract")
@@ -186,11 +212,16 @@ def test_run_module_no_wait(gethostbyname, chmod, download_and_extract):
 @patch("sagemaker_training.files.download_and_extract")
 @patch("os.chmod")
 @patch("socket.gethostbyname")
-def test_run_module_with_env_vars(gethostbyname, chmod, download_and_extract, get_runner, sys_path):
+def test_run_module_with_env_vars(
+    gethostbyname, chmod, download_and_extract, get_runner, sys_path
+):
     module_name = "default_user_module_name"
     args = ["--some-arg", "42"]
     entry_point.run(
-        uri="s3://url", user_entry_point=module_name, args=args, env_vars={"FOO": "BAR"}
+        uri="s3://url",
+        user_entry_point=module_name,
+        args=args,
+        env_vars={"FOO": "BAR"},
     )
 
     expected_env_vars = {"FOO": "BAR", "PYTHONPATH": ""}
@@ -211,5 +242,9 @@ def test_run_module_with_extra_opts(
     args = ["--some-arg", "42"]
     extra_opts = {"foo": "bar"}
 
-    entry_point.run(uri="s3://url", user_entry_point=module_name, args=args, extra_opts=extra_opts)
-    get_runner.assert_called_with(runner.ProcessRunnerType, module_name, args, {}, extra_opts)
+    entry_point.run(
+        uri="s3://url", user_entry_point=module_name, args=args, extra_opts=extra_opts
+    )
+    get_runner.assert_called_with(
+        runner.ProcessRunnerType, module_name, args, {}, extra_opts
+    )

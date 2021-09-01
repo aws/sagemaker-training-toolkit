@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import asyncio
 import json
 import logging
 import os
@@ -78,3 +79,10 @@ def fix_protobuf_installation_for_python_2():
         site_packages = re.match(r"[\S\s]*Location: (.*)\s", protobuf_info).group(1)
         with open(os.path.join(site_packages, "google", "__init__.py"), "w"):
             pass
+
+
+@pytest.fixture(autouse=True)
+def event_loop():
+    loop = asyncio.get_event_loop()
+    yield loop
+    loop.close()
