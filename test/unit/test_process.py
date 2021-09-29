@@ -15,8 +15,10 @@ from __future__ import absolute_import
 import asyncio
 import os
 import sys
+
 from mock import ANY, MagicMock, patch
 import pytest
+
 from sagemaker_training import environment, errors, process
 
 
