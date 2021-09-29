@@ -56,15 +56,12 @@ class _CalledProcessError(ClientError):
                 self.cmd,
             )
         else:
-            message = (
-                '%s:\nExitCode %s\nErrorMessage "%s"\nExtraInfo "%s"\nCommand "%s"'
-                % (
-                    type(self).__name__,
-                    self.return_code,
-                    error_msg,
-                    self.extra_info,
-                    self.cmd,
-                )
+            message = '%s:\nExitCode %s\nErrorMessage "%s"\nExtraInfo "%s"\nCommand "%s"' % (
+                type(self).__name__,
+                self.return_code,
+                error_msg,
+                self.extra_info,
+                self.cmd,
             )
         return message.strip()
 
@@ -85,11 +82,11 @@ class ExecuteUserScriptError(_CalledProcessError):
     """Error class indicating a user script failed to execute."""
 
 
-class ChannelDoesNotExistException(Exception):
+class ChannelDoesNotExistError(Exception):
     """Error class indicating a channel does not exist."""
 
     def __init__(self, channel_name):
-        super(ChannelDoesNotExistException, self).__init__(
+        super(ChannelDoesNotExistError, self).__init__(
             "Channel %s is not a valid channel" % channel_name
         )
 

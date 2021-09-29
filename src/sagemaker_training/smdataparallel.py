@@ -218,9 +218,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             # homogeneous mode uses 16 processes per host; 8 server; 8 worker
             smdataparallel_server_addr = self._master_hostname
             smdataparallel_server_port = 7592
-            host_list = [
-                "{}:{}".format(host, num_processes_per_host) for host in self._hosts
-            ]
+            host_list = ["{}:{}".format(host, num_processes_per_host) for host in self._hosts]
             smdataparallel_flag = "SMDATAPARALLEL_USE_HOMOGENEOUS=1"
             command = self._get_mpirun_command(
                 num_hosts,

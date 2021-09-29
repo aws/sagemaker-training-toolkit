@@ -30,20 +30,8 @@ builtins_open = "__builtin__.open" if PY2 else "builtins.open"
 @pytest.mark.parametrize(
     "url,bucket_name,key,dst,endpoint",
     [
-        (
-            "S3://my-bucket/path/to/my-file",
-            "my-bucket",
-            "path/to/my-file",
-            "/tmp/my-file",
-            None,
-        ),
-        (
-            "s3://my-bucket/my-file",
-            "my-bucket",
-            "my-file",
-            "/tmp/my-file",
-            "http://localhost:9000",
-        ),
+        ("S3://my-bucket/path/to/my-file", "my-bucket", "path/to/my-file", "/tmp/my-file", None),
+        ("s3://my-bucket/my-file", "my-bucket", "my-file", "/tmp/my-file", "http://localhost:9000"),
     ],
 )
 def test_s3_download(resource, url, bucket_name, key, dst, endpoint):
@@ -75,9 +63,7 @@ def test_install(check_error):
     modules.install(path)
 
     cmd = [sys.executable, "-m", "pip", "install", "."]
-    check_error.assert_called_with(
-        cmd, errors.InstallModuleError, 1, cwd=path, capture_error=False
-    )
+    check_error.assert_called_with(cmd, errors.InstallModuleError, 1, cwd=path, capture_error=False)
 
     with patch("os.path.exists", return_value=True):
         modules.install(path)
@@ -116,10 +102,7 @@ def test_install_fails(check_error):
 def test_install_no_python_executable():
     with pytest.raises(RuntimeError) as e:
         modules.install("git://aws/container-support")
-    assert (
-        str(e.value)
-        == "Failed to retrieve the real path for the Python executable binary"
-    )
+    assert str(e.value) == "Failed to retrieve the real path for the Python executable binary"
 
 
 @contextlib.contextmanager
@@ -191,9 +174,7 @@ def test_import_module(reload, import_module, install, download_and_extract):
 
     modules.import_module("s3://bucket/my-module")
 
-    download_and_extract.assert_called_with(
-        "s3://bucket/my-module", environment.code_dir
-    )
+    download_and_extract.assert_called_with("s3://bucket/my-module", environment.code_dir)
     install.assert_called_with(environment.code_dir)
     reload.assert_called_with(import_module(modules.DEFAULT_MODULE_NAME))
 
@@ -211,8 +192,6 @@ def test_import_module_local_directory(
     modules.import_module(uri)
 
     s3_download.assert_not_called()
-    tarfile.assert_called_with(
-        name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz"
-    )
+    tarfile.assert_called_with(name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz")
     prepare.assert_called_once()
     install.assert_called_once()

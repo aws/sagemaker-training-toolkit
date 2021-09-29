@@ -89,9 +89,7 @@ def train():
             logging_config.configure_logger(env.log_level)
 
             mpi_enabled = env.additional_framework_parameters.get(params.MPI_ENABLED)
-            runner_type = (
-                runner.RunnerType.MPI if mpi_enabled else runner.RunnerType.Process
-            )
+            runner_type = runner.RunnerType.MPI if mpi_enabled else runner.RunnerType.Process
 
             entry_point.run(
                 env.module_dir,

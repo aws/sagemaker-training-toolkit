@@ -34,9 +34,7 @@ class WorkerRunner(process.ProcessRunner):
     master execution to finish.
     """
 
-    def __init__(
-        self, user_entry_point, args, env_vars, processes_per_host, master_hostname
-    ):
+    def __init__(self, user_entry_point, args, env_vars, processes_per_host, master_hostname):
         """Initialize a WorkerRunner, which is responsible for preparing distributed
         training with MPI and waiting for MPI master execution to finish.
 
@@ -46,9 +44,7 @@ class WorkerRunner(process.ProcessRunner):
             env_vars (dict(str,str)): A dictionary of environment variables.
             master_hostname (str): The master hostname.
         """
-        super(WorkerRunner, self).__init__(
-            user_entry_point, args, env_vars, processes_per_host
-        )
+        super(WorkerRunner, self).__init__(user_entry_point, args, env_vars, processes_per_host)
         self._master_hostname = str(master_hostname)
 
     def run(
@@ -66,9 +62,7 @@ class WorkerRunner(process.ProcessRunner):
             self._wait_master_to_start()
         logger.info("MPI Master online, creating SSH daemon.")
 
-        logger.info(
-            "Writing environment variables to /etc/environment for the MPI process."
-        )
+        logger.info("Writing environment variables to /etc/environment for the MPI process.")
         _write_env_vars_to_file()
 
         _start_sshd_daemon()
@@ -105,9 +99,7 @@ def _wait_orted_process_to_finish():  # type: () -> None
 def _orted_process():  # pylint: disable=inconsistent-return-statements
     """Wait a maximum of 5 minutes for orted process to start."""
     for _ in range(5 * 60):
-        procs = [
-            p for p in psutil.process_iter(attrs=["name"]) if p.info["name"] == "orted"
-        ]
+        procs = [p for p in psutil.process_iter(attrs=["name"]) if p.info["name"] == "orted"]
         if procs:
             logger.info("Process[es]: %s", procs)
             return procs
@@ -131,7 +123,7 @@ class MasterRunner(process.ProcessRunner):
         network_interface_name,
         interval=1,
         timeout_in_seconds=60 * 60,
-        num_processes=1,
+        num_processes=None,
     ):
         """Initialize a MasterRunner, which is responsible for preparing distributed
         training with MPI and synchronizing work among the Workers.
@@ -149,15 +141,13 @@ class MasterRunner(process.ProcessRunner):
                 Defaults to 1 second.
             timeout_in_seconds (int): The number of seconds to wait for workers. Defaults to
                 3600 seconds (ie. 1 hour).
-            num_processes (int): The total number of processes.
         """
 
-        super(MasterRunner, self).__init__(
-            user_entry_point, args, env_vars, processes_per_host
-        )
+        super(MasterRunner, self).__init__(user_entry_point, args, env_vars, processes_per_host)
 
         self._master_hostname = master_hostname
         self._hosts = hosts
+        self._processes_per_host = processes_per_host
         self._num_processes = num_processes
         self._custom_mpi_options = custom_mpi_options
         self._network_interface_name = network_interface_name
@@ -189,14 +179,10 @@ class MasterRunner(process.ProcessRunner):
         if self._processes_per_host == 1:
             host_list = self._hosts
         else:
-            host_list = [
-                "%s:%s" % (host, self._processes_per_host) for host in self._hosts
-            ]
+            host_list = ["%s:%s" % (host, self._processes_per_host) for host in self._hosts]
 
         msg = "Env Hosts: %s Hosts: %s process_per_hosts: %s num_processes: %s"
-        logger.info(
-            msg, self._hosts, host_list, self._processes_per_host, num_processes
-        )
+        logger.info(msg, self._hosts, host_list, self._processes_per_host, num_processes)
 
         overridden_known_options, additional_options = _parse_custom_mpi_options(
             self._custom_mpi_options
@@ -254,11 +240,7 @@ class MasterRunner(process.ProcessRunner):
 
         command.extend(additional_options)
 
-        for credential in [
-            "AWS_ACCESS_KEY_ID",
-            "AWS_SECRET_ACCESS_KEY",
-            "AWS_SESSION_TOKEN",
-        ]:
+        for credential in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]:
             if credential in os.environ:
                 command.extend(["-x", credential])
 
@@ -266,7 +248,6 @@ class MasterRunner(process.ProcessRunner):
             command.extend(["-x", name])
 
         command.extend(super(MasterRunner, self)._create_command())
-
         return command
 
     def _python_command(self):

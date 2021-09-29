@@ -49,9 +49,7 @@ def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=
     if isinstance(identifier, process.ProcessRunner):
         return identifier
     else:
-        return _get_by_runner_type(
-            identifier, user_entry_point, args, env_vars, extra_opts
-        )
+        return _get_by_runner_type(identifier, user_entry_point, args, env_vars, extra_opts)
 
 
 def _get_by_runner_type(
@@ -62,9 +60,8 @@ def _get_by_runner_type(
     args = args or env.to_cmd_args()
     env_vars = env_vars or env.to_env_vars()
     mpi_args = extra_opts or {}
-    num_processes = _mpi_param_value(mpi_args, env, params.MPI_NUM_PROCESSES)
-    ## Processes per host
-    ## Default to single process for CPU
+
+    # Default to single process for CPU
     default_processes_per_host = int(env.num_gpus) if int(env.num_gpus) > 0 else 1
     processes_per_host = _mpi_param_value(
         mpi_args, env, params.MPI_PROCESSES_PER_HOST, default_processes_per_host
@@ -89,9 +86,8 @@ def _get_by_runner_type(
             user_entry_point, args, env_vars, processes_per_host, env.master_hostname
         )
     elif identifier is RunnerType.MPI and env.is_master:
-        custom_mpi_options = _mpi_param_value(
-            mpi_args, env, params.MPI_CUSTOM_OPTIONS, ""
-        )
+        num_processes = _mpi_param_value(mpi_args, env, params.MPI_NUM_PROCESSES)
+        custom_mpi_options = _mpi_param_value(mpi_args, env, params.MPI_CUSTOM_OPTIONS, "")
         return mpi.MasterRunner(
             user_entry_point,
             args,
@@ -108,14 +104,10 @@ def _get_by_runner_type(
             user_entry_point, args, env_vars, processes_per_host, env.master_hostname
         )
     elif identifier is RunnerType.Process:
-        return process.ProcessRunner(
-            user_entry_point, args, env_vars, processes_per_host
-        )
+        return process.ProcessRunner(user_entry_point, args, env_vars, processes_per_host)
     else:
         raise ValueError("Invalid identifier %s" % identifier)
 
 
 def _mpi_param_value(mpi_args, env, param_name, default=None):
-    return mpi_args.get(param_name) or env.additional_framework_parameters.get(
-        param_name, default
-    )
+    return mpi_args.get(param_name) or env.additional_framework_parameters.get(param_name, default)

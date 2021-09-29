@@ -20,7 +20,7 @@ from sagemaker_training import mpi, process, runner
 USER_SCRIPT = "script"
 CMD_ARGS = ["--some-arg", 42]
 ENV_VARS = {"FOO": "BAR"}
-PROC_PER_HOST = 1
+DEFAULT_PROC_PER_HOST = 1
 
 NCCL_DEBUG_MPI_OPT = "-X NCCL_DEBUG=WARN"
 MPI_OPTS = {
@@ -107,9 +107,7 @@ def test_runnner_with_default_gpu_processes_per_host(training_env):
 def test_get_runner_by_mpi_with_extra_args(training_env):
     training_env().num_gpus = 0
 
-    test_runner = runner.get(
-        runner.MPIRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS, MPI_OPTS
-    )
+    test_runner = runner.get(runner.MPIRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS, MPI_OPTS)
 
     assert isinstance(test_runner, mpi.MasterRunner)
 

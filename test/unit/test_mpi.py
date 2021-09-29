@@ -12,17 +12,13 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import asyncio
 import inspect
 import os
-from test.unit.test_process import AsyncMock
 
 from mock import ANY, MagicMock, patch
-import unittest
+
 import gethostname
-import pytest
 from sagemaker_training import environment, mpi
-import nest_asyncio
 
 
 def does_not_connect():
@@ -33,17 +29,15 @@ def connect():
     pass
 
 
-class AsyncMockCall(MagicMock):
+class AsyncMock(MagicMock):
     async def __call__(self, *args, **kwargs):
-        super().__call__(*args, **kwargs)
+        return super(AsyncMock, self).__call__(*args, **kwargs)
 
 
 class MockSSHClient(MagicMock):
     def __init__(self, *args, **kw):
         super(MockSSHClient, self).__init__(*args, **kw)
-        self.connect = MagicMock(
-            side_effect=[does_not_connect, connect, does_not_connect]
-        )
+        self.connect = MagicMock(side_effect=[does_not_connect, connect, does_not_connect])
 
 
 @patch("sagemaker_training.mpi._write_env_vars_to_file")
@@ -55,14 +49,7 @@ class MockSSHClient(MagicMock):
 @patch("paramiko.AutoAddPolicy")
 @patch("subprocess.Popen")
 def test_mpi_worker_run(
-    popen,
-    policy,
-    process_iter,
-    wait_procs,
-    ssh_client,
-    sleep,
-    path_exists,
-    write_env_vars,
+    popen, policy, process_iter, wait_procs, ssh_client, sleep, path_exists, write_env_vars
 ):
 
     process = MagicMock(info={"name": "orted"})
@@ -113,106 +100,121 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists, write_env_vars):
     path_exists.assert_called_with("/usr/sbin/sshd")
 
 
+@patch("process.asyncio.gather", new_callable=AsyncMock)
 @patch("os.path.exists")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("subprocess.Popen")
+@patch("process.asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
-def test_mpi_master_run(training_env, popen, policy, ssh_client, path_exists):
+def test_mpi_master_run(
+    training_env, async_shell, policy, ssh_client, path_exists, async_gather, event_loop
+):
+
     with patch.dict(os.environ, clear=True):
 
         master = mpi.MasterRunner(
             user_entry_point="train.sh",
             args=["-v", "--lr", "35"],
             env_vars={"LD_CONFIG_PATH": "/etc/ld"},
+            processes_per_host=2,
             master_hostname="algo-1",
             hosts=["algo-1", "algo-2"],
-            process_per_host=2,
             custom_mpi_options="-v --lr 35",
             network_interface_name="ethw3",
         )
-
         process = master.run(wait=False)
 
         ssh_client().load_system_host_keys.assert_called()
         ssh_client().set_missing_host_key_policy.assert_called_with(policy())
         ssh_client().connect.assert_called_with("algo-2", port=22)
         ssh_client().close.assert_called()
-
-        popen.assert_called_with(
-            [
-                "mpirun",
-                "--host",
-                "algo-1:2,algo-2:2",
-                "-np",
-                "4",
-                "--allow-run-as-root",
-                "--display-map",
-                "--tag-output",
-                "-mca",
-                "btl_tcp_if_include",
-                "ethw3",
-                "-mca",
-                "oob_tcp_if_include",
-                "ethw3",
-                "-mca",
-                "plm_rsh_no_tree_spawn",
-                "1",
-                "-bind-to",
-                "none",
-                "-map-by",
-                "slot",
-                "-mca",
-                "pml",
-                "ob1",
-                "-mca",
-                "btl",
-                "^openib",
-                "-mca",
-                "orte_abort_on_non_zero_status",
-                "1",
-                "-mca",
-                "btl_vader_single_copy_mechanism",
-                "none",
-                "-x",
-                "NCCL_MIN_NRINGS=4",
-                "-x",
-                "NCCL_SOCKET_IFNAME=ethw3",
-                "-x",
-                "NCCL_DEBUG=INFO",
-                "-x",
-                "LD_LIBRARY_PATH",
-                "-x",
-                "PATH",
-                "-x",
-                "LD_PRELOAD=%s" % inspect.getfile(gethostname),
-                "-v",
-                "--lr",
-                "35",
-                "-x",
-                "LD_CONFIG_PATH",
-                "/bin/sh",
-                "-c",
-                "./train.sh -v --lr 35",
-            ],
-            cwd=environment.code_dir,
+        cmd = [
+            "mpirun",
+            "--host",
+            "algo-1:2,algo-2:2",
+            "-np",
+            "4",
+            "--allow-run-as-root",
+            "--display-map",
+            "--tag-output",
+            "-mca",
+            "btl_tcp_if_include",
+            "ethw3",
+            "-mca",
+            "oob_tcp_if_include",
+            "ethw3",
+            "-mca",
+            "plm_rsh_no_tree_spawn",
+            "1",
+            "-bind-to",
+            "none",
+            "-map-by",
+            "slot",
+            "-mca",
+            "pml",
+            "ob1",
+            "-mca",
+            "btl",
+            "^openib",
+            "-mca",
+            "orte_abort_on_non_zero_status",
+            "1",
+            "-mca",
+            "btl_vader_single_copy_mechanism",
+            "none",
+            "-x",
+            "NCCL_MIN_NRINGS=4",
+            "-x",
+            "NCCL_SOCKET_IFNAME=ethw3",
+            "-x",
+            "NCCL_DEBUG=INFO",
+            "-x",
+            "LD_LIBRARY_PATH",
+            "-x",
+            "PATH",
+            "-x",
+            "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+            "-v",
+            "--lr",
+            "35",
+            "-x",
+            "LD_CONFIG_PATH",
+            "/bin/sh",
+            "-c",
+            "./train.sh -v --lr 35",
+        ]
+        extended_cmd = " ".join(cmd)
+        async_shell.assert_called_with(
+            extended_cmd,
             env=ANY,
+            cwd=environment.code_dir,
+            stdout=asyncio.subprocess.PIPE,
             stderr=None,
         )
-
-        assert process == popen()
+        async_shell.assert_called_once()
+        async_gather.assert_called_once()
+        assert process == async_shell.return_value
         path_exists.assert_called_with("/usr/sbin/sshd")
 
 
+@patch("process.asyncio.gather", new_callable=AsyncMock)
 @patch("os.path.exists")
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("subprocess.Popen")
+@patch("process.asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 def test_mpi_master_run_python(
-    training_env, popen, policy, ssh_client, python_executable, path_exists
+    training_env,
+    async_shell,
+    policy,
+    ssh_client,
+    python_executable,
+    path_exists,
+    async_gather,
+    event_loop,
 ):
+
     with patch.dict(os.environ, clear=True):
 
         master = mpi.MasterRunner(
@@ -221,7 +223,7 @@ def test_mpi_master_run_python(
             env_vars={"LD_CONFIG_PATH": "/etc/ld"},
             master_hostname="algo-1",
             hosts=["algo-1", "algo-2"],
-            process_per_host=2,
+            processes_per_host=2,
             custom_mpi_options="-v --lr 35",
             network_interface_name="ethw3",
         )
@@ -232,71 +234,73 @@ def test_mpi_master_run_python(
         ssh_client().set_missing_host_key_policy.assert_called_with(policy())
         ssh_client().connect.assert_called_with("algo-2", port=22)
         ssh_client().close.assert_called()
-
-        popen.assert_called_with(
-            [
-                "mpirun",
-                "--host",
-                "algo-1:2,algo-2:2",
-                "-np",
-                "4",
-                "--allow-run-as-root",
-                "--display-map",
-                "--tag-output",
-                "-mca",
-                "btl_tcp_if_include",
-                "ethw3",
-                "-mca",
-                "oob_tcp_if_include",
-                "ethw3",
-                "-mca",
-                "plm_rsh_no_tree_spawn",
-                "1",
-                "-bind-to",
-                "none",
-                "-map-by",
-                "slot",
-                "-mca",
-                "pml",
-                "ob1",
-                "-mca",
-                "btl",
-                "^openib",
-                "-mca",
-                "orte_abort_on_non_zero_status",
-                "1",
-                "-mca",
-                "btl_vader_single_copy_mechanism",
-                "none",
-                "-x",
-                "NCCL_MIN_NRINGS=4",
-                "-x",
-                "NCCL_SOCKET_IFNAME=ethw3",
-                "-x",
-                "NCCL_DEBUG=INFO",
-                "-x",
-                "LD_LIBRARY_PATH",
-                "-x",
-                "PATH",
-                "-x",
-                "LD_PRELOAD=%s" % inspect.getfile(gethostname),
-                "-v",
-                "--lr",
-                "35",
-                "-x",
-                "LD_CONFIG_PATH",
-                "usr/bin/python3",
-                "-m",
-                "mpi4py",
-                "train.py",
-                "-v",
-                "--lr",
-                "35",
-            ],
+        cmd = [
+            "mpirun",
+            "--host",
+            "algo-1:2,algo-2:2",
+            "-np",
+            "4",
+            "--allow-run-as-root",
+            "--display-map",
+            "--tag-output",
+            "-mca",
+            "btl_tcp_if_include",
+            "ethw3",
+            "-mca",
+            "oob_tcp_if_include",
+            "ethw3",
+            "-mca",
+            "plm_rsh_no_tree_spawn",
+            "1",
+            "-bind-to",
+            "none",
+            "-map-by",
+            "slot",
+            "-mca",
+            "pml",
+            "ob1",
+            "-mca",
+            "btl",
+            "^openib",
+            "-mca",
+            "orte_abort_on_non_zero_status",
+            "1",
+            "-mca",
+            "btl_vader_single_copy_mechanism",
+            "none",
+            "-x",
+            "NCCL_MIN_NRINGS=4",
+            "-x",
+            "NCCL_SOCKET_IFNAME=ethw3",
+            "-x",
+            "NCCL_DEBUG=INFO",
+            "-x",
+            "LD_LIBRARY_PATH",
+            "-x",
+            "PATH",
+            "-x",
+            "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+            "-v",
+            "--lr",
+            "35",
+            "-x",
+            "LD_CONFIG_PATH",
+            "usr/bin/python3",
+            "-m",
+            "mpi4py",
+            "train.py",
+            "-v",
+            "--lr",
+            "35",
+        ]
+        async_shell.assert_called_with(
+            " ".join(cmd),
             cwd=environment.code_dir,
             env=ANY,
+            stdout=asyncio.subprocess.PIPE,
             stderr=None,
         )
-
-        assert process == popen()
+        async_shell.assert_called_once()
+        async_gather.assert_called_once()
+        assert process == async_shell.return_value
         path_exists.assert_called_with("/usr/sbin/sshd")

@@ -150,8 +150,7 @@ resource_config_file_dir = os.path.join(input_config_dir, RESOURCE_CONFIG_FILE) 
 
 
 def _create_training_directories():
-    """Create the directory structure and files necessary for training under the base path.
-    """
+    """Create the directory structure and files necessary for training under the base path."""
     logger.info("Creating a new training folder under %s ." % base_dir)
 
     os.makedirs(model_dir)
@@ -274,7 +273,7 @@ def read_input_data_config():  # type: () -> dict
 
 
 def channel_path(channel):  # type: (str) -> str
-    """ Return the directory containing the channel data file(s) which is:
+    """Return the directory containing the channel data file(s) which is:
     - <self.base_dir>/input/data/<channel>
 
     For more information about channels: https://docs.aws.amazon.com/sagemaker/latest/dg/API_Channel.html
@@ -306,7 +305,6 @@ def num_cpus():  # type: () -> int
     Returns:
         int: Number of CPUs available in the current container.
     """
-    # TODO: https://stackoverflow.com/questions/1006289/how-to-find-out-the-number-of-cpus-using-python
     return multiprocessing.cpu_count()
 
 
@@ -566,7 +564,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
     @property
     def model_dir(self):  # type: () -> str
-        """ The directory where models should be saved.
+        """The directory where models should be saved.
 
         Returns:
             str: The directory where models should be saved, e.g., /opt/ml/model/
@@ -653,14 +651,12 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
     @property
     def is_master(self):  # type: () -> bool
-        """Returns True if host is master.
-        """
+        """Returns True if host is master."""
         return self._is_master
 
     @property
     def master_hostname(self):  # type: () -> str
-        """Returns the hostname of the master node.
-        """
+        """Returns the hostname of the master node."""
         return self._master_hostname
 
     @property

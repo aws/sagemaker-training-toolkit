@@ -28,16 +28,16 @@ SplitResultSpec = collections.namedtuple("SplitResultSpec", "included excluded")
 
 def to_env_vars(mapping):  # type: (dict) -> dict
     """Transform a dictionary in a dictionary of env vars.
-     Example:
-         >>>env_vars = mapping.to_env_vars({'model_dir': '/opt/ml/model', 'batch_size': 25})
-         >>>
-         >>>print(args)
-         ['MODEL_DIR', '/opt/ml/model', 'BATCH_SIZE', 25]
-     Args:
-         mapping (dict[str, object]): A Python mapping.
-     Returns:
-         (dict): Dictionary of env vars.
-     """
+    Example:
+        >>>env_vars = mapping.to_env_vars({'model_dir': '/opt/ml/model', 'batch_size': 25})
+        >>>
+        >>>print(args)
+        ['MODEL_DIR', '/opt/ml/model', 'BATCH_SIZE', 25]
+    Args:
+        mapping (dict[str, object]): A Python mapping.
+    Returns:
+        (dict): Dictionary of env vars.
+    """
 
     def format_key(key):
         """Decode a key, adds a SM_ prefix to the key and upper case it."""
@@ -160,8 +160,8 @@ class MappingMixin(collections.Mapping):
 
     def properties(self):  # type: () -> list
         """
-            Returns:
-                (list[str]) List of public properties.
+        Returns:
+            (list[str]) List of public properties.
         """
 
         _type = type(self)
