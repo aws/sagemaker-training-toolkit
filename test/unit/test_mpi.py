@@ -101,11 +101,11 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists, write_env_vars):
     path_exists.assert_called_with("/usr/sbin/sshd")
 
 
-@patch("process.asyncio.gather", new_callable=AsyncMock)
+@patch("asyncio.gather", new_callable=AsyncMock)
 @patch("os.path.exists")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("process.asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 def test_mpi_master_run(
     training_env, async_shell, policy, ssh_client, path_exists, async_gather, event_loop
@@ -198,12 +198,12 @@ def test_mpi_master_run(
         path_exists.assert_called_with("/usr/sbin/sshd")
 
 
-@patch("process.asyncio.gather", new_callable=AsyncMock)
+@patch("asyncio.gather", new_callable=AsyncMock)
 @patch("os.path.exists")
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("process.asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 def test_mpi_master_run_python(
     training_env,

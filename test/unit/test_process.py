@@ -128,8 +128,8 @@ def test_create_error():
         process.create(["run"], errors.ExecuteUserScriptError, 1)
 
 
-@patch("process.asyncio.gather", new_callable=AsyncMock1)
-@patch("process.asyncio.create_subprocess_shell")
+@patch("asyncio.gather", new_callable=AsyncMock1)
+@patch("asyncio.create_subprocess_shell")
 @pytest.mark.asyncio
 async def test_run_async(async_shell, async_gather):
     processes_per_host = 2
@@ -154,8 +154,8 @@ async def test_run_async(async_shell, async_gather):
     assert output == "test"
 
 
-@patch("process.asyncio.gather", new_callable=AsyncMock1)
-@patch("process.asyncio.create_subprocess_shell")
+@patch("asyncio.gather", new_callable=AsyncMock1)
+@patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_python(log, async_shell, async_gather, entry_point_type_script, event_loop):
 

@@ -28,12 +28,12 @@ class AsyncMock(MagicMock):
         return super(AsyncMock, self).__call__(*args, **kwargs)
 
 
-@patch("process.asyncio.gather", new_callable=AsyncMock)
+@patch("asyncio.gather", new_callable=AsyncMock)
 @patch("os.path.exists")
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("process.asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 def test_smdataparallel_run_multi_node_python(
     training_env,
@@ -154,12 +154,12 @@ def test_smdataparallel_run_multi_node_python(
         path_exists.assert_called_with("/usr/sbin/sshd")
 
 
-@patch("process.asyncio.gather", new_callable=AsyncMock)
+@patch("asyncio.gather", new_callable=AsyncMock)
 @patch("os.path.exists")
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("process.asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 def test_smdataparallel_run_single_node_python(
     training_env,
