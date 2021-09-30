@@ -26,6 +26,8 @@ RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSIO
    && apt-get install -y --no-install-recommends \
    libreadline-gplv2-dev \
    libncursesw5-dev \
+   libssl1.1 \
+   openssl \
    libssl-dev \
    libsqlite3-dev \
    libgdbm-dev \
