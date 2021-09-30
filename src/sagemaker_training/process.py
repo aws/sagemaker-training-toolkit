@@ -24,61 +24,16 @@ import sys
 
 import six
 
-from sagemaker_training import _entry_point_type, environment, errors, logging_config
+from sagemaker_training import (
+    _entry_point_type,
+    _PYTHON_ERRORS_,
+    environment,
+    errors,
+    logging_config,
+)
 
 # Default limit of the stream is 2 ** 16 KB, we can increase it to 128KB in subproc call
 _DEFAULT_BUF_SIZE = 1024 * 64
-# [x for x in dir(__builtins__) if 'Error' in x]
-_PYTHON_ERRORS_ = [
-    "ArithmeticError",
-    "AssertionError",
-    "AttributeError",
-    "BlockingIOError",
-    "BrokenPipeError",
-    "BufferError",
-    "ChildProcessError",
-    "ConnectionAbortedError",
-    "ConnectionError",
-    "ConnectionRefusedError",
-    "ConnectionResetError",
-    "EOFError",
-    "EnvironmentError",
-    "FileExistsError",
-    "FileNotFoundError",
-    "FloatingPointError",
-    "IOError",
-    "ImportError",
-    "IndentationError",
-    "IndexError",
-    "InterruptedError",
-    "IsADirectoryError",
-    "KeyError",
-    "LookupError",
-    "MemoryError",
-    "ModuleNotFoundError",
-    "NameError",
-    "NotADirectoryError",
-    "NotImplementedError",
-    "OSError",
-    "OverflowError",
-    "PermissionError",
-    "ProcessLookupError",
-    "RecursionError",
-    "ReferenceError",
-    "RuntimeError",
-    "SyntaxError",
-    "SystemError",
-    "TabError",
-    "TimeoutError",
-    "TypeError",
-    "UnboundLocalError",
-    "UnicodeDecodeError",
-    "UnicodeEncodeError",
-    "UnicodeError",
-    "UnicodeTranslateError",
-    "ValueError",
-    "ZeroDivisionError",
-]
 
 
 async def watch(stream, proc_per_host):
@@ -99,6 +54,8 @@ async def watch(stream, proc_per_host):
     buf_size = _DEFAULT_BUF_SIZE
     start = False
     while True:
+        if stream is None:
+            break
         lines = await stream.read(buf_size)
         if not lines or lines == "":
             break
@@ -160,6 +117,7 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
     proc = await asyncio.create_subprocess_shell(
         cmd, env=env, cwd=cwd, stdout=PIPE, stderr=stderr, **kwargs
     )
+
     output = await asyncio.gather(
         watch(proc.stdout, processes_per_host), watch(proc.stderr, processes_per_host)
     )
