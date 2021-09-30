@@ -17,9 +17,10 @@ import inspect
 import os
 
 from mock import ANY, MagicMock, patch
+import pytest
 
 import gethostname
-from sagemaker_training import environment, mpi
+from sagemaker_training import environment, errors, mpi
 
 
 def does_not_connect():
@@ -112,7 +113,7 @@ def test_mpi_master_run(
 ):
 
     with patch.dict(os.environ, clear=True):
-
+        os.environ["AWS_ACCESS_KEY_ID"] = "ABCD"
         master = mpi.MasterRunner(
             user_entry_point="train.sh",
             args=["-v", "--lr", "35"],
@@ -178,6 +179,8 @@ def test_mpi_master_run(
             "-v",
             "--lr",
             "35",
+            "-x",
+            "AWS_ACCESS_KEY_ID",
             "-x",
             "LD_CONFIG_PATH",
             "/bin/sh",
@@ -305,3 +308,11 @@ def test_mpi_master_run_python(
         async_gather.assert_called_once()
         assert process == async_shell.return_value
         path_exists.assert_called_with("/usr/sbin/sshd")
+
+
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_connection(log):
+    with pytest.raises(Exception):
+        mpi._can_connect("test_host")
+        log.assert_called_with("Cannot connect to host test_host")
+        log.assert_called_with("Connection failed with exceptio: ")

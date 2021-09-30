@@ -17,6 +17,7 @@ import inspect
 import os
 
 from mock import ANY, MagicMock, patch
+import pytest
 
 import gethostname
 from sagemaker_training import environment, smdataparallel
@@ -265,3 +266,10 @@ def test_smdataparallel_run_single_node_python(
         async_gather.assert_called_once()
         assert process == async_shell.return_value
         path_exists.assert_called_with("/usr/sbin/sshd")
+
+
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_connection(log):
+    with pytest.raises(Exception):
+        smdataparallel._can_connect("test_host")
+        log.assert_called_with("Cannot connect to host test_host at port 22. Retrying...")
