@@ -20,7 +20,7 @@ from mock import ANY, MagicMock, patch
 import pytest
 
 import gethostname
-from sagemaker_training import environment, errors, mpi
+from sagemaker_training import environment, mpi
 
 
 def does_not_connect():
