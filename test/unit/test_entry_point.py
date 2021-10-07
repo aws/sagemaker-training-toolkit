@@ -17,11 +17,10 @@ import sys
 
 from mock import call, MagicMock, patch, PropertyMock
 import pytest
-from six import PY2
 
 from sagemaker_training import entry_point, environment, errors, process, runner
 
-builtins_open = "__builtin__.open" if PY2 else "builtins.open"
+builtins_open = "builtins.open"
 
 
 @pytest.fixture

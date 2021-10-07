@@ -19,11 +19,10 @@ import textwrap
 
 from mock import call, mock_open, patch
 import pytest
-from six import PY2
 
 from sagemaker_training import environment, errors, files, modules, params
 
-builtins_open = "__builtin__.open" if PY2 else "builtins.open"
+builtins_open = "builtins.open"
 
 
 @patch("boto3.resource", autospec=True)
