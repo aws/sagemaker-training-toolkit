@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.9.3 (2021-10-07)
+
+### Bug Fixes and Other Changes
+
+ * Fix logging issues
+
 ## v3.9.2 (2021-04-27)
 
 ### Bug Fixes and Other Changes
