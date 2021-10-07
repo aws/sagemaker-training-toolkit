@@ -40,6 +40,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         user_entry_point,
         args,
         env_vars,
+        processes_per_host,
         master_hostname,
         hosts,
         custom_mpi_options,
@@ -66,7 +67,9 @@ class SMDataParallelRunner(process.ProcessRunner):
                 3600 seconds (ie. 1 hour).
         """
 
-        super(SMDataParallelRunner, self).__init__(user_entry_point, args, env_vars)
+        super(SMDataParallelRunner, self).__init__(
+            user_entry_point, args, env_vars, processes_per_host
+        )
 
         self._master_hostname = master_hostname
         self._hosts = hosts
@@ -107,9 +110,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         smdataparallel_server_addr=None,
         smdataparallel_server_port=None,
     ):
-        """Fetch mpi command for SMDataParallel
-
-        """
+        """Fetch mpi command for SMDataParallel"""
         overridden_known_options, additional_options = _parse_custom_mpi_options(
             self._custom_mpi_options
         )
@@ -264,6 +265,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             process_spawned = process.check_error(
                 cmd,
                 errors.ExecuteUserScriptError,
+                self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
             )
@@ -271,6 +273,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             process_spawned = process.create(
                 cmd,
                 errors.ExecuteUserScriptError,
+                self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
             )
@@ -311,9 +314,9 @@ def _can_connect(host, port=22):
     # type: (str, int) -> bool
     """Check if the connection to provided ``host`` and ``port`` is possible.
 
-       Args:
-           host (str): Hostname for the host to check connection.
-           port (int): Port name of the host to check connection on.
+    Args:
+        host (str): Hostname for the host to check connection.
+        port (int): Port name of the host to check connection on.
     """
     try:
         logger.debug("Testing connection to host %s at port %s", host, port)

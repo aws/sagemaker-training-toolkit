@@ -82,17 +82,17 @@ def array_to_json(array_like):
 def json_to_numpy(string_like, dtype=None):
     """Convert a JSON object to a numpy array.
 
-        Args:
-            string_like (str): JSON string.
-            dtype (dtype, optional):  Data type of the resulting array. If None,
-                                      the dtypes will be determined by the
-                                      contents of each column, individually.
-                                      This argument can only be used to
-                                      'upcast' the array.  For downcasting,
-                                      use the .astype(t) method.
-        Returns:
-            (np.array): Numpy array.
-        """
+    Args:
+        string_like (str): JSON string.
+        dtype (dtype, optional):  Data type of the resulting array. If None,
+                                  the dtypes will be determined by the
+                                  contents of each column, individually.
+                                  This argument can only be used to
+                                  'upcast' the array.  For downcasting,
+                                  use the .astype(t) method.
+    Returns:
+        (np.array): Numpy array.
+    """
     data = json.loads(string_like)
     return np.array(data, dtype=dtype)
 

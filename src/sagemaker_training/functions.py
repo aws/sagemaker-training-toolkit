@@ -68,13 +68,10 @@ def getargspec(fn):  # pylint: disable=inconsistent-return-statements
                 keywords (str): Names of the ** argument or None.
                 defaults (tuple): An n-tuple of the default values of the last n arguments.
     """
-    if six.PY2:
-        return inspect.getargspec(fn)  # pylint: disable=deprecated-method
-    elif six.PY3:
-        full_arg_spec = inspect.getfullargspec(fn)
-        return inspect.ArgSpec(
-            full_arg_spec.args, full_arg_spec.varargs, full_arg_spec.varkw, full_arg_spec.defaults
-        )
+    full_arg_spec = inspect.getfullargspec(fn)
+    return inspect.ArgSpec(
+        full_arg_spec.args, full_arg_spec.varargs, full_arg_spec.varkw, full_arg_spec.defaults
+    )
 
 
 def error_wrapper(fn, error_class):

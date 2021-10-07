@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -20,6 +20,7 @@ from sagemaker_training import mpi, process, runner
 USER_SCRIPT = "script"
 CMD_ARGS = ["--some-arg", 42]
 ENV_VARS = {"FOO": "BAR"}
+DEFAULT_PROC_PER_HOST = 1
 
 NCCL_DEBUG_MPI_OPT = "-X NCCL_DEBUG=WARN"
 MPI_OPTS = {
@@ -88,7 +89,7 @@ def test_runnner_with_default_cpu_processes_per_host(training_env):
     test_runner = runner.get(runner.MPIRunnerType)
 
     assert isinstance(test_runner, mpi.MasterRunner)
-    assert test_runner._process_per_host == 1
+    assert test_runner._processes_per_host == 1
 
 
 @patch("sagemaker_training.environment.Environment")
@@ -99,7 +100,7 @@ def test_runnner_with_default_gpu_processes_per_host(training_env):
     test_runner = runner.get(runner.MPIRunnerType)
 
     assert isinstance(test_runner, mpi.MasterRunner)
-    assert test_runner._process_per_host == 2
+    assert test_runner._processes_per_host == 2
 
 
 @patch("sagemaker_training.environment.Environment")
@@ -113,7 +114,7 @@ def test_get_runner_by_mpi_with_extra_args(training_env):
     assert test_runner._user_entry_point == USER_SCRIPT
     assert test_runner._args == CMD_ARGS
     assert test_runner._env_vars == ENV_VARS
-    assert test_runner._process_per_host == 2
+    assert test_runner._processes_per_host == 2
     assert test_runner._num_processes == 4
     assert test_runner._custom_mpi_options == NCCL_DEBUG_MPI_OPT
 

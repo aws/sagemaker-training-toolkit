@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -17,11 +17,10 @@ import sys
 
 from mock import call, MagicMock, patch, PropertyMock
 import pytest
-from six import PY2
 
 from sagemaker_training import entry_point, environment, errors, process, runner
 
-builtins_open = "__builtin__.open" if PY2 else "builtins.open"
+builtins_open = "builtins.open"
 
 
 @pytest.fixture
@@ -49,7 +48,7 @@ def test_install_module(check_error, prepare, entry_point_type_module):
     entry_point.install("python_module.py", path)
 
     cmd = [sys.executable, "-m", "pip", "install", "."]
-    check_error.assert_called_with(cmd, errors.InstallModuleError, capture_error=False, cwd=path)
+    check_error.assert_called_with(cmd, errors.InstallModuleError, 1, capture_error=False, cwd=path)
 
     with patch("os.path.exists", return_value=True):
         entry_point.install("python_module.py", path)
@@ -57,6 +56,7 @@ def test_install_module(check_error, prepare, entry_point_type_module):
         check_error.assert_called_with(
             cmd + ["-r", "requirements.txt"],
             errors.InstallModuleError,
+            1,
             cwd=path,
             capture_error=False,
         )

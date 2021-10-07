@@ -36,6 +36,10 @@ logger = logging_config.get_logger()
 SAGEMAKER_BASE_PATH = os.path.join("/opt", "ml")  # type: str
 BASE_PATH_ENV = "SAGEMAKER_BASE_DIR"  # type: str
 
+HYPERPARAMETERS_FILE = "hyperparameters.json"  # type: str
+RESOURCE_CONFIG_FILE = "resourceconfig.json"  # type: str
+INPUT_DATA_CONFIG_FILE = "inputdataconfig.json"  # type: str
+
 
 def _write_json(obj, path):  # type: (object, str) -> None
     """Write a serializeable object as a JSON file."""
@@ -65,10 +69,11 @@ def _is_training_path_configured():  # type: () -> bool
 
 def _set_base_path_env():  # type: () -> None
     """Set the environment variable SAGEMAKER_BASE_DIR as
-    ~/sagemaker_local/{timestamp}/opt/ml
+    ~/sagemaker_local/jobs/{timestamp}/opt/ml
     """
+    timestamp = str(time.time())
     local_config_dir = os.path.join(
-        os.path.expanduser("~"), "sagemaker_local", "jobs", str(time.time()), "opt", "ml"
+        os.path.expanduser("~"), "sagemaker_local", "jobs", timestamp, "opt", "ml"
     )
 
     logger.info("Setting environment variable SAGEMAKER_BASE_DIR as %s ." % local_config_dir)
@@ -139,18 +144,13 @@ Returns:
     str: the path to the intermediate output directory, e.g. /opt/ml/output/intermediate.
 """
 
-HYPERPARAMETERS_FILE = "hyperparameters.json"  # type: str
-RESOURCE_CONFIG_FILE = "resourceconfig.json"  # type: str
-INPUT_DATA_CONFIG_FILE = "inputdataconfig.json"  # type: str
-
 hyperparameters_file_dir = os.path.join(input_config_dir, HYPERPARAMETERS_FILE)  # type: str
 input_data_config_file_dir = os.path.join(input_config_dir, INPUT_DATA_CONFIG_FILE)  # type: str
 resource_config_file_dir = os.path.join(input_config_dir, RESOURCE_CONFIG_FILE)  # type: str
 
 
 def _create_training_directories():
-    """Create the directory structure and files necessary for training under the base path.
-    """
+    """Create the directory structure and files necessary for training under the base path."""
     logger.info("Creating a new training folder under %s ." % base_dir)
 
     os.makedirs(model_dir)
@@ -196,7 +196,7 @@ def read_hyperparameters():  # type: () -> dict
     """Read the hyperparameters from /opt/ml/input/config/hyperparameters.json.
 
     For more information about hyperparameters.json:
-    https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-hyperparameters
+    https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-hyperparameters
 
     Returns:
          (dict[string, object]): A dictionary containing the hyperparameters.
@@ -225,7 +225,7 @@ def read_resource_config():  # type: () -> dict
     """Read the resource configuration from /opt/ml/input/config/resourceconfig.json.
 
     For more information about resourceconfig.json:
-https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-dist-training
+    https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-dist-training
 
     Returns:
         resource_config (dict[string, object]): the contents from /opt/ml/input/config/resourceconfig.json.
@@ -264,7 +264,7 @@ def read_input_data_config():  # type: () -> dict
         }}
 
         For more information about inpudataconfig.json:
-https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-dist-training
+        https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-inputdataconfig
 
     Returns:
             input_data_config (dict[string, object]): Contents from /opt/ml/input/config/inputdataconfig.json.
@@ -273,7 +273,7 @@ https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.ht
 
 
 def channel_path(channel):  # type: (str) -> str
-    """ Return the directory containing the channel data file(s) which is:
+    """Return the directory containing the channel data file(s) which is:
     - <self.base_dir>/input/data/<channel>
 
     For more information about channels: https://docs.aws.amazon.com/sagemaker/latest/dg/API_Channel.html
@@ -326,7 +326,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             get the path of the channel 'training' from the inputdataconfig.json file
             >>>training_dir = environment.channel_input_dirs['training']
 
-            get a the hyperparameter 'training_data_file' from hyperparameters.json file
+            get the hyperparameter 'training_data_file' from hyperparameters.json file
             >>>file_name = environment.hyperparameters['training_data_file']
 
             get the folder where the model should be saved
@@ -407,7 +407,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             }}
 
             You can find more information about /opt/ml/input/config/inputdataconfig.json here:
-            https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
+            https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-inputdataconfig
 
         output_data_dir (str): The dir to write non-model training artifacts (e.g. evaluation
                                results) which will be retained by SageMaker,
@@ -476,7 +476,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
                 }}
 
                 You can find more information about /opt/ml/input/config/inputdataconfig.json here:
-                https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html#your-algorithms-training-algo-running-container-inputdataconfig
+                https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo-running-container.html#your-algorithms-training-algo-running-container-inputdataconfig
 
             hyperparameters (dict[string, object]): An instance of `HyperParameters` containing the
                 training job hyperparameters.
@@ -564,7 +564,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
     @property
     def model_dir(self):  # type: () -> str
-        """ The directory where models should be saved.
+        """The directory where models should be saved.
 
         Returns:
             str: The directory where models should be saved, e.g., /opt/ml/model/
@@ -651,14 +651,12 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
     @property
     def is_master(self):  # type: () -> bool
-        """Returns True if host is master.
-        """
+        """Returns True if host is master."""
         return self._is_master
 
     @property
     def master_hostname(self):  # type: () -> str
-        """Returns the hostname of the master node.
-        """
+        """Returns the hostname of the master node."""
         return self._master_hostname
 
     @property

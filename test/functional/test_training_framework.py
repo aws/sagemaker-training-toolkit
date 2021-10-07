@@ -17,6 +17,7 @@ import importlib
 import os
 import shlex
 import subprocess
+import unittest
 
 import mock
 import numpy as np
@@ -171,9 +172,7 @@ BASH_SCRIPT = "#!/usr/bin/env python\n%s" % USER_MODE_SCRIPT
 PARAMETER_SERVER_SCRIPT = """
 from time import sleep
 
-while True:
-    print('Running parameter server')
-    sleep(1)
+import sys
 """
 
 setup_file = test.File(
@@ -351,7 +350,7 @@ def test_trainer_report_failure():
 
     message = failure_message()
 
-    assert message.startswith("framework error:")
+    assert message.startswith("Framework Error:")
     assert "No such file or directory" in message
 
 
@@ -380,6 +379,7 @@ def mpi_training_with_script_mode_fn(capture_error):
     )
 
 
+@unittest.skip("PS does not use SM Training toolkit Process launcher")
 def test_parameter_server():
     module = test.UserModule(test.File(name="user_script.py", data=PARAMETER_SERVER_SCRIPT))
     hyperparameters = dict(sagemaker_program="user_script.py")
@@ -515,6 +515,7 @@ def test_script_mode_client_import_error():
         framework_training_with_script_mode_fn(capture_error=True)
 
     message = str(e.value)
+
     assert "InstallModuleError:" in message
 
     # fmt: off

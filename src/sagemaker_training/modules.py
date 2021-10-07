@@ -125,7 +125,7 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
     logger.info("Installing module with the following command:\n%s", cmd)
 
     process.check_error(
-        shlex.split(cmd), errors.InstallModuleError, cwd=path, capture_error=capture_error
+        shlex.split(cmd), errors.InstallModuleError, 1, cwd=path, capture_error=capture_error
     )
 
 
@@ -142,7 +142,7 @@ def install_requirements(path, capture_error=False):  # type: (str, bool) -> Non
     logger.info("Installing dependencies from requirements.txt:\n{}".format(cmd))
 
     process.check_error(
-        shlex.split(cmd), errors.InstallRequirementsError, cwd=path, capture_error=capture_error
+        shlex.split(cmd), errors.InstallRequirementsError, 1, cwd=path, capture_error=capture_error
     )
 
 
