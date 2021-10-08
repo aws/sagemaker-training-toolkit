@@ -1,10 +1,30 @@
 # Changelog
 
-## v3.9.3 (2021-10-07)
+## v3.9.3 ~ 4.0.0 (2021-10-07)
+
+## Breaking Changes
+
+ * Added `py38`, Removed `py36` and `py27` support
 
 ### Bug Fixes and Other Changes
 
- * Fix logging issues
+ * Use asyncio to read stdout and stderr streams in realtime
+ * Fix delayed logging issues
+ * Convey user informative message if process gets OOM Killed
+ * Filter out stderr to look for error messages and report
+ * Report Exit code on training job failures
+ * Prepend tags to MPI logs to enable easy filtering in CloudWatch
+ * All the changes are from PR #108
+
+### Documentation Changes
+
+ * Update SM doc urls
+ * Update Amazon Licensing
+ ### Testing and Release Infrastructure
+
+ * Install libssl1.1 and openssl packages in Dockerfiles
+ * Added `asyncio` package
+ * Updated tests to use `asyncio` package
 
 ## v3.9.2 (2021-04-27)
 
