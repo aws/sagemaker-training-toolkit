@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.0.0 (2021-10-08)
+
+### Breaking Changes
+
+ * Add py38, dropped py36 and py2 support. Bump pypi to 4.0.0 (changes from PR #108)
+
 ## v3.9.3 ~ 4.0.0 (2021-10-07)
 
 ## Breaking Changes
