@@ -61,7 +61,7 @@ def _exit_processes(exit_code):  # type: (int) -> None
     sys.exit(exit_code)
 
 
-def train():
+def train(framework_module: str = None):
     """The main function responsible for running training in the container."""
     intermediate_sync = None
     exit_code = SUCCESS_CODE
@@ -74,7 +74,19 @@ def train():
             env.sagemaker_s3_output(), region, endpoint_url=s3_endpoint_url
         )
 
-        if env.framework_module:
+        if framework_module:
+            framework_name, entry_point_name = framework_module.split(":")
+
+            framework = importlib.import_module(framework_name)
+
+            # the logger is configured after importing the framework library, allowing
+            # the framework to configure logging at import time.
+            logging_config.configure_logger(env.log_level)
+            logger.info("Imported framework %s", framework_name)
+            entrypoint = getattr(framework, entry_point_name)
+            entrypoint()
+
+        elif env.framework_module:
             framework_name, entry_point_name = env.framework_module.split(":")
 
             framework = importlib.import_module(framework_name)
