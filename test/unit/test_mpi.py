@@ -106,10 +106,10 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists, write_env_vars):
 @patch("os.path.exists")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.environment.Environment")
 def test_mpi_master_run(
-    training_env, async_shell, policy, ssh_client, path_exists, async_gather, event_loop
+    training_env, async_exec, policy, ssh_client, path_exists, async_gather, event_loop
 ):
 
     with patch.dict(os.environ, clear=True):
@@ -187,17 +187,16 @@ def test_mpi_master_run(
             "-c",
             "./train.sh -v --lr 35",
         ]
-        extended_cmd = " ".join(cmd)
-        async_shell.assert_called_with(
-            extended_cmd,
+        async_exec.assert_called_with(
+            *cmd,
             env=ANY,
             cwd=environment.code_dir,
             stdout=asyncio.subprocess.PIPE,
             stderr=None,
         )
-        async_shell.assert_called_once()
+        async_exec.assert_called_once()
         async_gather.assert_called_once()
-        assert process == async_shell.return_value
+        assert process == async_exec.return_value
         path_exists.assert_called_with("/usr/sbin/sshd")
 
 
@@ -206,11 +205,11 @@ def test_mpi_master_run(
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.environment.Environment")
 def test_mpi_master_run_python(
     training_env,
-    async_shell,
+    async_exec,
     policy,
     ssh_client,
     python_executable,
@@ -297,16 +296,16 @@ def test_mpi_master_run_python(
             "--lr",
             "35",
         ]
-        async_shell.assert_called_with(
-            " ".join(cmd),
+        async_exec.assert_called_with(
+            *cmd,
             cwd=environment.code_dir,
             env=ANY,
             stdout=asyncio.subprocess.PIPE,
             stderr=None,
         )
-        async_shell.assert_called_once()
+        async_exec.assert_called_once()
         async_gather.assert_called_once()
-        assert process == async_shell.return_value
+        assert process == async_exec.return_value
         path_exists.assert_called_with("/usr/sbin/sshd")
 
 
