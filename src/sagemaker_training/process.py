@@ -113,9 +113,8 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
     Raises:
         error_class: If there is an exception raised when creating the process.
     """
-    cmd = " ".join(cmd)
-    proc = await asyncio.create_subprocess_shell(
-        cmd, env=env, cwd=cwd, stdout=PIPE, stderr=stderr, **kwargs
+    proc = await asyncio.create_subprocess_exec(
+        *cmd, env=env, cwd=cwd, stdout=PIPE, stderr=stderr, **kwargs
     )
 
     output = await asyncio.gather(
