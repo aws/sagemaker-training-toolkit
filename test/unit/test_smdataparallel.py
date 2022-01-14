@@ -143,11 +143,7 @@ def test_smdataparallel_run_multi_node_python(
             "35",
         ]
         async_exec.assert_called_with(
-            *cmd,
-            cwd=environment.code_dir,
-            env=ANY,
-            stderr=None,
-            stdout=asyncio.subprocess.PIPE,
+            *cmd, cwd=environment.code_dir, env=ANY, stderr=None, stdout=asyncio.subprocess.PIPE
         )
         async_exec.assert_called_once()
         async_gather.assert_called_once()
@@ -256,11 +252,7 @@ def test_smdataparallel_run_single_node_python(
             "35",
         ]
         async_exec.assert_called_with(
-            *cmd,
-            cwd=environment.code_dir,
-            env=ANY,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=None,
+            *cmd, cwd=environment.code_dir, env=ANY, stdout=asyncio.subprocess.PIPE, stderr=None
         )
         async_exec.assert_called_once()
         async_gather.assert_called_once()

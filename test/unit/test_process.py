@@ -145,11 +145,7 @@ async def test_run_async(async_exec, async_gather):
     async_exec.assert_called_once()
     async_gather.assert_called_once()
     async_exec.assert_called_with(
-        *cmd,
-        stdout=asyncio.subprocess.PIPE,
-        env=ANY,
-        cwd=ANY,
-        stderr=asyncio.subprocess.PIPE,
+        *cmd, stdout=asyncio.subprocess.PIPE, env=ANY, cwd=ANY, stderr=asyncio.subprocess.PIPE
     )
     assert output == "test"
 
