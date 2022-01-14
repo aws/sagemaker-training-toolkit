@@ -129,9 +129,9 @@ def test_create_error():
 
 
 @patch("asyncio.gather", new_callable=AsyncMock1)
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @pytest.mark.asyncio
-async def test_run_async(async_shell, async_gather):
+async def test_run_async(async_exec, async_gather):
     processes_per_host = 2
     async_gather.return_value = "test"
     cmd = ["python3", "launcher.py", "--lr", "13"]
@@ -142,10 +142,10 @@ async def test_run_async(async_shell, async_gather):
         stderr=asyncio.subprocess.PIPE,
         cwd=environment.code_dir,
     )
-    async_shell.assert_called_once()
+    async_exec.assert_called_once()
     async_gather.assert_called_once()
-    async_shell.assert_called_with(
-        " ".join(cmd),
+    async_exec.assert_called_with(
+        *cmd,
         stdout=asyncio.subprocess.PIPE,
         env=ANY,
         cwd=ANY,
@@ -155,9 +155,9 @@ async def test_run_async(async_shell, async_gather):
 
 
 @patch("asyncio.gather", new_callable=AsyncMock1)
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.logging_config.log_script_invocation")
-def test_run_python(log, async_shell, async_gather, entry_point_type_script, event_loop):
+def test_run_python(log, async_exec, async_gather, entry_point_type_script, event_loop):
 
     async_gather.return_value = ("stdout", "stderr")
 
@@ -168,10 +168,10 @@ def test_run_python(log, async_shell, async_gather, entry_point_type_script, eve
         assert output == "stderr"
 
     cmd = [sys.executable, "launcher.py", "--lr", "13"]
-    async_shell.assert_called_once()
+    async_exec.assert_called_once()
     async_gather.assert_called_once()
-    async_shell.assert_called_with(
-        " ".join(cmd),
+    async_exec.assert_called_with(
+        *cmd,
         cwd=environment.code_dir,
         env=os.environ,
         stderr=asyncio.subprocess.PIPE,
