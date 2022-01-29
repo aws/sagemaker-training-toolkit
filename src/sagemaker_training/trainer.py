@@ -103,11 +103,11 @@ def train():
         files.write_success_file()
     except errors.ClientError as e:
 
-        failure_message = str(e)
-        files.write_failure_file(failure_message)
+        failure_msg = str(e)
+        files.write_failure_file(failure_msg)
         logger.error("Reporting training FAILURE")
 
-        logger.error(failure_message)
+        logger.error(failure_msg)
 
         if intermediate_sync:
             intermediate_sync.join()

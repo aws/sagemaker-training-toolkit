@@ -32,11 +32,6 @@ class AsyncMock1(MagicMock):
         return super(AsyncMock1, self).__call__(*args, **kwargs)
 
 
-class AsyncMock2(MagicMock):
-    async def __call__(self, *args, **kwargs):
-        return super(AsyncMock1, self).__call__(*args, **kwargs)
-
-
 @pytest.fixture
 def entry_point_type_module():
     with patch("os.listdir", lambda x: ("setup.py",)):
@@ -66,7 +61,9 @@ def test_check_error(popen):
     test_process = MagicMock(wait=MagicMock(return_value=0))
     popen.return_value = test_process
 
-    assert test_process == process.check_error(["run"], errors.ExecuteUserScriptError, 1)
+    assert test_process == process.check_error(
+        ["run"], errors.ExecuteUserScriptError, 1, capture_error=False
+    )
 
 
 @patch("subprocess.Popen")
