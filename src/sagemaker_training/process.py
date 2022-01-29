@@ -161,7 +161,7 @@ def create(cmd, error_class, processes_per_host, cwd=None, env=None, capture_err
         six.reraise(error_class, error_class(e), sys.exc_info()[2])
 
 
-def check_error(cmd, error_class, processes_per_host, cwd=None, capture_error=False, **kwargs):
+def check_error(cmd, error_class, processes_per_host, cwd=None, capture_error=True, **kwargs):
     """Run a commmand, raising an exception if there is an error.
 
     Args:
@@ -169,7 +169,7 @@ def check_error(cmd, error_class, processes_per_host, cwd=None, capture_error=Fa
         error_class (cls): The class to use when raising an exception.
         processes_per_host (int): Number of processes per host
         capture_error (bool): Whether or not to include stderr in
-            the exception message (default: False). In either case,
+            the exception message (default: True). In either case,
             stderr is streamed to the process's output.
         **kwargs: Extra arguments that are passed to the subprocess.Popen constructor.
 

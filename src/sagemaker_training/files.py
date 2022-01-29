@@ -25,7 +25,9 @@ import tempfile
 import boto3
 from six.moves.urllib import parse
 
-from sagemaker_training import environment, params
+from sagemaker_training import environment, logging_config, params
+
+logger = logging_config.get_logger()
 
 
 def write_success_file():  # type: () -> None
@@ -48,7 +50,12 @@ def write_failure_file(failure_msg):  # type: (str) -> None
         failure_msg: The description of failure.
     """
     file_path = os.path.join(environment.output_dir, "failure")
-    write_file(file_path, failure_msg)
+
+    # Write failure file only if it does not exist
+    if not os.path.exists(file_path):
+        write_file(file_path, failure_msg)
+    else:
+        logger.info("Failure file exists. Skipping creation....")
 
 
 @contextlib.contextmanager
