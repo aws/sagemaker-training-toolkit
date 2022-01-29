@@ -1,5 +1,7 @@
 # Changelog
 
+## v4.0.1 (2022-01-29)
+
 ## v4.0.0 (2021-10-08)
 
 ### Breaking Changes
