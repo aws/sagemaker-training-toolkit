@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import enum
 
-from sagemaker_training import environment, mpi, params, process, smdataparallel
+from sagemaker_training import environment, mpi, params, process, smdataparallel, vanilla_ddp
 
 
 class RunnerType(enum.Enum):
@@ -26,10 +26,12 @@ class RunnerType(enum.Enum):
     MPI = "MPI"
     Process = "Process"
     SMDataParallel = "SMDataParallel"
+    VanillaDDP = "VanillaDDP"
 
 
 ProcessRunnerType = RunnerType.Process
 MPIRunnerType = RunnerType.MPI
+VanillaDDPRunnerType = RunnerType.VanillaDDP
 SMDataParallelRunnerType = RunnerType.SMDataParallel
 
 
@@ -79,11 +81,22 @@ def _get_by_runner_type(
             env.master_hostname,
             env.hosts,
             custom_mpi_options,
+            env.nccl_min_nchannels,
             env.network_interface_name,
         )
     elif identifier is RunnerType.SMDataParallel:
         return mpi.WorkerRunner(
             user_entry_point, args, env_vars, processes_per_host, env.master_hostname
+        )
+    elif identifier is RunnerType.VanillaDDP:
+        return vanilla_ddp.VanillaDDPRunner(
+            user_entry_point,
+            args,
+            env_vars,
+            env.master_hostname,
+            env.hosts,
+            env.current_host,
+            processes_per_host,
         )
     elif identifier is RunnerType.MPI and env.is_master:
         num_processes = _mpi_param_value(mpi_args, env, params.MPI_NUM_PROCESSES)
@@ -96,6 +109,7 @@ def _get_by_runner_type(
             env.master_hostname,
             env.hosts,
             custom_mpi_options,
+            env.nccl_min_nchannels,
             env.network_interface_name,
             num_processes=num_processes,
         )

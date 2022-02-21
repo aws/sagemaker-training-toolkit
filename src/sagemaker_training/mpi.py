@@ -120,6 +120,7 @@ class MasterRunner(process.ProcessRunner):
         master_hostname,
         hosts,
         custom_mpi_options,
+        nccl_min_nchannels,
         network_interface_name,
         interval=1,
         timeout_in_seconds=60 * 60,
@@ -136,6 +137,7 @@ class MasterRunner(process.ProcessRunner):
             hosts ([str]): A list of hosts.
             processes_per_host (int): Number of processes per host.
             custom_mpi_options (str): A string of custom MPI options to be parsed.
+            nccl_min_nchannels: Limit on number of channels NCCL can use
             network_interface_name (str): The network interface name.
             interval (int or float): The interval at which to check the connection in seconds.
                 Defaults to 1 second.
@@ -150,6 +152,7 @@ class MasterRunner(process.ProcessRunner):
         self._processes_per_host = processes_per_host
         self._num_processes = num_processes
         self._custom_mpi_options = custom_mpi_options
+        self._nccl_min_nchannels = nccl_min_nchannels
         self._network_interface_name = network_interface_name
         self._interval = interval
         self.timeout_in_seconds = timeout_in_seconds
@@ -225,7 +228,7 @@ class MasterRunner(process.ProcessRunner):
             "btl_vader_single_copy_mechanism",
             "none",
             "-x",
-            "NCCL_MIN_NRINGS=4",
+            "NCCL_MIN_NCHANNELS=%s" % self._nccl_min_nchannels,
             "-x",
             "NCCL_SOCKET_IFNAME=%s" % self._network_interface_name,
             "-x",
