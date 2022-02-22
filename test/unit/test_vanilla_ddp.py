@@ -13,13 +13,11 @@
 from __future__ import absolute_import
 
 import asyncio
-import inspect
 import os
 
 from mock import ANY, MagicMock, patch
 import pytest
 
-import gethostname
 from sagemaker_training import environment, vanilla_ddp
 from test.unit.test_mpi import MockSSHClient
 
@@ -50,9 +48,8 @@ def test_smdataparallel_run_multi_node_python(
         hosts = ["algo-1", "algo-2"]
         master_hostname = hosts[0]
         num_processes_per_host = 8
-        network_interface_name = "ethw3"
 
-        vanilla_ddp_runner = vanilla_ddp.SMDataParallelRunner(
+        vanilla_ddp_runner = vanilla_ddp.VanillaDDPRunner(
             user_entry_point="train.py",
             args=["-v", "--lr", "35"],
             env_vars={
@@ -61,8 +58,7 @@ def test_smdataparallel_run_multi_node_python(
             processes_per_host=num_processes_per_host,
             master_hostname=master_hostname,
             hosts=hosts,
-            custom_mpi_options="--verbose",
-            network_interface_name=network_interface_name,
+            current_host="algo-1",
         )
 
         _, _, process = vanilla_ddp_runner.run()
@@ -79,13 +75,11 @@ def test_smdataparallel_run_multi_node_python(
             "8",
             "--nnodes",
             "2",
-            "--node_rank"
-            "0",
+            "--node_rank" "0",
             "--master_addr",
             "algo-1",
             "--master_port",
-            "55555"
-            "train.py",
+            "55555" "train.py",
             "-v",
             "--lr",
             "35",
@@ -134,6 +128,7 @@ def test_smdataparallel_run_single_node_python(
             },
             master_hostname=master_hostname,
             hosts=host_list,
+            current_host="algo-1",
             processes_per_host=num_processes_per_host,
         )
 

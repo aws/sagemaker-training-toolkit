@@ -10,25 +10,21 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""This module contains functionality Contains functionality 
+"""This module contains functionality Contains functionality
 related to SM PyTorch Vanilla Distributed Data Parallel Training.
-Refer: https://pytorch.org/docs/stable/distributed.html#debugging-torch-distributed-applications
+Refer: https://pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html
 """
 from __future__ import absolute_import
 
-import paramiko
 import sys
 
-from sagemaker_training import (
-    _entry_point_type,
-    environment,
-    errors,
-    logging_config,
-)
+import paramiko
 
-#TODO: This will be moved to torch elastic distributed launcher
+from sagemaker_training import _entry_point_type, environment, errors, logging_config, process
+
 PYTORCH_DIST_MODULE = "torch.distributed.launch"
 logger = logging_config.get_logger()
+
 
 def python_executable():
     """Return the real path for the Python executable, if it exists.
@@ -41,10 +37,22 @@ def python_executable():
         raise RuntimeError("Failed to retrieve the real path for the Python executable binary")
     return sys.executable
 
-class VanillaDDPRunner():
 
-    def __init__(self, user_entry_point, args, env_vars, master_hostname, hosts, current_host, processes_per_host):
-        """Initialize a Native PT DDP ProcessRunner, which is responsible for executing 
+class VanillaDDPRunner(process.ProcessRunner):
+    """Runner responsible for preparing Pytorch distributed data parallel training
+    """
+
+    def __init__(
+        self,
+        user_entry_point,
+        args,
+        env_vars,
+        processes_per_host,
+        master_hostname,
+        hosts,
+        current_host,
+    ):
+        """Initialize a Native PT DDP ProcessRunner, which is responsible for executing
         the user entry point within a process.
 
         Args:
@@ -52,17 +60,15 @@ class VanillaDDPRunner():
             args ([str]): A list of arguments to include when executing the entry point.
             env_vars (dict(str,str)): A dictionary of environment variables.
         """
-        self._user_entry_point = user_entry_point
-        self._args = args
-        self._env_vars = env_vars
+        super(VanillaDDPRunner, self).__init__(user_entry_point, args, env_vars, processes_per_host)
+
         self._master_hostname = master_hostname
         self._hosts = hosts
         self._current_host = current_host
-        self._processes_per_host = processes_per_host
 
     def _python_command(self):  # pylint: disable=no-self-use
-        return [python_executable()]
-    
+        return python_executable()
+
     def _get_vanilla_ddp_command(self):
         """
         Based on the number of hosts, vanilla ddp command differs.
@@ -73,21 +79,29 @@ class VanillaDDPRunner():
             num_hosts = len(self._hosts)
             current_host = self._current_host
             current_node_rank = self._hosts.index(current_host)
-            master_port = 55555
+            master_port = "55555"
+            vanilla_ddp_cmd = []
 
-            pt_dist_cmd = f" {PYTORCH_DIST_MODULE} --nproc_per_node {self._processes_per_host} "
-            multinode_options = f" --nnodes {num_hosts} --node_rank {current_node_rank} "
+            pt_dist_cmd = [PYTORCH_DIST_MODULE, "--nproc_per_node", str(self._processes_per_host)]
+            multinode_options = ["--nnodes", str(num_hosts), "--node_rank", str(current_node_rank)]
 
-            final_cmd = self._python_command() + " -m " + pt_dist_cmd 
+            vanilla_ddp_cmd += [self._python_command(), " -m "] + pt_dist_cmd
 
             if num_hosts > 1:
-                master_options = f" --master_addr {self._master_hostname} --master_port {master_port} "
-                final_cmd += multinode_options + master_options
+                master_options = [
+                    "--master_addr",
+                    self._master_hostname,
+                    "--master_port",
+                    master_port,
+                ]
+                vanilla_ddp_cmd += multinode_options + master_options
 
-            final_cmd += self._user_entry_point + self._args
-            return final_cmd
+            vanilla_ddp_cmd.append(str(self._user_entry_point))
+            vanilla_ddp_cmd += self._args
+            return vanilla_ddp_cmd
         else:
-            logger.error('Unknown entry point type for this distribution')
+            logger.error("Unknown entry point type for this distribution")
+            return None
 
     def run(self, capture_error=True):
         """
@@ -100,17 +114,17 @@ class VanillaDDPRunner():
             process (subprocess.Popen): The spawned process.
         """
         cmd = self._get_vanilla_ddp_command()
-
         logging_config.log_script_invocation(cmd, self._env_vars)
 
-        process = process.check_error(
+        process_spawned = process.check_error(
             cmd,
             errors.ExecuteUserScriptError,
             self._processes_per_host,
             capture_error=capture_error,
             cwd=environment.code_dir,
         )
-        return process
+        return process_spawned
+
 
 def _can_connect(host, port=55555):
     # type: (str, int) -> bool

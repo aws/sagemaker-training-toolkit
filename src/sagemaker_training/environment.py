@@ -530,7 +530,6 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         # ethwe is the current network interface defined by SageMaker training, it will be
         # changed to eth0 in the short future.
         self._network_interface_name = resource_config.get("network_interface_name", "eth0")
-
         self._hyperparameters = split_result.excluded
         self._additional_framework_parameters = additional_framework_parameters
         self._resource_config = resource_config

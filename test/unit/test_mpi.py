@@ -122,6 +122,7 @@ def test_mpi_master_run(
             master_hostname="algo-1",
             hosts=["algo-1", "algo-2"],
             custom_mpi_options="-v --lr 35",
+            nccl_min_nchannels="4",
             network_interface_name="ethw3",
         )
         process = master.run(wait=False)
@@ -165,7 +166,7 @@ def test_mpi_master_run(
             "btl_vader_single_copy_mechanism",
             "none",
             "-x",
-            "NCCL_MIN_NRINGS=4",
+            "NCCL_MIN_NCHANNELS=4",
             "-x",
             "NCCL_SOCKET_IFNAME=ethw3",
             "-x",
@@ -229,6 +230,7 @@ def test_mpi_master_run_python(
             hosts=["algo-1", "algo-2"],
             processes_per_host=2,
             custom_mpi_options="-v --lr 35",
+            nccl_min_nchannels="4",
             network_interface_name="ethw3",
         )
 
@@ -273,7 +275,7 @@ def test_mpi_master_run_python(
             "btl_vader_single_copy_mechanism",
             "none",
             "-x",
-            "NCCL_MIN_NRINGS=4",
+            "NCCL_MIN_NCHANNELS=4",
             "-x",
             "NCCL_SOCKET_IFNAME=ethw3",
             "-x",
