@@ -85,7 +85,7 @@ class VanillaDDPRunner(process.ProcessRunner):
             pt_dist_cmd = [PYTORCH_DIST_MODULE, "--nproc_per_node", str(self._processes_per_host)]
             multinode_options = ["--nnodes", str(num_hosts), "--node_rank", str(current_node_rank)]
 
-            vanilla_ddp_cmd += [self._python_command(), " -m "] + pt_dist_cmd
+            vanilla_ddp_cmd += [self._python_command(), "-m"] + pt_dist_cmd
 
             if num_hosts > 1:
                 master_options = [
