@@ -39,8 +39,7 @@ def python_executable():
 
 
 class VanillaDDPRunner(process.ProcessRunner):
-    """Runner responsible for preparing Pytorch distributed data parallel training
-    """
+    """Runner responsible for preparing Pytorch distributed data parallel training"""
 
     def __init__(
         self,
