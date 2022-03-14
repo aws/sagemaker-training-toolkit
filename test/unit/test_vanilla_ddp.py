@@ -106,13 +106,7 @@ def test_vanilla_ddp_run_multi_node_python(
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 def test_vanilla_ddp_run_single_node_python(
-    training_env,
-    async_shell,
-    policy,
-    ssh_client,
-    path_exists,
-    async_gather,
-    event_loop,
+    training_env, async_shell, policy, ssh_client, path_exists, async_gather, event_loop
 ):
     with patch.dict(os.environ, clear=True):
         hosts = ["algo-1"]
