@@ -102,7 +102,7 @@ class VanillaDDPRunner(process.ProcessRunner):
             logger.error("Unknown entry point type for this distribution")
             return None
 
-    def run(self, capture_error=True):
+    def run(self, capture_error=True, wait=True):
         """
         Run the process.
 
@@ -114,14 +114,22 @@ class VanillaDDPRunner(process.ProcessRunner):
         """
         cmd = self._get_vanilla_ddp_command()
         logging_config.log_script_invocation(cmd, self._env_vars)
-
-        process_spawned = process.check_error(
-            cmd,
-            errors.ExecuteUserScriptError,
-            self._processes_per_host,
-            capture_error=capture_error,
-            cwd=environment.code_dir,
-        )
+        if wait:
+            process_spawned = process.check_error(
+                cmd,
+                errors.ExecuteUserScriptError,
+                self._processes_per_host,
+                capture_error=capture_error,
+                cwd=environment.code_dir,
+            )
+        else:
+            process_spawned = process.create(
+                cmd,
+                errors.ExecuteUserScriptError,
+                self._processes_per_host,
+                capture_error=capture_error,
+                cwd=environment.code_dir,
+            )
         return process_spawned
 
 

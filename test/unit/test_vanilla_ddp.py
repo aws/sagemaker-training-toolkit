@@ -62,7 +62,7 @@ def test_vanilla_ddp_run_multi_node_python(
             current_host="algo-1",
         )
 
-        process = vanilla_ddp_runner.run()
+        _, _, process = vanilla_ddp_runner.run(wait=False)
 
         # ssh_client().load_system_host_keys.assert_called()
         # ssh_client().set_missing_host_key_policy.assert_called_with(policy())
@@ -126,7 +126,7 @@ def test_vanilla_ddp_run_single_node_python(
             processes_per_host=num_processes_per_host,
         )
 
-        process = vanilla_ddp_runner.run()
+        _, _, process = vanilla_ddp_runner.run(wait=False)
         cmd = [
             sys.executable,
             "-m",
