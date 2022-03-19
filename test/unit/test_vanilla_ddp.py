@@ -14,7 +14,6 @@ from __future__ import absolute_import
 
 import asyncio
 import os
-import sys
 
 from mock import ANY, MagicMock, patch
 import pytest
@@ -64,24 +63,20 @@ def test_vanilla_ddp_run_multi_node_python(
 
         _, _, process = vanilla_ddp_runner.run(wait=False)
 
-        # ssh_client().load_system_host_keys.assert_called()
-        # ssh_client().set_missing_host_key_policy.assert_called_with(policy())
-        # ssh_client().connect.assert_called_with("algo-2", port=22)
-        # ssh_client().close.assert_called()
         cmd = [
-            sys.executable,
-            "-m",
-            "torch.distributed.launch",
-            "--nproc_per_node",
-            "8",
+            "torchrun",
             "--nnodes",
             "2",
-            "--node_rank",
-            "0",
-            "--master_addr",
-            "algo-1",
-            "--master_port",
-            "55555",
+            "--nproc_per_node",
+            "8",
+            "--max_restarts",
+            "3",
+            "--rdzv_id",
+            "PT_TORCHRUN",
+            "--rdzv_backend",
+            "c10d",
+            "--rdzv_endpoint",
+            "algo-1:55555",
             "train.py",
             "-v",
             "--lr",
@@ -128,11 +123,12 @@ def test_vanilla_ddp_run_single_node_python(
 
         _, _, process = vanilla_ddp_runner.run(wait=False)
         cmd = [
-            sys.executable,
-            "-m",
-            "torch.distributed.launch",
+            "torchrun",
+            "--nnodes",
+            "1",
             "--nproc_per_node",
             "8",
+            "--standalone",
             "train.py",
             "-v",
             "--lr",

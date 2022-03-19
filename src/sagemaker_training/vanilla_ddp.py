@@ -22,7 +22,7 @@ import paramiko
 
 from sagemaker_training import _entry_point_type, environment, errors, logging_config, process
 
-PYTORCH_DIST_MODULE = "torch.distributed.launch"
+PYTORCH_DIST_MODULE = "torchrun"
 logger = logging_config.get_logger()
 
 
@@ -64,6 +64,8 @@ class VanillaDDPRunner(process.ProcessRunner):
         self._master_hostname = master_hostname
         self._hosts = hosts
         self._current_host = current_host
+        self._num_retries = "3"
+        self._rdzv_backend = "c10d"
 
     def _python_command(self):  # pylint: disable=no-self-use
         return python_executable()
@@ -76,25 +78,33 @@ class VanillaDDPRunner(process.ProcessRunner):
 
         if entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
             num_hosts = len(self._hosts)
-            current_host = self._current_host
-            current_node_rank = self._hosts.index(current_host)
             master_port = "55555"
             vanilla_ddp_cmd = []
 
-            pt_dist_cmd = [PYTORCH_DIST_MODULE, "--nproc_per_node", str(self._processes_per_host)]
-            multinode_options = ["--nnodes", str(num_hosts), "--node_rank", str(current_node_rank)]
+            pt_dist_cmd = [
+                PYTORCH_DIST_MODULE,
+                "--nnodes",
+                str(num_hosts),
+                "--nproc_per_node",
+                str(self._processes_per_host),
+            ]
+            vanilla_ddp_cmd += pt_dist_cmd
 
-            vanilla_ddp_cmd += [self._python_command(), "-m"] + pt_dist_cmd
-
-            if num_hosts > 1:
-                master_options = [
-                    "--master_addr",
-                    self._master_hostname,
-                    "--master_port",
-                    master_port,
+            if num_hosts == 1:
+                options = "--standalone"
+                vanilla_ddp_cmd.append(options)
+            else:
+                options = [
+                    "--max_restarts",
+                    self._num_retries,
+                    "--rdzv_id",
+                    "PT_TORCHRUN",
+                    "--rdzv_backend",
+                    self._rdzv_backend,
+                    "--rdzv_endpoint",
+                    self._master_hostname + ":" + master_port,
                 ]
-                vanilla_ddp_cmd += multinode_options + master_options
-
+                vanilla_ddp_cmd.extend(options)
             vanilla_ddp_cmd.append(str(self._user_entry_point))
             vanilla_ddp_cmd += self._args
             return vanilla_ddp_cmd
