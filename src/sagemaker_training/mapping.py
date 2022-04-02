@@ -79,9 +79,9 @@ def to_cmd_args(mapping):  # type: (dict) -> list
     def arg_name(obj):
         string = _decode(obj)
         if string:
-            return u"--%s" % string if len(string) > 1 else u"-%s" % string
+            return "--%s" % string if len(string) > 1 else "-%s" % string
         else:
-            return u""
+            return ""
 
     arg_names = [arg_name(argument) for argument in sorted_keys]
 
@@ -106,7 +106,7 @@ def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode # noqa
         Object decoded in unicode.
     """
     if obj is None:
-        return u""
+        return ""
     if six.PY3 and isinstance(obj, six.binary_type):
         # transforms a byte string (b'') in unicode
         return obj.decode("latin1")

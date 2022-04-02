@@ -85,7 +85,7 @@ setuptools.setup(
             "pytest-cov",
             "mock",
             "sagemaker[local]<2",
-            "black==19.3b0 ; python_version >= '3.7'",
+            "black==22.3.0 ; python_version >= '3.7'",
         ]
     },
     entry_points={"console_scripts": ["train=sagemaker_training.cli.train:main"]},
