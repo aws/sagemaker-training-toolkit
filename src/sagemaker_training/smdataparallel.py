@@ -169,6 +169,9 @@ class SMDataParallelRunner(process.ProcessRunner):
         mpirun_command.extend(additional_options)
 
         instance_type = self._get_instance_type()
+        # Use EFA's RDMA functionality for one-sided and two-sided transfer
+        if instance_type in ["ml.p3dn.24xlarge", "ml.p4d.24xlarge"]:
+            mpirun_command.extend(["-x", "FI_EFA_USE_DEVICE_RDMA=1"])
 
         if smdataparallel_server_addr and smdataparallel_server_port:
             # in case of multi-node [distributed] training, smdataparallel_server_addr,
