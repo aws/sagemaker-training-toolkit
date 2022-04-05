@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.1.0 (2022-04-05)
+
+### Features
+
+ * add back FI_EFA_USE_DEVICE_RDMA=1 flag, revert 2936f22
+
 ## v4.0.1 (2022-01-29)
 
 ## v4.0.0 (2021-10-08)
