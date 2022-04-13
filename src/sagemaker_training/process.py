@@ -30,6 +30,7 @@ from sagemaker_training import (
     environment,
     errors,
     logging_config,
+    SMDDP_EXCEPTIONS
 )
 
 logger = logging_config.get_logger()
@@ -88,7 +89,7 @@ async def watch(stream, proc_per_host):
                 if line not in output:
                     output.append(err_line)
             else:
-                if any(err in err_line for err in _PYTHON_ERRORS_):
+                if any(err in err_line for err in (_PYTHON_ERRORS_ + SMDDP_EXCEPTIONS)):
                     start = True
                     output.append(err_line + "\n")
 
