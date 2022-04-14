@@ -193,6 +193,8 @@ def check_error(cmd, error_class, processes_per_host, cwd=None, capture_error=Tr
         stderr = output[1]
     else:
         stderr = None
+        # remove extra quotes for subprocess.Popen
+        cmd[-1] = cmd[-1].strip('"')
         process = subprocess.Popen(
             cmd, env=os.environ, cwd=cwd or environment.code_dir, stderr=stderr, **kwargs
         )
@@ -253,7 +255,7 @@ class ProcessRunner(object):
                 six.moves.shlex_quote(arg)  # pylint: disable=too-many-function-args
                 for arg in self._args
             ]
-            return ["/bin/sh", "-c", "./%s %s" % (self._user_entry_point, " ".join(args))]
+            return ["/bin/sh", "-c", '"./%s %s"' % (self._user_entry_point, " ".join(args))]
 
     def _python_command(self):  # pylint: disable=no-self-use
         return [python_executable()]
