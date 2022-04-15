@@ -83,18 +83,18 @@ async def watch(stream, error_classes, proc_per_host):
                 )
             print(line)
             # log only if necessary, remove node and rank id for de-duplication
-            err_line = re.sub(r"\[(\d),(\d)\]<stderr>", "", err_line)
+            err_line = err_line[err_line.find("<stderr>") + 8 :]
             # in case error piped to stdout
-            err_line = re.sub(r"\[(\d),(\d)\]<stdout>", "", err_line)
+            err_line = err_line[err_line.find("<stdout>") + 8 :]
 
             if start:
-                if line not in output:
-                    output.append(err_line)
+                if err_line not in output:
+                    output.append(err_line.strip(" :\n")  + "\n")
             else:
                 if any(err in err_line for err in (_PYTHON_ERRORS_ + error_classes)):
                     # start logging error message if target exceptions found
                     start = True
-                    output.append(err_line + "\n")
+                    output.append(err_line.strip(" :\n") + "\n")
 
     return " ".join(output)
 
@@ -201,6 +201,8 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
             **kwargs,
         )
         stderr = " ".join(output)
+        # remove duplicate while preserve order
+        stderr = "\n".join(list(dict.fromkeys(stderr.split("\n")))).strip()
     else:
         stderr = None
         # remove extra quotes for subprocess.Popen
@@ -216,7 +218,7 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
         error_class = errors.ExecuteUserScriptError
         for error_name in error_classes:
             if error_name in stderr:
-                error_class = type(error_class_str, (errors._CalledProcessError,), {})
+                error_class = type(error_name, (errors._CalledProcessError,), {})
                 break
 
         raise error_class(
