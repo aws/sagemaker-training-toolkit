@@ -30,7 +30,6 @@ from sagemaker_training import (
     environment,
     errors,
     logging_config,
-    SMDDP_EXCEPTIONS
 )
 
 logger = logging_config.get_logger()
@@ -38,8 +37,7 @@ logger = logging_config.get_logger()
 # Default limit of the stream is 2 ** 16 KB, we can increase it to 128KB in subproc call
 _DEFAULT_BUF_SIZE = 1024 * 64
 
-
-async def watch(stream, proc_per_host):
+async def watch(stream, error_classes, proc_per_host):
     """Process the stdout and stderr streams on the fly.
     Decode the output lines
     Remove new line characters (if any)
@@ -48,6 +46,7 @@ async def watch(stream, proc_per_host):
 
     Args:
         stream: asyncio subprocess PIPE
+        error_classes (list): List of exception classes watch and raise
         proc_per_host (int): Number of processes per each host
 
     Returns:
@@ -83,25 +82,30 @@ async def watch(stream, proc_per_host):
                     line,
                 )
             print(line)
-            # log only if necessary
+            # log only if necessary, remove node and rank id for de-duplication
             err_line = re.sub(r"\[(\d),(\d)\]<stderr>", "", err_line)
+            # in case error piped to stdout
+            err_line = re.sub(r"\[(\d),(\d)\]<stdout>", "", err_line)
+
             if start:
                 if line not in output:
                     output.append(err_line)
             else:
-                if any(err in err_line for err in (_PYTHON_ERRORS_ + SMDDP_EXCEPTIONS)):
+                if any(err in err_line for err in (_PYTHON_ERRORS_ + error_classes)):
+                    # start logging error message if target exceptions found
                     start = True
                     output.append(err_line + "\n")
 
     return " ".join(output)
 
 
-async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
+async def run_async(cmd, error_classes, processes_per_host, env, cwd, stderr, **kwargs):
     """Method responsible for launching asyncio subprocess shell
     Use asyncio gather to collect processed stdout and stderr
 
     Args:
         cmd (list): The command to be run
+        error_classes (list): List of exception classes watch and raise
         processes_per_host (int): Number of processes per host
         env: os.environ
         cwd (str): The location from which to run the command (default: None).
@@ -114,7 +118,7 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
         asyncio.subprocess.Process: The asyncio process for the given command.
 
     Raises:
-        error_class: If there is an exception raised when creating the process.
+        ExecuteUserScriptError: If there is an exception raised when creating the process.
     """
     cmd = " ".join(cmd)
     proc = await asyncio.create_subprocess_shell(
@@ -122,7 +126,7 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
     )
 
     output = await asyncio.gather(
-        watch(proc.stdout, processes_per_host), watch(proc.stderr, processes_per_host)
+        watch(proc.stdout, error_classes, processes_per_host), watch(proc.stderr, error_classes, processes_per_host)
     )
     logger.info("Waiting for the process to finish and give a return code.")
     return_code = await proc.wait()
@@ -130,12 +134,12 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
     return return_code, output, proc
 
 
-def create(cmd, error_class, processes_per_host, cwd=None, env=None, capture_error=False, **kwargs):
+def create(cmd, error_classes, processes_per_host, cwd=None, env=None, capture_error=False, **kwargs):
     """Spawn a process with asyncio for the given command.
 
     Args:
         cmd (list): The command to be run.
-        error_class (cls): The class to use when raising an exception.
+        error_classes (list): List of exception classes watch and raise.
         cwd (str): The location from which to run the command (default: None).
             If None, this defaults to the ``code_dir`` of the environment.
         env: os.environ
@@ -147,13 +151,14 @@ def create(cmd, error_class, processes_per_host, cwd=None, env=None, capture_err
         asyncio.subprocess.Process: The asyncio process for the given command.
 
     Raises:
-        error_class: If there is an exception raised when creating the process.
+        ExecuteUserScriptError: If there is an exception raised when creating the process.
     """
     try:
         stderr = PIPE if capture_error else None
         rc, output, proc = asyncio.run(
             run_async(
                 cmd,
+                error_classes,
                 processes_per_host,
                 env=env or os.environ,
                 cwd=cwd or environment.code_dir,
@@ -163,15 +168,15 @@ def create(cmd, error_class, processes_per_host, cwd=None, env=None, capture_err
         )
         return rc, output, proc
     except Exception as e:  # pylint: disable=broad-except
-        six.reraise(error_class, error_class(e), sys.exc_info()[2])
+        six.reraise(errors.ExecuteUserScriptError, errors.ExecuteUserScriptError(e), sys.exc_info()[2])
 
 
-def check_error(cmd, error_class, processes_per_host, cwd=None, capture_error=True, **kwargs):
+def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=True, **kwargs):
     """Run a commmand, raising an exception if there is an error.
 
     Args:
         cmd ([str]): The command to be run.
-        error_class (cls): The class to use when raising an exception.
+        error_classes (list): List of exception classes watch and raise.
         processes_per_host (int): Number of processes per host
         capture_error (bool): Whether or not to include stderr in
             the exception message (default: True). In either case,
@@ -182,20 +187,20 @@ def check_error(cmd, error_class, processes_per_host, cwd=None, capture_error=Tr
         subprocess.Popen: The process for the given command.
 
     Raises:
-        error_class: If there is an exception raised when creating the process.
+        ExecuteUserScriptError: If there is an exception raised when creating the process.
     """
 
     if capture_error:
         return_code, output, process = create(
             cmd,
-            error_class,
+            error_classes,
             processes_per_host,
             env=os.environ,
             cwd=cwd or environment.code_dir,
             capture_error=True,
             **kwargs,
         )
-        stderr = output[1]
+        stderr = " ".join(output)
     else:
         stderr = None
         # remove extra quotes for subprocess.Popen
@@ -208,6 +213,12 @@ def check_error(cmd, error_class, processes_per_host, cwd=None, capture_error=Tr
         extra_info = None
         if return_code == 137:
             extra_info = "OutOfMemory: Process killed by SIGKILL (signal 9)"
+        error_class = errors.ExecuteUserScriptError
+        for error_name in error_classes:
+            if error_name in stderr:
+                error_class = type(error_class_str, (errors._CalledProcessError,), {})
+                break
+
         raise error_class(
             cmd=" ".join(cmd) if isinstance(cmd, list) else cmd,
             return_code=return_code,

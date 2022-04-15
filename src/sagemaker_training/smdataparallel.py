@@ -23,6 +23,14 @@ import paramiko
 
 import gethostname
 from sagemaker_training import environment, errors, logging_config, process, timeout
+from inspect import isclass
+try:
+    from smdistributed.dataparallel import exceptions
+    # list of exceptions SMDDP wants training toolkit to catch and log
+    exception_classes = [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
+except ImportError as e:
+    logger.info("No exception classes found in smdistributed.dataparallel")
+    exception_classes = []
 
 logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
@@ -267,7 +275,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         if wait:
             process_spawned = process.check_error(
                 cmd,
-                errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
@@ -275,7 +283,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         else:
             process_spawned = process.create(
                 cmd,
-                errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
