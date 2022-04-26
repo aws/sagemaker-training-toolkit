@@ -185,7 +185,7 @@ def test_mpi_master_run(
             "LD_CONFIG_PATH",
             "/bin/sh",
             "-c",
-            "./train.sh -v --lr 35",
+            '"./train.sh -v --lr 35"',
         ]
         extended_cmd = " ".join(cmd)
         async_shell.assert_called_with(
