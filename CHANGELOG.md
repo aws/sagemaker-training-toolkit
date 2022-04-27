@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.1.1 (2022-04-27)
+
+### Bug Fixes and Other Changes
+
+ * missing args when shell script is used
+
 ## v4.1.0 (2022-04-05)
 
 ### Features
