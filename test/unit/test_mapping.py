@@ -102,15 +102,15 @@ def test_mapping_throws_exception_trying_to_access_non_properties(property, erro
     [
         (
             {"da-sh": "1", "un_der": "2", "un-sh": "3", "da_der": "2"},
-            [u"--da-sh", u"1", u"--da_der", u"2", u"--un-sh", u"3", u"--un_der", u"2"],
+            ["--da-sh", "1", "--da_der", "2", "--un-sh", "3", "--un_der", "2"],
         ),
         ({}, []),
-        ({"": ""}, [u"", u""]),
+        ({"": ""}, ["", ""]),
         (
-            {"unicode": u"¡ø", "bytes": b"2", "floats": 4.0, "int": 2},
-            [u"--bytes", u"2", u"--floats", u"4.0", u"--int", u"2", u"--unicode", u"¡ø"],
+            {"unicode": "¡ø", "bytes": b"2", "floats": 4.0, "int": 2},
+            ["--bytes", "2", "--floats", "4.0", "--int", "2", "--unicode", "¡ø"],
         ),
-        ({"U": u"1", "b": b"2", "T": "", "": "42"}, ["", "42", "-T", "", "-U", "1", "-b", "2"]),
+        ({"U": "1", "b": b"2", "T": "", "": "42"}, ["", "42", "-T", "", "-U", "1", "-b", "2"]),
         ({"nested": ["1", ["2", "3", [["6"]]]]}, ["--nested", "['1', ['2', '3', [['6']]]]"]),
         (
             {"map": {"a": [1, 3, 4]}, "channel_dirs": {"train": "foo", "eval": "bar"}},
@@ -133,7 +133,7 @@ def test_to_cmd_args(target, expected):
             {"SM_MODEL_DIR": "/opt/ml/model", "SM_OUTPUT_DIR": "/opt/ml/output"},
         ),
         ({}, {}),
-        ({"": None}, {u"": u""}),
+        ({"": None}, {"": ""}),
         (
             {"bytes": b"2", "floats": 4.0, "int": 2, "unicode": "¡ø"},
             {"SM_BYTES": "2", "SM_FLOATS": "4.0", "SM_INT": "2", "SM_UNICODE": "¡ø"},

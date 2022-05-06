@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import enum
 
-from sagemaker_training import environment, mpi, params, process
+from sagemaker_training import environment, mpi, params, process, smdataparallel
 
 
 class RunnerType(enum.Enum):
@@ -25,10 +25,12 @@ class RunnerType(enum.Enum):
 
     MPI = "MPI"
     Process = "Process"
+    SMDataParallel = "SMDataParallel"
 
 
 ProcessRunnerType = RunnerType.Process
 MPIRunnerType = RunnerType.MPI
+SMDataParallelRunnerType = RunnerType.SMDataParallel
 
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
@@ -57,33 +59,52 @@ def _get_by_runner_type(
     user_entry_point = user_entry_point or env.user_entry_point
     args = args or env.to_cmd_args()
     env_vars = env_vars or env.to_env_vars()
+    mpi_args = extra_opts or {}
 
-    if identifier is RunnerType.MPI and env.is_master:
-        mpi_args = extra_opts or {}
+    # Default to single process for CPU
+    default_processes_per_host = int(env.num_gpus) if int(env.num_gpus) > 0 else 1
+    processes_per_host = _mpi_param_value(
+        mpi_args, env, params.MPI_PROCESSES_PER_HOST, default_processes_per_host
+    )
 
-        # Default to single process for CPU
-        default_processes_per_host = env.num_gpus if env.num_gpus > 0 else 1
-        processes_per_host = _mpi_param_value(
-            mpi_args, env, params.MPI_PROCESSES_PER_HOST, default_processes_per_host
+    if identifier is RunnerType.SMDataParallel and env.is_master:
+        custom_mpi_options = _mpi_param_value(
+            mpi_args, env, params.SMDATAPARALLEL_CUSTOM_MPI_OPTIONS, ""
         )
+        return smdataparallel.SMDataParallelRunner(
+            user_entry_point,
+            args,
+            env_vars,
+            processes_per_host,
+            env.master_hostname,
+            env.hosts,
+            custom_mpi_options,
+            env.network_interface_name,
+        )
+    elif identifier is RunnerType.SMDataParallel:
+        return mpi.WorkerRunner(
+            user_entry_point, args, env_vars, processes_per_host, env.master_hostname
+        )
+    elif identifier is RunnerType.MPI and env.is_master:
         num_processes = _mpi_param_value(mpi_args, env, params.MPI_NUM_PROCESSES)
         custom_mpi_options = _mpi_param_value(mpi_args, env, params.MPI_CUSTOM_OPTIONS, "")
-
         return mpi.MasterRunner(
             user_entry_point,
             args,
             env_vars,
+            processes_per_host,
             env.master_hostname,
             env.hosts,
-            processes_per_host,
             custom_mpi_options,
             env.network_interface_name,
             num_processes=num_processes,
         )
     elif identifier is RunnerType.MPI:
-        return mpi.WorkerRunner(user_entry_point, args, env_vars, env.master_hostname)
+        return mpi.WorkerRunner(
+            user_entry_point, args, env_vars, processes_per_host, env.master_hostname
+        )
     elif identifier is RunnerType.Process:
-        return process.ProcessRunner(user_entry_point, args, env_vars)
+        return process.ProcessRunner(user_entry_point, args, env_vars, processes_per_host)
     else:
         raise ValueError("Invalid identifier %s" % identifier)
 

@@ -175,7 +175,6 @@ def start_sync(
     watchers = {}
     wd = inotify.add_watch(intermediate_path, watch_flags)
     watchers[wd] = ""
-
     # start subprocess to sync any files from intermediate folder to s3
     p = multiprocessing.Process(target=_watch, args=[inotify, watchers, watch_flags, s3_uploader])
     # Make the process daemonic as a safety switch to prevent training job from hanging forever

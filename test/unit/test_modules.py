@@ -19,11 +19,10 @@ import textwrap
 
 from mock import call, mock_open, patch
 import pytest
-from six import PY2
 
 from sagemaker_training import environment, errors, files, modules, params
 
-builtins_open = "__builtin__.open" if PY2 else "builtins.open"
+builtins_open = "builtins.open"
 
 
 @patch("boto3.resource", autospec=True)
@@ -63,7 +62,7 @@ def test_install(check_error):
     modules.install(path)
 
     cmd = [sys.executable, "-m", "pip", "install", "."]
-    check_error.assert_called_with(cmd, errors.InstallModuleError, cwd=path, capture_error=False)
+    check_error.assert_called_with(cmd, errors.InstallModuleError, 1, cwd=path, capture_error=False)
 
     with patch("os.path.exists", return_value=True):
         modules.install(path)
@@ -71,6 +70,7 @@ def test_install(check_error):
         check_error.assert_called_with(
             cmd + ["-r", "requirements.txt"],
             errors.InstallModuleError,
+            1,
             capture_error=False,
             cwd=path,
         )
@@ -86,7 +86,7 @@ def test_install_requirements(check_error):
         modules.install_requirements(path)
 
         check_error.assert_called_with(
-            cmd, errors.InstallRequirementsError, cwd=path, capture_error=False
+            cmd, errors.InstallRequirementsError, 1, cwd=path, capture_error=False
         )
 
 

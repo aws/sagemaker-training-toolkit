@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 import importlib
 import os
+import sys
 import traceback
 
 from sagemaker_training import (
@@ -55,7 +56,9 @@ def _exit_processes(exit_code):  # type: (int) -> None
     Args:
         exit_code (int): exit code
     """
-    os._exit(exit_code)  # pylint: disable=protected-access
+    if exit_code != 0:
+        logger.error(f"Encountered exit_code {exit_code}")
+    sys.exit(exit_code)
 
 
 def train():
@@ -80,7 +83,6 @@ def train():
             # the framework to configure logging at import time.
             logging_config.configure_logger(env.log_level)
             logger.info("Imported framework %s", framework_name)
-
             entrypoint = getattr(framework, entry_point_name)
             entrypoint()
         else:
@@ -96,23 +98,23 @@ def train():
                 env.to_env_vars(),
                 runner_type=runner_type,
             )
-
         logger.info("Reporting training SUCCESS")
 
         files.write_success_file()
     except errors.ClientError as e:
 
-        failure_message = str(e)
-        files.write_failure_file(failure_message)
+        failure_msg = str(e)
+        files.write_failure_file(failure_msg)
+        logger.error("Reporting training FAILURE")
 
-        logger.error(failure_message)
+        logger.error(failure_msg)
 
         if intermediate_sync:
             intermediate_sync.join()
 
         exit_code = DEFAULT_FAILURE_CODE
     except Exception as e:  # pylint: disable=broad-except
-        failure_msg = "framework error: \n%s\n%s" % (traceback.format_exc(), str(e))
+        failure_msg = "Framework Error: \n%s\n%s" % (traceback.format_exc(), str(e))
 
         files.write_failure_file(failure_msg)
         logger.error("Reporting training FAILURE")
@@ -124,5 +126,4 @@ def train():
     finally:
         if intermediate_sync:
             intermediate_sync.join()
-
         _exit_processes(exit_code)

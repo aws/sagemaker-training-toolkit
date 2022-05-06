@@ -30,21 +30,39 @@ class _CalledProcessError(ClientError):
       cmd, return_code, output
     """
 
-    def __init__(self, cmd, return_code=None, output=None):
-        self.return_code = return_code
+    def __init__(self, cmd, return_code=None, output=None, info=None):
+        self.return_code = str(return_code)
         self.cmd = cmd
         self.output = output
+        self.extra_info = info
         super(_CalledProcessError, self).__init__()
 
     def __str__(self):
         if six.PY3 and self.output:
-            error_msg = "\n%s" % self.output.decode("latin1")
+            # error_msg = "%s" % self.output.decode("latin1")
+            if isinstance(self.output, bytes):
+                error_msg = "%s" % self.output.decode("utf-8")
+            else:
+                error_msg = "%s" % self.output
         elif self.output:
-            error_msg = "\n%s" % self.output
+            error_msg = "%s" % self.output
         else:
             error_msg = ""
-
-        message = '%s:\nCommand "%s"%s' % (type(self).__name__, self.cmd, error_msg)
+        if self.extra_info is None:
+            message = '%s:\nExitCode %s\nErrorMessage "%s"\nCommand "%s"' % (
+                type(self).__name__,
+                self.return_code,
+                error_msg,
+                self.cmd,
+            )
+        else:
+            message = '%s:\nExitCode %s\nErrorMessage "%s"\nExtraInfo "%s"\nCommand "%s"' % (
+                type(self).__name__,
+                self.return_code,
+                error_msg,
+                self.extra_info,
+                self.cmd,
+            )
         return message.strip()
 
 
@@ -64,11 +82,11 @@ class ExecuteUserScriptError(_CalledProcessError):
     """Error class indicating a user script failed to execute."""
 
 
-class ChannelDoesNotExistException(Exception):
+class ChannelDoesNotExistError(Exception):
     """Error class indicating a channel does not exist."""
 
     def __init__(self, channel_name):
-        super(ChannelDoesNotExistException, self).__init__(
+        super(ChannelDoesNotExistError, self).__init__(
             "Channel %s is not a valid channel" % channel_name
         )
 

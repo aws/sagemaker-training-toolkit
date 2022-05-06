@@ -1,5 +1,134 @@
 # Changelog
 
+## v4.1.1 (2022-04-27)
+
+### Bug Fixes and Other Changes
+
+ * missing args when shell script is used
+
+## v4.1.0 (2022-04-05)
+
+### Features
+
+ * add back FI_EFA_USE_DEVICE_RDMA=1 flag, revert 2936f22
+
+## v4.0.1 (2022-01-29)
+
+## v4.0.0 (2021-10-08)
+
+### Breaking Changes
+
+ * Add py38, dropped py36 and py2 support. Bump pypi to 4.0.0 (changes from PR #108)
+
+## v3.9.3 ~ 4.0.0 (2021-10-07)
+
+## Breaking Changes
+
+ * Added `py38`, Removed `py36` and `py27` support
+
+### Bug Fixes and Other Changes
+
+ * Use asyncio to read stdout and stderr streams in realtime
+ * Fix delayed logging issues
+ * Convey user informative message if process gets OOM Killed
+ * Filter out stderr to look for error messages and report
+ * Report Exit code on training job failures
+ * Prepend tags to MPI logs to enable easy filtering in CloudWatch
+ * All the changes are from PR #108
+
+### Documentation Changes
+
+ * Update SM doc urls
+ * Update Amazon Licensing
+ ### Testing and Release Infrastructure
+
+ * Install libssl1.1 and openssl packages in Dockerfiles
+ * Added `asyncio` package
+ * Updated tests to use `asyncio` package
+
+## v3.9.2 (2021-04-27)
+
+### Bug Fixes and Other Changes
+
+ * Reverted -x FI_EFA_USE_DEVICE_RDMA=1 to fix a crash on PyTorch Dataloaders for Distributed training
+
+## v3.9.1 (2021-04-13)
+
+### Bug Fixes and Other Changes
+
+ * [smdataparallel] better messages to establish the SSH connection between workers
+
+## v3.9.0 (2021-04-07)
+
+### Features
+
+ * smdataparallel enable EFA RDMA flag
+
+## v3.8.0 (2021-04-05)
+
+### Features
+
+ * smdataparallel custom mpi options support
+
+## v3.7.5 (2021-03-30)
+
+## v3.7.4 (2021-03-29)
+
+### Bug Fixes and Other Changes
+
+ * Update Dockerfile to accomomdate Rust dependency.
+
+## v3.7.3 (2021-02-02)
+
+### Bug Fixes and Other Changes
+
+ * set btl_vader_single_copy_mechanism to none to avoid Read -1 Warning messages
+
+## v3.7.2 (2020-12-18)
+
+### Bug Fixes and Other Changes
+
+ * set btl_vader_single_copy_mechanism to none
+
+## v3.7.1 (2020-12-17)
+
+### Bug Fixes and Other Changes
+
+ * decode binary stderr string before dumping it out
+
+## v3.7.0 (2020-12-09)
+
+### Features
+
+ * add data parallelism support (#3)
+
+### Bug Fixes and Other Changes
+
+ * update tox to use sagemaker 2.18.0 for tests
+ * use format in place of f-strings and use comment style type annotations
+
+## v3.6.4 (2020-12-08)
+
+### Bug Fixes and Other Changes
+
+ * workaround to print stderr when capturing
+
+### Testing and Release Infrastructure
+
+ * use ECR-hosted image for ubuntu:16.04
+
+## v3.6.3.post0 (2020-11-11)
+
+### Documentation Changes
+
+ * fix typo in ENVIRONMENT_VARIABLES.md
+
+## v3.6.3 (2020-10-26)
+
+### Bug Fixes and Other Changes
+
+ * propagate log level to aws services
+
 ## v3.6.2 (2020-08-04)
 
 ### Bug Fixes and Other Changes

@@ -28,16 +28,16 @@ SplitResultSpec = collections.namedtuple("SplitResultSpec", "included excluded")
 
 def to_env_vars(mapping):  # type: (dict) -> dict
     """Transform a dictionary in a dictionary of env vars.
-     Example:
-         >>>env_vars = mapping.to_env_vars({'model_dir': '/opt/ml/model', 'batch_size': 25})
-         >>>
-         >>>print(args)
-         ['MODEL_DIR', '/opt/ml/model', 'BATCH_SIZE', 25]
-     Args:
-         mapping (dict[str, object]): A Python mapping.
-     Returns:
-         (dict): Dictionary of env vars.
-     """
+    Example:
+        >>>env_vars = mapping.to_env_vars({'model_dir': '/opt/ml/model', 'batch_size': 25})
+        >>>
+        >>>print(args)
+        ['MODEL_DIR', '/opt/ml/model', 'BATCH_SIZE', 25]
+    Args:
+        mapping (dict[str, object]): A Python mapping.
+    Returns:
+        (dict): Dictionary of env vars.
+    """
 
     def format_key(key):
         """Decode a key, adds a SM_ prefix to the key and upper case it."""
@@ -79,9 +79,9 @@ def to_cmd_args(mapping):  # type: (dict) -> list
     def arg_name(obj):
         string = _decode(obj)
         if string:
-            return u"--%s" % string if len(string) > 1 else u"-%s" % string
+            return "--%s" % string if len(string) > 1 else "-%s" % string
         else:
-            return u""
+            return ""
 
     arg_names = [arg_name(argument) for argument in sorted_keys]
 
@@ -106,7 +106,7 @@ def _decode(obj):  # type: (bytes or str or unicode or object) -> unicode # noqa
         Object decoded in unicode.
     """
     if obj is None:
-        return u""
+        return ""
     if six.PY3 and isinstance(obj, six.binary_type):
         # transforms a byte string (b'') in unicode
         return obj.decode("latin1")
@@ -160,8 +160,8 @@ class MappingMixin(collections.Mapping):
 
     def properties(self):  # type: () -> list
         """
-            Returns:
-                (list[str]) List of public properties.
+        Returns:
+            (list[str]) List of public properties.
         """
 
         _type = type(self)

@@ -48,7 +48,6 @@ def test_train(import_module):
     framework = Mock()
     import_module.return_value = framework
     trainer.train()
-
     import_module.assert_called_with("my_framework")
     framework.entry_point.assert_called()
 
@@ -110,12 +109,12 @@ def test_train_fails_with_no_error_number(_exit, import_module):
 @patch("sagemaker_training.environment.Environment", Environment)
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_fails_with_invalid_error_number(_exit, import_module):
-    class InvalidErrorNumberException(Exception):
+    class InvalidErrorNumberExceptionError(Exception):
         def __init__(self, *args, **kwargs):  # real signature unknown
             self.errno = "invalid"
 
     def fail():
-        raise InvalidErrorNumberException("No such file or directory")
+        raise InvalidErrorNumberExceptionError("No such file or directory")
 
     framework = Mock(entry_point=fail)
     import_module.return_value = framework

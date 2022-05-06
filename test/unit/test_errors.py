@@ -17,33 +17,45 @@ from sagemaker_training import errors
 
 def test_install_module_error():
     error = errors.InstallModuleError(["python", "-m", "42"], return_code=42)
-
-    assert str(error) == "InstallModuleError:\nCommand \"['python', '-m', '42']\""
+    assert (
+        str(error) == 'InstallModuleError:\nExitCode 42\nErrorMessage ""\nCommand'
+        " \"['python', '-m', '42']\""
+    )
 
 
 def test_execute_user_script_error():
     error = errors.ExecuteUserScriptError(["python", "-m", "42"], return_code=42)
 
-    assert str(error) == "ExecuteUserScriptError:\nCommand \"['python', '-m', '42']\""
+    assert (
+        str(error) == 'ExecuteUserScriptError:\nExitCode 42\nErrorMessage ""\nCommand'
+        " \"['python', '-m', '42']\""
+    )
 
 
 def test_install_module_error_with_output():
-    error = errors.InstallModuleError(["python", "-m", "42"], return_code=42, output=b"42")
+    error = errors.InstallModuleError(["python", "-m", "42"], return_code=42, output="42")
 
     assert (
-        str(error)
-        == """InstallModuleError:
-Command "['python', '-m', '42']"
-42"""
+        str(error) == 'InstallModuleError:\nExitCode 42\nErrorMessage "42"\nCommand'
+        " \"['python', '-m', '42']\""
     )
 
 
 def test_execute_user_script_error_with_output():
-    error = errors.ExecuteUserScriptError(["python", "-m", "42"], return_code=42, output=b"42")
+    error = errors.ExecuteUserScriptError(["python", "-m", "42"], return_code=137, output=b"42")
 
     assert (
-        str(error)
-        == """ExecuteUserScriptError:
-Command "['python', '-m', '42']"
-42"""
+        str(error) == 'ExecuteUserScriptError:\nExitCode 137\nErrorMessage "42"\nCommand'
+        " \"['python', '-m', '42']\""
+    )
+
+
+def test_execute_user_script_error_with_output_and_info():
+    error = errors.ExecuteUserScriptError(
+        ["python", "-m", "42"], return_code=137, output="42", info="SIGKILL"
+    )
+
+    assert (
+        str(error) == "ExecuteUserScriptError:\nExitCode 137\nErrorMessage"
+        " \"42\"\nExtraInfo \"SIGKILL\"\nCommand \"['python', '-m', '42']\""
     )

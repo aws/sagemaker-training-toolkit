@@ -1,4 +1,4 @@
-# Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
@@ -20,15 +20,8 @@ from mock import ANY, MagicMock, patch
 import pytest
 
 import gethostname
-from sagemaker_training import environment, mpi
-
-
-def does_not_connect():
-    raise ValueError("cannot connect")
-
-
-def connect():
-    pass
+from sagemaker_training import environment, smdataparallel
+from test.unit.test_mpi import MockSSHClient
 
 
 class AsyncMock(MagicMock):
@@ -36,95 +29,49 @@ class AsyncMock(MagicMock):
         return super(AsyncMock, self).__call__(*args, **kwargs)
 
 
-class MockSSHClient(MagicMock):
-    def __init__(self, *args, **kw):
-        super(MockSSHClient, self).__init__(*args, **kw)
-        self.connect = MagicMock(side_effect=[does_not_connect, connect, does_not_connect])
-
-
-@patch("sagemaker_training.mpi._write_env_vars_to_file")
-@patch("os.path.exists")
-@patch("time.sleep")
-@patch("paramiko.SSHClient", new_callable=MockSSHClient)
-@patch("psutil.wait_procs")
-@patch("psutil.process_iter")
-@patch("paramiko.AutoAddPolicy")
-@patch("subprocess.Popen")
-def test_mpi_worker_run(
-    popen, policy, process_iter, wait_procs, ssh_client, sleep, path_exists, write_env_vars
-):
-
-    process = MagicMock(info={"name": "orted"})
-    process_iter.side_effect = lambda attrs: [process]
-
-    worker = mpi.WorkerRunner(
-        user_entry_point="train.sh",
-        args=["-v", "--lr", "35"],
-        env_vars={"LD_CONFIG_PATH": "/etc/ld"},
-        processes_per_host="1",
-        master_hostname="algo-1",
-    )
-
-    worker.run()
-
-    write_env_vars.assert_called_once()
-
-    ssh_client().load_system_host_keys.assert_called()
-    ssh_client().set_missing_host_key_policy.assert_called_with(policy())
-    ssh_client().connect.assert_called_with("algo-1", port=22)
-    ssh_client().close.assert_called()
-    wait_procs.assert_called_with([process])
-
-    popen.assert_called_with(["/usr/sbin/sshd", "-D"])
-    path_exists.assert_called_with("/usr/sbin/sshd")
-
-
-@patch("sagemaker_training.mpi._write_env_vars_to_file")
-@patch("os.path.exists")
-@patch("paramiko.SSHClient", new_callable=MockSSHClient)
-@patch("subprocess.Popen")
-def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists, write_env_vars):
-    worker = mpi.WorkerRunner(
-        user_entry_point="train.sh",
-        args=["-v", "--lr", "35"],
-        env_vars={"LD_CONFIG_PATH": "/etc/ld"},
-        processes_per_host=1,
-        master_hostname="algo-1",
-    )
-
-    worker.run(wait=False)
-
-    write_env_vars.assert_called_once()
-
-    ssh_client.assert_not_called()
-
-    popen.assert_called_with(["/usr/sbin/sshd", "-D"])
-    path_exists.assert_called_with("/usr/sbin/sshd")
-
-
 @patch("asyncio.gather", new_callable=AsyncMock)
 @patch("os.path.exists")
+@patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
-def test_mpi_master_run(
-    training_env, async_shell, policy, ssh_client, path_exists, async_gather, event_loop
+def test_smdataparallel_run_multi_node_python(
+    training_env,
+    async_shell,
+    policy,
+    ssh_client,
+    python_executable,
+    path_exists,
+    async_gather,
+    event_loop,
 ):
-
     with patch.dict(os.environ, clear=True):
-        os.environ["AWS_ACCESS_KEY_ID"] = "ABCD"
-        master = mpi.MasterRunner(
-            user_entry_point="train.sh",
+        hosts = ["algo-1", "algo-2"]
+        master_hostname = hosts[0]
+        num_hosts = len(hosts)
+        num_processes_per_host = 8
+        num_processes = num_processes_per_host * num_hosts
+        host_list = ["{}:{}".format(host, num_processes_per_host) for host in hosts]
+        network_interface_name = "ethw3"
+        smdataparallel_server_addr = master_hostname
+        smdataparallel_server_port = 7592
+        smdataparallel_flag = "SMDATAPARALLEL_USE_HOMOGENEOUS=1"
+
+        smdataparallel_runner = smdataparallel.SMDataParallelRunner(
+            user_entry_point="train.py",
             args=["-v", "--lr", "35"],
-            env_vars={"LD_CONFIG_PATH": "/etc/ld"},
-            processes_per_host=2,
-            master_hostname="algo-1",
-            hosts=["algo-1", "algo-2"],
-            custom_mpi_options="-v --lr 35",
-            network_interface_name="ethw3",
+            env_vars={
+                "SM_TRAINING_ENV": '{"additional_framework_parameters":{"sagemaker_instance_type":"ml.p3.16xlarge"}}'
+            },
+            processes_per_host=num_processes_per_host,
+            master_hostname=master_hostname,
+            hosts=hosts,
+            custom_mpi_options="--verbose",
+            network_interface_name=network_interface_name,
         )
-        process = master.run(wait=False)
+
+        _, _, process = smdataparallel_runner.run(wait=False)
 
         ssh_client().load_system_host_keys.assert_called()
         ssh_client().set_missing_host_key_policy.assert_called_with(policy())
@@ -133,25 +80,21 @@ def test_mpi_master_run(
         cmd = [
             "mpirun",
             "--host",
-            "algo-1:2,algo-2:2",
+            ",".join(host_list),
             "-np",
-            "4",
+            str(num_processes),
             "--allow-run-as-root",
-            "--display-map",
             "--tag-output",
+            "--oversubscribe",
             "-mca",
             "btl_tcp_if_include",
-            "ethw3",
+            network_interface_name,
             "-mca",
             "oob_tcp_if_include",
-            "ethw3",
+            network_interface_name,
             "-mca",
             "plm_rsh_no_tree_spawn",
             "1",
-            "-bind-to",
-            "none",
-            "-map-by",
-            "slot",
             "-mca",
             "pml",
             "ob1",
@@ -164,10 +107,11 @@ def test_mpi_master_run(
             "-mca",
             "btl_vader_single_copy_mechanism",
             "none",
+            "-mca",
+            "plm_rsh_num_concurrent",
+            str(num_hosts),
             "-x",
-            "NCCL_MIN_NRINGS=4",
-            "-x",
-            "NCCL_SOCKET_IFNAME=ethw3",
+            "NCCL_SOCKET_IFNAME=%s" % network_interface_name,
             "-x",
             "NCCL_DEBUG=INFO",
             "-x",
@@ -175,25 +119,35 @@ def test_mpi_master_run(
             "-x",
             "PATH",
             "-x",
+            smdataparallel_flag,
+            "-x",
+            "FI_PROVIDER=efa",
+            "-x",
+            "RDMAV_FORK_SAFE=1",
+            "-x",
             "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+            "--verbose",
+            "-x",
+            "SMDATAPARALLEL_SERVER_ADDR=%s" % smdataparallel_server_addr,
+            "-x",
+            "SMDATAPARALLEL_SERVER_PORT=%s" % str(smdataparallel_server_port),
+            "-x",
+            "SAGEMAKER_INSTANCE_TYPE=ml.p3.16xlarge",
+            "smddprun",
+            "usr/bin/python3",
+            "-m",
+            "mpi4py",
+            "train.py",
             "-v",
             "--lr",
             "35",
-            "-x",
-            "AWS_ACCESS_KEY_ID",
-            "-x",
-            "LD_CONFIG_PATH",
-            "/bin/sh",
-            "-c",
-            '"./train.sh -v --lr 35"',
         ]
-        extended_cmd = " ".join(cmd)
         async_shell.assert_called_with(
-            extended_cmd,
-            env=ANY,
+            " ".join(cmd),
             cwd=environment.code_dir,
-            stdout=asyncio.subprocess.PIPE,
+            env=ANY,
             stderr=None,
+            stdout=asyncio.subprocess.PIPE,
         )
         async_shell.assert_called_once()
         async_gather.assert_called_once()
@@ -208,7 +162,7 @@ def test_mpi_master_run(
 @patch("paramiko.AutoAddPolicy")
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
-def test_mpi_master_run_python(
+def test_smdataparallel_run_single_node_python(
     training_env,
     async_shell,
     policy,
@@ -218,48 +172,48 @@ def test_mpi_master_run_python(
     async_gather,
     event_loop,
 ):
-
     with patch.dict(os.environ, clear=True):
+        hosts = ["algo-1"]
+        master_hostname = hosts[0]
+        num_hosts = len(hosts)
+        num_processes_per_host = 8
+        num_processes = num_processes_per_host * num_hosts
+        host_list = hosts
+        network_interface_name = "ethw3"
+        smdataparallel_flag = "SMDATAPARALLEL_USE_SINGLENODE=1"
 
-        master = mpi.MasterRunner(
+        smdataparallel_runner = smdataparallel.SMDataParallelRunner(
             user_entry_point="train.py",
             args=["-v", "--lr", "35"],
-            env_vars={"LD_CONFIG_PATH": "/etc/ld"},
-            master_hostname="algo-1",
-            hosts=["algo-1", "algo-2"],
-            processes_per_host=2,
-            custom_mpi_options="-v --lr 35",
-            network_interface_name="ethw3",
+            env_vars={
+                "SM_TRAINING_ENV": '{"additional_framework_parameters":{"sagemaker_instance_type":"ml.p4d.24xlarge"}}'
+            },
+            processes_per_host=num_processes_per_host,
+            master_hostname=master_hostname,
+            hosts=hosts,
+            custom_mpi_options="--verbose",
+            network_interface_name=network_interface_name,
         )
 
-        process = master.run(wait=False)
-
-        ssh_client().load_system_host_keys.assert_called()
-        ssh_client().set_missing_host_key_policy.assert_called_with(policy())
-        ssh_client().connect.assert_called_with("algo-2", port=22)
-        ssh_client().close.assert_called()
+        _, _, process = smdataparallel_runner.run(wait=False)
         cmd = [
             "mpirun",
             "--host",
-            "algo-1:2,algo-2:2",
+            ",".join(host_list),
             "-np",
-            "4",
+            str(num_processes),
             "--allow-run-as-root",
-            "--display-map",
             "--tag-output",
+            "--oversubscribe",
             "-mca",
             "btl_tcp_if_include",
-            "ethw3",
+            network_interface_name,
             "-mca",
             "oob_tcp_if_include",
-            "ethw3",
+            network_interface_name,
             "-mca",
             "plm_rsh_no_tree_spawn",
             "1",
-            "-bind-to",
-            "none",
-            "-map-by",
-            "slot",
             "-mca",
             "pml",
             "ob1",
@@ -272,10 +226,11 @@ def test_mpi_master_run_python(
             "-mca",
             "btl_vader_single_copy_mechanism",
             "none",
+            "-mca",
+            "plm_rsh_num_concurrent",
+            str(num_hosts),
             "-x",
-            "NCCL_MIN_NRINGS=4",
-            "-x",
-            "NCCL_SOCKET_IFNAME=ethw3",
+            "NCCL_SOCKET_IFNAME=%s" % network_interface_name,
             "-x",
             "NCCL_DEBUG=INFO",
             "-x",
@@ -283,12 +238,17 @@ def test_mpi_master_run_python(
             "-x",
             "PATH",
             "-x",
-            "LD_PRELOAD=%s" % inspect.getfile(gethostname),
-            "-v",
-            "--lr",
-            "35",
+            smdataparallel_flag,
             "-x",
-            "LD_CONFIG_PATH",
+            "FI_PROVIDER=efa",
+            "-x",
+            "RDMAV_FORK_SAFE=1",
+            "-x",
+            "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+            "--verbose",
+            "-x",
+            "FI_EFA_USE_DEVICE_RDMA=1",
+            "smddprun",
             "usr/bin/python3",
             "-m",
             "mpi4py",
@@ -313,6 +273,5 @@ def test_mpi_master_run_python(
 @patch("sagemaker_training.logging_config.log_script_invocation")
 def test_connection(log):
     with pytest.raises(Exception):
-        mpi._can_connect("test_host")
-        log.assert_called_with("Cannot connect to host test_host")
-        log.assert_called_with("Connection failed with exceptio: ")
+        smdataparallel._can_connect("test_host")
+        log.assert_called_with("Cannot connect to host test_host at port 22. Retrying...")
