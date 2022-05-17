@@ -121,7 +121,7 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
     output = await asyncio.gather(
         watch(proc.stdout, processes_per_host), watch(proc.stderr, processes_per_host)
     )
-    return_code = proc.returncode
+    return_code = await proc.wait()
     return return_code, output, proc
 
 
