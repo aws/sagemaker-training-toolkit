@@ -46,7 +46,7 @@ async def watch(stream, error_classes, proc_per_host):
 
     Args:
         stream: asyncio subprocess PIPE
-        error_classes (list): List of exception classes watch and raise
+        error_classes (list): List of exception classes to watch and raise
         proc_per_host (int): Number of processes per each host
 
     Returns:
@@ -83,9 +83,9 @@ async def watch(stream, error_classes, proc_per_host):
                 )
             print(line)
             # log only if necessary, remove node and rank id for de-duplication
-            err_line = err_line[err_line.find("<stderr>") + 8 :]
+            err_line = re.sub(r"\[(\d),(\d)\]<stderr>", "", err_line)
             # in case error piped to stdout
-            err_line = err_line[err_line.find("<stdout>") + 8 :]
+            err_line = re.sub(r"\[(\d),(\d)\]<stdout>", "", err_line)
 
             if start:
                 if err_line not in output:
@@ -105,7 +105,7 @@ async def run_async(cmd, error_classes, processes_per_host, env, cwd, stderr, **
 
     Args:
         cmd (list): The command to be run
-        error_classes (list): List of exception classes watch and raise
+        error_classes (list): List of exception classes to watch and raise
         processes_per_host (int): Number of processes per host
         env: os.environ
         cwd (str): The location from which to run the command (default: None).
@@ -139,7 +139,7 @@ def create(cmd, error_classes, processes_per_host, cwd=None, env=None, capture_e
 
     Args:
         cmd (list): The command to be run.
-        error_classes (list): List of exception classes watch and raise.
+        error_classes (list): List of exception classes to watch and raise.
         cwd (str): The location from which to run the command (default: None).
             If None, this defaults to the ``code_dir`` of the environment.
         env: os.environ
@@ -176,7 +176,7 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
 
     Args:
         cmd ([str]): The command to be run.
-        error_classes (list): List of exception classes watch and raise.
+        error_classes (list): List of exception classes to watch and raise.
         processes_per_host (int): Number of processes per host
         capture_error (bool): Whether or not to include stderr in
             the exception message (default: True). In either case,
@@ -215,7 +215,9 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
         extra_info = None
         if return_code == 137:
             extra_info = "OutOfMemory: Process killed by SIGKILL (signal 9)"
+        # default error class will be user script error
         error_class = errors.ExecuteUserScriptError
+        # use first found target error class if available
         for error_name in error_classes:
             if error_name in stderr:
                 error_class = type(error_name, (errors._CalledProcessError,), {})
