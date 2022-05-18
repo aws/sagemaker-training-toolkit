@@ -24,6 +24,8 @@ import paramiko
 import gethostname
 from sagemaker_training import environment, errors, logging_config, process, timeout
 from inspect import isclass
+
+logger = logging_config.get_logger()
 try:
     from smdistributed.dataparallel import exceptions
     # list of exceptions SMDDP wants training toolkit to catch and log
@@ -32,7 +34,7 @@ except ImportError as e:
     logger.info("No exception classes found in smdistributed.dataparallel")
     exception_classes = []
 
-logger = logging_config.get_logger()
+
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
 

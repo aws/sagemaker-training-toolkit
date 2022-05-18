@@ -23,9 +23,17 @@ import paramiko
 import psutil
 
 import gethostname
-from sagemaker_training import logging_config, process, timeout
-
+from sagemaker_training import environment, errors, logging_config, process, timeout
+from inspect import isclass
 logger = logging_config.get_logger()
+try:
+    from smdistributed.modelparallel.backend import exceptions
+    # list of exceptions SMDDP wants training toolkit to catch and log
+    exception_classes = [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
+except ImportError as e:
+    logger.info("No exception classes found in smdistributed.modelparallel")
+    exception_classes = []
+
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
 
@@ -255,6 +263,46 @@ class MasterRunner(process.ProcessRunner):
         https://docs.chainer.org/en/stable/chainermn/tutorial/tips_faqs.html#mpi-process-hangs-after-an-unhandled-python-exception
         """
         return super(MasterRunner, self)._python_command() + ["-m", "mpi4py"]
+
+    def run(self, wait=True, capture_error=False):
+        """Run the process.
+
+        Args:
+            wait (bool): A boolean indicating whether to wait and check for errors.
+                Defaults to True.
+            capture_error (bool): A boolean indicating whether to direct stderr to a stream
+                that can later be read. Defaults to False.
+
+        Returns:
+            process (subprocess.Popen): The spawned process.
+        """
+        self._setup()
+
+        cmd = self._create_command()
+
+        logging_config.log_script_invocation(cmd, self._env_vars)
+
+        training_env = environment.Environment()
+        if wait:
+            process_spawned = process.check_error(
+                cmd,
+                exception_classes if training_env.is_modelparallel_enabled else errors.ExecuteUserScriptError,
+                self._processes_per_host,
+                capture_error=capture_error,
+                cwd=environment.code_dir,
+            )
+        else:
+            _, _, process_spawned = process.create(
+                cmd,
+                exception_classes if training_env.is_modelparallel_enabled else errors.ExecuteUserScriptError,
+                self._processes_per_host,
+                capture_error=capture_error,
+                cwd=environment.code_dir,
+            )
+
+        self._tear_down()
+        return process_spawned
+
 
 
 _SSH_DAEMON_NOT_FOUND_ERROR_MESSAGE = """

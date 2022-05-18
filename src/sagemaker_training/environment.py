@@ -562,6 +562,10 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         self._master_hostname = list(hosts)[0]
         self._is_master = current_host == self._master_hostname
 
+        mp_parameters = os.environ.get(params.SM_HP_MP_PARAMETERS)
+        self._is_modelparallel_enabled = mp_parameters and mp_parameters != '{}'
+
+
     @property
     def model_dir(self):  # type: () -> str
         """The directory where models should be saved.
@@ -909,6 +913,14 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         """
         return self._framework_module
 
+    @property
+    def is_modelparallel_enabled(self):  # type: () -> bool
+        """Whether SM ModelParallel is enabled.
+
+        Returns:
+            bool: True if SM ModelParallel is enabled
+        """
+        return self._is_modelparallel_enabled
 
 def write_env_vars(env_vars=None):  # type: (dict) -> None
     """Write the dictionary env_vars in the system, as environment variables.
