@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 import asyncio
 from asyncio.subprocess import PIPE
+from inspect import isclass
 import os
 import re
 import subprocess
@@ -37,7 +38,25 @@ logger = logging_config.get_logger()
 # Default limit of the stream is 2 ** 16 KB, we can increase it to 128KB in subproc call
 _DEFAULT_BUF_SIZE = 1024 * 64
 
-async def watch(stream, error_classes, proc_per_host):
+
+def process_error_classes(error_classes):
+    """Process error classes and return a list of string.
+    Input could be class, string, or None
+
+    Args:
+        error_classes (list): List of error classes
+
+    Returns:
+        error_classes: processed classes
+    """
+    if not error_classes:
+        return []
+    if not isinstance(error_classes, list):
+        error_classes = [error_classes]
+    return [error.__name__ if isclass(error) else error for error in error_classes]
+
+
+async def watch(stream, proc_per_host, error_classes=None):
     """Process the stdout and stderr streams on the fly.
     Decode the output lines
     Remove new line characters (if any)
@@ -46,12 +65,13 @@ async def watch(stream, error_classes, proc_per_host):
 
     Args:
         stream: asyncio subprocess PIPE
-        error_classes (list): List of exception classes to watch and raise
         proc_per_host (int): Number of processes per each host
+        error_classes (list): List of exception classes to watch and raise
 
     Returns:
         output: Filtered stderr
     """
+    error_classes = process_error_classes(error_classes)
     output = []
     buf_size = _DEFAULT_BUF_SIZE
     start = False
@@ -89,9 +109,16 @@ async def watch(stream, error_classes, proc_per_host):
 
             if start:
                 if err_line not in output:
-                    output.append(err_line.strip(" :\n")  + "\n")
+                    output.append(err_line.strip(" :\n") + "\n")
             else:
-                if any(str(err) in err_line for err in (_PYTHON_ERRORS_ + error_classes if type(error_classes) == list else [error_classes])):
+                if any(
+                    str(err) in err_line
+                    for err in (
+                        _PYTHON_ERRORS_ + error_classes
+                        if isinstance(error_classes, list)
+                        else [error_classes]
+                    )
+                ):
                     # start logging error message if target exceptions found
                     start = True
                     output.append(err_line.strip(" :\n") + "\n")
@@ -99,17 +126,17 @@ async def watch(stream, error_classes, proc_per_host):
     return " ".join(output)
 
 
-async def run_async(cmd, error_classes, processes_per_host, env, cwd, stderr, **kwargs):
+async def run_async(cmd, processes_per_host, env, cwd, stderr, error_classes=None, **kwargs):
     """Method responsible for launching asyncio subprocess shell
     Use asyncio gather to collect processed stdout and stderr
 
     Args:
         cmd (list): The command to be run
-        error_classes (list): List of exception classes to watch and raise
         processes_per_host (int): Number of processes per host
         env: os.environ
         cwd (str): The location from which to run the command (default: None).
             If None, this defaults to the ``code_dir`` of the environment.
+        error_classes (list): List of exception classes to watch and raise
         **kwargs: Extra arguments that are passed to the asyncio create subprocess constructor.
 
     Returns:
@@ -126,7 +153,8 @@ async def run_async(cmd, error_classes, processes_per_host, env, cwd, stderr, **
     )
 
     output = await asyncio.gather(
-        watch(proc.stdout, error_classes, processes_per_host), watch(proc.stderr, error_classes, processes_per_host)
+        watch(proc.stdout, processes_per_host, error_classes=error_classes),
+        watch(proc.stderr, processes_per_host, error_classes=error_classes),
     )
     logger.info("Waiting for the process to finish and give a return code.")
     return_code = await proc.wait()
@@ -134,7 +162,15 @@ async def run_async(cmd, error_classes, processes_per_host, env, cwd, stderr, **
     return return_code, output, proc
 
 
-def create(cmd, error_classes, processes_per_host, cwd=None, env=None, capture_error=False, **kwargs):
+def create(
+    cmd,
+    error_classes,
+    processes_per_host,
+    cwd=None,
+    env=None,
+    capture_error=False,
+    **kwargs,
+):
     """Spawn a process with asyncio for the given command.
 
     Args:
@@ -158,17 +194,21 @@ def create(cmd, error_classes, processes_per_host, cwd=None, env=None, capture_e
         rc, output, proc = asyncio.run(
             run_async(
                 cmd,
-                error_classes,
                 processes_per_host,
                 env=env or os.environ,
                 cwd=cwd or environment.code_dir,
                 stderr=stderr,
+                error_classes=error_classes,
                 **kwargs,
             )
         )
         return rc, output, proc
     except Exception as e:  # pylint: disable=broad-except
-        six.reraise(errors.ExecuteUserScriptError, errors.ExecuteUserScriptError(e), sys.exc_info()[2])
+        six.reraise(
+            errors.ExecuteUserScriptError,
+            errors.ExecuteUserScriptError(e),
+            sys.exc_info()[2],
+        )
 
 
 def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=True, **kwargs):
@@ -189,7 +229,7 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
     Raises:
         ExecuteUserScriptError: If there is an exception raised when creating the process.
     """
-
+    error_classes = process_error_classes(error_classes)
     if capture_error:
         return_code, output, process = create(
             cmd,
@@ -208,20 +248,35 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
         # remove extra quotes for subprocess.Popen
         cmd[-1] = cmd[-1].strip('"')
         process = subprocess.Popen(
-            cmd, env=os.environ, cwd=cwd or environment.code_dir, stderr=stderr, **kwargs
+            cmd,
+            env=os.environ,
+            cwd=cwd or environment.code_dir,
+            stderr=stderr,
+            **kwargs,
         )
         return_code = process.wait()
     if return_code:
         extra_info = None
         if return_code == 137:
             extra_info = "OutOfMemory: Process killed by SIGKILL (signal 9)"
-        # default error class will be user script error
-        error_class = errors.ExecuteUserScriptError
-        # use first found target error class if available
-        for error_name in error_classes:
-            if error_name in stderr:
-                error_class = type(error_name, (errors._CalledProcessError,), {})
-                break
+
+        # throw internal error classes first
+        internal_errors = [err for err in dir(errors) if isclass(getattr(errors, err))]
+        error_class = next(
+            (name for name in error_classes if name in internal_errors), "ExecuteUserScriptError"
+        )
+        error_class = getattr(errors, error_class)
+
+        # only replace ExecuteUserScriptError with custom library errors
+        if stderr and error_class == errors.ExecuteUserScriptError:
+            # find the first target error in stderr
+            error_name = next((str(name) for name in error_classes if str(name) in stderr), False)
+            if error_name:
+                error_class = type(
+                    error_name,
+                    (errors._CalledProcessError,),  # pylint: disable=protected-access
+                    {},
+                )
 
         raise error_class(
             cmd=" ".join(cmd) if isinstance(cmd, list) else cmd,
@@ -275,7 +330,11 @@ class ProcessRunner(object):
                 six.moves.shlex_quote(arg)  # pylint: disable=too-many-function-args
                 for arg in self._args
             ]
-            return ["/bin/sh", "-c", '"./%s %s"' % (self._user_entry_point, " ".join(args))]
+            return [
+                "/bin/sh",
+                "-c",
+                '"./%s %s"' % (self._user_entry_point, " ".join(args)),
+            ]
 
     def _python_command(self):  # pylint: disable=no-self-use
         return [python_executable()]
