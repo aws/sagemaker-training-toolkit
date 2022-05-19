@@ -25,14 +25,22 @@ import psutil
 import gethostname
 from sagemaker_training import environment, errors, logging_config, process, timeout
 from inspect import isclass
+
 logger = logging_config.get_logger()
 try:
     from smdistributed.modelparallel.backend import exceptions
-    # list of exceptions SMDDP wants training toolkit to catch and log
+    # list of exceptions SMMP wants training toolkit to catch and log
     exception_classes = [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
 except ImportError as e:
     logger.info("No exception classes found in smdistributed.modelparallel")
     exception_classes = []
+try:
+    from smdistributed.modelparallel.torch import exceptions as torch_exceptions
+    # list of torch exceptions SMMP wants training toolkit to catch and log
+    exception_classes += [x for x in dir(torch_exceptions) if isclass(getattr(torch_exceptions, x))]
+except ImportError as e:
+    logger.info("No torch exception classes found in smdistributed.modelparallel")
+
 
 logging.getLogger("paramiko").setLevel(logging.INFO)
 

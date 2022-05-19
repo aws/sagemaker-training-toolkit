@@ -565,7 +565,6 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         mp_parameters = os.environ.get(params.SM_HP_MP_PARAMETERS)
         self._is_modelparallel_enabled = mp_parameters and mp_parameters != '{}'
 
-
     @property
     def model_dir(self):  # type: () -> str
         """The directory where models should be saved.

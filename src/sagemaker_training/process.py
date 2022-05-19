@@ -91,7 +91,7 @@ async def watch(stream, error_classes, proc_per_host):
                 if err_line not in output:
                     output.append(err_line.strip(" :\n")  + "\n")
             else:
-                if any(err in err_line for err in (_PYTHON_ERRORS_ + error_classes)):
+                if any(str(err) in err_line for err in (_PYTHON_ERRORS_ + error_classes if type(error_classes) == list else [error_classes])):
                     # start logging error message if target exceptions found
                     start = True
                     output.append(err_line.strip(" :\n") + "\n")
