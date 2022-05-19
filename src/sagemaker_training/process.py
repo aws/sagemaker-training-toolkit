@@ -17,8 +17,10 @@ from __future__ import absolute_import
 
 import asyncio
 from asyncio.subprocess import PIPE
+from contextlib import contextmanager
 import os
 import re
+import signal
 import subprocess
 import sys
 
@@ -34,6 +36,24 @@ from sagemaker_training import (
 
 # Default limit of the stream is 2 ** 16 KB, we can increase it to 128KB in subproc call
 _DEFAULT_BUF_SIZE = 1024 * 64
+
+
+@contextmanager
+def capture_signal(signalnum, callback):
+    """
+    Install handler to capture signal
+
+    Args:
+        signalnum: signal to capture
+        callback: callback if signal occurs
+
+    """
+    original_handler = signal.getsignal(signalnum)
+    signal.signal(signalnum, callback)
+    try:
+        yield
+    finally:
+        signal.signal(signalnum, original_handler)
 
 
 async def watch(stream, proc_per_host):
@@ -118,9 +138,10 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
         cmd, env=env, cwd=cwd, stdout=PIPE, stderr=stderr, **kwargs
     )
 
-    output = await asyncio.gather(
-        watch(proc.stdout, processes_per_host), watch(proc.stderr, processes_per_host)
-    )
+    with capture_signal(signal.SIGTERM, lambda signalnum, *_: proc.send_signal(signalnum)):
+        output = await asyncio.gather(
+            watch(proc.stdout, processes_per_host), watch(proc.stderr, processes_per_host)
+        )
     return_code = proc.returncode
     return return_code, output, proc
 
@@ -198,7 +219,8 @@ def check_error(cmd, error_class, processes_per_host, cwd=None, capture_error=Tr
         process = subprocess.Popen(
             cmd, env=os.environ, cwd=cwd or environment.code_dir, stderr=stderr, **kwargs
         )
-        return_code = process.wait()
+        with capture_signal(signal.SIGTERM, lambda signalnum, *_: process.send_signal(signalnum)):
+            return_code = process.wait()
     if return_code:
         extra_info = None
         if return_code == 137:

@@ -201,6 +201,8 @@ entry_point.run(uri=env.module_dir,
 
 If the entry point execution fails, `trainer.train()` will write the error message to `/opt/ml/output/failure`. Otherwise, it will write to the file `/opt/ml/success`.
 
+If `sagemaker_training` receives a `SIGTERM`, such as from `StopTrainingJob`, it will pass that signal to your script.
+
 ## :scroll: License
 
 This library is licensed under the [Apache 2.0 License](http://aws.amazon.com/apache2.0/).
