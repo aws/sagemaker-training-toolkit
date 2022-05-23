@@ -113,7 +113,7 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
     Raises:
         error_class: If there is an exception raised when creating the process.
     """
-    cmd = " ".join(cmd)
+    cmd = " ".join(six.moves.shlex_quote(token) for token in cmd)
     proc = await asyncio.create_subprocess_shell(
         cmd, env=env, cwd=cwd, stdout=PIPE, stderr=stderr, **kwargs
     )
@@ -255,7 +255,7 @@ class ProcessRunner(object):
                 six.moves.shlex_quote(arg)  # pylint: disable=too-many-function-args
                 for arg in self._args
             ]
-            return ["/bin/sh", "-c", '"./%s %s"' % (self._user_entry_point, " ".join(args))]
+            return ["/bin/sh", "-c", "./%s %s" % (self._user_entry_point, " ".join(args))]
 
     def _python_command(self):  # pylint: disable=no-self-use
         return [python_executable()]
