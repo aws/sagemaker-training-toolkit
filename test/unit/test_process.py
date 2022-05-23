@@ -201,5 +201,5 @@ def test_check_error_signal(capture_error):
     proc.start()
     time.sleep(1)
     os.kill(proc.pid, signal.SIGTERM)
-    proc.join(1)
+    proc.join(5)
     assert int(proc.exitcode) == 42
