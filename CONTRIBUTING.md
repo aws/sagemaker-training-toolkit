@@ -37,7 +37,7 @@ GitHub provides additional document on [forking a repository](https://help.githu
 ### Running the unit tests
 
 1. Install tox using `pip install tox`
-1. Install coverage using `pip install .[test]`
+1. Install coverage using `pip install ".[test]"`
 1. cd into the sagemaker-training-toolkit folder: `cd sagemaker-training-toolkit`
 1. Run the following tox command and verify that all code checks and unit tests pass: `tox test/unit`
 

@@ -13,8 +13,11 @@
 from __future__ import absolute_import
 
 import asyncio
+import multiprocessing
 import os
+import signal
 import sys
+import time
 
 from mock import ANY, MagicMock, patch
 import pytest
@@ -175,3 +178,28 @@ def test_run_python(log, async_shell, async_gather, entry_point_type_script, eve
         stdout=asyncio.subprocess.PIPE,
     )
     log.assert_called_with(cmd, {})
+
+
+def _sleep_subprocess(capture_error):
+    with pytest.raises(errors.ExecuteUserScriptError) as error:
+        process.check_error(
+            [sys.executable, os.path.abspath(os.path.join(__file__, "../_test_process_helper.py"))],
+            errors.ExecuteUserScriptError,
+            1,
+            capture_error=capture_error,
+        )
+    assert int(error.value.return_code) == 21
+    exit(42)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 7) or sys.version_info >= (3, 8), reason="requires python3.7"
+)
+@pytest.mark.parametrize("capture_error", [True, False])
+def test_check_error_signal(capture_error):
+    proc = multiprocessing.Process(target=_sleep_subprocess, args=(capture_error,))
+    proc.start()
+    time.sleep(1)
+    os.kill(proc.pid, signal.SIGTERM)
+    proc.join(5)
+    assert int(proc.exitcode) == 42
