@@ -32,6 +32,8 @@ from sagemaker_training import (
     logging_config,
 )
 
+logger = logging_config.get_logger()
+
 # Default limit of the stream is 2 ** 16 KB, we can increase it to 128KB in subproc call
 _DEFAULT_BUF_SIZE = 1024 * 64
 
@@ -121,7 +123,9 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, **kwargs):
     output = await asyncio.gather(
         watch(proc.stdout, processes_per_host), watch(proc.stderr, processes_per_host)
     )
-    return_code = proc.returncode
+    logger.info("Waiting for the process to finish and give a return code.")
+    return_code = await proc.wait()
+    logger.info(f"Done waiting for a return code. Received {return_code} from exiting process.")
     return return_code, output, proc
 
 
