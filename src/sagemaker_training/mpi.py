@@ -13,7 +13,7 @@
 """This module contains functionality related to distributed training using
 MPI (Message Passing Interface)."""
 import argparse
-import inspect
+from inspect import getfile, isclass
 import logging
 import os
 import subprocess
@@ -23,10 +23,30 @@ import paramiko
 import psutil
 
 import gethostname
-from sagemaker_training import logging_config, process, timeout
+from sagemaker_training import environment, errors, logging_config, process, timeout
 
 logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
+
+exception_classes = None
+try:
+    from smdistributed.modelparallel.backend import exceptions
+
+    # list of exceptions SMMP wants training toolkit to catch and log
+    exception_classes = [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
+except ImportError:
+    logger.info("No exception classes found in smdistributed.modelparallel.backend")
+
+try:
+    from smdistributed.modelparallel.torch import exceptions as torch_exceptions
+
+    # list of torch exceptions SMMP wants training toolkit to catch and log
+    exception_classes += [x for x in dir(torch_exceptions) if isclass(getattr(torch_exceptions, x))]
+except ImportError:
+    logger.info("No torch exception classes found in smdistributed.modelparallel.torch")
+
+if not exception_classes:
+    exception_classes = [errors.ExecuteUserScriptError]
 
 
 class WorkerRunner(process.ProcessRunner):
@@ -235,12 +255,16 @@ class MasterRunner(process.ProcessRunner):
             "-x",
             "PATH",
             "-x",
-            "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+            "LD_PRELOAD=%s" % getfile(gethostname),
         ]
 
         command.extend(additional_options)
 
-        for credential in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]:
+        for credential in [
+            "AWS_ACCESS_KEY_ID",
+            "AWS_SECRET_ACCESS_KEY",
+            "AWS_SESSION_TOKEN",
+        ]:
             if credential in os.environ:
                 command.extend(["-x", credential])
 
@@ -255,6 +279,49 @@ class MasterRunner(process.ProcessRunner):
         https://docs.chainer.org/en/stable/chainermn/tutorial/tips_faqs.html#mpi-process-hangs-after-an-unhandled-python-exception
         """
         return super(MasterRunner, self)._python_command() + ["-m", "mpi4py"]
+
+    def run(self, wait=True, capture_error=False):
+        """Run the process.
+
+        Args:
+            wait (bool): A boolean indicating whether to wait and check for errors.
+                Defaults to True.
+            capture_error (bool): A boolean indicating whether to direct stderr to a stream
+                that can later be read. Defaults to False.
+
+        Returns:
+            process (subprocess.Popen): The spawned process.
+        """
+        self._setup()
+
+        cmd = self._create_command()
+
+        logging_config.log_script_invocation(cmd, self._env_vars)
+
+        training_env = environment.Environment()
+        if wait:
+            process_spawned = process.check_error(
+                cmd,
+                exception_classes
+                if training_env.is_modelparallel_enabled
+                else errors.ExecuteUserScriptError,
+                self._processes_per_host,
+                capture_error=capture_error,
+                cwd=environment.code_dir,
+            )
+        else:
+            _, _, process_spawned = process.create(
+                cmd,
+                exception_classes
+                if training_env.is_modelparallel_enabled
+                else errors.ExecuteUserScriptError,
+                self._processes_per_host,
+                capture_error=capture_error,
+                cwd=environment.code_dir,
+            )
+
+        self._tear_down()
+        return process_spawned
 
 
 _SSH_DAEMON_NOT_FOUND_ERROR_MESSAGE = """

@@ -105,7 +105,7 @@ async def test_watch(event_loop, capsys):
     expected_stream += (
         "[1,mpirank:0,algo-1]<stderr>:FileNotFoundError: [Errno 2] No such file or directory\n"
     )
-    expected_errmsg = ":FileNotFoundError: [Errno 2] No such file or directory\n"
+    expected_errmsg = "FileNotFoundError: [Errno 2] No such file or directory\n"
 
     stream = asyncio.StreamReader()
     stream.feed_data(b"[1,10]<stdout>:This is stdout\n")
@@ -116,6 +116,53 @@ async def test_watch(event_loop, capsys):
     output = await process.watch(stream, num_processes_per_host)
     captured_stream = capsys.readouterr()
     assert captured_stream.out == expected_stream
+    assert output == expected_errmsg
+
+
+@pytest.mark.asyncio
+async def test_watch_custom_error(event_loop, capsys):
+    num_processes_per_host = 8
+    expected_stream = "[1,mpirank:10,algo-2]<stdout>:This is stdout\n"
+    expected_stream += "[1,mpirank:10,algo-2]<stderr>:This is stderr\n"
+    expected_stream += "[1,mpirank:0,algo-1]<stderr>:SMDDPNCCLError: unhandled cuda error\n"
+    expected_errmsg = "SMDDPNCCLError: unhandled cuda error\n"
+
+    stream = asyncio.StreamReader()
+    stream.feed_data(b"[1,10]<stdout>:This is stdout\n")
+    stream.feed_data(b"[1,10]<stderr>:This is stderr\n")
+    stream.feed_data(b"[1,0]<stderr>:SMDDPNCCLError: unhandled cuda error")
+    stream.feed_eof()
+
+    error_classes = ["SMDDPNCCLError"]
+    output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
+    captured_stream = capsys.readouterr()
+    assert captured_stream.out == expected_stream
+    assert output == expected_errmsg
+
+    # test errors piped in stdout
+    stream = asyncio.StreamReader()
+    stream.feed_data(b"[1,0]<stdout>:SMDDPNCCLError: unhandled cuda error")
+    stream.feed_eof()
+
+    error_classes = ["SMDDPNCCLError"]
+    output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
+    assert output == expected_errmsg
+
+    # test single item
+    stream = asyncio.StreamReader()
+    stream.feed_data(b"[1,0]<stdout>:SMDDPNCCLError: unhandled cuda error")
+    stream.feed_eof()
+    error_classes = "SMDDPNCCLError"
+    output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
+    assert output == expected_errmsg
+
+    # test internal error
+    expected_errmsg = "ImportModuleError: module does not exist\n"
+    stream = asyncio.StreamReader()
+    stream.feed_data(b"[1,0]<stderr>:ImportModuleError: module does not exist")
+    stream.feed_eof()
+    error_classes = [errors.ImportModuleError]
+    output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
     assert output == expected_errmsg
 
 

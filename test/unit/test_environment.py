@@ -212,6 +212,7 @@ def test_env_mapping_properties(training_env):
         "output_intermediate_dir",
         "is_master",
         "master_hostname",
+        "is_modelparallel_enabled",
     }
 
 

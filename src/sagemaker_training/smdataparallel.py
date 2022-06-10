@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 """Contains functionality related to SM Distributed Data Parallel Training."""
 import argparse
-import inspect
+from inspect import getfile, isclass
 import json
 import logging
 import os
@@ -24,8 +24,18 @@ import paramiko
 import gethostname
 from sagemaker_training import environment, errors, logging_config, process, timeout
 
+
 logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
+
+try:
+    from smdistributed.dataparallel import exceptions
+
+    # list of exceptions SMDDP wants training toolkit to catch and log
+    exception_classes = [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
+except ImportError:
+    logger.info("No exception classes found in smdistributed.dataparallel")
+    exception_classes = [errors.ExecuteUserScriptError]
 
 
 class SMDataParallelRunner(process.ProcessRunner):
@@ -163,7 +173,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             "-x",
             "RDMAV_FORK_SAFE=1",
             "-x",
-            "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+            "LD_PRELOAD=%s" % getfile(gethostname),
         ]
 
         mpirun_command.extend(additional_options)
@@ -267,7 +277,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         if wait:
             process_spawned = process.check_error(
                 cmd,
-                errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
@@ -275,7 +285,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         else:
             process_spawned = process.create(
                 cmd,
-                errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
