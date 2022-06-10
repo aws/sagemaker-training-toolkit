@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.1.4 (2022-06-10)
+
+### Bug Fixes and Other Changes
+
+ * Use framework provided error class and stack trace as error message
+
 ## v4.1.3 (2022-06-03)
 
 ## v4.1.2 (2022-05-25)
