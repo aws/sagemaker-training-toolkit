@@ -237,7 +237,7 @@ def test_smp_exception_import():
     # import sagemaker_training.mpi as mpi
     from sagemaker_training import mpi
 
-    exceptions = mpi.set_exception_classes()
+    exceptions = mpi.get_modelparallel_exception_classes()
     assert exceptions == [
         "PseudoBackendException",
         "PseudoTorchException",
@@ -254,7 +254,7 @@ def test_smp_exception_mport_torch_only():
 
     from sagemaker_training import mpi as mpi
 
-    exceptions = mpi.set_exception_classes()
+    exceptions = mpi.get_modelparallel_exception_classes()
     assert exceptions == ["PseudoTorchException"]
 
 
@@ -266,5 +266,5 @@ def test_smp_exception_import_no_exceptions():
 
     from sagemaker_training import mpi
 
-    exceptions = mpi.set_exception_classes()
+    exceptions = mpi.get_modelparallel_exception_classes()
     assert exceptions == [errors.ExecuteUserScriptError], f"exceptions are {exceptions}"

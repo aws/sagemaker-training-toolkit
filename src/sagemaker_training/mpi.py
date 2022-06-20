@@ -29,7 +29,7 @@ logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
 
-def set_exception_classes():
+def get_modelparallel_exception_classes():
     """Set exception classes"""
     exception_classes = []
     try:
@@ -305,7 +305,7 @@ class MasterRunner(process.ProcessRunner):
         logging_config.log_script_invocation(cmd, self._env_vars)
 
         training_env = environment.Environment()
-        exception_classes = set_exception_classes()
+        exception_classes = get_modelparallel_exception_classes()
         if wait:
             process_spawned = process.check_error(
                 cmd,
