@@ -17,7 +17,7 @@ import os
 import sys
 import textwrap
 
-from mock import call, mock_open, patch
+from mock import call, mock_open, patch, Mock
 import pytest
 
 from sagemaker_training import environment, errors, files, modules, params
@@ -194,3 +194,73 @@ def test_import_module_local_directory(
     tarfile.assert_called_with(name="/opt/ml/input/data/code/sourcedir.tar.gz", mode="r:gz")
     prepare.assert_called_once()
     install.assert_called_once()
+
+
+
+# Pseudo Packages for Test SMP Import
+class PseudoPackage:
+    def __init__(self, exceptions=None):
+        if exceptions:
+            self.exceptions = exceptions
+
+
+class PseudoExceptionFile:
+    def __init__(self, type="backend"):
+        self.type = type
+        self.PseudoBackendException = PseudoBackendException
+        self.PseudoTorchException = PseudoTorchException
+
+    def __dir__(self):
+        return ["PseudoBackendException"] if self.type == "backend" else ["PseudoTorchException"]
+
+
+class PseudoTorchException:
+    def __init__(self):
+        return
+
+
+class PseudoBackendException:
+    def __init__(self):
+        return
+
+# Test SMP Import
+@patch.dict(sys.modules, {"smdistributed": Mock()})
+@patch.dict(sys.modules, {"smdistributed.modelparallel": Mock()})
+@patch.dict(
+    sys.modules,
+    {"smdistributed.modelparallel.backend": PseudoPackage(PseudoExceptionFile("backend"))},
+)
+@patch.dict(
+    sys.modules, {"smdistributed.modelparallel.torch": PseudoPackage(PseudoExceptionFile("torch"))}
+)
+def test_smp_exception_import():
+    # import sagemaker_training.mpi as mpi
+    from sagemaker_training import mpi
+    exceptions = mpi.set_exception_classes()
+    assert exceptions == [
+        "PseudoBackendException",
+        "PseudoTorchException",
+    ], f"exceptions are {exceptions}"
+    
+
+@patch.dict(sys.modules, {'smdistributed': Mock()})
+@patch.dict(sys.modules, {'smdistributed.modelparallel': Mock()})
+@patch.dict(sys.modules, {'smdistributed.modelparallel.backend': PseudoPackage()})
+@patch.dict(sys.modules, {'smdistributed.modelparallel.torch': PseudoPackage(PseudoExceptionFile('torch'))})
+def test_smp_exception_mport_torch_only():
+
+    from sagemaker_training import mpi as mpi
+
+    exceptions = mpi.set_exception_classes()
+    assert exceptions == ['PseudoTorchException']
+
+
+@patch.dict(sys.modules, {"smdistributed": Mock()})
+@patch.dict(sys.modules, {"smdistributed.modelparallel": Mock()})
+@patch.dict(sys.modules, {"smdistributed.modelparallel.backend": PseudoPackage()})
+@patch.dict(sys.modules, {"smdistributed.modelparallel.torch": PseudoPackage()})
+def test_smp_exception_import_no_exceptions():
+
+    from sagemaker_training import mpi
+    exceptions = mpi.set_exception_classes()
+    assert exceptions == [errors.ExecuteUserScriptError], f"exceptions are {exceptions}"
