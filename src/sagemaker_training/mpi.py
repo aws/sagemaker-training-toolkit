@@ -28,25 +28,31 @@ from sagemaker_training import environment, errors, logging_config, process, tim
 logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
-exception_classes = None
-try:
-    from smdistributed.modelparallel.backend import exceptions
 
-    # list of exceptions SMMP wants training toolkit to catch and log
-    exception_classes = [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
-except ImportError:
-    logger.info("No exception classes found in smdistributed.modelparallel.backend")
+def get_modelparallel_exception_classes():
+    """Set exception classes"""
+    exception_classes = []
+    try:
+        from smdistributed.modelparallel.backend import exceptions
 
-try:
-    from smdistributed.modelparallel.torch import exceptions as torch_exceptions
+        # list of exceptions SMMP wants training toolkit to catch and log
+        exception_classes += [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
+    except ImportError:
+        logger.info("No exception classes found in smdistributed.modelparallel.backend")
 
-    # list of torch exceptions SMMP wants training toolkit to catch and log
-    exception_classes += [x for x in dir(torch_exceptions) if isclass(getattr(torch_exceptions, x))]
-except ImportError:
-    logger.info("No torch exception classes found in smdistributed.modelparallel.torch")
+    try:
+        from smdistributed.modelparallel.torch import exceptions as torch_exceptions
 
-if not exception_classes:
-    exception_classes = [errors.ExecuteUserScriptError]
+        # list of torch exceptions SMMP wants training toolkit to catch and log
+        exception_classes += [
+            x for x in dir(torch_exceptions) if isclass(getattr(torch_exceptions, x))
+        ]
+    except ImportError:
+        logger.info("No torch exception classes found in smdistributed.modelparallel.torch")
+
+    if not exception_classes:
+        exception_classes = [errors.ExecuteUserScriptError]
+    return exception_classes
 
 
 class WorkerRunner(process.ProcessRunner):
@@ -299,6 +305,7 @@ class MasterRunner(process.ProcessRunner):
         logging_config.log_script_invocation(cmd, self._env_vars)
 
         training_env = environment.Environment()
+        exception_classes = get_modelparallel_exception_classes()
         if wait:
             process_spawned = process.check_error(
                 cmd,
