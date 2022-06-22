@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.1.5 (2022-06-22)
+
+### Bug Fixes and Other Changes
+
+ * Fix none exception class issue for mpi
+
 ## v4.1.4 (2022-06-10)
 
 ### Bug Fixes and Other Changes
