@@ -17,6 +17,7 @@ import textwrap
 
 import six
 
+ERROR_MSG_MAX_LENGTH = 7000
 
 class ClientError(Exception):
     """Error class used to separate framework and user errors."""
@@ -48,6 +49,11 @@ class _CalledProcessError(ClientError):
             error_msg = "%s" % self.output
         else:
             error_msg = ""
+
+        # total failure reason limit is 8k
+        # leave 1k for error name, exit code, extra info, and command
+        # truncate error message to 7k characters
+        error_msg = error_msg[:ERROR_MSG_MAX_LENGTH]
         if self.extra_info is None:
             message = '%s:\nExitCode %s\nErrorMessage "%s"\nCommand "%s"' % (
                 type(self).__name__,

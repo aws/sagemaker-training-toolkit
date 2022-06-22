@@ -31,6 +31,7 @@ from sagemaker_training import (
     environment,
     errors,
     logging_config,
+    smdataparallel,
 )
 
 logger = logging_config.get_logger()
@@ -116,7 +117,7 @@ async def watch(stream, proc_per_host, error_classes=None):
                     for err in (
                         _PYTHON_ERRORS_ + error_classes
                         if isinstance(error_classes, list)
-                        else [error_classes]
+                        else [error_classes] + ["Segmentation fault"]
                     )
                 ):
                     # start logging error message if target exceptions found
@@ -274,6 +275,14 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
             if error_name:
                 error_class = type(
                     error_name,
+                    (errors._CalledProcessError,),  # pylint: disable=protected-access
+                    {},
+                )
+
+            # handle segmentation fault
+            if "Segmentation fault" in stderr and any(binary in stderr for binary in smdataparallel.SMDDP_BINARIES):
+                error_classes = type(
+                    "SMDDPSegmentFault",
                     (errors._CalledProcessError,),  # pylint: disable=protected-access
                     {},
                 )

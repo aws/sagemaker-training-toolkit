@@ -37,6 +37,9 @@ except ImportError:
     logger.info("No exception classes found in smdistributed.dataparallel")
     exception_classes = [errors.ExecuteUserScriptError]
 
+SMDDP_BINARIES = ["libsmddpcpp.so", "libsmddpcommoncpu.so", "libherringena.so", "libsmddpp2p.so", "libsmddp_shared.so",
+                  "librdma_transport.so", "libsmddptfops.so"]
+SIG_HANDLER_PATH = "/usr/local/lib/sig_handler.so"
 
 class SMDataParallelRunner(process.ProcessRunner):
     """Prepare SMDataParallel-based distributed training.
@@ -125,6 +128,11 @@ class SMDataParallelRunner(process.ProcessRunner):
             self._custom_mpi_options
         )
 
+        if os.path.exists(SIG_HANDLER_PATH):
+            ld_preload = "LD_PRELOAD=%s %s" % getfile(gethostname), SIG_HANDLER_PATH
+        else:
+            ld_preload = "LD_PRELOAD=%s" % getfile(gethostname)
+
         mpirun_command = [
             "mpirun",
             "--host",
@@ -173,7 +181,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             "-x",
             "RDMAV_FORK_SAFE=1",
             "-x",
-            "LD_PRELOAD=%s" % getfile(gethostname),
+            ld_preload,
         ]
 
         mpirun_command.extend(additional_options)
