@@ -31,7 +31,7 @@ from sagemaker_training import (
     environment,
     errors,
     logging_config,
-    smdataparallel,
+    SMDDP_BINARIES,
 )
 
 logger = logging_config.get_logger()

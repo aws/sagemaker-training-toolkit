@@ -22,7 +22,7 @@ import time
 import paramiko
 
 import gethostname
-from sagemaker_training import environment, errors, logging_config, process, timeout
+from sagemaker_training import environment, errors, logging_config, process, timeout, SIG_HANDLER_PATH
 
 
 logger = logging_config.get_logger()
@@ -37,9 +37,6 @@ except ImportError:
     logger.info("No exception classes found in smdistributed.dataparallel")
     exception_classes = [errors.ExecuteUserScriptError]
 
-SMDDP_BINARIES = ["libsmddpcpp.so", "libsmddpcommoncpu.so", "libherringena.so", "libsmddpp2p.so", "libsmddp_shared.so",
-                  "librdma_transport.so", "libsmddptfops.so"]
-SIG_HANDLER_PATH = "/usr/local/lib/sig_handler.so"
 
 class SMDataParallelRunner(process.ProcessRunner):
     """Prepare SMDataParallel-based distributed training.

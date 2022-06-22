@@ -69,3 +69,7 @@ _PYTHON_ERRORS_ = [
     "OutOfRangeError",
     "InvalidArgumentError",
 ]
+
+SMDDP_BINARIES = ["libsmddpcpp.so", "libsmddpcommoncpu.so", "libherringena.so", "libsmddpp2p.so", "libsmddp_shared.so",
+                  "librdma_transport.so", "libsmddptfops.so"]
+SIG_HANDLER_PATH = "/usr/local/lib/sig_handler.so"
