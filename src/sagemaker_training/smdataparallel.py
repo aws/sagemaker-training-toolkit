@@ -126,7 +126,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         )
 
         if os.path.exists(SIG_HANDLER_PATH):
-            ld_preload = "LD_PRELOAD=%s %s" % getfile(gethostname), SIG_HANDLER_PATH
+            ld_preload = "LD_PRELOAD=\"%s %s\"" % (getfile(gethostname), SIG_HANDLER_PATH)
         else:
             ld_preload = "LD_PRELOAD=%s" % getfile(gethostname)
 
