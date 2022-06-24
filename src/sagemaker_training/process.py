@@ -105,9 +105,9 @@ async def watch(stream, proc_per_host, error_classes=None):
                 )
             print(line)
             # log only if necessary, remove node and rank id for de-duplication
-            err_line = re.sub(r"\[(\d),(\d)\]<stderr>", "", err_line)
+            err_line = re.sub(r"\[(\d),(\d+)\]<stderr>", "", err_line)
             # in case error piped to stdout
-            err_line = re.sub(r"\[(\d),(\d)\]<stdout>", "", err_line)
+            err_line = re.sub(r"\[(\d),(\d+)\]<stdout>", "", err_line)
 
             if start:
                 if err_line not in output:
