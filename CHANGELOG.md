@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.1.6 (2022-06-28)
+
+### Bug Fixes and Other Changes
+
+ * update: protobuf version to overlap with TF requirements
+
 ## v4.1.5 (2022-06-22)
 
 ### Bug Fixes and Other Changes
