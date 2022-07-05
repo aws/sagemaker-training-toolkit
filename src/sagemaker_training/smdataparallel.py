@@ -198,6 +198,9 @@ class SMDataParallelRunner(process.ProcessRunner):
         instance_type = sm_training_env.get("additional_framework_parameters").get(
             "sagemaker_instance_type"
         )
+        if not instance_type:
+            # Heterogeneous mode
+            instance_type = sm_training_env.get("current_instance_type", None)
         logger.info("instance type: %s" % instance_type)
         return instance_type
 
