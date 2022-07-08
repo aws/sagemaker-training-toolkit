@@ -161,8 +161,18 @@ def _create_training_directories():
     _write_json({}, input_data_config_file_dir)
 
     host_name = socket.gethostname()
-
-    resources_dict = {"current_host": host_name, "hosts": [host_name]}
+    resources_dict = {
+        "current_host": host_name,
+        "hosts": [host_name],
+        "current_instance_group": "homogeneousCluster",
+        "instance_groups": [
+            {
+                "instance_group_name": "homogeneousCluster",
+                "instance_type": "local",
+                "hosts": [host_name],
+            }
+        ],
+    }
     _write_json(resources_dict, resource_config_file_dir)
 
 
@@ -232,9 +242,14 @@ def read_resource_config():  # type: () -> dict
                         It has the following keys:
                             - current_host: The name of the current container on the container
                                             network. For example, 'algo-1'.
-                            -  hosts: The list of names of all containers on the container
+                            - current_instance_type: Type of EC2 instance
+                            - hosts: The list of names of all nodes on the container
                                       network, sorted lexicographically. For example,
                                       `['algo-1', 'algo-2', 'algo-3']` for a three-node cluster.
+                            - current_instance_group: Name of the current instance group
+                            - instance_groups: List of instance group dicts containing info about
+                                      instance_type, hosts list and group name
+                            - network_interface_name: Name of network interface exposed to container
     """
     return _read_json(resource_config_file_dir)
 
@@ -383,6 +398,10 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
                 -  hosts: The list of names of all containers on the container network,
                     sorted lexicographically. For example, `['algo-1', 'algo-2', 'algo-3']`
                     for a three-node cluster.
+                -  current_instance_group: Name of the current instance group
+                - instance_groups: List of instance group dicts containing info about
+                            instance_type, hosts list and group name
+                - network_interface_name: Name of network interface exposed to container
 
         input_data_config (dict[string, object]): the contents from /opt/ml/input/config/inputdataconfig.json.
             For example, suppose that you specify three data channels (train, evaluation, and
@@ -447,11 +466,16 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             resource_config (dict[string, object]): The contents from
                 /opt/ml/input/config/resourceconfig.json.
                 It has the following keys:
-                    - current_host: The name of the current container on the container network.
-                        For example, 'algo-1'.
-                    -  hosts: The list of names of all containers on the container network,
-                        sorted lexicographically. For example, `['algo-1', 'algo-2', 'algo-3']`
-                        for a three-node cluster.
+                    - current_host: The name of the current container on the container
+                                    network. For example, 'algo-1'.
+                    - current_instance_type: Type of EC2 instance
+                    - hosts: The list of names of all nodes on the container
+                                network, sorted lexicographically. For example,
+                                `['algo-1', 'algo-2', 'algo-3']` for a three-node cluster.
+                    - current_instance_group: Name of the current instance group
+                    - instance_groups: List of instance group dicts containing info about
+                                instance_type, hosts list and group name
+                    - network_interface_name: Name of network interface exposed to container
 
             input_data_config (dict[string, object]): The contents from /opt/ml/input/config/inputdataconfig.json.
                 For example, suppose that you specify three data channels (train, evaluation, and
@@ -486,7 +510,6 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         module_dir = os.environ.get(params.SUBMIT_DIR_ENV, code_dir)
         log_level = int(os.environ.get(params.LOG_LEVEL_ENV, logging.INFO))
 
-        self._current_host = current_host
         self._num_gpus = num_gpus()
         self._num_cpus = num_cpus()
         self._module_name = module_name
@@ -499,8 +522,14 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         input_data_config = input_data_config or read_input_data_config()
         all_hyperparameters = hyperparameters or read_hyperparameters()
 
-        current_host = resource_config["current_host"]
         hosts = resource_config["hosts"]
+        current_instance_type = resource_config.get("current_instance_type", "local")
+        current_instance_group = resource_config.get("current_group_name", "homogeneousCluster")
+        current_host = resource_config["current_host"]
+
+        self._current_host = current_host
+        self._current_instance_type = current_instance_type
+        self._current_instance_group = current_instance_group
 
         split_result = mapping.split_by_criteria(
             all_hyperparameters,
@@ -523,6 +552,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         os.environ[params.CURRENT_HOST_ENV] = current_host
         os.environ[params.REGION_NAME_ENV] = sagemaker_region or ""
 
+        # hosts comprises of instances from all the groups
         self._hosts = hosts
 
         # eth0 is the default network interface defined by SageMaker with VPC support and
@@ -538,7 +568,6 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         self._output_data_dir = output_data_dir
         self._output_intermediate_dir = output_intermediate_dir
         self._channel_input_dirs = {channel: channel_path(channel) for channel in input_data_config}
-        self._current_host = current_host
 
         # override base class attributes
         if self._module_name is None:
@@ -559,11 +588,91 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         self._output_dir = output_dir
         self._job_name = os.environ.get(params.TRAINING_JOB_ENV.upper(), None)
 
-        self._master_hostname = list(hosts)[0]
+        # Heterogeneous cluster changes - get the instance group related information
+        current_instance_group_hosts = self.get_current_instance_group_hosts()
+        instance_groups = self.get_instance_groups()
+        instance_groups_dict = self.get_instance_groups_dict()
+        distribution_instance_groups = self._additional_framework_parameters.get(
+            "sagemaker_distribution_instance_groups",
+            self.get_distribution_instance_groups_from_resource_config(),
+        )
+        self._distribution_instance_groups = distribution_instance_groups
+        distribution_hosts = self.get_distribution_hosts()
+
+        self._current_instance_group_hosts = current_instance_group_hosts
+        self._instance_groups = instance_groups
+        self._instance_groups_dict = instance_groups_dict
+        self._distribution_hosts = distribution_hosts
+        is_hetero = bool(len(self._instance_groups) > 1)
+        self._is_hetero = is_hetero
+        master_hostname = self.get_master_hostname()
+        self._master_hostname = master_hostname
         self._is_master = current_host == self._master_hostname
+        self._distribution_enabled = bool(
+            self._current_instance_group in self._distribution_instance_groups
+        )
 
         mp_parameters = os.environ.get(params.SM_HP_MP_PARAMETERS)
         self._is_modelparallel_enabled = mp_parameters and mp_parameters != "{}"
+
+    @property
+    def current_instance_type(self):
+        """
+        Return current instance type
+        """
+        return self._current_instance_type
+
+    @property
+    def is_hetero(self):
+        """
+        Return if current mode is hetero
+        """
+        return self._is_hetero
+
+    @property
+    def current_instance_group(self):
+        """
+        Return name of the current instance group
+        """
+        return self._current_instance_group
+
+    @property
+    def instance_groups(self):
+        """
+        Return list of all instance groups
+        """
+        return self._instance_groups
+
+    @property
+    def instance_groups_dict(self):
+        """
+        Return dict of all instance groups
+        """
+        return self._instance_groups_dict
+
+    @property
+    def current_instance_group_hosts(self):
+        """
+        Return hosts in the current instance group
+        """
+        return self._current_instance_group_hosts
+
+    @property
+    def distribution_hosts(self):
+        """
+        Return list of hosts on which distribution will be applied
+        """
+        return self._distribution_hosts
+
+    @property
+    def distribution_instance_groups(self):
+        """Return list of instance groups which have distribution"""
+        return self._distribution_instance_groups
+
+    @property
+    def master_hostname(self):
+        """Return master hostname"""
+        return self._master_hostname
 
     @property
     def model_dir(self):  # type: () -> str
@@ -658,11 +767,6 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         return self._is_master
 
     @property
-    def master_hostname(self):  # type: () -> str
-        """Returns the hostname of the master node."""
-        return self._master_hostname
-
-    @property
     def job_name(self):  # type: () -> str
         """The name of the current training job.
 
@@ -682,6 +786,94 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
                   framework independent settings and are not defined by the user.
         """
         return self._additional_framework_parameters
+
+    def get_distribution_instance_groups_from_resource_config(self):
+        """If non heterogeneous cluster mode is used, instance_groups inside distribution is a noop
+        We populate the sagemaker_distribution_instance_groups with current instance group name ~
+        homogeneousCluster
+        """
+        distribution_instance_groups = []
+        current_instance_group = self.resource_config.get(
+            "current_group_name", "homogeneousCluster"
+        )
+        if (
+            self._additional_framework_parameters.get("sagemaker_mpi_enabled", False)
+            or self._additional_framework_parameters.get(
+                "sagemaker_parameter_server_enabled", False
+            )
+            or self._additional_framework_parameters.get(
+                "sagemaker_distributed_dataparallel_enabled", False
+            )
+            or self._additional_framework_parameters.get(
+                "sagemaker_multi_worker_mirrored_strategy_enabled", False
+            )
+        ):
+            distribution_instance_groups.append(current_instance_group)
+        return distribution_instance_groups
+
+    def get_current_instance_group(self):
+        """
+        Get the current instance group name
+        """
+        return self.resource_config["current_instance_group"]
+
+    def get_distribution_hosts(self):
+        """
+        Get the list of all hosts in all distribution instance groups
+        """
+        distribution_hosts = []
+        instance_groups_config = self._resource_config.get("instance_groups", [])
+        if instance_groups_config:
+            for group in instance_groups_config:
+                if group["instance_group_name"] in self._distribution_instance_groups:
+                    distribution_hosts.extend(group["hosts"])
+        else:
+            # local mode
+            distribution_hosts = self.hosts.copy()
+        return distribution_hosts
+
+    def get_current_instance_group_hosts(self):
+        """
+        Get the list of hosts in the current instance group
+        """
+        instance_groups_config = self._resource_config.get("instance_groups", [])
+        for group in instance_groups_config:
+            if self._current_instance_group == group["instance_group_name"]:
+                return group["hosts"]
+        return []
+
+    def get_instance_groups(self):  # type: () -> list
+        """
+        List of instance groups provided for the job
+        """
+        instance_groups = []
+        instance_groups_config = self._resource_config.get("instance_groups", [])
+        # log missing instance groups and return empty list
+        if not instance_groups_config:
+            logger.info("instance_groups entry not present in resource_config")
+
+        for group in instance_groups_config:
+            instance_groups.append(group["instance_group_name"])
+        return instance_groups
+
+    def get_instance_groups_dict(self):
+        """
+        Dictionaty of instance groups with group_names as keys
+        """
+        instance_groups_dict = {}
+        instance_groups_config = self._resource_config.get("instance_groups", [])
+        for group in instance_groups_config:
+            instance_groups_dict[group["instance_group_name"]] = group
+        return instance_groups_dict
+
+    def get_master_hostname(self):
+        """
+        Get the master hostname from the list of hosts in the distribution instance groups
+        """
+        if self._distribution_hosts:
+            return list(self._distribution_hosts)[0]
+        # if no distribution found
+        return list(self._hosts)[0]
 
     def sagemaker_s3_output(self):  # type: () -> str
         """S3 output directory location provided by the user.
@@ -717,6 +909,13 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             "output_data_dir": self.output_data_dir,
             "channels": sorted(self.channel_input_dirs.keys()),
             "current_host": self.current_host,
+            "current_instance_type": self.current_instance_type,
+            "current_instance_group": self.current_instance_group,
+            "current_instance_group_hosts": self.current_instance_group_hosts,
+            "instance_groups": self.instance_groups,
+            "instance_groups_dict": self.instance_groups_dict,
+            "distribution_instance_groups": self.distribution_instance_groups,
+            "is_hetero": self.is_hetero,
             "module_name": self.module_name,
             "log_level": self.log_level,
             "framework_module": self.framework_module,
@@ -836,10 +1035,15 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
         It has the following keys:
             - current_host: The name of the current container on the container
-                            network. For example, 'algo-1'.
-            -  hosts: The list of names of all containers on the container network,
-                      sorted lexicographically. For example,
-                      `["algo-1", "algo-2", "algo-3"]` for a three-node cluster.
+                        network. For example, 'algo-1'.
+            - current_instance_type: Type of EC2 instance
+            - hosts: The list of names of all nodes on the container
+                        network, sorted lexicographically. For example,
+                        `['algo-1', 'algo-2', 'algo-3']` for a three-node cluster.
+            - current_instance_group: Name of the current instance group
+            - instance_groups: List of instance group dicts containing info about
+                        instance_type, hosts list and group name
+            - network_interface_name: Name of network interface exposed to container
 
         Returns:
             dict[str, str or list(str)]

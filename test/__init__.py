@@ -77,16 +77,17 @@ def prepare(
     current_host="algo-1",
     hosts=None,
     network_interface_name="ethwe",
+    current_instance_group="homogeneousCluster",
     local=False,
 ):
-    # type: (UserModule, dict, list, str, list, str, bool) -> None
+    # type: (UserModule, dict, list, str, list, str, str, bool) -> None
     hosts = hosts or ["algo-1"]
 
     if not local:
         user_module.upload()
 
     create_hyperparameters_config(hyperparameters, user_module.url)
-    create_resource_config(current_host, hosts, network_interface_name)
+    create_resource_config(current_host, hosts, current_instance_group, network_interface_name)
     create_input_data_config(channels)
 
 
@@ -98,21 +99,29 @@ def hyperparameters(**kwargs):  # type: (...) -> dict
 
 
 def create_resource_config(
-    current_host="algo-1", hosts=None, network_interface_name="ethwe"
-):  # type: (str, list, str) -> None
+    current_host="algo-1",
+    hosts=None,
+    current_instance_group="homogeneousCluster",
+    network_interface_name="ethwe",
+):  # type: (str, list, str, str) -> None
 
     if network_interface_name:
         write_json(
             dict(
                 current_host=current_host,
                 hosts=hosts or ["algo-1"],
+                current_instance_group=current_instance_group,
                 network_interface_name=network_interface_name,
             ),
             environment.resource_config_file_dir,
         )
     else:
         write_json(
-            dict(current_host=current_host, hosts=hosts or ["algo-1"]),
+            dict(
+                current_host=current_host,
+                current_instance_group=current_instance_group,
+                hosts=hosts or ["algo-1"],
+            ),
             environment.resource_config_file_dir,
         )
 

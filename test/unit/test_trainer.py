@@ -35,6 +35,8 @@ class EnvironmentNoIntermediate(Mock):
 
 class ScriptEnvironment(Environment):
     framework_module = None
+    current_instance_group = "Test1"
+    distribution_instance_groups = ["Test1"]
 
     def sagemaker_s3_output(self):
         return "s3://bucket"
