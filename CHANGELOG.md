@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.2.0 (2022-07-08)
+
+### Features
+
+ * Heterogeneous cluster changes
+
 ## v4.1.6 (2022-06-28)
 
 ### Bug Fixes and Other Changes
