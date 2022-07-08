@@ -25,7 +25,18 @@ import test
 
 builtins_open = "__builtin__.open" if six.PY2 else "builtins.open"
 
-RESOURCE_CONFIG = dict(current_host="algo-1", hosts=["algo-1", "algo-2", "algo-3"])
+RESOURCE_CONFIG = dict(
+    current_host="algo-1",
+    hosts=["algo-1", "algo-2", "algo-3"],
+    current_group_name="train1",
+    current_instance_type="ml.p3.16xlarge",
+    instance_groups=[
+        dict(
+            instance_group_name="train1", instance_type="ml.p3.16xlarge", hosts=["algo-1", "algo-2"]
+        ),
+        dict(instance_group_name="train2", instance_type="ml.p3.8xlarge", hosts=["algo-3"]),
+    ],
+)
 
 INPUT_DATA_CONFIG = {
     "train": {
@@ -184,6 +195,9 @@ def test_training_env(training_env):
     assert training_env.network_interface_name == "eth0"
     assert training_env.job_name == "training-job-42"
     assert training_env.additional_framework_parameters == {"sagemaker_parameter_server_num": 2}
+    assert training_env.current_instance_group == "train1"
+    assert training_env.current_instance_type == "ml.p3.16xlarge"
+    assert training_env.instance_groups == ["train1", "train2"]
 
 
 def test_env_mapping_properties(training_env):
@@ -213,6 +227,14 @@ def test_env_mapping_properties(training_env):
         "is_master",
         "master_hostname",
         "is_modelparallel_enabled",
+        "instance_groups",
+        "instance_groups_dict",
+        "current_instance_type",
+        "current_instance_group",
+        "current_instance_group_hosts",
+        "distribution_hosts",
+        "distribution_instance_groups",
+        "is_hetero",
     }
 
 

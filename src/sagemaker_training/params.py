@@ -63,3 +63,4 @@ SMDATAPARALLEL_CUSTOM_MPI_OPTIONS = (
     "sagemaker_distributed_dataparallel_custom_mpi_options"
 )  # type: str
 SM_HP_MP_PARAMETERS = "SM_HP_MP_PARAMETERS"
+DISTRIBUTION_INSTANCE_GROUPS = "sagemaker_distribution_instance_groups"  # type: list

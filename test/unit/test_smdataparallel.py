@@ -270,6 +270,122 @@ def test_smdataparallel_run_single_node_python(
         path_exists.assert_called_with("/usr/sbin/sshd")
 
 
+@patch("asyncio.gather", new_callable=AsyncMock)
+@patch("os.path.exists")
+@patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
+@patch("paramiko.SSHClient", new_callable=MockSSHClient)
+@patch("paramiko.AutoAddPolicy")
+@patch("asyncio.create_subprocess_shell")
+@patch("sagemaker_training.environment.Environment")
+def test_hc_smdataparallel_run_single_node_python(
+    training_env,
+    async_shell,
+    policy,
+    ssh_client,
+    python_executable,
+    path_exists,
+    async_gather,
+    event_loop,
+):
+    with patch.dict(os.environ, clear=True):
+        hosts = ["algo-1"]
+        master_hostname = hosts[0]
+        num_hosts = len(hosts)
+        num_processes_per_host = 8
+        num_processes = num_processes_per_host * num_hosts
+        host_list = hosts
+        network_interface_name = "ethw3"
+        smdataparallel_flag = "SMDATAPARALLEL_USE_SINGLENODE=1"
+
+        smdataparallel_runner = smdataparallel.SMDataParallelRunner(
+            user_entry_point="train.py",
+            args=["-v", "--lr", "35"],
+            env_vars={
+                "SM_TRAINING_ENV": '{"additional_framework_parameters":{"sagemaker_distributed_dataparallel_enabled":"true"},\
+                "current_instance_type": "ml.p4d.24xlarge"}'
+            },
+            processes_per_host=num_processes_per_host,
+            master_hostname=master_hostname,
+            hosts=hosts,
+            custom_mpi_options="--verbose",
+            network_interface_name=network_interface_name,
+        )
+
+        _, _, process = smdataparallel_runner.run(wait=False)
+        cmd = [
+            "mpirun",
+            "--host",
+            ",".join(host_list),
+            "-np",
+            str(num_processes),
+            "--allow-run-as-root",
+            "--tag-output",
+            "--oversubscribe",
+            "-mca",
+            "btl_tcp_if_include",
+            network_interface_name,
+            "-mca",
+            "oob_tcp_if_include",
+            network_interface_name,
+            "-mca",
+            "plm_rsh_no_tree_spawn",
+            "1",
+            "-mca",
+            "pml",
+            "ob1",
+            "-mca",
+            "btl",
+            "^openib",
+            "-mca",
+            "orte_abort_on_non_zero_status",
+            "1",
+            "-mca",
+            "btl_vader_single_copy_mechanism",
+            "none",
+            "-mca",
+            "plm_rsh_num_concurrent",
+            str(num_hosts),
+            "-x",
+            "NCCL_SOCKET_IFNAME=%s" % network_interface_name,
+            "-x",
+            "NCCL_DEBUG=INFO",
+            "-x",
+            "LD_LIBRARY_PATH",
+            "-x",
+            "PATH",
+            "-x",
+            smdataparallel_flag,
+            "-x",
+            "FI_PROVIDER=efa",
+            "-x",
+            "RDMAV_FORK_SAFE=1",
+            "-x",
+            "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+            "--verbose",
+            "-x",
+            "FI_EFA_USE_DEVICE_RDMA=1",
+            "smddprun",
+            "usr/bin/python3",
+            "-m",
+            "mpi4py",
+            "train.py",
+            "-v",
+            "--lr",
+            "35",
+        ]
+        async_shell.assert_called_with(
+            " ".join(cmd),
+            cwd=environment.code_dir,
+            env=ANY,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=None,
+        )
+        async_shell.assert_called_once()
+        async_gather.assert_called_once()
+        assert process == async_shell.return_value
+        path_exists.assert_called_with("/usr/sbin/sshd")
+
+
 @patch("sagemaker_training.logging_config.log_script_invocation")
 def test_connection(log):
     with pytest.raises(Exception):

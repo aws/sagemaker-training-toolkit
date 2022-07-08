@@ -77,7 +77,7 @@ def _get_by_runner_type(
             env_vars,
             processes_per_host,
             env.master_hostname,
-            env.hosts,
+            env.distribution_hosts,
             custom_mpi_options,
             env.network_interface_name,
         )
@@ -94,7 +94,7 @@ def _get_by_runner_type(
             env_vars,
             processes_per_host,
             env.master_hostname,
-            env.hosts,
+            env.distribution_hosts,
             custom_mpi_options,
             env.network_interface_name,
             num_processes=num_processes,
