@@ -166,6 +166,29 @@ async def test_watch_custom_error(event_loop, capsys):
     assert output == expected_errmsg
 
 
+@pytest.mark.asyncio
+async def test_watch_special_characters(event_loop, capsys):
+    num_processes_per_host = 8
+    expected_stream = "[1,mpirank:10,algo-2]<stdout>:This is stdout with character �\n"
+    expected_stream += "[1,mpirank:10,algo-2]<stderr>:This is stderr with character �\n"
+    expected_stream += (
+        "[1,mpirank:0,algo-1]<stderr>:ExecuteUserScriptError: [Errno 2] Invalid character �\n"
+    )
+    expected_errmsg = "ExecuteUserScriptError: [Errno 2] Invalid character �\n"
+
+    stream = asyncio.StreamReader()
+    stream.feed_data(b"[1,10]<stdout>:This is stdout with character \x83\n")
+    stream.feed_data(b"[1,10]<stderr>:This is stderr with character \x83\n")
+    stream.feed_data(b"[1,0]<stderr>:ExecuteUserScriptError: [Errno 2] Invalid character \x83")
+    stream.feed_eof()
+
+    error_classes = ["ExecuteUserScriptError"]
+    output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
+    captured_stream = capsys.readouterr()
+    assert captured_stream.out == expected_stream
+    assert output == expected_errmsg
+
+
 @patch("asyncio.run", AsyncMock(side_effect=ValueError("FAIL")))
 def test_create_error():
     with pytest.raises(errors.ExecuteUserScriptError):
