@@ -82,7 +82,8 @@ async def watch(stream, proc_per_host, error_classes=None):
         if not lines or lines == "":
             break
 
-        lines = lines.decode("utf-8").strip().split("\n")
+        # If `lines` contains non-utf-8 characters, replace them with �
+        lines = lines.decode("utf-8", "replace").strip().split("\n")
         for line in lines:
             err_line = line
             if "<stdout>" in line:
