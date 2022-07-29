@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.2.1 (2022-07-29)
+
+### Bug Fixes and Other Changes
+
+ * handle utf-8 decoding exceptions while processing stdout and stderr streams
+
 ## v4.2.0 (2022-07-08)
 
 ### Features
