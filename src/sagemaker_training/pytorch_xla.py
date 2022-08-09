@@ -16,7 +16,13 @@ from __future__ import absolute_import
 
 import os
 
-from sagemaker_training import logging_config, _entry_point_type, environment, errors
+from sagemaker_training import (
+    logging_config,
+    _entry_point_type,
+    environment,
+    errors,
+    process,
+)
 
 
 logger = logging_config.get_logger()
@@ -85,16 +91,18 @@ class PyTorchXLARunner(process.ProcessRunner):
 
         if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
             raise errors.ClientError(
-                "Distributed Training through PT-XLA is not supported for Python packages. Please use a python script as the entry-point"
+                "Distributed Training through PT-XLA is not supported for Python packages. "
+                "Please use a python script as the entry-point"
             )
-        elif entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
+        if entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
             return self.__pytorch_xla_command() + [self._user_entry_point] + self._args
         else:
             raise errors.ClientError(
-                "Distributed Training through PT-XLA is only supported for Python scripts. Please use a python script as the entry-point"
+                "Distributed Training through PT-XLA is only supported for Python scripts. "
+                "Please use a python script as the entry-point"
             )
 
-    def __pytorch_xla_command(self):  # pylint: disable=no-self-use
+    def __pytorch_xla_command(self):
         return [
             self._python_command(),
             "-m",
@@ -105,25 +113,30 @@ class PyTorchXLARunner(process.ProcessRunner):
 
     def __check_compatibility(self):
         try:
-            import torch_xla
-        except ModuleNotFoundError:
+            import torch_xla  # pylint: disable=unused-import, import-outside-toplevel
+        except ModuleNotFoundError as exception:
             raise ModuleNotFoundError(
                 "Unable to find PT-XLA in the execution environment. "
-                "This distribution mechanism requires PT-XLA to be available in the execution environment. "
+                "This distribution mechanism requires PT-XLA to be available"
+                " in the execution environment. "
                 "SageMaker Training Compiler provides ready-to-use containers with PT-XLA. "
-                "Please refer to https://github.com/aws/deep-learning-containers/blob/master/available_images.md "
-            )
+                "Please refer to https://github.com/aws/deep-learning-containers"
+                "/blob/master/available_images.md "
+            ) from exception
 
         try:
-            import torch_xla.distributed.xla_spawn
-        except ModuleNotFoundError:
+            import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import, import-outside-toplevel
+        except ModuleNotFoundError as exception:
             raise ModuleNotFoundError(
                 "Unable to find SageMaker integration code in PT-XLA. "
-                "AWS SageMaker adds custom code on top of open source PT-XLA to provide platform specific "
-                "optimizations. These SageMaker specific binaries are shipped as part of our "
-                "Deep Learning Containers. Please refer to "
-                "https://github.com/aws/deep-learning-containers/blob/master/available_images.md"
-            )
+                "AWS SageMaker adds custom code on top of open source "
+                "PT-XLA to provide platform specific "
+                "optimizations. These SageMaker specific binaries are"
+                " shipped as part of our Deep Learning Containers."
+                " Please refer to "
+                "https://github.com/aws/deep-learning-containers"
+                "/blob/master/available_images.md"
+            ) from exception
 
-        if not (self._num_gpus > 1):
+        if not self._num_gpus > 1:
             raise ValueError("Distributed training through PT-XLA is only supported for GPUs.")
