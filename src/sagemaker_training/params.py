@@ -38,9 +38,7 @@ PARAMETER_SERVER_ENABLED = "sagemaker_parameter_server_enabled"  # type: str
 MULTI_WORKER_MIRRORED_STRATEGY_ENABLED = (
     "sagemaker_multi_worker_mirrored_strategy_enabled"
 )  # type: str
-PTORCH_XLA_MULTI_WORKER_ENABLED = (
-    "sagemaker_pytorch_xla_multi_worker_enabled"
-)  # type: str
+PTORCH_XLA_MULTI_WORKER_ENABLED = "sagemaker_pytorch_xla_multi_worker_enabled"  # type: str
 REGION_NAME_PARAM = "sagemaker_region"  # type: str
 REGION_NAME_ENV = REGION_NAME_PARAM.upper()  # type: str
 DEFAULT_INVOCATIONS_ACCEPT_ENV = "SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT"  # type: str

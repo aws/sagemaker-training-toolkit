@@ -16,20 +16,14 @@ from __future__ import absolute_import
 
 import os
 
-from sagemaker_training import (
-    logging_config,
-    _entry_point_type,
-    environment,
-    errors
-)
+from sagemaker_training import logging_config, _entry_point_type, environment, errors
 
 
 logger = logging_config.get_logger()
 
 
 class PyTorchXLARunner(process.ProcessRunner):
-    """Responsible for preparing PT-XLA distributed training.
-    """
+    """Responsible for preparing PT-XLA distributed training."""
 
     MESH_SERVICE_PORT = 53957
     WORKER_PORT = 43857
@@ -74,11 +68,15 @@ class PyTorchXLARunner(process.ProcessRunner):
 
         os.environ["XRT_HOST_ORDINAL"] = str(self._rank)
         os.environ["XRT_SHARD_WORLD_SIZE"] = str(self._num_hosts)
-        address = 'localservice:{};{}:'+str(self.WORKER_PORT)
-        os.environ["XRT_WORKERS"] = "|".join([address.format(i, host) for i, host in enumerate(self._hosts)])
+        address = "localservice:{};{}:" + str(self.WORKER_PORT)
+        os.environ["XRT_WORKERS"] = "|".join(
+            [address.format(i, host) for i, host in enumerate(self._hosts)]
+        )
         os.environ["GPU_NUM_DEVICES"] = str(self._num_gpus)
         if self._num_hosts > 1:
-            os.environ["XRT_MESH_SERVICE_ADDRESS"] = f"{self._master_hostname}:{self.MESH_SERVICE_PORT}"
+            os.environ[
+                "XRT_MESH_SERVICE_ADDRESS"
+            ] = f"{self._master_hostname}:{self.MESH_SERVICE_PORT}"
 
         logger.info("Completed environment setup for distributed training through PT-XLA Runtime.")
 
@@ -86,14 +84,24 @@ class PyTorchXLARunner(process.ProcessRunner):
         entrypoint_type = _entry_point_type.get(environment.code_dir, self._user_entry_point)
 
         if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
-            raise errors.ClientError("Distributed Training through PT-XLA is not supported for Python packages. Please use a python script as the entry-point")
+            raise errors.ClientError(
+                "Distributed Training through PT-XLA is not supported for Python packages. Please use a python script as the entry-point"
+            )
         elif entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
             return self.__pytorch_xla_command() + [self._user_entry_point] + self._args
         else:
-            raise errors.ClientError("Distributed Training through PT-XLA is only supported for Python scripts. Please use a python script as the entry-point")
+            raise errors.ClientError(
+                "Distributed Training through PT-XLA is only supported for Python scripts. Please use a python script as the entry-point"
+            )
 
-    def __pytorch_xla_command(self): # pylint: disable=no-self-use
-        return [self._python_command(), '-m', 'torch_xla.distributed.xla_spawn', '--num_gpus', str(self._num_gpus)]
+    def __pytorch_xla_command(self):  # pylint: disable=no-self-use
+        return [
+            self._python_command(),
+            "-m",
+            "torch_xla.distributed.xla_spawn",
+            "--num_gpus",
+            str(self._num_gpus),
+        ]
 
     def __check_compatibility(self):
         try:
@@ -117,6 +125,5 @@ class PyTorchXLARunner(process.ProcessRunner):
                 "https://github.com/aws/deep-learning-containers/blob/master/available_images.md"
             )
 
-        if not ( self._num_gpus > 1 ):
+        if not (self._num_gpus > 1):
             raise ValueError("Distributed training through PT-XLA is only supported for GPUs.")
-
