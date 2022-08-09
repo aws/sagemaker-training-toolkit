@@ -1,3 +1,4 @@
 [flake8]
 application_import_names = sagemaker_training, test, gethostname
 import-order-style = google
+ignore = E501, W503
