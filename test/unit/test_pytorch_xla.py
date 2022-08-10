@@ -18,6 +18,7 @@ import os
 from mock import patch
 import pytest
 
+from sagemaker_training.errors import ClientError
 from sagemaker_training.pytorch_xla import PyTorchXLARunner
 
 
@@ -63,7 +64,7 @@ class TestPyTorchXLARunner:
             rank = cluster.index(current_host)
             print(f"Testing as host {rank+1}/{cluster_size}")
             runner = PyTorchXLARunner(
-                user_entry_point="train.sh",
+                user_entry_point="train.py",
                 args=["-v", "--lr", "35"],
                 env_vars={
                     "SM_TRAINING_ENV": json.dumps(
@@ -96,8 +97,58 @@ class TestPyTorchXLARunner:
                     == f"{master}:{PyTorchXLARunner.MESH_SERVICE_PORT}"
                 )
 
-    def test_command(self):
-        raise NotImplementedError()
+    def test_create_command_with_py_script(self, cluster, cluster_size, master, instance_type, num_gpus, *patches):
+        for current_host in cluster:
+            rank = cluster.index(current_host)
+            print(f"Testing as host {rank+1}/{cluster_size}")
+            runner = PyTorchXLARunner(
+                user_entry_point="train.py",
+                args=["-v", "--lr", "35"],
+                env_vars={
+                    "SM_TRAINING_ENV": json.dumps(
+                        {
+                            "additional_framework_parameters": {
+                                "sagemaker_instance_type": instance_type
+                            }
+                        }
+                    ),
+                },
+                processes_per_host=num_gpus,
+                master_hostname=master,
+                current_host=current_host,
+                hosts=cluster,
+                num_gpus=num_gpus,
+            )
+            expected_command = []
+            assert expected_command == runner._create_command()
+
+
+    def test_create_command_with_shell_script(self, cluster, cluster_size, master, instance_type, num_gpus, *patches):
+        for current_host in cluster:
+            rank = cluster.index(current_host)
+            print(f"Testing as host {rank+1}/{cluster_size}")
+            runner = PyTorchXLARunner(
+                user_entry_point="train.sh",
+                args=["-v", "--lr", "35"],
+                env_vars={
+                    "SM_TRAINING_ENV": json.dumps(
+                        {
+                            "additional_framework_parameters": {
+                                "sagemaker_instance_type": instance_type
+                            }
+                        }
+                    ),
+                },
+                processes_per_host=num_gpus,
+                master_hostname=master,
+                current_host=current_host,
+                hosts=cluster,
+                num_gpus=num_gpus,
+            )
+            with pytest.raises(ClientError) as err:
+                runner._create_command()
+            assert 'Please use a python script' in str(err)
+
 
     def test_compatibility(self):
         raise NotImplementedError()
