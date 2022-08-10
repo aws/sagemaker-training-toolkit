@@ -243,7 +243,10 @@ class TestPyTorchXLARunner:
                 runner._check_compatibility()
             assert "Unable to find SageMaker integration code" in err
 
-    @pytest.mark.skipif(is_trcomp_env() or is_oss_pt_xla_env())
+    @pytest.mark.skipif(
+        is_trcomp_env() or is_oss_pt_xla_env(),
+        reason="Testing compatibility with generic container",
+    )
     def test_check_compatibility_with_pt(
         self, cluster, cluster_size, master, instance_type, num_gpus, *patches
     ):
