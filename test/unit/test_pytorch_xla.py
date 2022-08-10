@@ -61,6 +61,7 @@ def num_gpus(instance_type):
 def is_trcomp_env():
     try:
         import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import # noqa: F401
+
         return True
     except ModuleNotFoundError:
         return False
@@ -69,6 +70,7 @@ def is_trcomp_env():
 def is_oss_pt_xla_env():
     try:
         import torch_xla  # pylint: disable=unused-import # noqa: F401
+
         return not is_trcomp_env()
     except ModuleNotFoundError:
         return False
@@ -182,7 +184,10 @@ class TestPyTorchXLARunner:
                 runner._create_command()
             assert "Please use a python script" in str(err)
 
-    @pytest.mark.skipif(not is_trcomp_env(), reason="Processor compatibility check follows environment compatibility check")
+    @pytest.mark.skipif(
+        not is_trcomp_env(),
+        reason="Processor compatibility check follows environment compatibility check",
+    )
     def test_check_compatibility_with_gpu(
         self, cluster, cluster_size, master, instance_type, num_gpus, *patches
     ):
@@ -208,7 +213,9 @@ class TestPyTorchXLARunner:
             )
             runner._check_compatibility()
 
-    @pytest.mark.skipif(not is_oss_pt_xla_env(), reason="This test expects an OSS PT-XLA environment")
+    @pytest.mark.skipif(
+        not is_oss_pt_xla_env(), reason="This test expects an OSS PT-XLA environment"
+    )
     def test_check_compatibility_with_oss_pt_xla(
         self, cluster, cluster_size, master, instance_type, num_gpus, *patches
     ):
@@ -234,7 +241,7 @@ class TestPyTorchXLARunner:
             )
             with pytest.raises(ModuleNotFoundError) as err:
                 runner._check_compatibility()
-            assert 'Unable to find SageMaker integration code' in err
+            assert "Unable to find SageMaker integration code" in err
 
     @pytest.mark.skipif(is_trcomp_env() or is_oss_pt_xla_env())
     def test_check_compatibility_with_pt(
@@ -262,14 +269,15 @@ class TestPyTorchXLARunner:
             )
             with pytest.raises(ModuleNotFoundError) as err:
                 runner._check_compatibility()
-            assert 'requires PT-XLA to be available' in err
+            assert "requires PT-XLA to be available" in err
 
 
-@pytest.mark.skipif(not is_trcomp_env(), reason="Processor compatibility check follows environment compatibility check")
+@pytest.mark.skipif(
+    not is_trcomp_env(),
+    reason="Processor compatibility check follows environment compatibility check",
+)
 @pytest.mark.parametrize("cluster_size", [1, 4])
-def test_check_compatibility_with_cpu(
-    cluster, cluster_size, master, *patches
-):
+def test_check_compatibility_with_cpu(cluster, cluster_size, master, *patches):
     for rank, current_host in enumerate(cluster):
         print(f"Testing as host {rank+1}/{cluster_size}")
         runner = PyTorchXLARunner(
@@ -279,7 +287,7 @@ def test_check_compatibility_with_cpu(
                 "SM_TRAINING_ENV": json.dumps(
                     {
                         "additional_framework_parameters": {
-                            "sagemaker_instance_type": 'ml.c5.4xlarge'
+                            "sagemaker_instance_type": "ml.c5.4xlarge"
                         }
                     }
                 ),
