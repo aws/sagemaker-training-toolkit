@@ -21,27 +21,27 @@ import pytest
 from sagemaker_training.pytorch_xla import PyTorchXLARunner
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def cluster(cluster_size):
     return [f"algo-{i+1}" for i in range(cluster_size)]
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def master(cluster):
     return cluster[0]
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def cluster_size():
     return 2
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def instance_type():
     return "ml.p3.16xlarge"
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def num_gpus(instance_type):
     if instance_type in [
         "ml.p3.16xlarge",
