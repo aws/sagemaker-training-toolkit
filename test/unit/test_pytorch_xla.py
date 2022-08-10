@@ -99,12 +99,14 @@ class TestPyTorchXLARunner:
     def test_create_command_with_py_script(
         self, cluster, cluster_size, master, instance_type, num_gpus, *patches
     ):
+        training_args = ["-v", "--lr", "35"]
+        training_script = "train.py"
         for current_host in cluster:
             rank = cluster.index(current_host)
             print(f"Testing as host {rank+1}/{cluster_size}")
             runner = PyTorchXLARunner(
-                user_entry_point="train.py",
-                args=["-v", "--lr", "35"],
+                user_entry_point=training_script,
+                args=training_args,
                 env_vars={
                     "SM_TRAINING_ENV": json.dumps(
                         {
@@ -120,8 +122,17 @@ class TestPyTorchXLARunner:
                 hosts=cluster,
                 num_gpus=num_gpus,
             )
-            expected_command = []
-            assert expected_command == runner._create_command()
+            received_command = runner._create_command()
+            expected_command = [
+                "python",
+                "-m",
+                "torch_xla.distributed.xla_spawn",
+                "--num_gpus",
+                str(num_gpus),
+                training_script,
+            ] + training_args
+            assert received_command[0].split("/")[-1] == expected_command[0]
+            assert received_command[1:] == expected_command[1:]
 
     def test_create_command_with_shell_script(
         self, cluster, cluster_size, master, instance_type, num_gpus, *patches
