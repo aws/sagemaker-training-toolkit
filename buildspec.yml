@@ -19,12 +19,36 @@ phases:
         AWS_CONTAINER_CREDENTIALS_RELATIVE_URI= AWS_DEFAULT_REGION=
         tox -v -e py37,py38 --parallel all -- test/unit
 
+      # build toolkit
+      - python setup.py sdist
+
+      # build a SageMaker Training Compiler container with AWS PT-XLA
+      - cp dist/sagemaker_training-*.tar.gz test/container/trcomp_pytorch/sagemaker_training.tar.gz
+      - docker build -t sagemaker-training-toolkit-test:trcomp_pytorch -f test/container/trcomp_pytorch/Dockerfile .
+      - rm test/container/trcomp_pytorch/sagemaker_training.tar.gz
+
+      # build a mock container with OSS PT-XLA
+      - cp dist/sagemaker_training-*.tar.gz test/container/oss_pt_xla/sagemaker_training.tar.gz
+      - docker build -t sagemaker-training-toolkit-test:oss_pt_xla -f test/container/oss_pt_xla/Dockerfile .
+      - rm test/container/oss_pt_xla/sagemaker_training.tar.gz
+
+      # run unit tests in SageMaker Training Compiler container
+      - docker run sagemaker-training-toolkit-test:trcomp_pytorch 
+        -e AWS_ACCESS_KEY_ID='' -e AWS_SECRET_ACCESS_KEY='' -e AWS_SESSION_TOKEN=''
+        -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI='' -e AWS_DEFAULT_REGION=''
+        tox -v -e py37,py38 --parallel all -- test/unit
+
+      # run unit tests in OSS PT-XLA container
+      - docker run sagemaker-training-toolkit-test:oss_pt_xla 
+        -e AWS_ACCESS_KEY_ID='' -e AWS_SECRET_ACCESS_KEY='' -e AWS_SESSION_TOKEN=''
+        -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI='' -e AWS_DEFAULT_REGION=''
+        tox -v -e py37,py38 --parallel all -- test/unit
+
       # run functional tests
       - $(aws ecr get-login --no-include-email --region us-west-2)
       - IGNORE_COVERAGE=- tox -v -e py37,py38 -- test/functional
 
       # build dummy container
-      - python setup.py sdist
       - cp dist/sagemaker_training-*.tar.gz test/container/dummy/sagemaker_training.tar.gz
       - cd test/container
       - docker build -t sagemaker-training-toolkit-test:dummy -f dummy/Dockerfile .

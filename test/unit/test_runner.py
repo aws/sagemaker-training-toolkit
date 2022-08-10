@@ -140,3 +140,16 @@ def test_get_runner_by_mpi_with_extra_args(training_env):
 def test_get_runner_invalid_identifier():
     with pytest.raises(ValueError):
         runner.get(42)
+
+
+@patch("sagemaker_training.environment.Environment")
+def test_get_runner_by_pt_xla_returns_runnner(training_env):
+    training_env().num_gpus = 8
+
+    for is_master in [True, False]:
+        training_env().is_master = is_master
+        test_runner = runner.get(runner.PyTorchXLARunnerType)
+
+        assert isinstance(test_runner, pytorch_xla.PyTorchXLARunner)
+        training_env().to_cmd_args.assert_called()
+        training_env().to_env_vars.assert_called()
