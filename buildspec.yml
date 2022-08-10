@@ -33,15 +33,17 @@ phases:
         --build-arg AWS_REGION
 
       # run unit tests in SageMaker Training Compiler container
-      - docker run sagemaker-training-toolkit-test:trcomp_pytorch 
-        -e AWS_ACCESS_KEY_ID='' -e AWS_SECRET_ACCESS_KEY='' -e AWS_SESSION_TOKEN=''
-        -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI='' -e AWS_DEFAULT_REGION=''
+      - docker run 
+        -e AWS_ACCESS_KEY_ID='' -e AWS_SECRET_ACCESS_KEY='' -e AWS_SESSION_TOKEN='' 
+        -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI='' -e AWS_DEFAULT_REGION='' 
+        sagemaker-training-toolkit-test:trcomp_pytorch 
         tox -v -e py37,py38 --parallel all -- test/unit
 
       # run unit tests in OSS PT-XLA container
-      - docker run sagemaker-training-toolkit-test:oss_pt_xla 
-        -e AWS_ACCESS_KEY_ID='' -e AWS_SECRET_ACCESS_KEY='' -e AWS_SESSION_TOKEN=''
-        -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI='' -e AWS_DEFAULT_REGION=''
+      - docker run  
+        -e AWS_ACCESS_KEY_ID='' -e AWS_SECRET_ACCESS_KEY='' -e AWS_SESSION_TOKEN='' 
+        -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI='' -e AWS_DEFAULT_REGION='' 
+        sagemaker-training-toolkit-test:oss_pt_xla 
         tox -v -e py37,py38 --parallel all -- test/unit
 
       # run functional tests
