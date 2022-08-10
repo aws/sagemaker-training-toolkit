@@ -125,7 +125,7 @@ class PyTorchXLARunner(process.ProcessRunner):
             ) from exception
 
         try:
-            import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import
+            import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import # noqa: F401
         except ModuleNotFoundError as exception:
             raise ModuleNotFoundError(
                 "Unable to find SageMaker integration code in PT-XLA. "
