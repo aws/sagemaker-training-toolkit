@@ -1,5 +1,13 @@
 # Changelog
 
+## v4.2.2 (2022-08-10)
+
+### Bug Fixes and Other Changes
+
+ * Removed version hardcoding for sagemaker test dependency
+ * update distribution_instance_group for pytorch ddp
+ * specify flake8 config explicitly
+
 ## v4.2.1 (2022-07-29)
 
 ### Bug Fixes and Other Changes
