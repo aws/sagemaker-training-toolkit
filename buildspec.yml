@@ -27,12 +27,10 @@ phases:
         docker login --username AWS --password-stdin 763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com
       - docker build -t sagemaker-training-toolkit-test:trcomp_pytorch -f test/container/trcomp_pytorch/Dockerfile . 
         --build-arg AWS_REGION
-      - rm test/container/trcomp_pytorch/sagemaker_training.tar.gz
 
       # build a mock container with OSS PT-XLA
       - docker build -t sagemaker-training-toolkit-test:oss_pt_xla -f test/container/oss_pt_xla/Dockerfile . 
         --build-arg AWS_REGION
-      - rm test/container/oss_pt_xla/sagemaker_training.tar.gz
 
       # run unit tests in SageMaker Training Compiler container
       - docker run sagemaker-training-toolkit-test:trcomp_pytorch 
