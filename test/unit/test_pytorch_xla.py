@@ -18,7 +18,7 @@ import os
 from mock import patch
 import pytest
 
-from sagemaker_training import pytorch_xla
+from sagemaker_training.pytorch_xla import PyTorchXLARunner
 
 
 @pytest.fixture(autouse=True)
@@ -57,12 +57,12 @@ def num_gpus(instance_type):
 @pytest.mark.parametrize("instance_type", ["ml.p3.16xlarge", "ml.p3.2xlarge"])
 @pytest.mark.parametrize("cluster_size", [1, 4])
 class TestPyTorchXLARunner:
-    @patch.object(sagemaker_training.pytorch_xla.PyTorchXLARunner, "__check_compatibility")
+    @patch.object(PyTorchXLARunner, "__check_compatibility")
     def test_setup(self, *patches):
         for current_host in cluster:
             rank = cluster.index(current_host)
             print(f"Testing as host {rank+1}/{cluster_size}")
-            runner = pytorch_xla.PyTorchXLARunner(
+            runner = PyTorchXLARunner(
                 user_entry_point="train.sh",
                 args=["-v", "--lr", "35"],
                 env_vars={
@@ -85,7 +85,7 @@ class TestPyTorchXLARunner:
             assert os.environ["XRT_SHARD_WORLD_SIZE"] == str(cluster_size)
             assert os.environ["XRT_WORKERS"] == "|".join(
                 [
-                    f"localservice:{i};{host}:{pytorch_xla.PyTorchXLARunner.WORKER_PORT}"
+                    f"localservice:{i};{host}:{PyTorchXLARunner.WORKER_PORT}"
                     for i, host in enumerate(cluster)
                 ]
             )
@@ -93,7 +93,7 @@ class TestPyTorchXLARunner:
             if cluster_size > 1:
                 assert (
                     os.environ["XRT_MESH_SERVICE_ADDRESS"]
-                    == f"{master}:{pytorch_xla.PyTorchXLARunner.MESH_SERVICE_PORT}"
+                    == f"{master}:{PyTorchXLARunner.MESH_SERVICE_PORT}"
                 )
 
     def test_command(self):
