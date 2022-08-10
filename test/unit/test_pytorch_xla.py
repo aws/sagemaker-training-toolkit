@@ -101,7 +101,7 @@ class TestPyTorchXLARunner:
                 hosts=cluster,
                 num_gpus=num_gpus,
             )
-            runner._check_compatibility = lambda x: None
+            runner._check_compatibility = lambda: None
             runner._setup()
             assert os.environ["XRT_HOST_ORDINAL"] == str(rank)
             assert os.environ["XRT_SHARD_WORLD_SIZE"] == str(cluster_size)
