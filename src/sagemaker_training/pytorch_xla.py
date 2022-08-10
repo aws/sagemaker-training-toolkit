@@ -102,7 +102,7 @@ class PyTorchXLARunner(process.ProcessRunner):
                 "Please use a python script as the entry-point"
             )
 
-    def __pytorch_xla_command(self):
+    def _pytorch_xla_command(self):
         return [
             self._python_command(),
             "-m",
@@ -111,7 +111,7 @@ class PyTorchXLARunner(process.ProcessRunner):
             str(self._num_gpus),
         ]
 
-    def __check_compatibility(self):
+    def _check_compatibility(self):
         try:
             import torch_xla  # pylint: disable=unused-import
         except ModuleNotFoundError as exception:
