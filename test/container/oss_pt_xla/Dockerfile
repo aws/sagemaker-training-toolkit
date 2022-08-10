@@ -1,4 +1,5 @@
-FROM 763104351884.dkr.ecr.us-east-1.amazonaws.com/huggingface-pytorch-trcomp-training:1.10.2-transformers4.17.0-gpu-py38-cu113-ubuntu20.04
+ARG AWS_REGION
+FROM 763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com/huggingface-pytorch-trcomp-training:1.10.2-transformers4.17.0-gpu-py38-cu113-ubuntu20.04
 
 # Disable prompts during package installation
 ENV DEBIAN_FRONTEND="noninteractive"
