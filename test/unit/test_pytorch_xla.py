@@ -97,7 +97,9 @@ class TestPyTorchXLARunner:
                     == f"{master}:{PyTorchXLARunner.MESH_SERVICE_PORT}"
                 )
 
-    def test_create_command_with_py_script(self, cluster, cluster_size, master, instance_type, num_gpus, *patches):
+    def test_create_command_with_py_script(
+        self, cluster, cluster_size, master, instance_type, num_gpus, *patches
+    ):
         for current_host in cluster:
             rank = cluster.index(current_host)
             print(f"Testing as host {rank+1}/{cluster_size}")
@@ -122,7 +124,9 @@ class TestPyTorchXLARunner:
             expected_command = []
             assert expected_command == runner._create_command()
 
-    def test_create_command_with_shell_script(self, cluster, cluster_size, master, instance_type, num_gpus, *patches):
+    def test_create_command_with_shell_script(
+        self, cluster, cluster_size, master, instance_type, num_gpus, *patches
+    ):
         for current_host in cluster:
             rank = cluster.index(current_host)
             print(f"Testing as host {rank+1}/{cluster_size}")
@@ -146,7 +150,7 @@ class TestPyTorchXLARunner:
             )
             with pytest.raises(ClientError) as err:
                 runner._create_command()
-            assert 'Please use a python script' in str(err)
+            assert "Please use a python script" in str(err)
 
     def test_compatibility(self):
         raise NotImplementedError()
