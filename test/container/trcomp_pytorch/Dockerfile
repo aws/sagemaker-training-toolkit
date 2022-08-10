@@ -4,7 +4,7 @@ FROM 763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com/huggingface-pytorch-trcomp
 # Disable prompts during package installation
 ENV DEBIAN_FRONTEND="noninteractive"
 
-COPY test/container/trcomp_pytorch/sagemaker_training.tar.gz /sagemaker_training.tar.gz
+COPY dist/sagemaker_training-*.tar.gz /sagemaker_training.tar.gz
 
 RUN pip install --no-cache-dir \
    /sagemaker_training.tar.gz
