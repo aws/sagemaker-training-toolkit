@@ -103,7 +103,7 @@ class PyTorchXLARunner(process.ProcessRunner):
             )
 
     def _pytorch_xla_command(self):
-        return _python_command + [
+        return self._python_command() + [
             "-m",
             "torch_xla.distributed.xla_spawn",
             "--num_gpus",
