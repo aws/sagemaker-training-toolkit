@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import enum
 
-from sagemaker_training import environment, mpi, params, process, smdataparallel, pytorch_xla
+from sagemaker_training import environment, mpi, params, process, pytorch_xla, smdataparallel
 
 
 class RunnerType(enum.Enum):

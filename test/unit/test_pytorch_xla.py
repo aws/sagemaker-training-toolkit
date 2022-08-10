@@ -12,10 +12,11 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import pytest
-from mock import ANY, MagicMock, patch
-import os
 import json
+import os
+
+from mock import patch
+import pytest
 
 from sagemaker_training import pytorch_xla
 

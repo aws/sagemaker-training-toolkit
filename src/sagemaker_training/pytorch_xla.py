@@ -17,10 +17,10 @@ from __future__ import absolute_import
 import os
 
 from sagemaker_training import (
-    logging_config,
     _entry_point_type,
     environment,
     errors,
+    logging_config,
     process,
 )
 
@@ -113,7 +113,7 @@ class PyTorchXLARunner(process.ProcessRunner):
 
     def __check_compatibility(self):
         try:
-            import torch_xla  # pylint: disable=unused-import, import-outside-toplevel
+            import torch_xla  # pylint: disable=unused-import
         except ModuleNotFoundError as exception:
             raise ModuleNotFoundError(
                 "Unable to find PT-XLA in the execution environment. "
@@ -125,7 +125,7 @@ class PyTorchXLARunner(process.ProcessRunner):
             ) from exception
 
         try:
-            import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import, import-outside-toplevel
+            import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import
         except ModuleNotFoundError as exception:
             raise ModuleNotFoundError(
                 "Unable to find SageMaker integration code in PT-XLA. "
