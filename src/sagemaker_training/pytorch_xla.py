@@ -70,7 +70,7 @@ class PyTorchXLARunner(process.ProcessRunner):
 
     def _setup(self):  # type: () -> None
         logger.info("Starting distributed training through PT-XLA Runtime.")
-        self.__check_compatibility()
+        self._check_compatibility()
 
         os.environ["XRT_HOST_ORDINAL"] = str(self._rank)
         os.environ["XRT_SHARD_WORLD_SIZE"] = str(self._num_hosts)
@@ -95,7 +95,7 @@ class PyTorchXLARunner(process.ProcessRunner):
                 "Please use a python script as the entry-point"
             )
         if entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
-            return self.__pytorch_xla_command() + [self._user_entry_point] + self._args
+            return self._pytorch_xla_command() + [self._user_entry_point] + self._args
         else:
             raise errors.ClientError(
                 "Distributed Training through PT-XLA is only supported for Python scripts. "

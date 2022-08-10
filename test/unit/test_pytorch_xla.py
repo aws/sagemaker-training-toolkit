@@ -58,7 +58,7 @@ def num_gpus(instance_type):
 @pytest.mark.parametrize("instance_type", ["ml.p3.16xlarge", "ml.p3.2xlarge"])
 @pytest.mark.parametrize("cluster_size", [1, 4])
 class TestPyTorchXLARunner:
-    # @patch.object(PyTorchXLARunner, "_check_compatibility")
+    @patch.object(PyTorchXLARunner, "_check_compatibility")
     def test_setup(self, cluster, cluster_size, master, instance_type, num_gpus, *patches):
         for rank, current_host in enumerate(cluster):
             print(f"Testing as host {rank+1}/{cluster_size}")
@@ -80,7 +80,7 @@ class TestPyTorchXLARunner:
                 hosts=cluster,
                 num_gpus=num_gpus,
             )
-            runner.setup()
+            runner._setup()
             assert os.environ["XRT_HOST_ORDINAL"] == str(rank)
             assert os.environ["XRT_SHARD_WORLD_SIZE"] == str(cluster_size)
             assert os.environ["XRT_WORKERS"] == "|".join(
