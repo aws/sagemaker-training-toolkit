@@ -81,7 +81,6 @@ def is_oss_pt_xla_env():
 @pytest.mark.parametrize("cluster_size", [1, 4])
 class TestPyTorchXLARunner:
     def test_setup(self, cluster, cluster_size, master, instance_type, num_gpus, *patches):
-        PyTorchXLARunner._check_compatibility = lambda x: None
         for rank, current_host in enumerate(cluster):
             print(f"Testing as host {rank+1}/{cluster_size}")
             runner = PyTorchXLARunner(
@@ -102,6 +101,7 @@ class TestPyTorchXLARunner:
                 hosts=cluster,
                 num_gpus=num_gpus,
             )
+            runner._check_compatibility = lambda x: None
             runner._setup()
             assert os.environ["XRT_HOST_ORDINAL"] == str(rank)
             assert os.environ["XRT_SHARD_WORLD_SIZE"] == str(cluster_size)
