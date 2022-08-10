@@ -125,7 +125,7 @@ class TestPyTorchXLARunner:
             assert expected_command == runner._create_command()
 
     def test_create_command_with_shell_script(
-        self, cluster, cluster_size, master, instance_type, num_gpus, *patches
+        self, cluster, master, instance_type, num_gpus, *patches
     ):
         for current_host in cluster:
             rank = cluster.index(current_host)
