@@ -33,8 +33,13 @@ try:
 
     # list of exceptions SMDDP wants training toolkit to catch and log
     exception_classes = [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
-except ImportError:
-    logger.info("No exception classes found in smdistributed.dataparallel")
+# relaxed exception type in case of custom exceptions thrown during import
+except Exception:  # pylint: disable=broad-except
+    logger.info(
+        "smdistributed.dataparallel not found or "
+        "using an older version without custom exceptions."
+        "SM training toolkit will track user script error only"
+    )
     exception_classes = [errors.ExecuteUserScriptError]
 
 
