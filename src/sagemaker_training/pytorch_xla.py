@@ -29,7 +29,7 @@ logger = logging_config.get_logger()
 
 
 class PyTorchXLARunner(process.ProcessRunner):
-    """Responsible for preparing PT-XLA distributed training."""
+    """Responsible for PT-XLA distributed training."""
 
     MESH_SERVICE_PORT = 53957
     WORKER_PORT = 43857
@@ -45,7 +45,7 @@ class PyTorchXLARunner(process.ProcessRunner):
         hosts,
         num_gpus,
     ):
-        """Initialize a PyTorchXLARunner, which is responsible for preparing distributed
+        """Initialize a PyTorchXLARunner, which is responsible for distributed
         training with PT-XLA.
 
         Args:
@@ -66,7 +66,7 @@ class PyTorchXLARunner(process.ProcessRunner):
         self._num_gpus = num_gpus
 
         self._num_hosts = len(self._hosts)
-        self._rank = len(self._hosts.index(self._current_host))
+        self._rank = self._hosts.index(self._current_host)
 
     def _setup(self):  # type: () -> None
         logger.info("Starting distributed training through PT-XLA Runtime.")
