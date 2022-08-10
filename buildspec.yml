@@ -23,7 +23,7 @@ phases:
       - python setup.py sdist
 
       # build a SageMaker Training Compiler container with AWS PT-XLA
-      - aws ecr get-login-password --region {$AWS_REGION} | 
+      - aws ecr get-login-password --region ${AWS_REGION} | 
         docker login --username AWS --password-stdin 763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com
       - cp dist/sagemaker_training-*.tar.gz test/container/trcomp_pytorch/sagemaker_training.tar.gz
       - docker build -t sagemaker-training-toolkit-test:trcomp_pytorch -f test/container/trcomp_pytorch/Dockerfile . 
