@@ -241,7 +241,7 @@ class TestPyTorchXLARunner:
             )
             with pytest.raises(ModuleNotFoundError) as err:
                 runner._check_compatibility()
-            assert "Unable to find SageMaker integration code" in err
+            assert "Unable to find SageMaker integration code" in str(err)
 
     @pytest.mark.skipif(
         is_trcomp_env() or is_oss_pt_xla_env(),
@@ -272,7 +272,7 @@ class TestPyTorchXLARunner:
             )
             with pytest.raises(ModuleNotFoundError) as err:
                 runner._check_compatibility()
-            assert "requires PT-XLA to be available" in err
+            assert "requires PT-XLA to be available" in str(err)
 
 
 @pytest.mark.skipif(
