@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from mock import MagicMock, patch
 import pytest
 
-from sagemaker_training import mpi, process, runner
+from sagemaker_training import mpi, process, pytorch_xla, runner
 
 USER_SCRIPT = "script"
 CMD_ARGS = ["--some-arg", 42]

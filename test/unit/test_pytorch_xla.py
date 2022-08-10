@@ -62,7 +62,7 @@ def is_trcomp_env():
     try:
         import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import # noqa: F401
         return True
-    except ModuleNotFoundError as exception:
+    except ModuleNotFoundError:
         return False
 
 
@@ -70,7 +70,7 @@ def is_oss_pt_xla_env():
     try:
         import torch_xla  # pylint: disable=unused-import # noqa: F401
         return not is_trcomp_env()
-    except ModuleNotFoundError as exception:
+    except ModuleNotFoundError:
         return False
 
 
@@ -182,7 +182,7 @@ class TestPyTorchXLARunner:
                 runner._create_command()
             assert "Please use a python script" in str(err)
 
-    @pytest.mark.skipif(not is_trcomp_env() , reason="Processor compatibility check follows environment compatibility check")
+    @pytest.mark.skipif(not is_trcomp_env(), reason="Processor compatibility check follows environment compatibility check")
     def test_check_compatibility_with_gpu(
         self, cluster, cluster_size, master, instance_type, num_gpus, *patches
     ):
@@ -208,7 +208,7 @@ class TestPyTorchXLARunner:
             )
             runner._check_compatibility()
 
-    @pytest.mark.skipif(not is_oss_pt_xla_env() , reason="This test expects an OSS PT-XLA environment")
+    @pytest.mark.skipif(not is_oss_pt_xla_env(), reason="This test expects an OSS PT-XLA environment")
     def test_check_compatibility_with_oss_pt_xla(
         self, cluster, cluster_size, master, instance_type, num_gpus, *patches
     ):
@@ -265,7 +265,7 @@ class TestPyTorchXLARunner:
             assert 'requires PT-XLA to be available' in err
 
 
-@pytest.mark.skipif(not is_trcomp_env() , reason="Processor compatibility check follows environment compatibility check")
+@pytest.mark.skipif(not is_trcomp_env(), reason="Processor compatibility check follows environment compatibility check")
 @pytest.mark.parametrize("cluster_size", [1, 4])
 def test_check_compatibility_with_cpu(
     cluster, cluster_size, master, *patches
