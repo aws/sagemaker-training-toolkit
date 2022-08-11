@@ -58,24 +58,6 @@ def num_gpus(instance_type):
         return 0
 
 
-def is_trcomp_env():
-    try:
-        import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import # noqa: F401
-
-        return True
-    except ModuleNotFoundError:
-        return False
-
-
-def is_oss_pt_xla_env():
-    try:
-        import torch_xla  # pylint: disable=unused-import # noqa: F401
-
-        return not is_trcomp_env()
-    except ModuleNotFoundError:
-        return False
-
-
 @patch.dict(os.environ, {}, clear=True)
 @pytest.mark.parametrize("instance_type", ["ml.p3.16xlarge", "ml.p3.2xlarge"])
 @pytest.mark.parametrize("cluster_size", [1, 4])
@@ -161,7 +143,7 @@ class TestPyTorchXLARunner:
     ):
         for current_host in cluster:
             rank = cluster.index(current_host)
-            print(f"Testing as host {rank+1}/{cluster_size}")
+            print(f"Testing as host {rank + 1}/{cluster_size}")
             runner = PyTorchXLARunner(
                 user_entry_point="train.sh",
                 args=["-v", "--lr", "35"],
@@ -184,15 +166,11 @@ class TestPyTorchXLARunner:
                 runner._create_command()
             assert "Please use a python script" in str(err)
 
-    @pytest.mark.skipif(
-        not is_trcomp_env(),
-        reason="Processor compatibility check follows environment compatibility check",
-    )
-    def test_check_compatibility_with_gpu(
+    def test_check_gpu_compatibility(
         self, cluster, cluster_size, master, instance_type, num_gpus, *patches
     ):
         for rank, current_host in enumerate(cluster):
-            print(f"Testing as host {rank+1}/{cluster_size}")
+            print(f"Testing as host {rank + 1}/{cluster_size}")
             runner = PyTorchXLARunner(
                 user_entry_point="train.py",
                 args=["-v", "--lr", "35"],
@@ -211,16 +189,13 @@ class TestPyTorchXLARunner:
                 hosts=cluster,
                 num_gpus=num_gpus,
             )
-            runner._check_compatibility()
+            runner._check_processor_compatibility()
 
-    @pytest.mark.skipif(
-        not is_oss_pt_xla_env(), reason="This test expects an OSS PT-XLA environment"
-    )
-    def test_check_compatibility_with_oss_pt_xla(
+    def test_check_env_compatibility(
         self, cluster, cluster_size, master, instance_type, num_gpus, *patches
     ):
         for rank, current_host in enumerate(cluster):
-            print(f"Testing as host {rank+1}/{cluster_size}")
+            print(f"Testing as host {rank + 1}/{cluster_size}")
             runner = PyTorchXLARunner(
                 user_entry_point="train.py",
                 args=["-v", "--lr", "35"],
@@ -239,50 +214,17 @@ class TestPyTorchXLARunner:
                 hosts=cluster,
                 num_gpus=num_gpus,
             )
-            with pytest.raises(ModuleNotFoundError) as err:
-                runner._check_compatibility()
+            with pytest.raises(ClientError) as err:
+                runner._check_for_torch_xla()
+            assert "mechanism requires PT-XLA" in str(err)
+            with pytest.raises(ClientError) as err:
+                runner._check_for_sagemaker_integration()
             assert "Unable to find SageMaker integration code" in str(err)
 
-    @pytest.mark.skipif(
-        is_trcomp_env() or is_oss_pt_xla_env(),
-        reason="Testing compatibility with generic container",
-    )
-    def test_check_compatibility_with_pt(
-        self, cluster, cluster_size, master, instance_type, num_gpus, *patches
-    ):
-        for rank, current_host in enumerate(cluster):
-            print(f"Testing as host {rank+1}/{cluster_size}")
-            runner = PyTorchXLARunner(
-                user_entry_point="train.py",
-                args=["-v", "--lr", "35"],
-                env_vars={
-                    "SM_TRAINING_ENV": json.dumps(
-                        {
-                            "additional_framework_parameters": {
-                                "sagemaker_instance_type": instance_type
-                            }
-                        }
-                    ),
-                },
-                processes_per_host=num_gpus,
-                master_hostname=master,
-                current_host=current_host,
-                hosts=cluster,
-                num_gpus=num_gpus,
-            )
-            with pytest.raises(ModuleNotFoundError) as err:
-                runner._check_compatibility()
-            assert "requires PT-XLA to be available" in str(err)
 
-
-@pytest.mark.skipif(
-    not is_trcomp_env(),
-    reason="Processor compatibility check follows environment compatibility check",
-)
-@pytest.mark.parametrize("cluster_size", [1, 4])
-def test_check_compatibility_with_cpu(cluster, cluster_size, master, *patches):
+def test_check_cpu_compatibility(cluster, cluster_size, master, *patches):
     for rank, current_host in enumerate(cluster):
-        print(f"Testing as host {rank+1}/{cluster_size}")
+        print(f"Testing as host {rank + 1}/{cluster_size}")
         runner = PyTorchXLARunner(
             user_entry_point="train.py",
             args=["-v", "--lr", "35"],
@@ -302,5 +244,5 @@ def test_check_compatibility_with_cpu(cluster, cluster_size, master, *patches):
             num_gpus=0,
         )
         with pytest.raises(ValueError) as err:
-            runner._check_compatibility()
+            runner._check_processor_compatibility()
         assert "only supported for GPU" in str(err)

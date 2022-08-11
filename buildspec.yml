@@ -22,31 +22,6 @@ phases:
       # build toolkit
       - python setup.py sdist
 
-      # build a SageMaker Training Compiler container with AWS PT-XLA
-      - aws ecr get-login-password --region ${AWS_REGION} | 
-        docker login --username AWS --password-stdin 763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com
-      - docker build -t sagemaker-training-toolkit-test:trcomp_pytorch -f test/container/trcomp_pytorch/Dockerfile . 
-        --build-arg AWS_REGION
-
-      # build a mock container with OSS PT-XLA
-      - docker build -t sagemaker-training-toolkit-test:oss_pt_xla -f test/container/oss_pt_xla/Dockerfile . 
-        --build-arg AWS_REGION
-
-      # run unit tests in SageMaker Training Compiler container
-      - docker run 
-        -e AWS_ACCESS_KEY_ID='' -e AWS_SECRET_ACCESS_KEY='' -e AWS_SESSION_TOKEN='' 
-        -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI='' -e AWS_DEFAULT_REGION=''
-        -v $(pwd):$(pwd) -w $(pwd)
-        sagemaker-training-toolkit-test:trcomp_pytorch 
-        tox -v -e py37,py38 --parallel all -- test/unit
-
-      # run unit tests in OSS PT-XLA container
-      - docker run  
-        -e AWS_ACCESS_KEY_ID='' -e AWS_SECRET_ACCESS_KEY='' -e AWS_SESSION_TOKEN='' 
-        -v $(pwd):$(pwd) -w $(pwd) 
-        sagemaker-training-toolkit-test:oss_pt_xla 
-        tox -v -e py37,py38 --parallel all -- test/unit
-
       # run functional tests
       - $(aws ecr get-login --no-include-email --region us-west-2)
       - IGNORE_COVERAGE=- tox -v -e py37,py38 -- test/functional
@@ -58,6 +33,12 @@ phases:
       - rm dummy/sagemaker_training.tar.gz
 
       - cd ../..
+
+      # build a SageMaker Training Compiler container with PyTorch
+      - aws ecr get-login-password --region ${AWS_REGION} | 
+        docker login --username AWS --password-stdin 763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com
+      - docker build -t sagemaker-training-toolkit-test:trcomp_pytorch -f test/container/trcomp_pytorch/Dockerfile . 
+        --build-arg AWS_REGION
 
       # run local integration tests
       - IGNORE_COVERAGE=- tox -v -e py37,py38 -- test/integration/local

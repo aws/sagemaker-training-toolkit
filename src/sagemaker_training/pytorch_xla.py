@@ -111,18 +111,11 @@ class PyTorchXLARunner(process.ProcessRunner):
         ]
 
     def _check_compatibility(self):
-        try:
-            import torch_xla  # pylint: disable=unused-import
-        except ModuleNotFoundError as exception:
-            raise ModuleNotFoundError(
-                "Unable to find PT-XLA in the execution environment. "
-                "This distribution mechanism requires PT-XLA to be available"
-                " in the execution environment. "
-                "SageMaker Training Compiler provides ready-to-use containers with PT-XLA. "
-                "Please refer to https://github.com/aws/deep-learning-containers"
-                "/blob/master/available_images.md "
-            ) from exception
+        self._check_processor_compatibility()
+        self._check_for_torch_xla()
+        self._check_for_sagemaker_integration()
 
+    def _check_for_sagemaker_integration(self):
         try:
             import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import # noqa: F401
         except ModuleNotFoundError as exception:
@@ -137,5 +130,19 @@ class PyTorchXLARunner(process.ProcessRunner):
                 "/blob/master/available_images.md"
             ) from exception
 
+    def _check_for_torch_xla(self):
+        try:
+            import torch_xla  # pylint: disable=unused-import
+        except ModuleNotFoundError as exception:
+            raise ModuleNotFoundError(
+                "Unable to find PT-XLA in the execution environment. "
+                "This distribution mechanism requires PT-XLA to be available"
+                " in the execution environment. "
+                "SageMaker Training Compiler provides ready-to-use containers with PT-XLA. "
+                "Please refer to https://github.com/aws/deep-learning-containers"
+                "/blob/master/available_images.md "
+            ) from exception
+
+    def _check_processor_compatibility(self):
         if not self._num_gpus > 1:
             raise ValueError("Distributed training through PT-XLA is only supported for GPUs.")
