@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.2.3 (2022-08-11)
+
+### Bug Fixes and Other Changes
+
+ * update num_processes_per_host for smdataparallel runner
+
 ## v4.2.2 (2022-08-10)
 
 ### Bug Fixes and Other Changes
