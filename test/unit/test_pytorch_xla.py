@@ -214,10 +214,10 @@ class TestPyTorchXLARunner:
                 hosts=cluster,
                 num_gpus=num_gpus,
             )
-            with pytest.raises(ClientError) as err:
+            with pytest.raises(ModuleNotFoundError) as err:
                 runner._check_for_torch_xla()
             assert "mechanism requires PT-XLA" in str(err)
-            with pytest.raises(ClientError) as err:
+            with pytest.raises(ModuleNotFoundError) as err:
                 runner._check_for_sagemaker_integration()
             assert "Unable to find SageMaker integration code" in str(err)
 
