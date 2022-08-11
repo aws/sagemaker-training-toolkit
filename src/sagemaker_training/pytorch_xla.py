@@ -116,6 +116,7 @@ class PyTorchXLARunner(process.ProcessRunner):
         self._check_for_sagemaker_integration()
 
     def _check_for_sagemaker_integration(self):
+        # pylint: disable=no-self-use
         try:
             import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import # noqa: F401
         except ModuleNotFoundError as exception:
@@ -131,6 +132,7 @@ class PyTorchXLARunner(process.ProcessRunner):
             ) from exception
 
     def _check_for_torch_xla(self):
+        # pylint: disable=no-self-use
         try:
             import torch_xla  # pylint: disable=unused-import # noqa: F401
         except ModuleNotFoundError as exception:
