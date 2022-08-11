@@ -50,7 +50,7 @@ def test_smdataparallel_run_multi_node_python(
         hosts = ["algo-1", "algo-2"]
         master_hostname = hosts[0]
         num_hosts = len(hosts)
-        num_processes_per_host = 8
+        num_processes_per_host = 2
         num_processes = num_processes_per_host * num_hosts
         host_list = ["{}:{}".format(host, num_processes_per_host) for host in hosts]
         network_interface_name = "ethw3"
@@ -176,7 +176,7 @@ def test_smdataparallel_run_single_node_python(
         hosts = ["algo-1"]
         master_hostname = hosts[0]
         num_hosts = len(hosts)
-        num_processes_per_host = 8
+        num_processes_per_host = 4
         num_processes = num_processes_per_host * num_hosts
         host_list = hosts
         network_interface_name = "ethw3"
