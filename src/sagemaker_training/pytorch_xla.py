@@ -146,5 +146,5 @@ class PyTorchXLARunner(process.ProcessRunner):
             ) from exception
 
     def _check_processor_compatibility(self):
-        if not self._num_gpus > 1:
+        if not self._num_gpus > 0:
             raise ValueError("Distributed training through PT-XLA is only supported for GPUs.")
