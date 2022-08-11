@@ -132,7 +132,7 @@ class PyTorchXLARunner(process.ProcessRunner):
 
     def _check_for_torch_xla(self):
         try:
-            import torch_xla  # pylint: disable=unused-import
+            import torch_xla  # pylint: disable=unused-import # noqa: F401
         except ModuleNotFoundError as exception:
             raise ModuleNotFoundError(
                 "Unable to find PT-XLA in the execution environment. "
