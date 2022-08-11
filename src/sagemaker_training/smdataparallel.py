@@ -83,6 +83,7 @@ class SMDataParallelRunner(process.ProcessRunner):
 
         self._master_hostname = master_hostname
         self._hosts = hosts
+        self._processes_per_host = processes_per_host
         self._custom_mpi_options = custom_mpi_options
         self._network_interface_name = network_interface_name
         self._interval = interval
@@ -223,10 +224,8 @@ class SMDataParallelRunner(process.ProcessRunner):
         """
         host_list = self._hosts
         num_hosts = len(self._hosts)
-        # SMDATAPARALLEL expects instances to have 8 GPUs
-        # each GPU will run 1 process
-        num_processes_per_host = 8
-        num_processes = num_hosts * num_processes_per_host
+        num_processes = self._processes_per_host * num_hosts
+
         logger.info("Network interface name: %s" % self._network_interface_name)
         logger.info("Host: %s" % self._hosts)
         if num_hosts > 1:
@@ -234,7 +233,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             # homogeneous mode uses 16 processes per host; 8 server; 8 worker
             smdataparallel_server_addr = self._master_hostname
             smdataparallel_server_port = 7592
-            host_list = ["{}:{}".format(host, num_processes_per_host) for host in self._hosts]
+            host_list = ["{}:{}".format(host, self._processes_per_host) for host in self._hosts]
             smdataparallel_flag = "SMDATAPARALLEL_USE_HOMOGENEOUS=1"
             command = self._get_mpirun_command(
                 num_hosts,
@@ -250,6 +249,9 @@ class SMDataParallelRunner(process.ProcessRunner):
             command = self._get_mpirun_command(
                 num_hosts, host_list, smdataparallel_flag, num_processes
             )
+
+        msg = "Env Hosts: %s Hosts: %s process_per_hosts: %s num_processes: %s"
+        logger.info(msg, self._hosts, host_list, self._processes_per_host, num_processes)
 
         return command
 
