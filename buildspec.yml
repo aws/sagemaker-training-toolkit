@@ -34,11 +34,5 @@ phases:
 
       - cd ../..
 
-      # build a SageMaker Training Compiler container with PyTorch
-      - aws ecr get-login-password --region ${AWS_REGION} | 
-        docker login --username AWS --password-stdin 763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com
-      - docker build -t sagemaker-training-toolkit-test:trcomp_pytorch -f test/container/trcomp_pytorch/Dockerfile . 
-        --build-arg AWS_REGION
-
       # run local integration tests
       - IGNORE_COVERAGE=- tox -v -e py37,py38 -- test/integration/local
