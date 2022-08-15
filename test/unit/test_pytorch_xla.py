@@ -85,6 +85,10 @@ class TestPyTorchXLARunner:
             )
             runner._check_compatibility = lambda: None
             runner._setup()
+            assert os.environ["NCCL_DEBUG"] == "info"
+            assert os.environ["NCCL_PROTO"] == "simple"
+            assert os.environ["FI_EFA_USE_DEVICE_RDMA"] == "1"
+            assert os.environ["OFI_NCCL_NIC_DUP_CONNS"] == str(num_gpus)
             assert os.environ["XRT_HOST_ORDINAL"] == str(rank)
             assert os.environ["XRT_SHARD_WORLD_SIZE"] == str(cluster_size)
             assert os.environ["XRT_WORKERS"] == "|".join(

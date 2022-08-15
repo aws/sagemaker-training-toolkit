@@ -72,6 +72,19 @@ class PyTorchXLARunner(process.ProcessRunner):
         logger.info("Starting distributed training through PT-XLA Runtime.")
         self._check_compatibility()
 
+        # Set NCCL logging to info to debug customer issues
+        os.environ["NCCL_DEBUG"] = "info"
+
+        # Use `simple` protocol to handle the out-of-order data delivery from EFA
+        os.environ["NCCL_PROTO"] = "simple"
+
+        # Use GPU RDMA when available (available only in p4d.24xlarge)
+        os.environ["FI_EFA_USE_DEVICE_RDMA"] = "1"
+
+        # Use multiple connections per GPU to better saturate the EFA bandwidth
+        os.environ["OFI_NCCL_NIC_DUP_CONNS"] = str(self._num_gpus)
+
+        # Set cluster configuration for XLA runtime
         os.environ["XRT_HOST_ORDINAL"] = str(self._rank)
         os.environ["XRT_SHARD_WORLD_SIZE"] = str(self._num_hosts)
         address = "localservice:{};{}:" + str(self.WORKER_PORT)
