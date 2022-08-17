@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.2.5 (2022-08-17)
+
+### Bug Fixes and Other Changes
+
+ * relax exception type
+
 ## v4.2.4 (2022-08-15)
 
 ## v4.2.3 (2022-08-11)
