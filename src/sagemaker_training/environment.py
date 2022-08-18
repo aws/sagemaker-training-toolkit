@@ -792,6 +792,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         We populate the sagemaker_distribution_instance_groups with current instance group name ~
         homogeneousCluster
         """
+        # pylint: disable=too-many-boolean-expressions
         distribution_instance_groups = []
         current_instance_group = self.resource_config.get(
             "current_group_name", "homogeneousCluster"
@@ -805,6 +806,9 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
                 "sagemaker_distributed_dataparallel_enabled", False
             )
             or self._additional_framework_parameters.get("sagemaker_pytorch_ddp_enabled", False)
+            or self._additional_framework_parameters.get(
+                "sagemaker_pytorch_xla_multi_worker_enabled", False
+            )
             or self._additional_framework_parameters.get(
                 "sagemaker_multi_worker_mirrored_strategy_enabled", False
             )
