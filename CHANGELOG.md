@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.2.6 (2022-08-18)
+
+### Bug Fixes and Other Changes
+
+ * Enable PT XLA distributed training on homogeneous clusters
+
 ## v4.2.5 (2022-08-17)
 
 ### Bug Fixes and Other Changes
