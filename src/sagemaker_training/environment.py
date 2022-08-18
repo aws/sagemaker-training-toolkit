@@ -806,6 +806,9 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             )
             or self._additional_framework_parameters.get("sagemaker_pytorch_ddp_enabled", False)
             or self._additional_framework_parameters.get(
+                "sagemaker_pytorch_xla_multi_worker_enabled", False
+            )
+            or self._additional_framework_parameters.get(
                 "sagemaker_multi_worker_mirrored_strategy_enabled", False
             )
         ):
