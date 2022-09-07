@@ -36,6 +36,14 @@ logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
 DEFAULT_ERROR_CLASS = errors.ExecuteUserScriptError
+COMMUNICATION_BACKEND_NCCL = "nccl"
+
+SMDDP_LIB_PATHS = [
+    "/opt/conda/lib/libsmddp.so",
+    "/opt/conda/lib/libsmddpcoll.so",
+    "/opt/conda/lib/liboutofband.so",
+    "/opt/conda/lib/libgloo.so",
+]
 
 
 def get_dataparallel_exception_classes():
@@ -148,6 +156,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         overridden_known_options, additional_options = _parse_custom_mpi_options(
             self._custom_mpi_options
         )
+        smddp_collectives_enabled = self.use_smddp_collectives()
 
         mpirun_command = [
             "mpirun",
@@ -225,6 +234,11 @@ class SMDataParallelRunner(process.ProcessRunner):
                 ]
             )
 
+        if smddp_collectives_enabled:
+            mpirun_command.extend(["-x", "USE_SMDDP_COLLECTIVES=1"])
+        else:
+            mpirun_command.extend(["-x", "USE_SMDDP_COLLECTIVES=0"])
+
         smddprun_command = ["smddprun"]
         mpirun_command.extend(smddprun_command)
         return mpirun_command
@@ -240,6 +254,24 @@ class SMDataParallelRunner(process.ProcessRunner):
             instance_type = sm_training_env.get("current_instance_type", None)
         logger.info("instance type: %s" % instance_type)
         return instance_type
+
+    def use_smddp_collectives(self):
+        """Check if communication_backend is set to auto.
+        If yes, enable SMDDP collectives support."""
+        sm_training_env = json.loads(self._env_vars.get("SM_TRAINING_ENV"))
+        additional_fw_params = sm_training_env.get("additional_framework_parameters")
+        if not additional_fw_params:
+            return False
+        comm_backend = additional_fw_params.get("sagemaker_communication_backend")
+        logger.info("sagemaker_communication_backend: %s" % comm_backend)
+        is_smddp_coll_installed = _validate_smddp_coll_libs_present()
+        if (
+            not comm_backend
+            or comm_backend == COMMUNICATION_BACKEND_NCCL
+            or not is_smddp_coll_installed
+        ):
+            return False
+        return True
 
     def _create_command(self):
         """Create mpi-based smddprun command.
@@ -432,3 +464,28 @@ def _parse_custom_mpi_options(custom_mpi_options):
     parser.add_argument("--NCCL_DEBUG", default="INFO", type=str)
 
     return parser.parse_known_args(custom_mpi_options.split())
+
+
+def _validate_smddp_coll_libs_present():
+    """Check if SMDDP collective communication libraries are present in the
+    container and have executable permissions. These libraries are installed in
+    SageMaker DLCs via an smddp-installer-<versions>.run file in the
+    deep-learning-containers package.
+
+    libsmddp.so is preloaded for training when SMDDP Collectives are used.
+    The other libraries libsmddpcoll.so, liboutofband.so and libgloo.so are
+    essential for successful training. Thus, if the libraries are absent,
+    we want to avoid training failure by disabling SMDDP Collectives.
+    """
+    for path in SMDDP_LIB_PATHS:
+        if not os.path.exists(path):
+            logger.warning("Missing library %s for SMDDP collective", path)
+            logger.warning(
+                "The system is not configured to run SMDDP collectives optimized"
+                "for AWS infrastructure."
+                "Please use the latest SageMaker Deep Learning Container (DLC) to "
+                "enable SMDDP Collectives support.\n"
+                "Continuing model training with default NCCL communication backend.\n"
+            )
+            return False
+    return True
