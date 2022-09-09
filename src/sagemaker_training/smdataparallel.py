@@ -22,7 +22,14 @@ import time
 import paramiko
 
 import gethostname
-from sagemaker_training import environment, errors, logging_config, process, timeout
+from sagemaker_training import (
+    environment,
+    errors,
+    logging_config,
+    process,
+    SM_EFA_NCCL_INSTANCES,
+    timeout,
+)
 
 
 logger = logging_config.get_logger()
@@ -41,6 +48,8 @@ except Exception:  # pylint: disable=broad-except
         "SM training toolkit will track user script error only"
     )
     exception_classes = [errors.ExecuteUserScriptError]
+
+MPI_FINISHED_STATUS_FILE = "/tmp/done"
 
 
 class SMDataParallelRunner(process.ProcessRunner):
@@ -185,9 +194,12 @@ class SMDataParallelRunner(process.ProcessRunner):
         mpirun_command.extend(additional_options)
 
         instance_type = self._get_instance_type()
-        # Use EFA's RDMA functionality for one-sided and two-sided transfer
-        if instance_type in ["ml.p3dn.24xlarge", "ml.p4d.24xlarge"]:
+        # EFA settings
+        if instance_type in SM_EFA_NCCL_INSTANCES:
+            # Use EFA's RDMA functionality for one-sided and two-sided transfer
             mpirun_command.extend(["-x", "FI_EFA_USE_DEVICE_RDMA=1"])
+            # Use simple protocol to handle the out-of-order data delivery from EFA
+            mpirun_command.extend(["-x", "NCCL_PROTO=simple"])
 
         if smdataparallel_server_addr and smdataparallel_server_port:
             # in case of multi-node [distributed] training, smdataparallel_server_addr,
@@ -300,6 +312,28 @@ class SMDataParallelRunner(process.ProcessRunner):
                 capture_error=capture_error,
                 cwd=environment.code_dir,
             )
+
+        logger.info("Begin writing status file from leader node to worker nodes")
+        # Write status file to all nodes
+        status_file = MPI_FINISHED_STATUS_FILE + "." + self._master_hostname
+        for host in self._hosts:
+            if host != self._master_hostname:
+                status = _write_status_file(host, status_file)
+                retry_count = 5 if not status else 0
+                while not status:
+                    if retry_count == 0:
+                        break
+                    logger.info(f"Retry creating status file onto {host}")
+                    retry_count -= 1
+                    time.sleep(1)
+                    status = _write_status_file(host, status_file)
+
+                if not status:
+                    logger.info(f"Failed to create status file onto {host}")
+
+        time.sleep(30)
+        logger.info("Finished writing status file from leader node to worker nodes")
+
         self._tear_down()
         return process_spawned
 
@@ -355,6 +389,23 @@ def _can_connect(host, port=22):
     finally:
         client.close()
         logger.info("Connection closed")
+
+
+def _write_status_file(host, status_file):
+    try:
+        logger.info(f"Start writing mpirun finished status to {host}")
+        output = subprocess.run(
+            ["ssh", str(host), "touch", f"{status_file}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        logger.info(f"output from subprocess run {output}")
+        logger.info("Finished writing status file")
+        return True
+    except subprocess.CalledProcessError:
+        logger.info(f"Cannot connect to {host}")
+        return False
 
 
 def _parse_custom_mpi_options(custom_mpi_options):
