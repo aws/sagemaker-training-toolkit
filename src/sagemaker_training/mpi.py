@@ -23,10 +23,19 @@ import paramiko
 import psutil
 
 import gethostname
-from sagemaker_training import environment, errors, logging_config, process, timeout
+from sagemaker_training import (
+    environment,
+    errors,
+    logging_config,
+    process,
+    SM_EFA_NCCL_INSTANCES,
+    timeout,
+)
 
 logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
+
+MPI_FINISHED_STATUS_FILE = "/tmp/done"
 
 
 def get_modelparallel_exception_classes():
@@ -60,7 +69,9 @@ class WorkerRunner(process.ProcessRunner):
     master execution to finish.
     """
 
-    def __init__(self, user_entry_point, args, env_vars, processes_per_host, master_hostname):
+    def __init__(
+        self, user_entry_point, args, env_vars, processes_per_host, master_hostname, current_host
+    ):
         """Initialize a WorkerRunner, which is responsible for preparing distributed
         training with MPI and waiting for MPI master execution to finish.
 
@@ -69,9 +80,11 @@ class WorkerRunner(process.ProcessRunner):
             args ([str]): A list of arguments to include when executing the entry point.
             env_vars (dict(str,str)): A dictionary of environment variables.
             master_hostname (str): The master hostname.
+            current_hostname (str): Current hostname.
         """
         super(WorkerRunner, self).__init__(user_entry_point, args, env_vars, processes_per_host)
         self._master_hostname = str(master_hostname)
+        self._current_host = str(current_host)
 
     def run(
         self, wait=True, capture_error=False
@@ -81,6 +94,8 @@ class WorkerRunner(process.ProcessRunner):
         - wait for the MPI Master to create its SSH daemon
         - start its SSH daemon
         - monitor the MPI orted process and wait it to finish the MPI execution
+        - wait for the status file from master
+        - Exit once orted process is finished and status file is found.
         """
         logger.info("Starting MPI run as worker node.")
         if wait:
@@ -95,18 +110,41 @@ class WorkerRunner(process.ProcessRunner):
 
         if wait:
             logger.info("Waiting for MPI process to finish.")
-            _wait_orted_process_to_finish()
+            gone, alive = _wait_orted_process_to_finish()
+            logger.info(f"Reporting status for ORTEd process. gone: {gone} alive: {alive}")
             logger.info("Orted process exited")
             time.sleep(30)
+            logger.info(f"Begin looking for status file on {self._current_host}")
+            status_file = MPI_FINISHED_STATUS_FILE + "." + self._master_hostname
+            file_found = self._wait_for_status_file(status_file)
+            if file_found:
+                logger.info("MPI training job status file found. Exit gracefully")
+            else:
+                logger.info("Status file not found. Exiting...")
+            logger.info("End looking for status file")
         logger.info("MPI process finished.")
+
+    def _wait_for_status_file(self, status_file):
+        start_time = time.time()
+        file_found = os.path.exists(status_file)
+        while not file_found:
+            time.sleep(30)
+            curr_time = time.time()
+            # Check connectivity with master every 2 minutes
+            if int(curr_time - start_time) % 120 == 0:
+                logger.info("status file not found...")
+                if not _can_connect(self._master_hostname):
+                    return False
+            file_found = os.path.exists(status_file)
+        return True
 
     def _wait_master_to_start(self):  # type: () -> None
         while not _can_connect(self._master_hostname):
             time.sleep(1)
 
-    def _wait_master_to_finish(self):  # type: () -> None
-        while _can_connect(self._master_hostname):
-            time.sleep(30)
+    # def _wait_master_to_finish(self):  # type: () -> None
+    #     while _can_connect(self._master_hostname):
+    #         time.sleep(30)
 
 
 def _write_env_vars_to_file():  # type: () -> None
@@ -115,11 +153,17 @@ def _write_env_vars_to_file():  # type: () -> None
             f.write("{}={}\n".format(name, os.environ.get(name)))
 
 
+def _on_terminate(proc):
+    logger.info("Invoked on_terminate from psutil.wait_for_procs")
+    logger.info("process {} terminated with exit code {}".format(proc, proc.returncode))
+
+
 def _wait_orted_process_to_finish():  # type: () -> None
     orted = _orted_process()
     logger.info("Orted process found %s", orted)
     logger.info("Waiting for orted process %s", orted)
-    psutil.wait_procs(orted)
+    gone, alive = psutil.wait_procs(orted, callback=_on_terminate)
+    return gone, alive
 
 
 def _orted_process():  # pylint: disable=inconsistent-return-statements
@@ -150,6 +194,7 @@ class MasterRunner(process.ProcessRunner):
         interval=1,
         timeout_in_seconds=60 * 60,
         num_processes=None,
+        instance_type="ml.p3.16xlarge",
     ):
         """Initialize a MasterRunner, which is responsible for preparing distributed
         training with MPI and synchronizing work among the Workers.
@@ -178,6 +223,8 @@ class MasterRunner(process.ProcessRunner):
         self._custom_mpi_options = custom_mpi_options
         self._network_interface_name = network_interface_name
         self._interval = interval
+        self._env_vars = env_vars
+        self._instance_type = instance_type
         self.timeout_in_seconds = timeout_in_seconds
 
     def _setup(self):  # type: () -> None
@@ -266,6 +313,15 @@ class MasterRunner(process.ProcessRunner):
 
         command.extend(additional_options)
 
+        # EFA settings
+        if self._instance_type in SM_EFA_NCCL_INSTANCES:
+            # Enable EFA use
+            command.extend(["-x", "FI_PROVIDER=efa"])
+            # Use EFA's RDMA functionality for one-sided and two-sided transfer
+            command.extend(["-x", "FI_EFA_USE_DEVICE_RDMA=1"])
+            # Use simple protocol to handle the out-of-order data delivery from EFA
+            command.extend(["-x", "NCCL_PROTO=simple"])
+
         for credential in [
             "AWS_ACCESS_KEY_ID",
             "AWS_SECRET_ACCESS_KEY",
@@ -326,7 +382,26 @@ class MasterRunner(process.ProcessRunner):
                 capture_error=capture_error,
                 cwd=environment.code_dir,
             )
+        logger.info("Begin writing status file from leader node to worker nodes (if any)")
+        # Write status file to all nodes
+        status_file = MPI_FINISHED_STATUS_FILE + "." + self._master_hostname
+        for host in self._hosts:
+            if host != self._master_hostname:
+                status = _write_status_file(host, status_file)
+                retry_count = 5 if not status else 0
+                while not status:
+                    if retry_count == 0:
+                        break
+                    logger.info(f"Retry creating status file onto {host}")
+                    retry_count -= 1
+                    time.sleep(1)
+                    status = _write_status_file(host, status_file)
 
+                if not status:
+                    logger.info(f"Failed to create status file onto {host}")
+
+        time.sleep(30)
+        logger.info("Finished writing status file from leader node to worker nodes (if any)")
         self._tear_down()
         return process_spawned
 
@@ -378,8 +453,28 @@ def _can_connect(host, port=22):  # type: (str, int) -> bool
         return True
     except Exception as e:  # pylint: disable=broad-except
         logger.info("Cannot connect to host %s", host)
+        logger.info(
+            "Connection failed with exception: \n %s. \
+             Can be ignored for worker when master completes and exits.",
+            str(e),
+        )
+        return False
 
-        logger.info("Connection failed with exception: \n %s", str(e))
+
+def _write_status_file(host, status_file):
+    try:
+        logger.info(f"Start writing mpirun finished status to {host}")
+        output = subprocess.run(
+            ["ssh", str(host), "touch", f"{status_file}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        logger.info(f"output from subprocess run {output}")
+        logger.info("Finished writing status file")
+        return True
+    except subprocess.CalledProcessError:
+        logger.info(f"Cannot connect to {host}")
         return False
 
 

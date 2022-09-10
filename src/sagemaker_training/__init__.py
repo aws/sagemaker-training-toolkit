@@ -69,3 +69,13 @@ _PYTHON_ERRORS_ = [
     "OutOfRangeError",
     "InvalidArgumentError",
 ]
+
+_MPI_ERRORS_ = ["mpirun.real", "ORTE"]
+
+SM_EFA_NCCL_INSTANCES = [
+    "ml.g4dn.8xlarge",
+    "ml.g4dn.12xlarge",
+    "ml.g5.48xlarge",
+    "ml.p3dn.24xlarge",
+    "ml.p4d.24xlarge",
+]

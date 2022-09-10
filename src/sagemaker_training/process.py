@@ -27,6 +27,7 @@ import six
 
 from sagemaker_training import (
     _entry_point_type,
+    _MPI_ERRORS_,
     _PYTHON_ERRORS_,
     environment,
     errors,
@@ -115,7 +116,7 @@ async def watch(stream, proc_per_host, error_classes=None):
                 if any(
                     str(err) in err_line
                     for err in (
-                        _PYTHON_ERRORS_ + error_classes
+                        _PYTHON_ERRORS_ + _MPI_ERRORS_ + error_classes
                         if isinstance(error_classes, list)
                         else [error_classes]
                     )

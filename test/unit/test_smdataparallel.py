@@ -36,7 +36,9 @@ class AsyncMock(MagicMock):
 @patch("paramiko.AutoAddPolicy")
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
+@patch("subprocess.run")
 def test_smdataparallel_run_multi_node_python(
+    subprocess_run,
     training_env,
     async_shell,
     policy,
@@ -153,6 +155,7 @@ def test_smdataparallel_run_multi_node_python(
         async_gather.assert_called_once()
         assert process == async_shell.return_value
         path_exists.assert_called_with("/usr/sbin/sshd")
+        subprocess_run.assert_called()
 
 
 @patch("asyncio.gather", new_callable=AsyncMock)
@@ -162,7 +165,9 @@ def test_smdataparallel_run_multi_node_python(
 @patch("paramiko.AutoAddPolicy")
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
+@patch("subprocess.run")
 def test_smdataparallel_run_single_node_python(
+    subprocess_run,
     training_env,
     async_shell,
     policy,
@@ -248,6 +253,8 @@ def test_smdataparallel_run_single_node_python(
             "--verbose",
             "-x",
             "FI_EFA_USE_DEVICE_RDMA=1",
+            "-x",
+            "NCCL_PROTO=simple",
             "smddprun",
             "usr/bin/python3",
             "-m",
@@ -268,6 +275,7 @@ def test_smdataparallel_run_single_node_python(
         async_gather.assert_called_once()
         assert process == async_shell.return_value
         path_exists.assert_called_with("/usr/sbin/sshd")
+        subprocess_run.assert_not_called()
 
 
 @patch("asyncio.gather", new_callable=AsyncMock)
@@ -277,7 +285,9 @@ def test_smdataparallel_run_single_node_python(
 @patch("paramiko.AutoAddPolicy")
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
+@patch("subprocess.run")
 def test_hc_smdataparallel_run_single_node_python(
+    subprocess_run,
     training_env,
     async_shell,
     policy,
@@ -364,6 +374,8 @@ def test_hc_smdataparallel_run_single_node_python(
             "--verbose",
             "-x",
             "FI_EFA_USE_DEVICE_RDMA=1",
+            "-x",
+            "NCCL_PROTO=simple",
             "smddprun",
             "usr/bin/python3",
             "-m",
@@ -384,6 +396,7 @@ def test_hc_smdataparallel_run_single_node_python(
         async_gather.assert_called_once()
         assert process == async_shell.return_value
         path_exists.assert_called_with("/usr/sbin/sshd")
+        subprocess_run.assert_not_called()
 
 
 @patch("sagemaker_training.logging_config.log_script_invocation")
