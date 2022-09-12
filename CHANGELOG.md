@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.2.7 (2022-09-10)
+
+### Bug Fixes and Other Changes
+
+ * improve worker node wait logic and update EFA flags
+
 ## v4.2.6 (2022-08-18)
 
 ### Bug Fixes and Other Changes
