@@ -167,6 +167,44 @@ async def test_watch_custom_error(event_loop, capsys):
 
 
 @pytest.mark.asyncio
+async def test_watch_debugger_error(event_loop, capsys):
+    num_processes_per_host = 8
+    expected_stream = "[1,mpirank:10,algo-2]<stdout>:This is stdout\n"
+    expected_stream += "[1,mpirank:10,algo-2]<stderr>:This is stderr\n"
+    expected_stream += "[1,mpirank:0,algo-1]<stderr>:SMDebugError: debugger exception raised\n"
+    expected_errmsg = "SMDebugError: debugger exception raised\n"
+
+    stream = asyncio.StreamReader()
+    stream.feed_data(b"[1,10]<stdout>:This is stdout\n")
+    stream.feed_data(b"[1,10]<stderr>:This is stderr\n")
+    stream.feed_data(b"[1,0]<stderr>:SMDebugError: debugger exception raised")
+    stream.feed_eof()
+
+    error_classes = ["SMDebugError"]
+    output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
+    captured_stream = capsys.readouterr()
+    assert captured_stream.out == expected_stream
+    assert output == expected_errmsg
+
+    # test errors piped in stdout
+    stream = asyncio.StreamReader()
+    stream.feed_data(b"[1,0]<stdout>:SMDebugError: debugger exception raised")
+    stream.feed_eof()
+
+    error_classes = ["SMDebugError"]
+    output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
+    assert output == expected_errmsg
+
+    # test single item
+    stream = asyncio.StreamReader()
+    stream.feed_data(b"[1,0]<stdout>:SMDebugError: debugger exception raised")
+    stream.feed_eof()
+    error_classes = "SMDebugError"
+    output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
+    assert output == expected_errmsg
+
+
+@pytest.mark.asyncio
 async def test_watch_special_characters(event_loop, capsys):
     num_processes_per_host = 8
     expected_stream = "[1,mpirank:10,algo-2]<stdout>:This is stdout with character �\n"

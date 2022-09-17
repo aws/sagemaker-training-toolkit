@@ -35,19 +35,28 @@ from sagemaker_training import (
 logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
-try:
-    from smdistributed.dataparallel import exceptions
+DEFAULT_ERROR_CLASS = errors.ExecuteUserScriptError
 
-    # list of exceptions SMDDP wants training toolkit to catch and log
-    exception_classes = [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
-# relaxed exception type in case of custom exceptions thrown during import
-except Exception:  # pylint: disable=broad-except
-    logger.info(
-        "smdistributed.dataparallel not found or "
-        "using an older version without custom exceptions."
-        "SM training toolkit will track user script error only"
-    )
-    exception_classes = [errors.ExecuteUserScriptError]
+
+def get_dataparallel_exception_classes():
+    """Get ddp exception classes"""
+    exception_classes = []
+    try:
+        from smdistributed.dataparallel import exceptions
+
+        # list of exceptions SMDDP wants training toolkit to catch and log
+        exception_classes += [ex for ex in dir(exceptions) if isclass(getattr(exceptions, ex))]
+    # relaxed exception type in case of custom exceptions thrown during import
+    except Exception:  # pylint: disable=broad-except
+        logger.info(
+            "smdistributed.dataparallel not found or "
+            "using an older version without custom exceptions."
+            "SM training toolkit will track user script error only"
+        )
+    if not exception_classes:
+        exception_classes = [DEFAULT_ERROR_CLASS]
+    return exception_classes
+
 
 MPI_FINISHED_STATUS_FILE = "/tmp/done"
 
@@ -296,6 +305,13 @@ class SMDataParallelRunner(process.ProcessRunner):
         cmd = self._create_command()
         cmd.extend(super(SMDataParallelRunner, self)._create_command())
         logging_config.log_script_invocation(cmd, self._env_vars)
+
+        exception_classes = []
+        exception_classes += process.get_debugger_exception_classes()
+        exception_classes += get_dataparallel_exception_classes()
+
+        # remove potential duplication
+        exception_classes = list(set(exception_classes))
         if wait:
             process_spawned = process.check_error(
                 cmd,
