@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 """Contains functionality related to SM Distributed Data Parallel Training."""
 import argparse
-import inspect
+from inspect import getfile, isclass
 import json
 import logging
 import os
@@ -22,10 +22,34 @@ import time
 import paramiko
 
 import gethostname
-from sagemaker_training import environment, errors, logging_config, process, timeout
+from sagemaker_training import (
+    environment,
+    errors,
+    logging_config,
+    process,
+    SM_EFA_NCCL_INSTANCES,
+    timeout,
+)
+
 
 logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
+
+try:
+    from smdistributed.dataparallel import exceptions
+
+    # list of exceptions SMDDP wants training toolkit to catch and log
+    exception_classes = [x for x in dir(exceptions) if isclass(getattr(exceptions, x))]
+# relaxed exception type in case of custom exceptions thrown during import
+except Exception:  # pylint: disable=broad-except
+    logger.info(
+        "smdistributed.dataparallel not found or "
+        "using an older version without custom exceptions."
+        "SM training toolkit will track user script error only"
+    )
+    exception_classes = [errors.ExecuteUserScriptError]
+
+MPI_FINISHED_STATUS_FILE = "/tmp/done"
 
 
 class SMDataParallelRunner(process.ProcessRunner):
@@ -73,6 +97,7 @@ class SMDataParallelRunner(process.ProcessRunner):
 
         self._master_hostname = master_hostname
         self._hosts = hosts
+        self._processes_per_host = processes_per_host
         self._custom_mpi_options = custom_mpi_options
         self._network_interface_name = network_interface_name
         self._interval = interval
@@ -163,15 +188,18 @@ class SMDataParallelRunner(process.ProcessRunner):
             "-x",
             "RDMAV_FORK_SAFE=1",
             "-x",
-            "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+            "LD_PRELOAD=%s" % getfile(gethostname),
         ]
 
         mpirun_command.extend(additional_options)
 
         instance_type = self._get_instance_type()
-        # Use EFA's RDMA functionality for one-sided and two-sided transfer
-        if instance_type in ["ml.p3dn.24xlarge", "ml.p4d.24xlarge"]:
+        # EFA settings
+        if instance_type in SM_EFA_NCCL_INSTANCES:
+            # Use EFA's RDMA functionality for one-sided and two-sided transfer
             mpirun_command.extend(["-x", "FI_EFA_USE_DEVICE_RDMA=1"])
+            # Use simple protocol to handle the out-of-order data delivery from EFA
+            mpirun_command.extend(["-x", "NCCL_PROTO=simple"])
 
         if smdataparallel_server_addr and smdataparallel_server_port:
             # in case of multi-node [distributed] training, smdataparallel_server_addr,
@@ -213,10 +241,8 @@ class SMDataParallelRunner(process.ProcessRunner):
         """
         host_list = self._hosts
         num_hosts = len(self._hosts)
-        # SMDATAPARALLEL expects instances to have 8 GPUs
-        # each GPU will run 1 process
-        num_processes_per_host = 8
-        num_processes = num_hosts * num_processes_per_host
+        num_processes = self._processes_per_host * num_hosts
+
         logger.info("Network interface name: %s" % self._network_interface_name)
         logger.info("Host: %s" % self._hosts)
         if num_hosts > 1:
@@ -224,7 +250,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             # homogeneous mode uses 16 processes per host; 8 server; 8 worker
             smdataparallel_server_addr = self._master_hostname
             smdataparallel_server_port = 7592
-            host_list = ["{}:{}".format(host, num_processes_per_host) for host in self._hosts]
+            host_list = ["{}:{}".format(host, self._processes_per_host) for host in self._hosts]
             smdataparallel_flag = "SMDATAPARALLEL_USE_HOMOGENEOUS=1"
             command = self._get_mpirun_command(
                 num_hosts,
@@ -240,6 +266,9 @@ class SMDataParallelRunner(process.ProcessRunner):
             command = self._get_mpirun_command(
                 num_hosts, host_list, smdataparallel_flag, num_processes
             )
+
+        msg = "Env Hosts: %s Hosts: %s process_per_hosts: %s num_processes: %s"
+        logger.info(msg, self._hosts, host_list, self._processes_per_host, num_processes)
 
         return command
 
@@ -270,7 +299,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         if wait:
             process_spawned = process.check_error(
                 cmd,
-                errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
@@ -278,11 +307,33 @@ class SMDataParallelRunner(process.ProcessRunner):
         else:
             process_spawned = process.create(
                 cmd,
-                errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
             )
+
+        logger.info("Begin writing status file from leader node to worker nodes")
+        # Write status file to all nodes
+        status_file = MPI_FINISHED_STATUS_FILE + "." + self._master_hostname
+        for host in self._hosts:
+            if host != self._master_hostname:
+                status = _write_status_file(host, status_file)
+                retry_count = 5 if not status else 0
+                while not status:
+                    if retry_count == 0:
+                        break
+                    logger.info(f"Retry creating status file onto {host}")
+                    retry_count -= 1
+                    time.sleep(1)
+                    status = _write_status_file(host, status_file)
+
+                if not status:
+                    logger.info(f"Failed to create status file onto {host}")
+
+        time.sleep(30)
+        logger.info("Finished writing status file from leader node to worker nodes")
+
         self._tear_down()
         return process_spawned
 
@@ -338,6 +389,23 @@ def _can_connect(host, port=22):
     finally:
         client.close()
         logger.info("Connection closed")
+
+
+def _write_status_file(host, status_file):
+    try:
+        logger.info(f"Start writing mpirun finished status to {host}")
+        output = subprocess.run(
+            ["ssh", str(host), "touch", f"{status_file}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        logger.info(f"output from subprocess run {output}")
+        logger.info("Finished writing status file")
+        return True
+    except subprocess.CalledProcessError:
+        logger.info(f"Cannot connect to {host}")
+        return False
 
 
 def _parse_custom_mpi_options(custom_mpi_options):

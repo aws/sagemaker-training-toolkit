@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import enum
 
-from sagemaker_training import environment, mpi, params, process, smdataparallel
+from sagemaker_training import environment, mpi, params, process, pytorch_xla, smdataparallel
 
 
 class RunnerType(enum.Enum):
@@ -26,11 +26,13 @@ class RunnerType(enum.Enum):
     MPI = "MPI"
     Process = "Process"
     SMDataParallel = "SMDataParallel"
+    PyTorchXLA = "PyTorchXLA"
 
 
 ProcessRunnerType = RunnerType.Process
 MPIRunnerType = RunnerType.MPI
 SMDataParallelRunnerType = RunnerType.SMDataParallel
+PyTorchXLARunnerType = RunnerType.PyTorchXLA
 
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
@@ -83,11 +85,17 @@ def _get_by_runner_type(
         )
     elif identifier is RunnerType.SMDataParallel:
         return mpi.WorkerRunner(
-            user_entry_point, args, env_vars, processes_per_host, env.master_hostname
+            user_entry_point,
+            args,
+            env_vars,
+            processes_per_host,
+            env.master_hostname,
+            env.current_host,
         )
     elif identifier is RunnerType.MPI and env.is_master:
         num_processes = _mpi_param_value(mpi_args, env, params.MPI_NUM_PROCESSES)
         custom_mpi_options = _mpi_param_value(mpi_args, env, params.MPI_CUSTOM_OPTIONS, "")
+        current_instance_type = env.current_instance_type
         return mpi.MasterRunner(
             user_entry_point,
             args,
@@ -98,10 +106,27 @@ def _get_by_runner_type(
             custom_mpi_options,
             env.network_interface_name,
             num_processes=num_processes,
+            instance_type=current_instance_type,
         )
     elif identifier is RunnerType.MPI:
         return mpi.WorkerRunner(
-            user_entry_point, args, env_vars, processes_per_host, env.master_hostname
+            user_entry_point,
+            args,
+            env_vars,
+            processes_per_host,
+            env.master_hostname,
+            env.current_host,
+        )
+    elif identifier is RunnerType.PyTorchXLA:
+        return pytorch_xla.PyTorchXLARunner(
+            user_entry_point,
+            args,
+            env_vars,
+            processes_per_host,
+            env.master_hostname,
+            env.current_host,
+            env.distribution_hosts,
+            env.num_gpus,
         )
     elif identifier is RunnerType.Process:
         return process.ProcessRunner(user_entry_point, args, env_vars, processes_per_host)

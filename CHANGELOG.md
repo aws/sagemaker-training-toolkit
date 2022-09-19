@@ -1,5 +1,71 @@
 # Changelog
 
+## v4.2.8 (2022-09-12)
+
+## v4.2.7 (2022-09-10)
+
+### Bug Fixes and Other Changes
+
+ * improve worker node wait logic and update EFA flags
+
+## v4.2.6 (2022-08-18)
+
+### Bug Fixes and Other Changes
+
+ * Enable PT XLA distributed training on homogeneous clusters
+
+## v4.2.5 (2022-08-17)
+
+### Bug Fixes and Other Changes
+
+ * relax exception type
+
+## v4.2.4 (2022-08-15)
+
+## v4.2.3 (2022-08-11)
+
+### Bug Fixes and Other Changes
+
+ * update num_processes_per_host for smdataparallel runner
+
+## v4.2.2 (2022-08-10)
+
+### Bug Fixes and Other Changes
+
+ * Removed version hardcoding for sagemaker test dependency
+ * update distribution_instance_group for pytorch ddp
+ * specify flake8 config explicitly
+
+## v4.2.1 (2022-07-29)
+
+### Bug Fixes and Other Changes
+
+ * handle utf-8 decoding exceptions while processing stdout and stderr streams
+
+## v4.2.0 (2022-07-08)
+
+### Features
+
+ * Heterogeneous cluster changes
+
+## v4.1.6 (2022-06-28)
+
+### Bug Fixes and Other Changes
+
+ * update: protobuf version to overlap with TF requirements
+
+## v4.1.5 (2022-06-22)
+
+### Bug Fixes and Other Changes
+
+ * Fix none exception class issue for mpi
+
+## v4.1.4 (2022-06-10)
+
+### Bug Fixes and Other Changes
+
+ * Use framework provided error class and stack trace as error message
+
 ## v4.1.3 (2022-06-03)
 
 ## v4.1.2 (2022-05-25)

@@ -226,6 +226,7 @@ def test_env_mapping_properties(training_env):
         "output_intermediate_dir",
         "is_master",
         "master_hostname",
+        "is_modelparallel_enabled",
         "instance_groups",
         "instance_groups_dict",
         "current_instance_type",

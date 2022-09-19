@@ -38,6 +38,7 @@ PARAMETER_SERVER_ENABLED = "sagemaker_parameter_server_enabled"  # type: str
 MULTI_WORKER_MIRRORED_STRATEGY_ENABLED = (
     "sagemaker_multi_worker_mirrored_strategy_enabled"
 )  # type: str
+PYTORCH_XLA_MULTI_WORKER_ENABLED = "sagemaker_pytorch_xla_multi_worker_enabled"  # type: str
 REGION_NAME_PARAM = "sagemaker_region"  # type: str
 REGION_NAME_ENV = REGION_NAME_PARAM.upper()  # type: str
 DEFAULT_INVOCATIONS_ACCEPT_ENV = "SAGEMAKER_DEFAULT_INVOCATIONS_ACCEPT"  # type: str
@@ -62,4 +63,5 @@ SAGEMAKER_NETWORK_INTERFACE_NAME = "sagemaker_network_interface_name"  # type: s
 SMDATAPARALLEL_CUSTOM_MPI_OPTIONS = (
     "sagemaker_distributed_dataparallel_custom_mpi_options"
 )  # type: str
+SM_HP_MP_PARAMETERS = "SM_HP_MP_PARAMETERS"
 DISTRIBUTION_INSTANCE_GROUPS = "sagemaker_distribution_instance_groups"  # type: list

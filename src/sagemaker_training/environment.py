@@ -612,6 +612,9 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             self._current_instance_group in self._distribution_instance_groups
         )
 
+        mp_parameters = os.environ.get(params.SM_HP_MP_PARAMETERS)
+        self._is_modelparallel_enabled = mp_parameters and mp_parameters != "{}"
+
     @property
     def current_instance_type(self):
         """
@@ -789,6 +792,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         We populate the sagemaker_distribution_instance_groups with current instance group name ~
         homogeneousCluster
         """
+        # pylint: disable=too-many-boolean-expressions
         distribution_instance_groups = []
         current_instance_group = self.resource_config.get(
             "current_group_name", "homogeneousCluster"
@@ -800,6 +804,10 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             )
             or self._additional_framework_parameters.get(
                 "sagemaker_distributed_dataparallel_enabled", False
+            )
+            or self._additional_framework_parameters.get("sagemaker_pytorch_ddp_enabled", False)
+            or self._additional_framework_parameters.get(
+                "sagemaker_pytorch_xla_multi_worker_enabled", False
             )
             or self._additional_framework_parameters.get(
                 "sagemaker_multi_worker_mirrored_strategy_enabled", False
@@ -1112,6 +1120,15 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
                 my_module:main
         """
         return self._framework_module
+
+    @property
+    def is_modelparallel_enabled(self):  # type: () -> bool
+        """Whether SM ModelParallel is enabled.
+
+        Returns:
+            bool: True if SM ModelParallel is enabled
+        """
+        return self._is_modelparallel_enabled
 
 
 def write_env_vars(env_vars=None):  # type: (dict) -> None
