@@ -36,6 +36,7 @@ logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
 
 MPI_FINISHED_STATUS_FILE = "/tmp/done"
+DEFAULT_ERROR_CLASS = errors.ExecuteUserScriptError
 
 
 def get_modelparallel_exception_classes():
@@ -54,13 +55,13 @@ def get_modelparallel_exception_classes():
 
         # list of torch exceptions SMMP wants training toolkit to catch and log
         exception_classes += [
-            x for x in dir(torch_exceptions) if isclass(getattr(torch_exceptions, x))
+            ex for ex in dir(torch_exceptions) if isclass(getattr(torch_exceptions, ex))
         ]
     except ImportError:
         logger.info("No torch exception classes found in smdistributed.modelparallel.torch")
 
     if not exception_classes:
-        exception_classes = [errors.ExecuteUserScriptError]
+        exception_classes = [DEFAULT_ERROR_CLASS]
     return exception_classes
 
 
@@ -361,13 +362,16 @@ class MasterRunner(process.ProcessRunner):
         logging_config.log_script_invocation(cmd, self._env_vars)
 
         training_env = environment.Environment()
-        exception_classes = get_modelparallel_exception_classes()
+        exception_classes = []
+        exception_classes += process.get_debugger_exception_classes()
+        if training_env.is_modelparallel_enabled:
+            exception_classes += get_modelparallel_exception_classes()
+        # remove potential duplication
+        exception_classes = list(set(exception_classes))
         if wait:
             process_spawned = process.check_error(
                 cmd,
-                exception_classes
-                if training_env.is_modelparallel_enabled
-                else errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
@@ -375,9 +379,7 @@ class MasterRunner(process.ProcessRunner):
         else:
             _, _, process_spawned = process.create(
                 cmd,
-                exception_classes
-                if training_env.is_modelparallel_enabled
-                else errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,

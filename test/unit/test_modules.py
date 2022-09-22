@@ -213,12 +213,26 @@ class PseudoExceptionFile:
         return ["PseudoBackendException"] if self.type == "backend" else ["PseudoTorchException"]
 
 
+class PseudoDebuggerExceptionFile:
+    def __init__(self):
+        self.type = type
+        self.PseudoDebuggerException = PseudoDebuggerException
+
+    def __dir__(self):
+        return ["PseudoDebuggerException"]
+
+
 class PseudoTorchException:
     def __init__(self):
         return
 
 
 class PseudoBackendException:
+    def __init__(self):
+        return
+
+
+class PseudoDebuggerException:
     def __init__(self):
         return
 
@@ -250,7 +264,7 @@ def test_smp_exception_import():
 @patch.dict(
     sys.modules, {"smdistributed.modelparallel.torch": PseudoPackage(PseudoExceptionFile("torch"))}
 )
-def test_smp_exception_mport_torch_only():
+def test_smp_exception_import_torch_only():
 
     from sagemaker_training import mpi as mpi
 
@@ -267,4 +281,20 @@ def test_smp_exception_import_no_exceptions():
     from sagemaker_training import mpi
 
     exceptions = mpi.get_modelparallel_exception_classes()
+    assert exceptions == [errors.ExecuteUserScriptError], f"exceptions are {exceptions}"
+
+
+@patch.dict(sys.modules, {"smdebug": PseudoPackage(PseudoDebuggerExceptionFile())})
+def test_debugger_exception_import():
+    from sagemaker_training import process
+
+    exceptions = process.get_debugger_exception_classes()
+    assert exceptions == ["PseudoDebuggerException"], f"exceptions are {exceptions}"
+
+
+@patch.dict(sys.modules, {"smdebug": PseudoPackage()})
+def test_debugger_exception_import_no_exceptions():
+    from sagemaker_training import process
+
+    exceptions = process.get_debugger_exception_classes()
     assert exceptions == [errors.ExecuteUserScriptError], f"exceptions are {exceptions}"

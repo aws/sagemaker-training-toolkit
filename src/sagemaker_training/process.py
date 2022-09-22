@@ -38,6 +38,26 @@ logger = logging_config.get_logger()
 
 # Default limit of the stream is 2 ** 16 KB, we can increase it to 128KB in subproc call
 _DEFAULT_BUF_SIZE = 1024 * 64
+DEFAULT_ERROR_CLASS = errors.ExecuteUserScriptError
+
+
+def get_debugger_exception_classes():
+    """Set exception classes"""
+    exception_classes = []
+    if os.environ.get("USE_SMDEBUG") == "0":
+        logger.info("Sagemaker Debugger is not enabled, debugger exceptions will not be imported.")
+    else:
+        try:
+            from smdebug import exceptions
+
+            # list of exceptions debugger wants training toolkit to catch and log
+            exception_classes += [ex for ex in dir(exceptions) if isclass(getattr(exceptions, ex))]
+        except ImportError:
+            logger.info("Exceptions not imported for SageMaker Debugger as it is not installed.")
+
+    if not exception_classes:
+        exception_classes = [DEFAULT_ERROR_CLASS]
+    return exception_classes
 
 
 def process_error_classes(error_classes):
@@ -124,7 +144,6 @@ async def watch(stream, proc_per_host, error_classes=None):
                     # start logging error message if target exceptions found
                     start = True
                     output.append(err_line.strip(" :\n") + "\n")
-
     return " ".join(output)
 
 
@@ -207,8 +226,8 @@ def create(
         return rc, output, proc
     except Exception as e:  # pylint: disable=broad-except
         six.reraise(
-            errors.ExecuteUserScriptError,
-            errors.ExecuteUserScriptError(e),
+            DEFAULT_ERROR_CLASS,
+            DEFAULT_ERROR_CLASS(e),
             sys.exc_info()[2],
         )
 
@@ -270,7 +289,7 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
         error_class = getattr(errors, error_class)
 
         # only replace ExecuteUserScriptError with custom library errors
-        if stderr and error_class == errors.ExecuteUserScriptError:
+        if stderr and error_class == DEFAULT_ERROR_CLASS:
             # find the first target error in stderr
             error_name = next((str(name) for name in error_classes if str(name) in stderr), False)
             if error_name:
@@ -365,10 +384,12 @@ class ProcessRunner(object):
 
         logging_config.log_script_invocation(cmd, self._env_vars)
 
+        exception_classes = []
+        exception_classes += get_debugger_exception_classes()
         if wait:
             process = check_error(
                 cmd,
-                errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
@@ -376,7 +397,7 @@ class ProcessRunner(object):
         else:
             _, _, process = create(
                 cmd,
-                errors.ExecuteUserScriptError,
+                exception_classes,
                 self._processes_per_host,
                 capture_error=capture_error,
                 cwd=environment.code_dir,
