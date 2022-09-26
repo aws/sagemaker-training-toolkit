@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.2.9 (2022-09-26)
+
+### Bug Fixes and Other Changes
+
+ * Add SageMaker Debugger exceptions
+
 ## v4.2.8 (2022-09-12)
 
 ## v4.2.7 (2022-09-10)
