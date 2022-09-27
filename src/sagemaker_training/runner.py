@@ -17,7 +17,14 @@ from __future__ import absolute_import
 
 import enum
 
-from sagemaker_training import environment, mpi, params, process, pytorch_xla, smdataparallel
+from sagemaker_training import (
+    environment,
+    mpi,
+    params,
+    process,
+    pytorch_xla,
+    smdataparallel,
+)
 
 
 class RunnerType(enum.Enum):
@@ -64,7 +71,14 @@ def _get_by_runner_type(
     mpi_args = extra_opts or {}
 
     # Default to single process for CPU
-    default_processes_per_host = int(env.num_gpus) if int(env.num_gpus) > 0 else 1
+    default_processes_per_host = (
+        int(env.num_gpus)
+        if int(env.num_gpus) > 0
+        else int(env.num_neurons)
+        if int(env.num_neurons) > 0
+        else 1
+    )
+
     processes_per_host = _mpi_param_value(
         mpi_args, env, params.MPI_PROCESSES_PER_HOST, default_processes_per_host
     )
