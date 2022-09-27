@@ -7,6 +7,7 @@
 - [SM\_CURRENT\_HOST](#sm_current_host)
 - [SM\_HOSTS](#sm_hosts)
 - [SM\_NUM\_GPUS](#sm_num_gpus)
+- [SM\_NUM\_NEURONS](#sm_num_neurons)
 - [SM\_NUM\_CPUS](#sm_num_cpus)
 - [SM\_LOG\_LEVEL](#sm_log_level)
 - [SM\_NETWORK\_INTERFACE\_NAME](#sm_network_interface_name)
@@ -179,6 +180,23 @@ parser.add_argument('num_gpus', type=int, default=os.environ['SM_NUM_GPUS'])
 num_gpus = int(os.environ['SM_NUM_GPUS'])
 ```
 
+## SM\_NUM\_NEURONS
+
+``` shell
+SM_NUM_NEURONS=1
+```
+
+The number of Neuron Cores available in the current container.
+
+``` python
+import os
+
+# using it in argparse
+parser.add_argument('num_neurons', type=int, default=os.environ['SM_NUM_NEURONS'])
+
+# using it as variable
+num_neurons = int(os.environ['SM_NUM_NEURONS'])
+```
 ## SM\_NUM\_CPUS
 
 ``` shell
@@ -336,6 +354,7 @@ SM_TRAINING_ENV='
     "network_interface_name": "ethwe",
     "num_cpus": 4,
     "num_gpus": 1,
+    "num_neurons": 1,
     "output_data_dir": "/opt/ml/output/data/algo-1",
     "output_dir": "/opt/ml/output",
     "resource_config": {

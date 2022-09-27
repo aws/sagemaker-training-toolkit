@@ -66,6 +66,7 @@ def test_get_runner_by_process_with_extra_args(training_env):
 @patch("sagemaker_training.environment.Environment")
 def test_get_runner_by_mpi_returns_runnner(training_env):
     training_env().num_gpus = 0
+    training_env().num_neurons = 0
 
     test_runner = runner.get(runner.MPIRunnerType)
 
@@ -85,6 +86,7 @@ def test_get_runner_by_mpi_returns_runnner(training_env):
 def test_runnner_with_default_cpu_processes_per_host(training_env):
     training_env().additional_framework_parameters = dict()
     training_env().num_gpus = 0
+    training_env().num_neurons = 0
 
     test_runner = runner.get(runner.MPIRunnerType)
 
@@ -96,6 +98,19 @@ def test_runnner_with_default_cpu_processes_per_host(training_env):
 def test_runnner_with_default_gpu_processes_per_host(training_env):
     training_env().additional_framework_parameters = dict()
     training_env().num_gpus = 2
+    training_env().num_neurons = 0
+
+    test_runner = runner.get(runner.MPIRunnerType)
+
+    assert isinstance(test_runner, mpi.MasterRunner)
+    assert test_runner._processes_per_host == 2
+
+
+@patch("sagemaker_training.environment.Environment")
+def test_runnner_with_default_neuron_cores_per_host(training_env):
+    training_env().additional_framework_parameters = dict()
+    training_env().num_gpus = 0
+    training_env().num_neurons = 2
 
     test_runner = runner.get(runner.MPIRunnerType)
 
@@ -106,6 +121,7 @@ def test_runnner_with_default_gpu_processes_per_host(training_env):
 @patch("sagemaker_training.environment.Environment")
 def test_get_runner_by_mpi_with_extra_args(training_env):
     training_env().num_gpus = 0
+    training_env().num_neurons = 0
 
     test_runner = runner.get(runner.MPIRunnerType, USER_SCRIPT, CMD_ARGS, ENV_VARS, MPI_OPTS)
 

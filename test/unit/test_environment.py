@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import socket
+import subprocess
 
 from mock import Mock, patch
 import pytest
@@ -32,9 +33,15 @@ RESOURCE_CONFIG = dict(
     current_instance_type="ml.p3.16xlarge",
     instance_groups=[
         dict(
-            instance_group_name="train1", instance_type="ml.p3.16xlarge", hosts=["algo-1", "algo-2"]
+            instance_group_name="train1",
+            instance_type="ml.p3.16xlarge",
+            hosts=["algo-1", "algo-2"],
         ),
-        dict(instance_group_name="train2", instance_type="ml.p3.8xlarge", hosts=["algo-3"]),
+        dict(
+            instance_group_name="train2",
+            instance_type="ml.p3.8xlarge",
+            hosts=["algo-3"],
+        ),
     ],
 )
 
@@ -52,7 +59,11 @@ INPUT_DATA_CONFIG = {
     },
 }
 
-USER_HYPERPARAMETERS = {"batch_size": 32, "learning_rate": 0.001, "hosts": ["algo-1", "algo-2"]}
+USER_HYPERPARAMETERS = {
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "hosts": ["algo-1", "algo-2"],
+}
 
 SAGEMAKER_HYPERPARAMETERS = {
     "sagemaker_region": "us-west-2",
@@ -131,6 +142,38 @@ def test_gpu_count_in_cpu_instance(check_output):
     assert environment.num_gpus() == 0
 
 
+@patch("subprocess.check_output", lambda s, stderr: b'[{"nc_count":2}]')
+def test_neuron_count_in_neuron_instance():
+    assert environment.num_neurons() == 2
+
+
+@patch("subprocess.check_output", side_effect=OSError())
+def test_neuron_count_in_cpu_instance(check_output):
+    assert environment.num_neurons() == 0
+
+
+@patch(
+    "subprocess.check_output",
+    side_effect=subprocess.CalledProcessError(
+        returncode=1, cmd="neuron-ls -j", output="random junk"
+    ),
+)
+def test_neuron_count_in_neuron_instance_nodriver(check_output):
+    assert environment.num_neurons() == 0
+
+
+@patch(
+    "subprocess.check_output",
+    side_effect=subprocess.CalledProcessError(
+        returncode=1,
+        cmd="neuron-ls -j",
+        output=b'time="2022-09-26T19:46:45Z" level=fatal msg="Failed to discover neuron devices" error="Unable to read device information from the driver. Make sure aws-neuron-dkms is installed and the neuron driver is accessible."\n',
+    ),
+)
+def test_neuron_count_in_neuron_instance_nodriver_with_error_msg(check_output):
+    assert environment.num_neurons() == 0
+
+
 @patch("multiprocessing.cpu_count", lambda: 2)
 def test_cpu_count():
     assert environment.num_cpus() == 2
@@ -141,13 +184,17 @@ def create_training_env():
     with patch(
         "sagemaker_training.environment.read_resource_config", lambda: RESOURCE_CONFIG
     ), patch(
-        "sagemaker_training.environment.read_input_data_config", lambda: INPUT_DATA_CONFIG
+        "sagemaker_training.environment.read_input_data_config",
+        lambda: INPUT_DATA_CONFIG,
     ), patch(
-        "sagemaker_training.environment.read_hyperparameters", lambda: ALL_HYPERPARAMETERS
+        "sagemaker_training.environment.read_hyperparameters",
+        lambda: ALL_HYPERPARAMETERS,
     ), patch(
         "sagemaker_training.environment.num_cpus", lambda: 8
     ), patch(
         "sagemaker_training.environment.num_gpus", lambda: 4
+    ), patch(
+        "sagemaker_training.environment.num_neurons", lambda: 2
     ):
         session_mock = Mock()
         session_mock.region_name = "us-west-2"
@@ -176,6 +223,7 @@ def test_env():
 def test_training_env(training_env):
     assert training_env.num_gpus == 4
     assert training_env.num_cpus == 8
+    assert training_env.num_neurons == 2
     assert training_env.input_dir.endswith("/opt/ml/input")
     assert training_env.input_config_dir.endswith("/opt/ml/input/config")
     assert training_env.model_dir.endswith("/opt/ml/model")
@@ -218,6 +266,7 @@ def test_env_mapping_properties(training_env):
         "network_interface_name",
         "num_cpus",
         "num_gpus",
+        "num_neurons",
         "output_data_dir",
         "output_dir",
         "resource_config",
@@ -240,6 +289,7 @@ def test_env_mapping_properties(training_env):
 
 @patch("sagemaker_training.environment.num_cpus", lambda: 8)
 @patch("sagemaker_training.environment.num_gpus", lambda: 4)
+@patch("sagemaker_training.environment.num_neurons", lambda: 2)
 def test_env_dictionary():
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
