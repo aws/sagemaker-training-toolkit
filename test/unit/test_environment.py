@@ -284,6 +284,7 @@ def test_env_mapping_properties(training_env):
         "distribution_hosts",
         "distribution_instance_groups",
         "is_hetero",
+        "is_smddpmprun_installed",
     }
 
 
