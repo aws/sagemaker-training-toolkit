@@ -364,6 +364,7 @@ class MasterRunner(process.ProcessRunner):
         training_env = environment.Environment()
         exception_classes = []
         exception_classes += process.get_debugger_exception_classes()
+        exception_classes += process.get_tf_exception_classes()
         if training_env.is_modelparallel_enabled:
             exception_classes += get_modelparallel_exception_classes()
         # remove potential duplication

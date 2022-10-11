@@ -59,6 +59,23 @@ def get_debugger_exception_classes():
         exception_classes = [DEFAULT_ERROR_CLASS]
     return exception_classes
 
+def get_tf_exception_classes():
+    """Set exception classes"""
+    exception_classes = []
+    if os.environ.get("USE_TF") == "0":
+        logger.info("Sagemaker TF is not enabled, TF exceptions will not be imported.")
+    else:
+        try:
+            from tensorflow::python::framework import errors_impl
+
+            # list of exceptions TF wants training toolkit to catch and log
+            exception_classes += [ex for ex in dir(exceptions) if isclass(getattr(exceptions, ex))]
+        except ImportError:
+            logger.info("Exceptions not imported for SageMaker TF as it is not installed.")
+
+    if not exception_classes:
+        exception_classes = [DEFAULT_ERROR_CLASS]
+    return exception_classes
 
 def process_error_classes(error_classes):
     """Process error classes and return a list of string.
@@ -386,6 +403,7 @@ class ProcessRunner(object):
 
         exception_classes = []
         exception_classes += get_debugger_exception_classes()
+        exception_classes += get_tf_exception_classes()
         if wait:
             process = check_error(
                 cmd,
