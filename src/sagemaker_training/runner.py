@@ -24,6 +24,7 @@ from sagemaker_training import (
     process,
     pytorch_xla,
     smdataparallel,
+    torch_distributed,
 )
 
 
@@ -34,12 +35,14 @@ class RunnerType(enum.Enum):
     Process = "Process"
     SMDataParallel = "SMDataParallel"
     PyTorchXLA = "PyTorchXLA"
+    TorchDistributed = "TorchDistributed"
 
 
 ProcessRunnerType = RunnerType.Process
 MPIRunnerType = RunnerType.MPI
 SMDataParallelRunnerType = RunnerType.SMDataParallel
 PyTorchXLARunnerType = RunnerType.PyTorchXLA
+TorchDistributedRunnerType = RunnerType.TorchDistributed
 
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
@@ -105,6 +108,18 @@ def _get_by_runner_type(
             processes_per_host,
             env.master_hostname,
             env.current_host,
+        )
+    elif identifier is RunnerType.TorchDistributed:
+        return torch_distributed.TorchDistributedRunner(
+            user_entry_point,
+            args,
+            env_vars,
+            processes_per_host,
+            env.master_hostname,
+            env.distribution_hosts,
+            env.current_host,
+            env.network_interface_name,
+            instance_type=env.current_instance_type,
         )
     elif identifier is RunnerType.MPI and env.is_master:
         num_processes = _mpi_param_value(mpi_args, env, params.MPI_NUM_PROCESSES)
