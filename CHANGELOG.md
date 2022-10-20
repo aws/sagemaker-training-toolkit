@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.3.0 (2022-10-20)
+
+### Features
+
+ * Add torch_distributed support for Trainium instances in SageMaker
+
 ## v4.2.10 (2022-10-17)
 
 ### Bug Fixes and Other Changes
