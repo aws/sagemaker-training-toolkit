@@ -312,6 +312,7 @@ def num_neurons():  # type: () -> int
         neuron_cores = 0
         for item in j:
             neuron_cores += item.get("nc_count", 0)
+        logger.info(f"Found {neuron_cores} neurons on this instance")
         return neuron_cores
     except OSError:
         logger.info("No Neurons detected (normal if no neurons installed)")
@@ -856,6 +857,9 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             )
             or self._additional_framework_parameters.get(
                 "sagemaker_multi_worker_mirrored_strategy_enabled", False
+            )
+            or self._additional_framework_parameters.get(
+                "sagemaker_torch_distributed_enabled", False
             )
         ):
             distribution_instance_groups.append(current_instance_group)

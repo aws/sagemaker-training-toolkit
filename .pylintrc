@@ -81,6 +81,7 @@ disable=
     no-else-return, # This check encourages code that is less readable
     too-many-lines,
     too-many-arguments,
+    too-many-return-statements,
     too-many-instance-attributes,
     invalid-name,
     useless-object-inheritance, # TODO: Enable this check and fix code once Python 2 is no longer supported.
