@@ -17,7 +17,15 @@ from __future__ import absolute_import
 
 import enum
 
-from sagemaker_training import environment, mpi, params, process, pytorch_xla, smdataparallel
+from sagemaker_training import (
+    environment,
+    mpi,
+    params,
+    process,
+    pytorch_xla,
+    smdataparallel,
+    torch_distributed,
+)
 
 
 class RunnerType(enum.Enum):
@@ -27,12 +35,14 @@ class RunnerType(enum.Enum):
     Process = "Process"
     SMDataParallel = "SMDataParallel"
     PyTorchXLA = "PyTorchXLA"
+    TorchDistributed = "TorchDistributed"
 
 
 ProcessRunnerType = RunnerType.Process
 MPIRunnerType = RunnerType.MPI
 SMDataParallelRunnerType = RunnerType.SMDataParallel
 PyTorchXLARunnerType = RunnerType.PyTorchXLA
+TorchDistributedRunnerType = RunnerType.TorchDistributed
 
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
@@ -64,7 +74,14 @@ def _get_by_runner_type(
     mpi_args = extra_opts or {}
 
     # Default to single process for CPU
-    default_processes_per_host = int(env.num_gpus) if int(env.num_gpus) > 0 else 1
+    default_processes_per_host = (
+        int(env.num_gpus)
+        if int(env.num_gpus) > 0
+        else int(env.num_neurons)
+        if int(env.num_neurons) > 0
+        else 1
+    )
+
     processes_per_host = _mpi_param_value(
         mpi_args, env, params.MPI_PROCESSES_PER_HOST, default_processes_per_host
     )
@@ -91,6 +108,18 @@ def _get_by_runner_type(
             processes_per_host,
             env.master_hostname,
             env.current_host,
+        )
+    elif identifier is RunnerType.TorchDistributed:
+        return torch_distributed.TorchDistributedRunner(
+            user_entry_point,
+            args,
+            env_vars,
+            processes_per_host,
+            env.master_hostname,
+            env.distribution_hosts,
+            env.current_host,
+            env.network_interface_name,
+            instance_type=env.current_instance_type,
         )
     elif identifier is RunnerType.MPI and env.is_master:
         num_processes = _mpi_param_value(mpi_args, env, params.MPI_NUM_PROCESSES)

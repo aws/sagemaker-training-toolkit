@@ -41,9 +41,9 @@ GitHub provides additional document on [forking a repository](https://help.githu
 1. cd into the sagemaker-training-toolkit folder: `cd sagemaker-training-toolkit`
 1. Run the following tox command and verify that all code checks and unit tests pass: `tox test/unit`
 
-You can also run a single test with the following command: `tox -e py36 -- -s -vv test/unit/test_entry_point.py::test_install_module`  
+You can also run a single test with the following command: `tox -e py37 -- -s -vv test/unit/test_entry_point.py::test_install_module`  
   * Note that the coverage test will fail if you only run a single test, so make sure to surround the command with `export IGNORE_COVERAGE=-` and `unset IGNORE_COVERAGE`
-  * Example: `export IGNORE_COVERAGE=- ; tox -e py36 -- -s -vv test/unit/test_entry_point.py::test_install_module ; unset IGNORE_COVERAGE`
+  * Example: `export IGNORE_COVERAGE=- ; tox -e py37 -- -s -vv test/unit/test_entry_point.py::test_install_module ; unset IGNORE_COVERAGE`
 
 
 ### Running the integration tests
@@ -52,9 +52,9 @@ Our CI system runs integration tests (the ones in the `test/integration` directo
 You should only worry about manually running any new integration tests that you write, or integration tests that test an area of code that you've modified.  
 
 1. Follow the instructions at [Set Up the AWS Command Line Interface (AWS CLI)](https://docs.aws.amazon.com/polly/latest/dg/setup-aws-cli.html).
-1. To run a test, specify the test file and method you want to run per the following command: `tox -e py36 -- -s -vv test/integration/local/test_dummy.py::test_install_requirements`
+1. To run a test, specify the test file and method you want to run per the following command: `tox -e py37 -- -s -vv test/integration/local/test_dummy.py::test_install_requirements`
    * Note that the coverage test will fail if you only run a single test, so make sure to surround the command with `export IGNORE_COVERAGE=-` and `unset IGNORE_COVERAGE`
-   * Example: `export IGNORE_COVERAGE=- ; tox -e py36 -- -s -vv test/integration/local/test_dummy.py::test_install_requirements ; unset IGNORE_COVERAGE`
+   * Example: `export IGNORE_COVERAGE=- ; tox -e py37 -- -s -vv test/integration/local/test_dummy.py::test_install_requirements ; unset IGNORE_COVERAGE`
 
 
 ### Making and testing your change

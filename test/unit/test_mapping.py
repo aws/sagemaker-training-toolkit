@@ -223,6 +223,7 @@ def test_env_vars_round_trip():
     assert env_vars["SM_MODEL_DIR"].endswith("/opt/ml/model")
     assert env_vars["SM_HOSTS"] == '["algo-1","algo-2","algo-3"]'
     assert env_vars["SM_NUM_GPUS"] == str(training_env.num_gpus)
+    assert env_vars["SM_NUM_NEURONS"] == str(training_env.num_neurons)
     assert env_vars["SM_MODULE_DIR"] == "s3/something"
     assert env_vars["SM_CURRENT_HOST"] == "algo-1"
     assert env_vars["SM_CHANNELS"] == '["train","validation"]'

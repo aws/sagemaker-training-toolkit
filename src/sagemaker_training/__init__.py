@@ -78,4 +78,5 @@ SM_EFA_NCCL_INSTANCES = [
     "ml.g5.48xlarge",
     "ml.p3dn.24xlarge",
     "ml.p4d.24xlarge",
+    "ml.trn1.32xlarge",
 ]

@@ -299,6 +299,42 @@ def channel_path(channel):  # type: (str) -> str
     return os.path.join(_input_data_dir, channel)
 
 
+def num_neurons():  # type: () -> int
+    """Return the number of neuron cores available in the current container.
+
+    Returns:
+        int: Number of Neuron Cores available in the current container.
+    """
+    try:
+        cmd = shlex.split("neuron-ls -j")
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode("utf-8")
+        j = json.loads(output)
+        neuron_cores = 0
+        for item in j:
+            neuron_cores += item.get("nc_count", 0)
+        logger.info(f"Found {neuron_cores} neurons on this instance")
+        return neuron_cores
+    except OSError:
+        logger.info("No Neurons detected (normal if no neurons installed)")
+        return 0
+    except (subprocess.CalledProcessError) as e:
+        if e.output is not None:
+            try:
+                msg = e.output.decode("utf-8").partition("error=")[2]
+                logger.info(
+                    "No Neurons detected (normal if no neurons installed). \
+                            If neuron installed then {}".format(
+                        msg
+                    )
+                )
+            except AttributeError:
+                logger.info("No Neurons detected (normal if no neurons installed)")
+        else:
+            logger.info("No Neurons detected (normal if no neurons installed)")
+
+        return 0
+
+
 def num_gpus():  # type: () -> int
     """Return the number of GPUs available in the current container.
 
@@ -512,6 +548,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
         self._num_gpus = num_gpus()
         self._num_cpus = num_cpus()
+        self._num_neurons = num_neurons()
         self._module_name = module_name
         self._user_entry_point = module_name
         self._module_dir = module_dir
@@ -702,6 +739,15 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         return self._num_gpus
 
     @property
+    def num_neurons(self):  # type: () -> int
+        """The number of Neuron Cores available in the current container.
+
+        Returns:
+            int: Number of Neuron Cores available in the current container.
+        """
+        return self._num_neurons
+
+    @property
     def num_cpus(self):  # type: () -> int
         """The number of CPUs available in the current container.
 
@@ -811,6 +857,9 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             )
             or self._additional_framework_parameters.get(
                 "sagemaker_multi_worker_mirrored_strategy_enabled", False
+            )
+            or self._additional_framework_parameters.get(
+                "sagemaker_torch_distributed_enabled", False
             )
         ):
             distribution_instance_groups.append(current_instance_group)
@@ -929,6 +978,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             "output_dir": self.output_dir,
             "num_cpus": self.num_cpus,
             "num_gpus": self.num_gpus,
+            "num_neurons": self.num_neurons,
             "model_dir": self.model_dir,
             "module_dir": self.module_dir,
             "training_env": dict(self),
