@@ -1,5 +1,12 @@
 # Changelog
 
+## v4.3.1 (2022-10-27)
+
+### Bug Fixes and Other Changes
+
+ * integrate upcoming dataparallel change to modelparallel
+ * add unit tests for torchrun launcher and collections package deprecationWarning
+
 ## v4.3.0 (2022-10-20)
 
 ### Features
