@@ -16,7 +16,6 @@ Refer: https://pytorch.org/docs/stable/elastic/run.html
 from __future__ import absolute_import
 
 import os
-import sys
 
 from sagemaker_training import (
     _entry_point_type,
@@ -31,18 +30,6 @@ TORCH_DISTRIBUTED_MODULE = "torchrun"
 MASTER_PORT = "7777"
 
 logger = logging_config.get_logger()
-
-
-def python_executable():
-    """Return the real path for the Python executable, if it exists.
-    Return RuntimeError otherwise.
-
-    Returns:
-        (str): The real path of the current Python executable.
-    """
-    if not sys.executable:
-        raise RuntimeError("Failed to retrieve the real path for the Python executable")
-    return sys.executable
 
 
 class TorchDistributedRunner(process.ProcessRunner):
@@ -88,9 +75,6 @@ class TorchDistributedRunner(process.ProcessRunner):
             os.environ["FI_PROVIDER"] = "efa"
         os.environ["NCCL_SOCKET_IFNAME"] = str(self._network_interface_name)
 
-    def _python_command(self):  # pylint: disable=no-self-use
-        return python_executable()
-
     def _create_command(self):
         """
         Based on the number of hosts, torchrun command differs.
@@ -101,8 +85,7 @@ class TorchDistributedRunner(process.ProcessRunner):
 
         if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
             raise errors.ClientError(
-                "Distributed Training through torch_distributed is not supported \
-                    for Python packages"
+                "Python packages are not supported for torch_distributed. "
                 "Please use a python script as the entry-point"
             )
 
