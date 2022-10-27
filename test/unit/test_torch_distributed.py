@@ -12,14 +12,21 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import asyncio
 import json
 import os
 
-from mock import patch
+from mock import ANY, MagicMock, patch
 import pytest
 
+from sagemaker_training import environment
 from sagemaker_training.errors import ClientError
 from sagemaker_training.torch_distributed import TorchDistributedRunner
+
+
+class AsyncMock(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super(AsyncMock, self).__call__(*args, **kwargs)
 
 
 @pytest.fixture()
@@ -54,9 +61,13 @@ def num_neurons(instance_type):
         return 32
 
 
+@pytest.fixture
+def entry_point_type_module():
+    with patch("os.listdir", lambda x: ("setup.py",)):
+        yield
+
+
 @patch.dict(os.environ, {}, clear=True)
-# @pytest.mark.parametrize("instance_type", ["ml.trn1.2xlarge", "ml.trn1.32xlarge"])
-# @pytest.mark.parametrize("cluster_size", [2, 4])
 class TestTorchDistributedRunner:
     @pytest.mark.parametrize("instance_type", ["ml.trn1.2xlarge"])
     @pytest.mark.parametrize("cluster_size", [2])
@@ -201,6 +212,66 @@ class TestTorchDistributedRunner:
             assert received_command[0].split("/")[-1] == expected_command[0]
             assert received_command[1:] == expected_command[1:]
 
+    @patch("asyncio.gather", new_callable=AsyncMock)
+    @patch("asyncio.create_subprocess_shell")
+    @patch("sagemaker_training.environment.Environment")
+    @patch("subprocess.run")
+    def test_run_multinode_job_with_py_script(
+        self,
+        subprocess_run,
+        training_env,
+        async_shell,
+        async_gather,
+    ):
+        with patch.dict(os.environ, clear=True):
+            hosts = ["algo-1", "algo-2"]
+            current_host = "algo-1"
+            master_hostname = hosts[0]
+            num_hosts = len(hosts)
+            num_processes_per_host = 32
+            network_interface_name = "eth0"
+            torch_distributed_runner = TorchDistributedRunner(
+                user_entry_point="train.py",
+                args=["-v", "--lr", "35"],
+                env_vars={
+                    "SM_TRAINING_ENV": '{"additional_framework_parameters":{"sagemaker_instance_type":"ml.trn1.32xlarge"}}'
+                },
+                processes_per_host=num_processes_per_host,
+                master_hostname=master_hostname,
+                hosts=hosts,
+                current_host="algo-1",
+                network_interface_name=network_interface_name,
+            )
+        _, _, process = torch_distributed_runner.run(wait=False)
+        cmd = [
+            "torchrun",
+            "--nnodes",
+            str(num_hosts),
+            "--nproc_per_node",
+            str(num_processes_per_host),
+            "--master_addr",
+            str(master_hostname),
+            "--master_port",
+            "7777",
+            "--node_rank",
+            str(hosts.index(current_host)),
+            "train.py",
+            "-v",
+            "--lr",
+            "35",
+        ]
+        async_shell.assert_called_with(
+            " ".join(cmd),
+            cwd=environment.code_dir,
+            env=ANY,
+            stderr=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+        )
+        async_shell.assert_called_once()
+        async_gather.assert_called_once()
+        assert process == async_shell.return_value
+        subprocess_run.assert_not_called()
+
     @pytest.mark.parametrize("instance_type", ["ml.trn1.2xlarge", "ml.trn1.32xlarge"])
     @pytest.mark.parametrize("cluster_size", [2, 4])
     def test_create_command_with_shell_script(
@@ -230,3 +301,45 @@ class TestTorchDistributedRunner:
             with pytest.raises(ClientError) as err:
                 runner._create_command()
             assert "Unsupported entry point type for torch_distributed" in str(err)
+
+    @pytest.mark.parametrize("instance_type", ["ml.trn1.2xlarge"])
+    @pytest.mark.parametrize("cluster_size", [2])
+    def test_raises_error_with_python_package(
+        self,
+        entry_point_type_module,
+        cluster,
+        cluster_size,
+        master,
+        instance_type,
+        num_neurons,
+        *patches,
+    ):
+
+        with patch("sagemaker_training.environment.code_dir", entry_point_type_module):
+            for current_host in cluster:
+                rank = cluster.index(current_host)
+                print(f"Testing as host {rank + 1} in cluster of size {cluster_size}")
+                runner = TorchDistributedRunner(
+                    user_entry_point="train.py",
+                    args=["-v", "--lr", "35"],
+                    env_vars={
+                        "SM_TRAINING_ENV": json.dumps(
+                            {
+                                "additional_framework_parameters": {
+                                    "sagemaker_instance_type": instance_type
+                                }
+                            }
+                        ),
+                    },
+                    master_hostname=master,
+                    hosts=cluster,
+                    current_host=current_host,
+                    processes_per_host=num_neurons,
+                    network_interface_name="eth0",
+                )
+                with pytest.raises(ClientError) as err:
+                    runner._create_command()
+                assert (
+                    "Python packages are not supported for torch_distributed. "
+                    "Please use a python script as the entry-point"
+                ) in str(err)
