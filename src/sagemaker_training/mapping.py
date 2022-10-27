@@ -18,6 +18,7 @@ the collections.Mapping abstract base class.
 from __future__ import absolute_import
 
 import collections
+import collections.abc
 import itertools
 import json
 
@@ -152,7 +153,7 @@ def split_by_criteria(
     return SplitResultSpec(included=included_items, excluded=excluded_items)
 
 
-class MappingMixin(collections.Mapping):
+class MappingMixin(collections.abc.Mapping):
     """A mixin class that allows for the creation of a dictionary like object,
     with any built-in function that works with a dictionary. This is used by the
     environment._Env base class.
