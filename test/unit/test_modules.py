@@ -298,3 +298,21 @@ def test_debugger_exception_import_no_exceptions():
 
     exceptions = process.get_debugger_exception_classes()
     assert exceptions == [errors.ExecuteUserScriptError], f"exceptions are {exceptions}"
+
+
+@patch.dict(sys.modules, {"tensorflow": Mock()})
+@patch.dict(sys.modules, {"tensorflow.python": Mock()})
+@patch.dict(sys.modules, {"tensorflow.python.framework": Mock()})
+@patch.dict(sys.modules, {"tensorflow.python.framework.errors_impl": Mock()})
+def test_tensorflow_exception_import():
+    from sagemaker_training import process
+
+    exceptions = process.get_tensorflow_exception_classes()
+    assert exceptions == ["XlaRuntimeError"], f"exceptions are {exceptions}"
+
+
+def test_tensorflow_exception_import_no_exceptions():
+    from sagemaker_training import process
+
+    exceptions = process.get_tensorflow_exception_classes()
+    assert exceptions == [errors.ExecuteUserScriptError], f"exceptions are {exceptions}"

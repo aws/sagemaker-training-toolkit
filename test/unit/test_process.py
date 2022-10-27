@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 
 import asyncio
+import logging
 import os
 import sys
 
@@ -202,6 +203,13 @@ async def test_watch_debugger_error(event_loop, capsys):
     error_classes = "SMDebugError"
     output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
     assert output == expected_errmsg
+
+
+def test_get_tensorflow_exception_error(event_loop, caplog):
+    with caplog.at_level(logging.INFO):
+        process.get_tensorflow_exception_classes()
+        expected_errmsg = "Exceptions not imported for SageMaker TF as Tensorflow is not installed."
+        assert expected_errmsg in caplog.text
 
 
 @pytest.mark.asyncio

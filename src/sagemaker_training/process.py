@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 import asyncio
 from asyncio.subprocess import PIPE
+from inspect import getmembers
 from inspect import isclass
 import os
 import re
@@ -54,6 +55,26 @@ def get_debugger_exception_classes():
             exception_classes += [ex for ex in dir(exceptions) if isclass(getattr(exceptions, ex))]
         except ImportError:
             logger.info("Exceptions not imported for SageMaker Debugger as it is not installed.")
+
+    if not exception_classes:
+        exception_classes = [DEFAULT_ERROR_CLASS]
+    return exception_classes
+
+
+def get_tensorflow_exception_classes():
+    """TensorFlow exception classes are reused by XLA. XLA is present in SageMaker Training Compiler
+    enabled TensorFlow and PyTorch DLCs."""
+    exception_classes = []
+    try:
+        from tensorflow.python.framework import errors_impl
+
+        # list of exceptions from TensorFlow that sagemaker-training-toolkit to catch and log
+        exception_classes += [name for name, obj in getmembers(errors_impl) if isclass(obj)]
+        # adding XlaRuntimeError as a str (process.watch can handle str) as there is
+        # no proper import of module tensorflow/compiler/xla/python/xla_client.py available.
+        exception_classes += ["XlaRuntimeError"]
+    except ImportError:
+        logger.info("Exceptions not imported for SageMaker TF as Tensorflow is not installed.")
 
     if not exception_classes:
         exception_classes = [DEFAULT_ERROR_CLASS]
@@ -386,6 +407,7 @@ class ProcessRunner(object):
 
         exception_classes = []
         exception_classes += get_debugger_exception_classes()
+        exception_classes += get_tensorflow_exception_classes()
         if wait:
             process = check_error(
                 cmd,
