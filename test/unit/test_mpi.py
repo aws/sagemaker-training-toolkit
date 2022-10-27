@@ -124,6 +124,7 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists, write_env_vars):
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 @patch("subprocess.run")
+@patch("sagemaker_training.mpi._smddpmprun_command", lambda x: [])
 def test_mpi_master_run(
     subprocess_run,
     training_env,
@@ -233,6 +234,7 @@ def test_mpi_master_run(
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 @patch("sagemaker_training.mpi._write_status_file")
+@patch("sagemaker_training.mpi._smddpmprun_command", lambda x: [])
 def test_mpi_master_run_python(
     write_status_file,
     training_env,
@@ -345,6 +347,124 @@ def test_mpi_master_run_python(
 @patch("paramiko.AutoAddPolicy")
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
+@patch("sagemaker_training.mpi._write_status_file")
+def test_mpi_master_run_python_with_smddpmprun(
+    write_status_file,
+    training_env,
+    async_shell,
+    policy,
+    ssh_client,
+    python_executable,
+    path_exists,
+    async_gather,
+    event_loop,
+):
+
+    with patch.dict(os.environ, clear=True):
+
+        master = mpi.MasterRunner(
+            user_entry_point="train.py",
+            args=["-v", "--lr", "35"],
+            env_vars={"LD_CONFIG_PATH": "/etc/ld"},
+            master_hostname="algo-1",
+            hosts=["algo-1", "algo-2"],
+            processes_per_host=2,
+            custom_mpi_options="-v --lr 35",
+            network_interface_name="ethw3",
+        )
+
+        process = master.run(wait=False)
+
+        ssh_client().load_system_host_keys.assert_called()
+        ssh_client().set_missing_host_key_policy.assert_called_with(policy())
+        ssh_client().connect.assert_called_with("algo-2", port=22)
+        ssh_client().close.assert_called()
+        cmd = [
+            "mpirun",
+            "--host",
+            "algo-1:2,algo-2:2",
+            "-np",
+            "4",
+            "--allow-run-as-root",
+            "--display-map",
+            "--tag-output",
+            "-mca",
+            "btl_tcp_if_include",
+            "ethw3",
+            "-mca",
+            "oob_tcp_if_include",
+            "ethw3",
+            "-mca",
+            "plm_rsh_no_tree_spawn",
+            "1",
+            "-bind-to",
+            "none",
+            "-map-by",
+            "slot",
+            "-mca",
+            "pml",
+            "ob1",
+            "-mca",
+            "btl",
+            "^openib",
+            "-mca",
+            "orte_abort_on_non_zero_status",
+            "1",
+            "-mca",
+            "btl_vader_single_copy_mechanism",
+            "none",
+            "-x",
+            "NCCL_MIN_NRINGS=4",
+            "-x",
+            "NCCL_SOCKET_IFNAME=ethw3",
+            "-x",
+            "NCCL_DEBUG=INFO",
+            "-x",
+            "LD_LIBRARY_PATH",
+            "-x",
+            "PATH",
+            "-x",
+            "LD_PRELOAD=%s" % inspect.getfile(gethostname),
+            "-v",
+            "--lr",
+            "35",
+            "-x",
+            "LD_CONFIG_PATH",
+            "smddpmprun",
+            "-i",
+            "ml.p3.16xlarge",
+            "--allow-bypass",
+            "usr/bin/python3",
+            "-m",
+            "mpi4py",
+            "train.py",
+            "-v",
+            "--lr",
+            "35",
+        ]
+        async_shell.assert_called_with(
+            " ".join(cmd),
+            cwd=environment.code_dir,
+            env=ANY,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=None,
+        )
+        async_shell.assert_called_once()
+        async_gather.assert_called_once()
+        assert process == async_shell.return_value
+        path_exists.assert_called_with("/usr/sbin/sshd")
+        write_status_file.assert_called_once()
+        write_status_file.assert_called_with("algo-2", "/tmp/done.algo-1")
+
+
+@patch("asyncio.gather", new_callable=AsyncMock)
+@patch("os.path.exists")
+@patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
+@patch("paramiko.SSHClient", new_callable=MockSSHClient)
+@patch("paramiko.AutoAddPolicy")
+@patch("asyncio.create_subprocess_shell")
+@patch("sagemaker_training.environment.Environment")
+@patch("sagemaker_training.mpi._smddpmprun_command", lambda x: [])
 def test_mpi_master_run_python_efa(
     training_env,
     async_shell,

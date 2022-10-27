@@ -14,6 +14,7 @@
 MPI (Message Passing Interface)."""
 import argparse
 from inspect import getfile, isclass
+import json
 import logging
 import os
 import subprocess
@@ -27,6 +28,7 @@ from sagemaker_training import (
     environment,
     errors,
     logging_config,
+    params,
     process,
     SM_EFA_NCCL_INSTANCES,
     timeout,
@@ -175,6 +177,23 @@ def _orted_process():  # pylint: disable=inconsistent-return-statements
             logger.info("Process[es]: %s", procs)
             return procs
         time.sleep(1)
+
+
+def _smddpmprun_command(instance_type):  # type: (str) -> list[str]
+    """When a task is of modelparallel and ddp_dist_backend is auto,
+    we use smddpmprun to set up necessary environment variables if possible.
+    """
+    command = []
+    env = environment.Environment()
+    if env.is_modelparallel_enabled:
+        mp_parameters = json.loads(os.environ.get(params.SM_HP_MP_PARAMETERS, "{}"))
+        ddp_dist_backend = mp_parameters.get("ddp_dist_backend", "auto")
+        if ddp_dist_backend == "auto":
+            if env.is_smddpmprun_installed:
+                command.extend(["smddpmprun", "-i", instance_type, "--allow-bypass"])
+        else:
+            logger.info(f"{ddp_dist_backend} is used as DDP backend for training")
+    return command
 
 
 class MasterRunner(process.ProcessRunner):
@@ -333,6 +352,8 @@ class MasterRunner(process.ProcessRunner):
 
         for name in self._env_vars:
             command.extend(["-x", name])
+
+        command.extend(_smddpmprun_command(self._instance_type))
 
         command.extend(super(MasterRunner, self)._create_command())
         return command

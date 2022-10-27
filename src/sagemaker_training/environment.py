@@ -359,6 +359,24 @@ def num_cpus():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
+def validate_smddpmprun():  # type: () -> bool
+    """Whether smddpmprun is installed.
+
+    Returns:
+        bool: True if both are installed
+    """
+    try:
+        output = subprocess.run(
+            ["which", "smddpmprun"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return output.stdout != ""
+    except subprocess.CalledProcessError:
+        return False
+
+
 class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-methods
     """Provides access to aspects of the training environment relevant to training jobs, including
     hyperparameters, system characteristics, filesystem locations, environment variables and
@@ -651,6 +669,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
         mp_parameters = os.environ.get(params.SM_HP_MP_PARAMETERS)
         self._is_modelparallel_enabled = mp_parameters and mp_parameters != "{}"
+        self._is_smddpmprun_installed = validate_smddpmprun()
 
     @property
     def current_instance_type(self):
@@ -1179,6 +1198,15 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             bool: True if SM ModelParallel is enabled
         """
         return self._is_modelparallel_enabled
+
+    @property
+    def is_smddpmprun_installed(self):  # type: () -> bool
+        """Whether smddpmprun is installed.
+
+        Returns:
+            bool: True if both are installed
+        """
+        return self._is_smddpmprun_installed
 
 
 def write_env_vars(env_vars=None):  # type: (dict) -> None
