@@ -14,8 +14,10 @@
 from __future__ import absolute_import
 
 # list of errors: To show user error message on the SM Training job page
-# [x for x in dir(__builtins__) if 'Error' in x]
+# [x for x in dir(__builtins__) if 'Error' in x or 'Exception' in x]
 _PYTHON_ERRORS_ = [
+    "BaseException",
+    "Exception",
     "ArithmeticError",
     "AssertionError",
     "AttributeError",
