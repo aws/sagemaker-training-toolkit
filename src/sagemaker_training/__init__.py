@@ -82,3 +82,9 @@ SM_EFA_NCCL_INSTANCES = [
     "ml.p4d.24xlarge",
     "ml.trn1.32xlarge",
 ]
+
+SM_TRAINING_COMPILER_PATHS = [
+    "tensorflow/compiler/xla",
+    "tensorflow/compiler/tf2xla",
+    "xla/torch_xla",
+]

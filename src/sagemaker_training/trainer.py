@@ -29,6 +29,7 @@ from sagemaker_training import (
     logging_config,
     params,
     runner,
+    SM_TRAINING_COMPILER_PATHS,
 )
 
 logger = logging_config.get_logger()
@@ -118,8 +119,10 @@ def train():
 
         exit_code = DEFAULT_FAILURE_CODE
     except Exception as e:  # pylint: disable=broad-except
-        failure_msg = "Framework Error: \n%s\n%s" % (traceback.format_exc(), str(e))
-
+        if any(path in str(e) for path in SM_TRAINING_COMPILER_PATHS):
+            failure_msg = "SMTrainingCompiler Error: \n%s\n%s" % (traceback.format_exc(), str(e))
+        else:
+            failure_msg = "Framework Error: \n%s\n%s" % (traceback.format_exc(), str(e))
         files.write_failure_file(failure_msg)
         logger.error("Reporting training FAILURE")
 

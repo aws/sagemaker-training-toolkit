@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import errno
+import logging
 
 from mock import MagicMock, Mock, patch
 
@@ -174,3 +175,20 @@ def test_train_no_intermediate(start_intermediate_folder_sync, import_module):
     import_module.assert_called_with("my_framework")
     framework.entry_point.assert_called()
     start_intermediate_folder_sync.asser_not_called()
+
+
+@patch("inotify_simple.INotify", MagicMock())
+@patch("boto3.client", MagicMock())
+@patch("importlib.import_module")
+@patch("sagemaker_training.environment.Environment", Environment)
+@patch("sagemaker_training.trainer._exit_processes")
+def test_train_with_smtrainingcompiler_error(_exit, import_module, caplog):
+    def fail():
+        raise Exception("exception in tensorflow/compiler/xla")
+
+    framework = Mock(entry_point=fail)
+    import_module.return_value = framework
+    with caplog.at_level(logging.INFO):
+        trainer.train()
+        expected_errmsg = "SMTrainingCompiler Error:"
+        assert expected_errmsg in caplog.text
