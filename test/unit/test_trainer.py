@@ -185,6 +185,7 @@ def test_train_no_intermediate(start_intermediate_folder_sync, import_module):
 def test_train_with_smtrainingcompiler_error(_exit, import_module, caplog):
     def fail():
         from dummy.tensorflow.compiler.xla import dummy_xla
+
         dummy_xla.dummy_xla_function()
 
     framework = Mock(entry_point=fail)
@@ -196,6 +197,7 @@ def test_train_with_smtrainingcompiler_error(_exit, import_module, caplog):
         assert expected_errmsg in caplog.text
         assert unexpected_errmsg not in caplog.text
 
+
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
@@ -204,6 +206,7 @@ def test_train_with_smtrainingcompiler_error(_exit, import_module, caplog):
 def test_train_with_framework_error(_exit, import_module, caplog):
     def fail():
         from dummy import dummy
+
         dummy.dummy_function()
 
     framework = Mock(entry_point=fail)
