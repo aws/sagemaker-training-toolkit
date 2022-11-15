@@ -184,7 +184,7 @@ def test_train_no_intermediate(start_intermediate_folder_sync, import_module):
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_with_smtrainingcompiler_error(_exit, import_module, caplog):
     def fail():
-        from dummy.tensorflow.compiler.xla import dummy_xla
+        from sagemaker_training.dummy.tensorflow.compiler.xla import dummy_xla
 
         dummy_xla.dummy_xla_function()
 
@@ -205,7 +205,7 @@ def test_train_with_smtrainingcompiler_error(_exit, import_module, caplog):
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_with_framework_error(_exit, import_module, caplog):
     def fail():
-        from dummy import dummy
+        from sagemaker_training.dummy import dummy
 
         dummy.dummy_function()
 
