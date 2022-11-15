@@ -184,11 +184,33 @@ def test_train_no_intermediate(start_intermediate_folder_sync, import_module):
 @patch("sagemaker_training.trainer._exit_processes")
 def test_train_with_smtrainingcompiler_error(_exit, import_module, caplog):
     def fail():
-        raise Exception("exception in tensorflow/compiler/xla")
+        from dummy.tensorflow.compiler.xla import dummy_xla
+        dummy_xla.dummy_xla_function()
 
     framework = Mock(entry_point=fail)
     import_module.return_value = framework
     with caplog.at_level(logging.INFO):
         trainer.train()
         expected_errmsg = "SMTrainingCompiler Error:"
+        unexpected_errmsg = "Framework Error:"
+        assert expected_errmsg in caplog.text
+        assert unexpected_errmsg not in caplog.text
+
+@patch("inotify_simple.INotify", MagicMock())
+@patch("boto3.client", MagicMock())
+@patch("importlib.import_module")
+@patch("sagemaker_training.environment.Environment", Environment)
+@patch("sagemaker_training.trainer._exit_processes")
+def test_train_with_framework_error(_exit, import_module, caplog):
+    def fail():
+        from dummy import dummy
+        dummy.dummy_function()
+
+    framework = Mock(entry_point=fail)
+    import_module.return_value = framework
+    with caplog.at_level(logging.INFO):
+        trainer.train()
+        unexpected_errmsg = "SMTrainingCompiler Error:"
+        expected_errmsg = "Framework Error:"
+        assert unexpected_errmsg not in caplog.text
         assert expected_errmsg in caplog.text

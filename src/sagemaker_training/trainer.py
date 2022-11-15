@@ -119,7 +119,7 @@ def train():
 
         exit_code = DEFAULT_FAILURE_CODE
     except Exception as e:  # pylint: disable=broad-except
-        if any(path in str(e) for path in SM_TRAINING_COMPILER_PATHS):
+        if any(path in traceback.format_exc() for path in SM_TRAINING_COMPILER_PATHS):
             failure_msg = "SMTrainingCompiler Error: \n%s\n%s" % (traceback.format_exc(), str(e))
         else:
             failure_msg = "Framework Error: \n%s\n%s" % (traceback.format_exc(), str(e))
