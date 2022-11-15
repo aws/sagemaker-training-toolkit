@@ -10,6 +10,9 @@
 # distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-def dummy_xla_function():
-    """dummy xla function to raise an exception"""
-    raise Exception("raising xla dummy exception")
+"""This module contains dummy function to raise an exception"""
+
+
+def dummy_function():
+    """dummy function to raise an exception"""
+    raise Exception("raising dummy exception")
