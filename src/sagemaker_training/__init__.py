@@ -86,5 +86,6 @@ SM_EFA_NCCL_INSTANCES = [
 SM_TRAINING_COMPILER_PATHS = [
     "tensorflow/compiler/xla",
     "tensorflow/compiler/tf2xla",
-    "xla/torch_xla",
+    "tensorflow/python/compiler/xla",
+    "torch_xla/",
 ]
