@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import errno
+import logging
 
 from mock import MagicMock, Mock, patch
 
@@ -174,3 +175,45 @@ def test_train_no_intermediate(start_intermediate_folder_sync, import_module):
     import_module.assert_called_with("my_framework")
     framework.entry_point.assert_called()
     start_intermediate_folder_sync.asser_not_called()
+
+
+@patch("inotify_simple.INotify", MagicMock())
+@patch("boto3.client", MagicMock())
+@patch("importlib.import_module")
+@patch("sagemaker_training.environment.Environment", Environment)
+@patch("sagemaker_training.trainer._exit_processes")
+def test_train_with_smtrainingcompiler_error(_exit, import_module, caplog):
+    def fail():
+        from .dummy.tensorflow.compiler.xla import dummy_xla
+
+        dummy_xla.dummy_xla_function()
+
+    framework = Mock(entry_point=fail)
+    import_module.return_value = framework
+    with caplog.at_level(logging.INFO):
+        trainer.train()
+        expected_errmsg = "SMTrainingCompiler Error:"
+        unexpected_errmsg = "Framework Error:"
+        assert expected_errmsg in caplog.text
+        assert unexpected_errmsg not in caplog.text
+
+
+@patch("inotify_simple.INotify", MagicMock())
+@patch("boto3.client", MagicMock())
+@patch("importlib.import_module")
+@patch("sagemaker_training.environment.Environment", Environment)
+@patch("sagemaker_training.trainer._exit_processes")
+def test_train_with_framework_error(_exit, import_module, caplog):
+    def fail():
+        from .dummy import dummy
+
+        dummy.dummy_function()
+
+    framework = Mock(entry_point=fail)
+    import_module.return_value = framework
+    with caplog.at_level(logging.INFO):
+        trainer.train()
+        unexpected_errmsg = "SMTrainingCompiler Error:"
+        expected_errmsg = "Framework Error:"
+        assert unexpected_errmsg not in caplog.text
+        assert expected_errmsg in caplog.text
