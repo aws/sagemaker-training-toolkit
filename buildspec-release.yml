@@ -33,6 +33,15 @@ phases:
       - docker build -t sagemaker-training-toolkit-test:dummy -f dummy/Dockerfile .
       - rm dummy/sagemaker_training.tar.gz
 
+      # build tensorflow container
+      - cd ../..
+      - aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 763104351884.dkr.ecr.us-west-2.amazonaws.com
+      - cp dist/sagemaker_training-*.tar.gz test/container/dummy/sagemaker_training.tar.gz
+      - cd test/container
+      - docker build -t sagemaker-training-toolkit-test:tensorflow -f tensorflow/Dockerfile .
+      #- docker tag sagemaker-training-toolkit-test:tensorflow sagemaker-training-toolkit-test:tensorflow$(($(date +%s%N)/1000000)) #append currenttime to the tag name.
+      - rm dummy/sagemaker_training.tar.gz
+
       - cd ../..
 
       # run local integration tests
