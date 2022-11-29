@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.3.2 (2022-11-29)
+
+### Bug Fixes and Other Changes
+
+ * add general exception to filter
+
 ## v4.3.1 (2022-10-27)
 
 ### Bug Fixes and Other Changes
