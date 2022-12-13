@@ -80,7 +80,13 @@ SM_EFA_NCCL_INSTANCES = [
     "ml.g5.48xlarge",
     "ml.p3dn.24xlarge",
     "ml.p4d.24xlarge",
+    "ml.p4de.24xlarge",
     "ml.trn1.32xlarge",
+]
+
+SM_EFA_RDMA_INSTANCES = [
+    "ml.p4d.24xlarge",
+    "ml.p4de.24xlarge",
 ]
 
 SM_TRAINING_COMPILER_PATHS = [
