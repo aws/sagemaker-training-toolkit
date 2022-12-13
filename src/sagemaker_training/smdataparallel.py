@@ -28,6 +28,7 @@ from sagemaker_training import (
     logging_config,
     process,
     SM_EFA_NCCL_INSTANCES,
+    SM_EFA_RDMA_INSTANCES,
     timeout,
 )
 
@@ -214,10 +215,12 @@ class SMDataParallelRunner(process.ProcessRunner):
         instance_type = self._get_instance_type()
         # EFA settings
         if instance_type in SM_EFA_NCCL_INSTANCES:
-            # Use EFA's RDMA functionality for one-sided and two-sided transfer
-            mpirun_command.extend(["-x", "FI_EFA_USE_DEVICE_RDMA=1"])
             # Use simple protocol to handle the out-of-order data delivery from EFA
             mpirun_command.extend(["-x", "NCCL_PROTO=simple"])
+
+        if instance_type in SM_EFA_RDMA_INSTANCES:
+            # Use EFA's RDMA functionality for one-sided and two-sided transfer
+            mpirun_command.extend(["-x", "FI_EFA_USE_DEVICE_RDMA=1"])
 
         if smdataparallel_server_addr and smdataparallel_server_port:
             # in case of multi-node [distributed] training, smdataparallel_server_addr,

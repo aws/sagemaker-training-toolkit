@@ -31,6 +31,7 @@ from sagemaker_training import (
     params,
     process,
     SM_EFA_NCCL_INSTANCES,
+    SM_EFA_RDMA_INSTANCES,
     timeout,
 )
 
@@ -337,10 +338,12 @@ class MasterRunner(process.ProcessRunner):
         if self._instance_type in SM_EFA_NCCL_INSTANCES:
             # Enable EFA use
             command.extend(["-x", "FI_PROVIDER=efa"])
-            # Use EFA's RDMA functionality for one-sided and two-sided transfer
-            command.extend(["-x", "FI_EFA_USE_DEVICE_RDMA=1"])
             # Use simple protocol to handle the out-of-order data delivery from EFA
             command.extend(["-x", "NCCL_PROTO=simple"])
+
+        if self._instance_type in SM_EFA_RDMA_INSTANCES:
+            # Use EFA's RDMA functionality for one-sided and two-sided transfer
+            command.extend(["-x", "FI_EFA_USE_DEVICE_RDMA=1"])
 
         for credential in [
             "AWS_ACCESS_KEY_ID",

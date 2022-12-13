@@ -24,6 +24,7 @@ from sagemaker_training import (
     logging_config,
     process,
     SM_EFA_NCCL_INSTANCES,
+    SM_EFA_RDMA_INSTANCES,
 )
 
 TORCH_DISTRIBUTED_MODULE = "torchrun"
@@ -69,10 +70,11 @@ class TorchDistributedRunner(process.ProcessRunner):
         logger.info("Starting distributed training through torchrun")
         # EFA settings
         if self._instance_type in SM_EFA_NCCL_INSTANCES:
-            # Use EFA's RDMA functionality for one-sided and two-sided transfer
-            os.environ["FI_EFA_USE_DEVICE_RDMA"] = "1"
             # Enable EFA use
             os.environ["FI_PROVIDER"] = "efa"
+        if self._instance_type in SM_EFA_RDMA_INSTANCES:
+            # Use EFA's RDMA functionality for one-sided and two-sided transfer
+            os.environ["FI_EFA_USE_DEVICE_RDMA"] = "1"
         os.environ["NCCL_SOCKET_IFNAME"] = str(self._network_interface_name)
 
     def _create_command(self):
