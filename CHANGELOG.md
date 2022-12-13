@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.4.1 (2022-12-13)
+
+### Bug Fixes and Other Changes
+
+ * Add support for p4de instances, update when FI_EFA_USE_DEVICE_RDMA flag is set to only p4d{e} instances.
+
 ## v4.4.0 (2022-12-06)
 
 ### Features
