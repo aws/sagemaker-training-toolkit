@@ -18,7 +18,7 @@ import os
 from mock import patch
 import pytest
 
-from sagemaker_training.errors import ClientError
+from sagemaker_training.errors import SMTrainingCompilerConfigurationError
 from sagemaker_training.pytorch_xla import PyTorchXLARunner
 
 
@@ -166,7 +166,7 @@ class TestPyTorchXLARunner:
                 hosts=cluster,
                 num_gpus=num_gpus,
             )
-            with pytest.raises(ClientError) as err:
+            with pytest.raises(SMTrainingCompilerConfigurationError) as err:
                 runner._create_command()
             assert "Please use a python script" in str(err)
 
@@ -218,10 +218,10 @@ class TestPyTorchXLARunner:
                 hosts=cluster,
                 num_gpus=num_gpus,
             )
-            with pytest.raises(ModuleNotFoundError) as err:
+            with pytest.raises(SMTrainingCompilerConfigurationError) as err:
                 runner._check_for_torch_xla()
             assert "mechanism requires PT-XLA" in str(err)
-            with pytest.raises(ModuleNotFoundError) as err:
+            with pytest.raises(SMTrainingCompilerConfigurationError) as err:
                 runner._check_for_sagemaker_integration()
             assert "Unable to find SageMaker integration code" in str(err)
 
@@ -247,6 +247,6 @@ def test_check_cpu_compatibility(cluster, cluster_size, master, *patches):
             hosts=cluster,
             num_gpus=0,
         )
-        with pytest.raises(ValueError) as err:
+        with pytest.raises(SMTrainingCompilerConfigurationError) as err:
             runner._check_processor_compatibility()
         assert "only supported for GPU" in str(err)
