@@ -33,6 +33,7 @@ from sagemaker_training import (
     environment,
     errors,
     logging_config,
+    SM_TRAINING_COMPILER_PATHS,
 )
 
 logger = logging_config.get_logger()
@@ -302,6 +303,8 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
         if return_code == 137:
             extra_info = "OutOfMemory: Process killed by SIGKILL (signal 9)"
 
+        if stderr and any(path in stderr for path in SM_TRAINING_COMPILER_PATHS):
+            extra_info = "SMTrainingCompiler Error: Error occurred in SMTrainingCompiler."
         # throw internal error classes first
         internal_errors = [err for err in dir(errors) if isclass(getattr(errors, err))]
         error_class = next(

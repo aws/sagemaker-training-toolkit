@@ -103,14 +103,14 @@ class PyTorchXLARunner(process.ProcessRunner):
         entrypoint_type = _entry_point_type.get(environment.code_dir, self._user_entry_point)
 
         if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
-            raise errors.ClientError(
+            raise errors.SMTrainingCompilerConfigurationError(
                 "Distributed Training through PT-XLA is not supported for Python packages. "
                 "Please use a python script as the entry-point"
             )
         if entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
             return self._pytorch_xla_command() + [self._user_entry_point] + self._args
         else:
-            raise errors.ClientError(
+            raise errors.SMTrainingCompilerConfigurationError(
                 "Distributed Training through PT-XLA is only supported for Python scripts. "
                 "Please use a python script as the entry-point"
             )
@@ -133,7 +133,7 @@ class PyTorchXLARunner(process.ProcessRunner):
         try:
             import torch_xla.distributed.xla_spawn  # pylint: disable=unused-import # noqa: F401
         except ModuleNotFoundError as exception:
-            raise ModuleNotFoundError(
+            raise errors.SMTrainingCompilerConfigurationError(
                 "Unable to find SageMaker integration code in PT-XLA. "
                 "AWS SageMaker adds custom code on top of open source "
                 "PT-XLA to provide platform specific "
@@ -149,7 +149,7 @@ class PyTorchXLARunner(process.ProcessRunner):
         try:
             import torch_xla  # pylint: disable=unused-import # noqa: F401
         except ModuleNotFoundError as exception:
-            raise ModuleNotFoundError(
+            raise errors.SMTrainingCompilerConfigurationError(
                 "Unable to find PT-XLA in the execution environment. "
                 "This distribution mechanism requires PT-XLA to be available"
                 " in the execution environment. "
@@ -160,4 +160,6 @@ class PyTorchXLARunner(process.ProcessRunner):
 
     def _check_processor_compatibility(self):
         if not self._num_gpus > 0:
-            raise ValueError("Distributed training through PT-XLA is only supported for GPUs.")
+            raise errors.SMTrainingCompilerConfigurationError(
+                "Distributed training through PT-XLA is only supported for GPUs."
+            )
