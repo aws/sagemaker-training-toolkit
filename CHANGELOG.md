@@ -1,5 +1,7 @@
 # Changelog
 
+## v4.4.2 (2023-01-16)
+
 ## v4.4.1 (2022-12-13)
 
 ### Bug Fixes and Other Changes
