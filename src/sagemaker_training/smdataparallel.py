@@ -42,8 +42,6 @@ COMMUNICATION_BACKEND_NCCL = "nccl"
 SMDDP_LIB_PATHS = [
     "/opt/conda/lib/libsmddp.so",
     "/opt/conda/lib/libsmddpcoll.so",
-    "/opt/conda/lib/liboutofband.so",
-    "/opt/conda/lib/libgloo.so",
 ]
 
 
@@ -476,9 +474,9 @@ def _validate_smddp_coll_libs_present():
     deep-learning-containers package.
 
     libsmddp.so is preloaded for training when SMDDP Collectives are used.
-    The other libraries libsmddpcoll.so, liboutofband.so and libgloo.so are
-    essential for successful training. Thus, if the libraries are absent,
-    we want to avoid training failure by disabling SMDDP Collectives.
+    The other library libsmddpcoll.so is also essential for successful training.
+    Thus, if the libraries are absent, we want to avoid training failure
+    by disabling SMDDP Collectives.
     """
     for path in SMDDP_LIB_PATHS:
         if not os.path.exists(path):
