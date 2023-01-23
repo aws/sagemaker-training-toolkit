@@ -1,5 +1,19 @@
 # Changelog
 
+## v4.4.4 (2023-01-23)
+
+### Bug Fixes and Other Changes
+
+ * Update libraries for SMDDP collectives validation
+
+## v4.4.3 (2023-01-18)
+
+### Bug Fixes and Other Changes
+
+ * Upgrade protobuf to prevent conflicts with smdebugger.
+
+## v4.4.2 (2023-01-16)
+
 ## v4.4.1 (2022-12-13)
 
 ### Bug Fixes and Other Changes
