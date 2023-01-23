@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.4.4 (2023-01-23)
+
+### Bug Fixes and Other Changes
+
+ * Update libraries for SMDDP collectives validation
+
 ## v4.4.3 (2023-01-18)
 
 ### Bug Fixes and Other Changes
