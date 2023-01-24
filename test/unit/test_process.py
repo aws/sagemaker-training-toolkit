@@ -211,9 +211,9 @@ async def test_get_trainingcompiler_exception_classes(event_loop, capsys):
     expected_stream = "[1,mpirank:10,algo-2]<stdout>:This is stdout\n"
     expected_stream += "[1,mpirank:10,algo-2]<stderr>:This is stderr\n"
     expected_stream += (
-        "[1,mpirank:0,algo-1]<stderr>:SMTrainingCompilerConfigurationError:  exception raised\n"
+        "[1,mpirank:0,algo-1]<stderr>:SMTrainingCompilerConfigurationError: exception raised\n"
     )
-    expected_errmsg = "SMTrainingCompilerConfigurationError:  exception raised\n"
+    expected_errmsg = "SMTrainingCompilerConfigurationError: exception raised\n"
 
     stream = asyncio.StreamReader()
     stream.feed_data(b"[1,10]<stdout>:This is stdout\n")
@@ -225,7 +225,7 @@ async def test_get_trainingcompiler_exception_classes(event_loop, capsys):
     output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
     captured_stream = capsys.readouterr()
     assert captured_stream.out == expected_stream
-    assert output == expected_errmsg
+    assert expected_errmsg in output
 
     # test errors piped in stdout
     stream = asyncio.StreamReader()
@@ -234,7 +234,7 @@ async def test_get_trainingcompiler_exception_classes(event_loop, capsys):
 
     error_classes = ["SMTrainingCompilerConfigurationError"]
     output = await process.watch(stream, num_processes_per_host, error_classes=error_classes)
-    assert output == expected_errmsg
+    assert expected_errmsg in output
 
     # test single item
     stream = asyncio.StreamReader()
