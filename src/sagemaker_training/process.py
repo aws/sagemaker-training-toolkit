@@ -82,6 +82,15 @@ def get_tensorflow_exception_classes():
     return exception_classes
 
 
+def get_pytorch_exception_classes():
+    """Pytorch configuration errors are raised by pytorch_xla.py."""
+    exception_classes = []
+    exception_classes += [errors.SMTrainingCompilerConfigurationError.__class__.__name__]
+    if not exception_classes:
+        exception_classes = [DEFAULT_ERROR_CLASS]
+    return exception_classes
+
+
 def process_error_classes(error_classes):
     """Process error classes and return a list of string.
     Input could be class, string, or None
@@ -411,6 +420,7 @@ class ProcessRunner(object):
         exception_classes = []
         exception_classes += get_debugger_exception_classes()
         exception_classes += get_tensorflow_exception_classes()
+        exception_classes += get_pytorch_exception_classes()
         if wait:
             process = check_error(
                 cmd,

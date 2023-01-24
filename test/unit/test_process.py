@@ -205,6 +205,12 @@ async def test_watch_debugger_error(event_loop, capsys):
     assert output == expected_errmsg
 
 
+def test_get_pytorch_exception_classes():
+    exception_classes = process.get_tensorflow_exception_classes()
+    expected_errmsg = "SMTrainingCompilerConfigurationError"
+    assert expected_errmsg in exception_classes
+
+
 def test_get_tensorflow_exception_error(event_loop, caplog):
     with caplog.at_level(logging.INFO):
         process.get_tensorflow_exception_classes()
