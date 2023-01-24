@@ -207,8 +207,8 @@ async def test_watch_debugger_error(event_loop, capsys):
 
 def test_get_trainingcompiler_exception_classes():
     exception_classes = process.get_trainingcompiler_exception_classes()
-    expected_errmsg = "SMTrainingCompilerConfigurationError"
-    assert expected_errmsg in exception_classes
+    expected_msg = "SMTrainingCompilerConfigurationError"
+    assert expected_msg in exception_classes
 
 
 def test_get_tensorflow_exception_error(event_loop, caplog):

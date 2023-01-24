@@ -85,7 +85,7 @@ def get_tensorflow_exception_classes():
 def get_trainingcompiler_exception_classes():
     """Pytorch configuration errors are raised by pytorch_xla.py."""
     exception_classes = []
-    exception_classes += [errors.SMTrainingCompilerConfigurationError.__class__]
+    exception_classes += [errors.SMTrainingCompilerConfigurationError]
     if not exception_classes:
         exception_classes = [DEFAULT_ERROR_CLASS]
     return exception_classes
