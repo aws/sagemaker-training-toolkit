@@ -22,10 +22,6 @@ class ClientError(Exception):
     """Error class used to separate framework and user errors."""
 
 
-class SMTrainingCompilerConfigurationError(Exception):
-    """Error class used to separate configuration errors"""
-
-
 class _CalledProcessError(ClientError):
     """This exception is raised when a process run by check_call() or
     check_output() returns a non-zero exit status.
@@ -107,3 +103,6 @@ class UnsupportedFormatError(Exception):
             % content_type
         )
         super(UnsupportedFormatError, self).__init__(self.message, **kwargs)
+
+class SMTrainingCompilerConfigurationError(_CalledProcessError):
+    """Error class used to separate configuration errors"""
