@@ -104,5 +104,6 @@ class UnsupportedFormatError(Exception):
         )
         super(UnsupportedFormatError, self).__init__(self.message, **kwargs)
 
+
 class SMTrainingCompilerConfigurationError(_CalledProcessError):
     """Error class used to separate configuration errors"""
