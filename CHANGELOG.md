@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.4.7 (2023-03-02)
+
+### Bug Fixes and Other Changes
+
+ * Revert SMDDP collectives feature from smdataparallel runner
+
 ## v4.4.6 (2023-02-22)
 
 ## v4.4.5 (2023-01-24)
