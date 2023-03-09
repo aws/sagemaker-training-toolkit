@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.4.8 (2023-03-09)
+
+### Bug Fixes and Other Changes
+
+ * upagrade protobuf version for tensorflow 2.12
+
 ## v4.4.7 (2023-03-02)
 
 ### Bug Fixes and Other Changes
