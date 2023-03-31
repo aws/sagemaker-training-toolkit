@@ -172,7 +172,7 @@ def _wait_orted_process_to_finish():  # type: () -> None
 
 def _orted_process():  # pylint: disable=inconsistent-return-statements
     """Wait a maximum of 20 minutes for orted process to start."""
-    # TODO: the wait time here should be set to a dynamic value according to cluster size
+    # the wait time here should be set to a dynamic value according to cluster size
     for _ in range(20 * 60):
         procs = [p for p in psutil.process_iter(attrs=["name"]) if p.info["name"] == "orted"]
         if procs:
