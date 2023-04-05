@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.4.9 (2023-04-05)
+
+### Bug Fixes and Other Changes
+
+ * increase worker waiting time for ORTE proc
+
 ## v4.4.8 (2023-03-09)
 
 ### Bug Fixes and Other Changes
