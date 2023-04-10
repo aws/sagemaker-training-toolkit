@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.4.10 (2023-04-10)
+
+### Bug Fixes and Other Changes
+
+ * unpin sagemaker version as the credential issue fixed
+
 ## v4.4.9 (2023-04-05)
 
 ### Bug Fixes and Other Changes
