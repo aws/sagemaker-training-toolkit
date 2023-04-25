@@ -42,6 +42,27 @@ class MockSSHClient(MagicMock):
         self.connect = MagicMock(side_effect=[does_not_connect, connect, does_not_connect])
 
 
+@patch("sagemaker_training.environment.Environment.is_modelparallel_enabled", lambda x: True)
+def test_mpi_modelparallel_environment_command_no_torch():
+    with patch.dict(os.environ, {}, clear=True):
+        cmd = mpi._modelparallel_environment_command("ml.p4d.24xlarge")
+        assert cmd == []
+
+
+@patch("sagemaker_training.environment.Environment.is_modelparallel_enabled", lambda x: True)
+def test_mpi_modelparallel_environment_command_torch1():
+    with patch.dict(os.environ, {"SM_DLC_TORCH_VERSION": "1.13.1"}, clear=True):
+        cmd = mpi._modelparallel_environment_command("ml.p4d.24xlarge")
+        assert cmd == ["-x", "NCCL_PROTO=simple"]
+
+
+@patch("sagemaker_training.environment.Environment.is_modelparallel_enabled", lambda x: True)
+def test_mpi_modelparallel_environment_command_torch2():
+    with patch.dict(os.environ, {"SM_DLC_TORCH_VERSION": "2.0.0"}, clear=True):
+        cmd = mpi._modelparallel_environment_command("ml.p4d.24xlarge")
+        assert cmd == ["-x", "NCCL_PROTO=simple", "-x", "NCCL_ALGO=ring"]
+
+
 @patch("sagemaker_training.mpi._write_env_vars_to_file")
 @patch("sagemaker_training.mpi.logger")
 @patch("os.path.exists")
@@ -124,7 +145,7 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists, write_env_vars):
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 @patch("subprocess.run")
-@patch("sagemaker_training.mpi._smddpmprun_command", lambda x: [])
+@patch("sagemaker_training.mpi._modelparallel_environment_command", lambda x: [])
 def test_mpi_master_run(
     subprocess_run,
     training_env,
@@ -234,7 +255,7 @@ def test_mpi_master_run(
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
 @patch("sagemaker_training.mpi._write_status_file")
-@patch("sagemaker_training.mpi._smddpmprun_command", lambda x: [])
+@patch("sagemaker_training.mpi._modelparallel_environment_command", lambda x: [])
 def test_mpi_master_run_python(
     write_status_file,
     training_env,
@@ -464,7 +485,7 @@ def test_mpi_master_run_python_with_smddpmprun(
 @patch("paramiko.AutoAddPolicy")
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.environment.Environment")
-@patch("sagemaker_training.mpi._smddpmprun_command", lambda x: [])
+@patch("sagemaker_training.mpi._modelparallel_environment_command", lambda x: [])
 def test_mpi_master_run_python_efa(
     training_env,
     async_shell,
