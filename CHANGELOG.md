@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.5.0 (2023-04-26)
+
+### Features
+
+ * add NCCL_PROTO, NCCL_ALGO environments for modelparallel jobs
+
 ## v4.4.10 (2023-04-10)
 
 ### Bug Fixes and Other Changes
