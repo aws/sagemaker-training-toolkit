@@ -94,7 +94,13 @@ class TorchDistributedRunner(process.ProcessRunner):
         if entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
             num_hosts = len(self._hosts)
             torchrun_cmd = []
-
+            
+            """
+            Adding support for neuron_parallel_compile to precompile XLA graphs. If environment variable RUN_NEURON_PARALLEL_COMPILE == "1". 
+            """
+            if os.environ.get("RUN_NEURON_PARALLEL_COMPILE") == "1":
+                torchrun_cmd.append("neuron_parallel_compile")
+            
             node_options = [
                 TORCH_DISTRIBUTED_MODULE,
                 "--nnodes",
