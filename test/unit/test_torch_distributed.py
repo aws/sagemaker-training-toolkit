@@ -17,6 +17,7 @@ import json
 import os
 
 from mock import ANY, MagicMock, patch
+from unittest import mock   
 import pytest
 
 from sagemaker_training import environment
@@ -343,3 +344,53 @@ class TestTorchDistributedRunner:
                     "Python packages are not supported for torch_distributed. "
                     "Please use a python script as the entry-point"
                 ) in str(err)
+
+    @mock.patch.dict(os.environ, "RUN_NEURON_PARALLEL_COMPILE" == "1")
+    @pytest.mark.parametrize("instance_type", ["ml.trn1.2xlarge", "ml.trn1.32xlarge", "ml.trn1n.32xlarge"])
+    @pytest.mark.parametrize("cluster_size", [2, 4])
+    def test_neuron_parallel_compile(
+        self, cluster, cluster_size, master, instance_type, num_neurons, *patches
+    ):
+        training_args = ["-v", "--lr", "35"]
+        training_script = "train.py"
+        for current_host in cluster:
+            rank = cluster.index(current_host)
+            print(f"Testing as host {rank+1} in cluster of size {cluster_size}")
+            runner = TorchDistributedRunner(
+                user_entry_point=training_script,
+                args=training_args,
+                env_vars={
+                    "SM_TRAINING_ENV": json.dumps(
+                        {
+                            "additional_framework_parameters": {
+                                "sagemaker_instance_type": instance_type
+                            }
+                        }
+                    ),
+                },
+                master_hostname=master,
+                hosts=cluster,
+                current_host=current_host,
+                processes_per_host=num_neurons,
+                network_interface_name="eth0",
+            )
+            received_command = runner._create_command()
+            expected_command = [
+                "neuron_parallel_compile"
+                "torchrun",
+                "--nnodes",
+                str(len(cluster)),
+                "--nproc_per_node",
+                str(num_neurons),
+                "--master_addr",
+                str(master),
+                "--master_port",
+                "7777",
+                "--node_rank",
+                str(cluster.index(current_host)),
+                training_script,
+            ] + training_args
+            print(received_command) #remove after testing
+            print(expected_command) #remove after testing
+            assert received_command[0].split("/")[-1] == expected_command[0]
+            assert received_command[1:] == expected_command[1:]
