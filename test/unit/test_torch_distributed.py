@@ -345,7 +345,7 @@ class TestTorchDistributedRunner:
                     "Please use a python script as the entry-point"
                 ) in str(err)
 
-    @mock.patch.dict(os.environ, "RUN_NEURON_PARALLEL_COMPILE" == "1")
+    
     @pytest.mark.parametrize("instance_type", ["ml.trn1.2xlarge", "ml.trn1.32xlarge", "ml.trn1n.32xlarge"])
     @pytest.mark.parametrize("cluster_size", [2, 4])
     def test_neuron_parallel_compile(
@@ -356,6 +356,7 @@ class TestTorchDistributedRunner:
         for current_host in cluster:
             rank = cluster.index(current_host)
             print(f"Testing as host {rank+1} in cluster of size {cluster_size}")
+            os.environ["RUN_NEURON_PARALLEL_COMPILE"] = "1"
             runner = TorchDistributedRunner(
                 user_entry_point=training_script,
                 args=training_args,
@@ -376,7 +377,7 @@ class TestTorchDistributedRunner:
             )
             received_command = runner._create_command()
             expected_command = [
-                "neuron_parallel_compile"
+                "neuron_parallel_compile",
                 "torchrun",
                 "--nnodes",
                 str(len(cluster)),
@@ -390,7 +391,5 @@ class TestTorchDistributedRunner:
                 str(cluster.index(current_host)),
                 training_script,
             ] + training_args
-            print(received_command) #remove after testing
-            print(expected_command) #remove after testing
             assert received_command[0].split("/")[-1] == expected_command[0]
             assert received_command[1:] == expected_command[1:]
