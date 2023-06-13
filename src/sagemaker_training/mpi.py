@@ -34,6 +34,7 @@ from sagemaker_training import (
     SM_EFA_RDMA_INSTANCES,
     timeout,
 )
+from sagemaker_training.smdataparallel import get_dataparallel_exception_classes
 
 logger = logging_config.get_logger()
 logging.getLogger("paramiko").setLevel(logging.INFO)
@@ -405,6 +406,7 @@ class MasterRunner(process.ProcessRunner):
         exception_classes += process.get_tensorflow_exception_classes()
         if training_env.is_modelparallel_enabled:
             exception_classes += get_modelparallel_exception_classes()
+        exception_classes += get_dataparallel_exception_classes()
         # remove potential duplication
         exception_classes = list(set(exception_classes))
         if wait:
