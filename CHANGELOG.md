@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.6.0 (2023-06-15)
+
+### Features
+
+ * add smddp exception classes in mpi distribution
+
 ## v4.5.0 (2023-04-26)
 
 ### Features
