@@ -94,13 +94,12 @@ class TorchDistributedRunner(process.ProcessRunner):
         if entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
             num_hosts = len(self._hosts)
             torchrun_cmd = []
-            
-            
+
             # Adding support for neuron_parallel_compile to precompile XLA graphs, if environment variable RUN_NEURON_PARALLEL_COMPILE == "1"
             # This is an example of the command line output when this flag is set: "neuron_parallel_compile torchrun --nnodes 2 --nproc_per_node 32 --master_addr algo-1 --master_port 7777 --node_rank 0 trn_train.py --max_steps 100"
             if os.environ.get("RUN_NEURON_PARALLEL_COMPILE") == "1":
                 torchrun_cmd.append("neuron_parallel_compile")
-            
+
             node_options = [
                 TORCH_DISTRIBUTED_MODULE,
                 "--nnodes",

@@ -17,7 +17,7 @@ import json
 import os
 
 from mock import ANY, MagicMock, patch
-from unittest import mock   
+from unittest import mock
 import pytest
 
 from sagemaker_training import environment
@@ -315,7 +315,6 @@ class TestTorchDistributedRunner:
         num_neurons,
         *patches,
     ):
-
         with patch("sagemaker_training.environment.code_dir", entry_point_type_module):
             for current_host in cluster:
                 rank = cluster.index(current_host)
@@ -345,8 +344,9 @@ class TestTorchDistributedRunner:
                     "Please use a python script as the entry-point"
                 ) in str(err)
 
-    
-    @pytest.mark.parametrize("instance_type", ["ml.trn1.2xlarge", "ml.trn1.32xlarge", "ml.trn1n.32xlarge"])
+    @pytest.mark.parametrize(
+        "instance_type", ["ml.trn1.2xlarge", "ml.trn1.32xlarge", "ml.trn1n.32xlarge"]
+    )
     @pytest.mark.parametrize("cluster_size", [2, 4])
     def test_neuron_parallel_compile(
         self, cluster, cluster_size, master, instance_type, num_neurons, *patches
