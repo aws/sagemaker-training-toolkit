@@ -107,6 +107,7 @@ def train():
 
         files.write_success_file()
     except errors.ClientError as e:
+
         failure_msg = str(e)
         files.write_failure_file(failure_msg)
         logger.error("Reporting training FAILURE")

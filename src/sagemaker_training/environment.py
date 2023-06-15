@@ -317,7 +317,7 @@ def num_neurons():  # type: () -> int
     except OSError:
         logger.info("No Neurons detected (normal if no neurons installed)")
         return 0
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError) as e:
         if e.output is not None:
             try:
                 msg = e.output.decode("utf-8").partition("error=")[2]
