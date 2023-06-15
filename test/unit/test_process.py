@@ -281,6 +281,7 @@ async def test_run_async(async_shell, async_gather):
 @patch("asyncio.create_subprocess_shell")
 @patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_python(log, async_shell, async_gather, entry_point_type_script, event_loop):
+
     async_gather.return_value = ("stdout", "stderr")
 
     with pytest.raises(errors.ExecuteUserScriptError):

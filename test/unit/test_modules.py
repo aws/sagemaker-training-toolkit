@@ -170,6 +170,7 @@ def test_exists(import_module):
 @patch("importlib.import_module")
 @patch("six.moves.reload_module")
 def test_import_module(reload, import_module, install, download_and_extract):
+
     modules.import_module("s3://bucket/my-module")
 
     download_and_extract.assert_called_with("s3://bucket/my-module", environment.code_dir)
@@ -264,6 +265,7 @@ def test_smp_exception_import():
     sys.modules, {"smdistributed.modelparallel.torch": PseudoPackage(PseudoExceptionFile("torch"))}
 )
 def test_smp_exception_import_torch_only():
+
     from sagemaker_training import mpi as mpi
 
     exceptions = mpi.get_modelparallel_exception_classes()
@@ -275,6 +277,7 @@ def test_smp_exception_import_torch_only():
 @patch.dict(sys.modules, {"smdistributed.modelparallel.backend": PseudoPackage()})
 @patch.dict(sys.modules, {"smdistributed.modelparallel.torch": PseudoPackage()})
 def test_smp_exception_import_no_exceptions():
+
     from sagemaker_training import mpi
 
     exceptions = mpi.get_modelparallel_exception_classes()

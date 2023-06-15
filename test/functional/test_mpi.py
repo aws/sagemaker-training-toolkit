@@ -34,6 +34,7 @@ class CustomEstimator(Framework):
     reason="waiting for local mode fix on  " "https://github.com/aws/sagemaker-python-sdk/pull/559"
 )
 def test_mpi(tmpdir):
+
     estimator = CustomEstimator(
         entry_point="launcher.sh",
         image_name=build_mpi_image(tmpdir),
