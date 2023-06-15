@@ -85,7 +85,6 @@ def test_mpi_worker_run(
     logger,
     write_env_vars,
 ):
-
     process = MagicMock(info={"name": "orted"})
     process_iter.side_effect = lambda attrs: [process]
     wait_procs.return_value = (process, None)
@@ -156,7 +155,6 @@ def test_mpi_master_run(
     async_gather,
     event_loop,
 ):
-
     with patch.dict(os.environ, clear=True):
         os.environ["AWS_ACCESS_KEY_ID"] = "ABCD"
         master = mpi.MasterRunner(
@@ -267,9 +265,7 @@ def test_mpi_master_run_python(
     async_gather,
     event_loop,
 ):
-
     with patch.dict(os.environ, clear=True):
-
         master = mpi.MasterRunner(
             user_entry_point="train.py",
             args=["-v", "--lr", "35"],
@@ -380,9 +376,7 @@ def test_mpi_master_run_python_with_smddpmprun(
     async_gather,
     event_loop,
 ):
-
     with patch.dict(os.environ, clear=True):
-
         master = mpi.MasterRunner(
             user_entry_point="train.py",
             args=["-v", "--lr", "35"],
@@ -496,9 +490,7 @@ def test_mpi_master_run_python_efa(
     async_gather,
     event_loop,
 ):
-
     with patch.dict(os.environ, clear=True):
-
         master = mpi.MasterRunner(
             user_entry_point="train.py",
             args=["-v", "--lr", "35"],
