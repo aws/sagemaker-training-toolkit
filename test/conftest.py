@@ -41,7 +41,6 @@ def _write_json(obj, path):  # type: (object, str) -> None
 
 @pytest.fixture(autouse=True)
 def create_base_path():
-
     yield str(os.environ[environment.BASE_PATH_ENV])
 
     shutil.rmtree(os.environ[environment.BASE_PATH_ENV])

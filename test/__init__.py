@@ -104,7 +104,6 @@ def create_resource_config(
     current_instance_group="homogeneousCluster",
     network_interface_name="ethwe",
 ):  # type: (str, list, str, str) -> None
-
     if network_interface_name:
         write_json(
             dict(
@@ -202,7 +201,6 @@ class UserModule(object):
             for _file in self.files:
                 name = os.path.join(dir_path, _file.name)
                 with open(name, "w+") as f:
-
                     if isinstance(_file.data, six.string_types):
                         data = _file.data
                     else:
@@ -224,7 +222,6 @@ class UserModule(object):
         for _file in self.files:
             name = os.path.join(tmp_dir_path, _file.name)
             with open(name, "w+") as f:
-
                 if isinstance(_file.data, six.string_types):
                     data = _file.data
                 else:
@@ -259,7 +256,6 @@ class TestBase(object):
 
     @pytest.fixture(autouse=True)
     def set_up(self):
-
         for _patch in self.patches:
             _patch.start()
 
