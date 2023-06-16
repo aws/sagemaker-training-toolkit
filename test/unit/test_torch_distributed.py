@@ -17,7 +17,6 @@ import json
 import os
 
 from mock import ANY, MagicMock, patch
-from unittest import mock
 import pytest
 
 from sagemaker_training import environment
