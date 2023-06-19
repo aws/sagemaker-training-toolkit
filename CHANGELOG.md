@@ -1,5 +1,20 @@
 # Changelog
 
+## v4.6.1 (2023-06-19)
+
+### Bug Fixes and Other Changes
+
+ * removed unused import statment
+ * forgot to run black on torch_distributed.py after updating my comments from last commit
+ * Modified my comment on line 98-103 in torch_distrbuted.py to comply with formatting standard.
+ * Revert "Ran black on entire sagemaker-trianing-toolkit directory"
+ * Ran black on entire sagemaker-trianing-toolkit directory
+ * Ran Black (python formatter) on the files with my code updates (torch_distributed.py and test_torch_distributed.py)
+ * Added test for neuron_parallel_compile in test_torch_distributed.py
+ * Updated comment syntax based on feedback in pull request as well as added full example of the neuron_parallel_compile command as it would appear in the command line
+ * added unit test for neuron_parallel_compile code change
+ * Updated torch_distributed.py
+
 ## v4.6.0 (2023-06-15)
 
 ### Features
