@@ -17,7 +17,9 @@ import os
 import sys
 import textwrap
 
-from mock import call, Mock, mock_open, patch
+import botocore.session
+from botocore.stub import Stubber
+from mock import call, MagicMock, Mock, mock_open, patch
 import pytest
 
 from sagemaker_training import environment, errors, files, modules, params
@@ -88,6 +90,59 @@ def test_install_requirements(check_error):
         check_error.assert_called_with(
             cmd, errors.InstallRequirementsError, 1, cwd=path, capture_error=False
         )
+
+
+@patch.dict(
+    os.environ,
+    {
+        "CA_REPOSITORY_ARN": "arn:aws:codeartifact:my-region:012345678900:repository/my_domain/my_repo"
+    },
+    clear=True,
+)
+@patch("sagemaker_training.process.check_error", autospec=True)
+def test_install_requirements_codeartifact(check_error):
+    # mock/stub codeartifact client and its responses
+    endpoint = "https://domain-012345678900.d.codeartifact.my-region.amazonaws.com/pypi/my_repo/"
+    codeartifact = botocore.session.get_session().create_client(
+        "codeartifact", region_name="my-region"
+    )
+    stubber = Stubber(codeartifact)
+    stubber.add_response("get_authorization_token", {"authorizationToken": "the-auth-token"})
+    stubber.add_response("get_repository_endpoint", {"repositoryEndpoint": endpoint})
+    stubber.activate()
+
+    path = "c://sagemaker-pytorch-container"
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "requirements.txt",
+        "-i",
+        "https://aws:the-auth-token@domain-012345678900.d.codeartifact.my-region.amazonaws.com/pypi/my_repo/simple/",
+    ]
+
+    with patch("os.path.exists", return_value=True):
+        with patch("boto3.client", MagicMock(return_value=codeartifact)):
+            modules.install_requirements(path)
+
+            check_error.assert_called_with(
+                cmd, errors.InstallRequirementsError, 1, cwd=path, capture_error=False
+            )
+
+
+@patch.dict(os.environ, {"CA_REPOSITORY_ARN": "invalid_arn"}, clear=True)
+@patch("sagemaker_training.process.check_error", autospec=True)
+def test_install_requirements_codeartifact_missing_environment_variables(check_error):
+    path = "c://sagemaker-pytorch-container"
+
+    with patch("os.path.exists", return_value=True):
+        with pytest.raises(Exception) as e:
+            modules.install_requirements(path)
+
+            assert "invalid CodeArtifact repository arn invalid_arn" in str(e.value)
 
 
 @patch("sagemaker_training.process.check_error", autospec=True)
