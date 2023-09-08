@@ -456,6 +456,8 @@ def test_mpi_master_run_python_with_smddpmprun(
             "NCCL_PROTO=simple",
             "-x",
             "FI_EFA_USE_DEVICE_RDMA=1",
+            "-x",
+            "LD_CONFIG_PATH",
             "smddpmprun",
             "-i",
             "ml.p4d.24xlarge",
