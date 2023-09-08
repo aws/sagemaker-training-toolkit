@@ -392,6 +392,7 @@ def test_mpi_master_run_python_with_smddpmprun(
             processes_per_host=2,
             custom_mpi_options="-v --lr 35",
             network_interface_name="ethw3",
+            instance_type="ml.p4d.24xlarge",
         )
 
         process = master.run(wait=False)
@@ -453,7 +454,7 @@ def test_mpi_master_run_python_with_smddpmprun(
             "LD_CONFIG_PATH",
             "smddpmprun",
             "-i",
-            "ml.p3.16xlarge",
+            "ml.p4d.24xlarge",
             "--allow-bypass",
             "usr/bin/python3",
             "-m",
