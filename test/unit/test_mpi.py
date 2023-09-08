@@ -451,8 +451,6 @@ def test_mpi_master_run_python_with_smddpmprun(
             "--lr",
             "35",
             "-x",
-            "LD_CONFIG_PATH",
-            "-x",
             "FI_PROVIDER=efa",
             "-x",
             "NCCL_PROTO=simple",
