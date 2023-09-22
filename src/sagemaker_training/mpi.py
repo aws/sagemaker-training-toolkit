@@ -204,11 +204,11 @@ def _modelparallel_environment_command(instance_type):  # type: (str) -> list[st
         # Use smddpmprun to set up environment variables
         mp_parameters = json.loads(os.environ.get(params.SM_HP_MP_PARAMETERS, "{}"))
         ddp_dist_backend = mp_parameters.get("ddp_dist_backend", "auto")
-        SMDDP_SMP_SUPPORTED_INSTANCES = [
+        smddp_smp_supported_instances = [
             "ml.p4d.24xlarge",
             "ml.p4de.24xlarge",
         ]
-        if ddp_dist_backend == "auto" and instance_type in SMDDP_SMP_SUPPORTED_INSTANCES:
+        if ddp_dist_backend == "auto" and instance_type in smddp_smp_supported_instances:
             if env.is_smddpmprun_installed:
                 command.extend(["smddpmprun", "-i", instance_type, "--allow-bypass"])
         else:
