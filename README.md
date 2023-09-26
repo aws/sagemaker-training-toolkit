@@ -4,7 +4,7 @@
 
 [![Latest Version](https://img.shields.io/pypi/v/sagemaker-training.svg)](https://pypi.python.org/pypi/sagemaker-training) [![Supported Python Versions](https://img.shields.io/pypi/pyversions/sagemaker-training.svg)](https://pypi.python.org/pypi/sagemaker-training) [![Code Style: Black](https://img.shields.io/badge/code_style-black-000000.svg)](https://github.com/python/black)
 
-Train machine learning models within a Docker container using Amazon SageMaker.
+Train  machine learning models within a Docker container using Amazon SageMaker.
 
 
 ## :books: Background
