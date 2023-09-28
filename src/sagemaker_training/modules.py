@@ -17,12 +17,10 @@ from __future__ import absolute_import
 
 import importlib
 import os
-import re
 import shlex
 import sys
 import textwrap
 
-import boto3
 import six
 
 from sagemaker_training import environment, errors, files, logging_config, process
@@ -30,7 +28,6 @@ from sagemaker_training import environment, errors, files, logging_config, proce
 logger = logging_config.get_logger()
 
 DEFAULT_MODULE_NAME = "default_user_module_name"
-CA_REPOSITORY_ARN_ENV = "CA_REPOSITORY_ARN"
 
 
 def exists(name):  # type: (str) -> bool
@@ -124,9 +121,6 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
 
     if has_requirements(path):
         cmd += "-r requirements.txt"
-        if os.getenv(CA_REPOSITORY_ARN_ENV):
-            index = _get_codeartifact_index()
-            cmd += " -i {}".format(index)
 
     logger.info("Installing module with the following command:\n%s", cmd)
 
@@ -144,9 +138,6 @@ def install_requirements(path, capture_error=False):  # type: (str, bool) -> Non
             stderr, and appends it to the returned Exception message in case of errors.
     """
     cmd = "{} -m pip install -r requirements.txt".format(process.python_executable())
-    if os.getenv(CA_REPOSITORY_ARN_ENV):
-        index = _get_codeartifact_index()
-        cmd += " -i {}".format(index)
 
     logger.info("Installing dependencies from requirements.txt:\n{}".format(cmd))
 
@@ -181,55 +172,3 @@ def import_module(uri, name=DEFAULT_MODULE_NAME):  # type: (str, str) -> module
         return module
     except Exception as e:  # pylint: disable=broad-except
         six.reraise(errors.ImportModuleError, errors.ImportModuleError(e), sys.exc_info()[2])
-
-
-def _get_codeartifact_index():
-    """
-    Build the authenticated codeartifact index url based on the arn provided
-    via CA_REPOSITORY_ARN environment variable following the form
-    `arn:${Partition}:codeartifact:${Region}:${Account}:repository/${DomainName}/${RepositoryName}`
-    https://docs.aws.amazon.com/codeartifact/latest/ug/python-configure-pip.html
-    https://docs.aws.amazon.com/service-authorization/latest/reference/list_awscodeartifact.html#awscodeartifact-resources-for-iam-policies
-    :return: authenticated codeartifact index url
-    """
-    repository_arn = os.getenv(CA_REPOSITORY_ARN_ENV)
-    arn_regex = (
-        "arn:(?P<partition>[^:]+):codeartifact:(?P<region>[^:]+):(?P<account>[^:]+)"
-        ":repository/(?P<domain>[^/]+)/(?P<repository>.+)"
-    )
-    m = re.match(arn_regex, repository_arn)
-    if not m:
-        raise Exception("invalid CodeArtifact repository arn {}".format(repository_arn))
-    domain = m.group("domain")
-    owner = m.group("account")
-    repository = m.group("repository")
-    region = m.group("region")
-
-    logger.info(
-        "configuring pip to use codeartifact "
-        "(domain: %s, domain owner: %s, repository: %s, region: %s)",
-        domain,
-        owner,
-        repository,
-        region,
-    )
-    try:
-        client = boto3.client("codeartifact", region_name=region)
-        auth_token_response = client.get_authorization_token(domain=domain, domainOwner=owner)
-        token = auth_token_response["authorizationToken"]
-        endpoint_response = client.get_repository_endpoint(
-            domain=domain, domainOwner=owner, repository=repository, format="pypi"
-        )
-        unauthenticated_index = endpoint_response["repositoryEndpoint"]
-        return re.sub(
-            "https://",
-            "https://aws:{}@".format(token),
-            re.sub(
-                "{}/?$".format(repository),
-                "{}/simple/".format(repository),
-                unauthenticated_index,
-            ),
-        )
-    except Exception:
-        logger.error("failed to configure pip to use codeartifact")
-        raise Exception("failed to configure pip to use codeartifact")
