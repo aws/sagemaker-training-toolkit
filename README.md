@@ -12,7 +12,7 @@ Train  machine learning models within a Docker container using Amazon SageMaker.
 [Amazon SageMaker](https://aws.amazon.com/sagemaker/) is a fully managed service for data science and machine learning (ML) workflows.
 You can use Amazon SageMaker to simplify the process of building, training, and deploying ML models.
 
-To train a model, you can include your training script and dependencies in a [Docker container](https://www.docker.com/resources/what-container) that runs your training code.
+To    train a model, you can include your training script and dependencies in a [Docker container](https://www.docker.com/resources/what-container) that runs your training code.
 A container provides an effectively isolated environment, ensuring a consistent runtime and reliable training process. 
 
 The **SageMaker Training Toolkit** can be easily added to any Docker container, making it compatible with SageMaker for [training models](https://aws.amazon.com/sagemaker/train/).
