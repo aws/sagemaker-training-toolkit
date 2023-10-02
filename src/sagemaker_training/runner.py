@@ -25,6 +25,7 @@ from sagemaker_training import (
     pytorch_xla,
     smdataparallel,
     torch_distributed,
+    health_check,
 )
 
 
@@ -36,6 +37,7 @@ class RunnerType(enum.Enum):
     SMDataParallel = "SMDataParallel"
     PyTorchXLA = "PyTorchXLA"
     TorchDistributed = "TorchDistributed"
+    HealthCheck = "HealthCheck"
 
 
 ProcessRunnerType = RunnerType.Process
@@ -43,6 +45,7 @@ MPIRunnerType = RunnerType.MPI
 SMDataParallelRunnerType = RunnerType.SMDataParallel
 PyTorchXLARunnerType = RunnerType.PyTorchXLA
 TorchDistributedRunnerType = RunnerType.TorchDistributed
+HealthCheckRunnerType = RunnerType.HealthCheck
 
 
 def get(identifier, user_entry_point=None, args=None, env_vars=None, extra_opts=None):
@@ -157,7 +160,7 @@ def _get_by_runner_type(
             env.distribution_hosts,
             env.num_gpus,
         )
-    elif identifier is RunnerType.Process:
+    elif identifier is RunnerType.Process or RunnerType.HealthCheck:
         return process.ProcessRunner(user_entry_point, args, env_vars, processes_per_host)
     else:
         raise ValueError("Invalid identifier %s" % identifier)
