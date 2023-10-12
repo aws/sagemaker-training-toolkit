@@ -80,11 +80,11 @@ setuptools.setup(
     install_requires=required_packages,
     extras_require={
         "test": [
-            "tox==4.6.4",
+            "tox==3.13.1",
             "pytest==4.4.1",
             "pytest-cov",
             "mock",
-            "sagemaker[local]>=2.172.0,<3",
+            "sagemaker[local]<2",
             "black==22.3.0 ; python_version >= '3.7'",
         ]
     },

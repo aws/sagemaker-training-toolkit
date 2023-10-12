@@ -50,34 +50,3 @@ def test_install_requirements(capsys):
     assert "Installing collected packages: pyfiglet" in stdout
     assert "Successfully installed pyfiglet-0.8.post1" in stdout
     assert "Reporting training SUCCESS" in stdout
-
-
-# def test_install_requirements_from_codeartifact(capsys):
-#     # TODO: fill in details for CA
-#     ca_domain = "..."
-#     ca_domain_owner = "..."
-#     ca_repository = "..."
-#     ca_region = "..."
-#     ca_repository_arn = "..."
-#
-#     estimator = Estimator(
-#         image_uri="sagemaker-training-toolkit-test:dummy",
-#         # TODO: Grant the role permissions to access CodeArtifact repo (repo resource policy + role policy)
-#         # https://docs.aws.amazon.com/codeartifact/latest/ug/security-iam.html
-#         # https://docs.aws.amazon.com/codeartifact/latest/ug/repo-policies.html
-#         role="SageMakerRole",
-#         instance_count=1,
-#         instance_type="local",
-#         environment={
-#             "CA_REPOSITORY_ARN": ca_repository_arn,
-#         }
-#     )
-#
-#     estimator.fit()
-#
-#     stdout = capsys.readouterr().out
-#
-#     assert "{}-{}.d.codeartifact.{}.amazonaws.com/pypi/{}/simple/".format(ca_domain, ca_domain_owner, ca_region, ca_repository) in stdout
-#     assert "Installing collected packages: pyfiglet" in stdout
-#     assert "Successfully installed pyfiglet-0.8.post1" in stdout
-#     assert "Reporting training SUCCESS" in stdout
