@@ -230,11 +230,7 @@ class SMDataParallelRunner(process.ProcessRunner):
                 ]
             )
 
-        smddp_supported_instances = [
-            "ml.p4d.24xlarge",
-            "ml.p4de.24xlarge"
-        ]
-        if env.is_smddprun_installed and instance_type in smddp_supported_instances:
+        if env.is_smddprun_installed:
             smddprun_command = ["smddprun"]
             mpirun_command.extend(smddprun_command)
         return mpirun_command
