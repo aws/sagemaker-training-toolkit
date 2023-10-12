@@ -136,6 +136,8 @@ class SMDataParallelRunner(process.ProcessRunner):
             )
             raise
 
+
+
     def _get_mpirun_command(
         self,
         num_hosts,
@@ -149,7 +151,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         overridden_known_options, additional_options = _parse_custom_mpi_options(
             self._custom_mpi_options
         )
-
+        env = environment.Environment()
         mpirun_command = [
             "mpirun",
             "--host",
@@ -228,8 +230,13 @@ class SMDataParallelRunner(process.ProcessRunner):
                 ]
             )
 
-        smddprun_command = ["smddprun"]
-        mpirun_command.extend(smddprun_command)
+        smddp_supported_instances = [
+            "ml.p4d.24xlarge",
+            "ml.p4de.24xlarge"
+        ]
+        if env.is_smddprun_installed and instance_type in smddp_supported_instances:
+            smddprun_command = ["smddprun"]
+            mpirun_command.extend(smddprun_command)
         return mpirun_command
 
     def _get_instance_type(self):
