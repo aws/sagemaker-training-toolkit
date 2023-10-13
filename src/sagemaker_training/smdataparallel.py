@@ -136,8 +136,6 @@ class SMDataParallelRunner(process.ProcessRunner):
             )
             raise
 
-
-
     def _get_mpirun_command(
         self,
         num_hosts,
