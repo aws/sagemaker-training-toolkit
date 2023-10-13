@@ -375,7 +375,7 @@ def validate_smddprun():  # type: () -> bool
         return output.stdout != ""
     except subprocess.CalledProcessError:
         return False
-    
+ 
 
 def validate_smddpmprun():  # type: () -> bool
     """Whether smddpmprun is installed.
