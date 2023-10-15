@@ -81,7 +81,7 @@ setuptools.setup(
     install_requires=required_packages,
     extras_require={
         "test": [
-            "tox==3.13.1",
+            "tox==4.6.4",
             "pytest==4.4.1",
             "pytest-cov",
             "mock",
