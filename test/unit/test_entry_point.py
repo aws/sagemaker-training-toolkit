@@ -152,7 +152,6 @@ def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_a
 )
 @patch("socket.gethostbyname")
 def test_run_waits_hostname_resolution(gethostbyname, hosts, install, download_and_extract):
-
     gethostbyname.side_effect = [ValueError(), ValueError(), True, True]
 
     runner_mock = MagicMock(spec=process.ProcessRunner)
