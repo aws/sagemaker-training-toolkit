@@ -42,6 +42,8 @@ required_packages = [
     "psutil>=5.6.7",
     "protobuf>=3.9.2,<=3.20.3",
     "scipy>=1.2.2",
+    "boto3==1.28.57",
+    "botocore==1.31.57",
 ]
 
 # enum is introduced in Python 3.4. Installing enum back port
@@ -74,18 +76,17 @@ setuptools.setup(
         "Natural Language :: English",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
     install_requires=required_packages,
     extras_require={
         "test": [
-            "tox==4.6.4",
+            "tox==3.13.1",
             "pytest==4.4.1",
             "pytest-cov",
             "mock",
             "sagemaker[local]>=2.172.0,<3",
-            "black==22.3.0 ; python_version >= '3.7'",
+            "black==22.3.0 ; python_version >= '3.8'",
         ]
     },
     entry_points={"console_scripts": ["train=sagemaker_training.cli.train:main"]},
