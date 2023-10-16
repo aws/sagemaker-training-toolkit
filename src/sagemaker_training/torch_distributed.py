@@ -75,7 +75,9 @@ class TorchDistributedRunner(process.ProcessRunner):
         if self._instance_type in SM_EFA_RDMA_INSTANCES:
             # Use EFA's RDMA functionality for one-sided and two-sided transfer
             os.environ["FI_EFA_USE_DEVICE_RDMA"] = "1"
+            os.environ["RDMAV_FORK_SAFE"] = "1"
         os.environ["NCCL_SOCKET_IFNAME"] = str(self._network_interface_name)
+        os.environ["NCCL_PROTO"] = "simple"
 
     def _create_command(self):
         """
