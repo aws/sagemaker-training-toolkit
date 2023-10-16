@@ -231,6 +231,9 @@ class SMDataParallelRunner(process.ProcessRunner):
         if env.is_smddprun_installed:
             smddprun_command = ["smddprun"]
             mpirun_command.extend(smddprun_command)
+        else:
+            print(f"Warning: smddprun not being used as smddp is not installed")
+
         return mpirun_command
 
     def _get_instance_type(self):
