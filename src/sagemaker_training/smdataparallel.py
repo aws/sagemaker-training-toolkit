@@ -232,7 +232,7 @@ class SMDataParallelRunner(process.ProcessRunner):
             smddprun_command = ["smddprun"]
             mpirun_command.extend(smddprun_command)
         else:
-            print(f"Warning: smddprun not being used as smddp is not installed")
+            print("Warning: smddprun not being used as smddp is not installed")
 
         return mpirun_command
 
