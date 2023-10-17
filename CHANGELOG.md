@@ -1,5 +1,12 @@
 # Changelog
 
+## v4.7.1 (2023-10-17)
+
+### Bug Fixes and Other Changes
+
+ * Add NCCL_PROTO=simple environment variable to handle the out-of-order data delivery from EFA
+ * toolkit build failure
+
 ## v4.7.0 (2023-08-08)
 
 ### Features
