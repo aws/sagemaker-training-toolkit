@@ -149,7 +149,7 @@ class SMDataParallelRunner(process.ProcessRunner):
         overridden_known_options, additional_options = _parse_custom_mpi_options(
             self._custom_mpi_options
         )
-
+        env = environment.Environment()
         mpirun_command = [
             "mpirun",
             "--host",
@@ -228,8 +228,12 @@ class SMDataParallelRunner(process.ProcessRunner):
                 ]
             )
 
-        smddprun_command = ["smddprun"]
-        mpirun_command.extend(smddprun_command)
+        if env.is_smddprun_installed:
+            smddprun_command = ["smddprun"]
+            mpirun_command.extend(smddprun_command)
+        else:
+            print("Warning: smddprun not being used as smddp is not installed")
+
         return mpirun_command
 
     def _get_instance_type(self):

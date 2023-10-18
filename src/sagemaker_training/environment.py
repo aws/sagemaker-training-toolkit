@@ -359,6 +359,24 @@ def num_cpus():  # type: () -> int
     return multiprocessing.cpu_count()
 
 
+def validate_smddprun():  # type: () -> bool
+    """Whether smddprun is installed.
+
+    Returns:
+        bool: True if installed
+    """
+    try:
+        output = subprocess.run(
+            ["which", "smddprun"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return output.stdout != ""
+    except subprocess.CalledProcessError:
+        return False
+
+
 def validate_smddpmprun():  # type: () -> bool
     """Whether smddpmprun is installed.
 
@@ -669,6 +687,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
         mp_parameters = os.environ.get(params.SM_HP_MP_PARAMETERS)
         self._is_modelparallel_enabled = mp_parameters and mp_parameters != "{}"
+        self._is_smddprun_installed = validate_smddprun()
         self._is_smddpmprun_installed = validate_smddpmprun()
 
     @property
@@ -1207,6 +1226,15 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             bool: True if both are installed
         """
         return self._is_smddpmprun_installed
+
+    @property
+    def is_smddprun_installed(self):  # type: () -> bool
+        """Whether smddprun is installed.
+
+        Returns:
+            bool: True if it is installed
+        """
+        return self._is_smddprun_installed
 
 
 def write_env_vars(env_vars=None):  # type: (dict) -> None
