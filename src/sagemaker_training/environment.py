@@ -1228,7 +1228,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         return self._is_smddpmprun_installed
 
     @property
-    def is_smddprun_installed(self): # type: () -> bool
+    def is_smddprun_installed(self):  # type: () -> bool
         """Whether smddprun is installed.
 
         Returns:
