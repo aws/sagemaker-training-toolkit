@@ -1227,6 +1227,15 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         """
         return self._is_smddpmprun_installed
 
+    @property
+    def is_smddprun_installed(self): # type: () -> bool
+        """Whether smddprun is installed.
+
+        Returns:
+            bool: True if it is installed
+        """
+        return self._is_smddprun_installed
+
 
 def write_env_vars(env_vars=None):  # type: (dict) -> None
     """Write the dictionary env_vars in the system, as environment variables.
