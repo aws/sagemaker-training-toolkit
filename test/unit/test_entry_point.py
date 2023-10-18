@@ -151,6 +151,21 @@ def test_run_calls_hostname_resolution(gethostbyname, install, hosts, download_a
     environment.Environment, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
 )
 @patch("socket.gethostbyname")
+def test_run_skips_hostname_resolution_in_studio_local_mode(gethostbyname, install, hosts, download_and_extract):
+    os.environ['SM_STUDIO_LOCAL_MODE'] = 'True'
+    runner_mock = MagicMock(spec=process.ProcessRunner)
+    entry_point.run(
+        uri="s3://url", user_entry_point="launcher.py", args=["42"], runner_type=runner_mock
+    )
+    gethostbyname.assert_not_called()
+    del os.environ['SM_STUDIO_LOCAL_MODE']
+
+@patch("sagemaker_training.files.download_and_extract")
+@patch("sagemaker_training.modules.install")
+@patch.object(
+    environment.Environment, "hosts", return_value=["algo-1", "algo-2"], new_callable=PropertyMock
+)
+@patch("socket.gethostbyname")
 def test_run_waits_hostname_resolution(gethostbyname, hosts, install, download_and_extract):
     gethostbyname.side_effect = [ValueError(), ValueError(), True, True]
 
