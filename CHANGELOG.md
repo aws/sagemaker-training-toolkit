@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.7.2 (2023-10-19)
+
+### Bug Fixes and Other Changes
+
+ * use smddprun only if it is installed
+
 ## v4.7.1 (2023-10-17)
 
 ### Bug Fixes and Other Changes
