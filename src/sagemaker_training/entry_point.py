@@ -15,13 +15,17 @@ entry point.
 """
 from __future__ import absolute_import
 
+import logging
 import os
 import socket
 import sys
 
+
 from retrying import retry
 
 from sagemaker_training import _entry_point_type, environment, files, modules, runner
+
+logger = logging.getLogger(__name__)
 
 
 def run(
@@ -94,7 +98,12 @@ def run(
 
     environment.write_env_vars(env_vars)
 
-    _wait_hostname_resolution()
+    _sm_studio_local_mode = os.environ.get("SM_STUDIO_LOCAL_MODE", "False").lower() == "true"
+
+    if not _sm_studio_local_mode:
+        _wait_hostname_resolution()
+    else:
+        logger.info("Bypass DNS check in case of Studio Local Mode execution.")
 
     return runner.get(runner_type, user_entry_point, args, env_vars, extra_opts).run(
         wait, capture_error
