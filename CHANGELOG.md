@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.7.4 (2023-10-31)
+
+### Bug Fixes and Other Changes
+
+ * update the boto deps to use latest boto
+
 ## v4.7.3 (2023-10-23)
 
 ### Bug Fixes and Other Changes
