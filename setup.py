@@ -42,8 +42,8 @@ required_packages = [
     "psutil>=5.6.7",
     "protobuf>=3.9.2,<=3.20.3",
     "scipy>=1.2.2",
-    "boto3==1.28.57",
-    "botocore==1.31.57",
+    "boto3>=1.28.57",
+    "botocore>=1.31.57",
 ]
 
 # enum is introduced in Python 3.4. Installing enum back port
