@@ -93,7 +93,7 @@ class TorchDistributedRunner(process.ProcessRunner):
                 "Please use a python script as the entry-point"
             )
 
-        if entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
+        if entrypoint_type is _entry_point_type.PYTHON_PROGRAM or entrypoint_type is _entry_point_type.PYTHON_MODULE:
             num_hosts = len(self._hosts)
             torchrun_cmd = []
 
@@ -135,7 +135,7 @@ class TorchDistributedRunner(process.ProcessRunner):
             torchrun_cmd += self._args
             return torchrun_cmd
         else:
-            raise errors.ClientError("Unsupported entry point type for torch_distributed")
+            raise errors.ClientError(f"Unsupported entry point type for torch_distributed: {entrypoint_type}")
 
     def run(self, capture_error=True, wait=True):
         """
