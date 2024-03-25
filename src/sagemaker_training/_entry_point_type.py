@@ -21,11 +21,13 @@ import os
 class _EntryPointType(enum.Enum):
     """Enumerated type consisting of valid types of training entry points."""
 
+    PYTHON_MODULE = "PYTHON_MODULE"
     PYTHON_PACKAGE = "PYTHON_PACKAGE"
     PYTHON_PROGRAM = "PYTHON_PROGRAM"
     COMMAND = "COMMAND"
 
 
+PYTHON_MODULE = _EntryPointType.PYTHON_MODULE
 PYTHON_PACKAGE = _EntryPointType.PYTHON_PACKAGE
 PYTHON_PROGRAM = _EntryPointType.PYTHON_PROGRAM
 COMMAND = _EntryPointType.COMMAND
@@ -46,5 +48,7 @@ def get(path, name):  # type: (str, str) -> _EntryPointType
         return _EntryPointType.PYTHON_PACKAGE
     elif name.endswith(".py"):
         return _EntryPointType.PYTHON_PROGRAM
+    elif name.startswith("-m "):
+        return _EntryPointType.PYTHON_MODULE
     else:
         return _EntryPointType.COMMAND
