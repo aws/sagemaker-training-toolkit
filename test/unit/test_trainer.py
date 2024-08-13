@@ -44,6 +44,8 @@ class ScriptEnvironment(Environment):
 
 
 @patch("inotify_simple.INotify", MagicMock())
+@patch("multiprocessing.Process.start", MagicMock())
+@patch("multiprocessing.Process.join", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
 @patch("sagemaker_training.environment.Environment", Environment)
@@ -56,6 +58,8 @@ def test_train(import_module):
 
 
 @patch("inotify_simple.INotify", MagicMock())
+@patch("multiprocessing.Process.start", MagicMock())
+@patch("multiprocessing.Process.join", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
 @patch("sagemaker_training.environment.Environment", Environment)
@@ -73,6 +77,8 @@ def test_train_with_success(_exit, import_module):
 
 
 @patch("inotify_simple.INotify", MagicMock())
+@patch("multiprocessing.Process.start", MagicMock())
+@patch("multiprocessing.Process.join", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
 @patch("sagemaker_training.environment.Environment", Environment)
@@ -146,6 +152,8 @@ def test_train_with_client_error(_exit, import_module):
 
 @patch("inotify_simple.INotify", MagicMock())
 @patch("boto3.client", MagicMock())
+@patch("multiprocessing.Process.start", MagicMock())
+@patch("multiprocessing.Process.join", MagicMock())
 @patch("sagemaker_training.entry_point.run")
 @patch("sagemaker_training.environment.Environment", new_callable=ScriptEnvironment)
 @patch("sagemaker_training.trainer._exit_processes")
@@ -178,6 +186,8 @@ def test_train_no_intermediate(start_intermediate_folder_sync, import_module):
 
 
 @patch("inotify_simple.INotify", MagicMock())
+@patch("multiprocessing.Process.start", MagicMock())
+@patch("multiprocessing.Process.join", MagicMock())
 @patch("boto3.client", MagicMock())
 @patch("importlib.import_module")
 @patch("sagemaker_training.environment.Environment", Environment)

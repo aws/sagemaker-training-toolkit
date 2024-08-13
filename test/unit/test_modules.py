@@ -50,10 +50,9 @@ def test_s3_download(resource, url, bucket_name, key, dst, endpoint):
 
 
 def test_s3_download_wrong_scheme():
-    with pytest.raises(
-        ValueError, message="Expecting 's3' scheme, got: c in c://my-bucket/my-file"
-    ):
+    with pytest.raises(ValueError) as exc_info:
         files.s3_download("c://my-bucket/my-file", "/tmp/file")
+    assert "Expecting 's3' scheme, got: c in" in str(exc_info.value)
 
 
 @patch("sagemaker_training.process.check_error", autospec=True)

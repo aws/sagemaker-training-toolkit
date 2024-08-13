@@ -220,10 +220,10 @@ class TestPyTorchXLARunner:
             )
             with pytest.raises(SMTrainingCompilerConfigurationError) as err:
                 runner._check_for_torch_xla()
-            assert "mechanism requires PT-XLA" in str(err)
+            assert "mechanism requires PT-XLA" in str(err.value)
             with pytest.raises(SMTrainingCompilerConfigurationError) as err:
                 runner._check_for_sagemaker_integration()
-            assert "Unable to find SageMaker integration code" in str(err)
+            assert "Unable to find SageMaker integration code" in str(err.value)
 
 
 def test_check_cpu_compatibility(cluster, cluster_size, master, *patches):
@@ -249,4 +249,4 @@ def test_check_cpu_compatibility(cluster, cluster_size, master, *patches):
         )
         with pytest.raises(SMTrainingCompilerConfigurationError) as err:
             runner._check_processor_compatibility()
-        assert "only supported for GPU" in str(err)
+        assert "only supported for GPU" in str(err.value)

@@ -36,6 +36,8 @@ def test_wrong_output():
 
 
 @patch("inotify_simple.INotify", MagicMock())
+@patch("multiprocessing.Process.start", MagicMock())
+@patch("multiprocessing.Process.join", MagicMock())
 @patch("boto3.client", MagicMock())
 def test_daemon_process():
     intemediate_sync = intermediate_output.start_sync(S3_BUCKET, REGION)

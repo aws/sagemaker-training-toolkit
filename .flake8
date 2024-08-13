@@ -2,3 +2,11 @@
 application_import_names = sagemaker_training, test, gethostname
 import-order-style = google
 ignore = E501, W503
+exclude =
+    build/
+    .git
+    __pycache__
+    .tox
+    tests/data/
+    *venv/
+    ./src/sagemaker_training/record_pb2.py
