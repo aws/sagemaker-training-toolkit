@@ -148,7 +148,7 @@ def install_requirements(path, capture_error=False):  # type: (str, bool) -> Non
         index = _get_codeartifact_index()
         cmd += " -i {}".format(index)
 
-    logger.info("Installing dependencies from requirements.txt:\n{}".format(cmd))
+    logger.info("Installing dependencies from requirements.txt")
 
     process.check_error(
         shlex.split(cmd), errors.InstallRequirementsError, 1, cwd=path, capture_error=capture_error
