@@ -128,7 +128,7 @@ def install(path, capture_error=False):  # type: (str, bool) -> None
             index = _get_codeartifact_index()
             cmd += " -i {}".format(index)
 
-    logger.info("Installing module with the following command:\n%s", cmd)
+    logger.info("Installing module.")
 
     process.check_error(
         shlex.split(cmd), errors.InstallModuleError, 1, cwd=path, capture_error=capture_error
