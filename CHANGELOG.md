@@ -1,5 +1,17 @@
 # Changelog
 
+## v4.8.0 (2024-08-14)
+
+### Features
+
+ * Add support for py39 and py310
+
+### Bug Fixes and Other Changes
+
+ * typo in the run unit tests command
+ * run unit tests in sequence order for release process as well to prevent coverage conflicting issues
+ * chore: removing unnecessary logging information
+
 ## v4.7.4 (2023-10-31)
 
 ### Bug Fixes and Other Changes
