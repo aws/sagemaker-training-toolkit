@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.8.1 (2024-09-09)
+
+### Bug Fixes and Other Changes
+
+ * Added p5 as a supported NCCL instance
+
 ## v4.8.0 (2024-08-14)
 
 ### Features
