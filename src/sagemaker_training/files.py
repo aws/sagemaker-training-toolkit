@@ -138,7 +138,26 @@ def download_and_extract(uri, path):  # type: (str, str) -> None
                 s3_download(uri, dst)
 
                 with tarfile.open(name=dst, mode="r:gz") as t:
-                    t.extractall(path=path)
+                    def is_within_directory(directory, target):
+                        
+                        abs_directory = os.path.abspath(directory)
+                        abs_target = os.path.abspath(target)
+                    
+                        prefix = os.path.commonprefix([abs_directory, abs_target])
+                        
+                        return prefix == abs_directory
+                    
+                    def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+                    
+                        for member in tar.getmembers():
+                            member_path = os.path.join(path, member.name)
+                            if not is_within_directory(path, member_path):
+                                raise Exception("Attempted Path Traversal in Tar File")
+                    
+                        tar.extractall(path, members, numeric_owner=numeric_owner) 
+                        
+                    
+                    safe_extract(t, path=path)
 
             elif os.path.isdir(uri):
                 if uri == path:
@@ -148,7 +167,26 @@ def download_and_extract(uri, path):  # type: (str, str) -> None
                 shutil.copytree(uri, path)
             elif tarfile.is_tarfile(uri):
                 with tarfile.open(name=uri, mode="r:gz") as t:
-                    t.extractall(path=path)
+                    def is_within_directory(directory, target):
+                        
+                        abs_directory = os.path.abspath(directory)
+                        abs_target = os.path.abspath(target)
+                    
+                        prefix = os.path.commonprefix([abs_directory, abs_target])
+                        
+                        return prefix == abs_directory
+                    
+                    def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+                    
+                        for member in tar.getmembers():
+                            member_path = os.path.join(path, member.name)
+                            if not is_within_directory(path, member_path):
+                                raise Exception("Attempted Path Traversal in Tar File")
+                    
+                        tar.extractall(path, members, numeric_owner=numeric_owner) 
+                        
+                    
+                    safe_extract(t, path=path)
             else:
                 shutil.copy2(uri, path)
 
