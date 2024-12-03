@@ -307,7 +307,6 @@ def num_neurons(instance_type):  # type: (str) -> int
     """
     try:
         if "trn2.48xlarge" in instance_type:
-            logger.info("Check number of neuron cores in trn2")
             neuron_cores = 64
         else:
             cmd = shlex.split("neuron-ls -j")
