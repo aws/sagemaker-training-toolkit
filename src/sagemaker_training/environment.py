@@ -299,19 +299,23 @@ def channel_path(channel):  # type: (str) -> str
     return os.path.join(_input_data_dir, channel)
 
 
-def num_neurons():  # type: () -> int
+def num_neurons(instance_type):  # type: (str) -> int
     """Return the number of neuron cores available in the current container.
 
     Returns:
         int: Number of Neuron Cores available in the current container.
     """
     try:
-        cmd = shlex.split("neuron-ls -j")
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode("utf-8")
-        j = json.loads(output)
-        neuron_cores = 0
-        for item in j:
-            neuron_cores += item.get("nc_count", 0)
+        if "trn2.48xlarge" in instance_type:
+            logger.info("Check number of neuron cores in trn2")
+            neuron_cores = 64
+        else:
+            cmd = shlex.split("neuron-ls -j")
+            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode("utf-8")
+            j = json.loads(output)
+            neuron_cores = 0
+            for item in j:
+                neuron_cores += item.get("nc_count", 0)
         logger.info(f"Found {neuron_cores} neurons on this instance")
         return neuron_cores
     except OSError:
@@ -584,7 +588,6 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
 
         self._num_gpus = num_gpus()
         self._num_cpus = num_cpus()
-        self._num_neurons = num_neurons()
         self._module_name = module_name
         self._user_entry_point = module_name
         self._module_dir = module_dir
@@ -599,6 +602,8 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         current_instance_type = resource_config.get("current_instance_type", "local")
         current_instance_group = resource_config.get("current_group_name", "homogeneousCluster")
         current_host = resource_config["current_host"]
+
+        self._num_neurons = num_neurons(current_instance_type)
 
         self._current_host = current_host
         self._current_instance_type = current_instance_type
