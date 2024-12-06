@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.8.2 (2024-12-06)
+
+### Bug Fixes and Other Changes
+
+ * temporarily hardcode neuron cores for trn2
+
 ## v4.8.1 (2024-09-09)
 
 ### Bug Fixes and Other Changes
