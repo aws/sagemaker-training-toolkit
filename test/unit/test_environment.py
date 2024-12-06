@@ -144,12 +144,16 @@ def test_gpu_count_in_cpu_instance(check_output):
 
 @patch("subprocess.check_output", lambda s, stderr: b'[{"nc_count":2}]')
 def test_neuron_count_in_neuron_instance():
-    assert environment.num_neurons() == 2
+    assert environment.num_neurons("dummy-instance-type") == 2
 
 
 @patch("subprocess.check_output", side_effect=OSError())
 def test_neuron_count_in_cpu_instance(check_output):
-    assert environment.num_neurons() == 0
+    assert environment.num_neurons("dummy-instance-type") == 0
+
+
+def test_neuron_count_in_trn2_instance():
+    assert environment.num_neurons("ml.trn2.48xlarge") == 64
 
 
 @patch(
@@ -159,7 +163,7 @@ def test_neuron_count_in_cpu_instance(check_output):
     ),
 )
 def test_neuron_count_in_neuron_instance_nodriver(check_output):
-    assert environment.num_neurons() == 0
+    assert environment.num_neurons("dummy-instance-type") == 0
 
 
 @patch(
@@ -171,7 +175,7 @@ def test_neuron_count_in_neuron_instance_nodriver(check_output):
     ),
 )
 def test_neuron_count_in_neuron_instance_nodriver_with_error_msg(check_output):
-    assert environment.num_neurons() == 0
+    assert environment.num_neurons("dummy-instance-type") == 0
 
 
 @patch("multiprocessing.cpu_count", lambda: 2)
@@ -194,7 +198,7 @@ def create_training_env():
     ), patch(
         "sagemaker_training.environment.num_gpus", lambda: 4
     ), patch(
-        "sagemaker_training.environment.num_neurons", lambda: 2
+        "sagemaker_training.environment.num_neurons", lambda instance_type: 2
     ):
         session_mock = Mock()
         session_mock.region_name = "us-west-2"
@@ -291,7 +295,7 @@ def test_env_mapping_properties(training_env):
 
 @patch("sagemaker_training.environment.num_cpus", lambda: 8)
 @patch("sagemaker_training.environment.num_gpus", lambda: 4)
-@patch("sagemaker_training.environment.num_neurons", lambda: 2)
+@patch("sagemaker_training.environment.num_neurons", lambda instance_type: 2)
 def test_env_dictionary():
     session_mock = Mock()
     session_mock.region_name = "us-west-2"
