@@ -310,7 +310,7 @@ def num_neurons(instance_type):  # type: (str) -> int
             neuron_cores = 64
         else:
             cmd = shlex.split("neuron-ls -j")
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode("utf-8")
+            output = subprocess.check_output(cmd).decode("utf-8")
             j = json.loads(output)
             neuron_cores = 0
             for item in j:
