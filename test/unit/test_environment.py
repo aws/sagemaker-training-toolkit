@@ -142,7 +142,7 @@ def test_gpu_count_in_cpu_instance(check_output):
     assert environment.num_gpus() == 0
 
 
-@patch("subprocess.check_output", lambda s, stderr: b'[{"nc_count":2}]')
+@patch("subprocess.check_output", lambda s, stderr=None: b'[{"nc_count":2}]')
 def test_neuron_count_in_neuron_instance():
     assert environment.num_neurons("dummy-instance-type") == 2
 
