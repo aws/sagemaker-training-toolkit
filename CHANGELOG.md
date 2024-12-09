@@ -1,5 +1,12 @@
 # Changelog
 
+## v4.8.3 (2024-12-09)
+
+### Bug Fixes and Other Changes
+
+ * resolve failing unit test
+ * avoid parsing stderr as JSON
+
 ## v4.8.2 (2024-12-06)
 
 ### Bug Fixes and Other Changes
