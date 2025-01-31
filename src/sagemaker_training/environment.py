@@ -183,7 +183,10 @@ if not _is_path_configured:
 def _create_code_dir():  # type: () -> None
     """Create /opt/ml/code when the module is imported."""
     if not os.path.exists(code_dir):
-        os.makedirs(code_dir)
+        try:
+            os.makedirs(code_dir)
+        except FileExistsError:
+            pass  # Another process created the directory
 
 
 _create_code_dir()
