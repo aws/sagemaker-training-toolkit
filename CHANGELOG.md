@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.8.4 (2025-02-03)
+
+### Bug Fixes and Other Changes
+
+ * account for possible race condition when creating /opt/ml/code
+
 ## v4.8.3 (2024-12-09)
 
 ### Bug Fixes and Other Changes
