@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.9.0 (2025-02-11)
+
+### Features
+
+ * Add Code Owners file
+
 ## v4.8.4 (2025-02-03)
 
 ### Bug Fixes and Other Changes
