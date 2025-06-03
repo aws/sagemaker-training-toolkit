@@ -40,7 +40,7 @@ required_packages = [
     "werkzeug>=0.15.5",
     "paramiko>=2.4.2",
     "psutil>=5.6.7",
-    "protobuf>=3.9.2,<=3.20.3",
+    "protobuf>=5.28.1",
     "scipy>=1.2.2",
     "boto3>=1.28.57",
     "botocore>=1.31.57",
