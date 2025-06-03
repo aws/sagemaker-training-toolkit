@@ -1,5 +1,16 @@
 # Changelog
 
+## v5.0.0
+
+### Breaking Changes
+  **Upgraded `protobuf` to v5.28.1**
+
+  * This upgrade introduces a breaking change due to `protobuf` v5.28.1 dropping support for Python versions earlier than 3.8.
+
+  * Downstream packages that depend on `sagemaker-training-toolkit` for builds or tests may need to:
+    - Regenerate their protobuf code with the updated version.
+    - Update related testing/build dependencies to maintain compatibility.
+
 ## v4.9.0 (2025-02-11)
 
 ### Features

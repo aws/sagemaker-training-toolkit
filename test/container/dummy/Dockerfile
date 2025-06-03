@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND="noninteractive"
 
 ARG PYTHON=python3
 ARG PIP=pip3
-ARG PYTHON_VERSION=3.7.10
+ARG PYTHON_VERSION=3.8.13
 
 RUN apt-get update \
    && apt-get install -y --no-install-recommends \
