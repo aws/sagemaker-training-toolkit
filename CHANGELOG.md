@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.0.0 (2025-06-04)
+
+### Breaking Changes
+
+ * updating protobuf version to 5.28.1
+
 ## v5.0.0
 
 ### Breaking Changes
