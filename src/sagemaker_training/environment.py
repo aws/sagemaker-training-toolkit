@@ -253,6 +253,8 @@ def read_resource_config():  # type: () -> dict
                             - instance_groups: List of instance group dicts containing info about
                                       instance_type, hosts list and group name
                             - network_interface_name: Name of network interface exposed to container
+                            - topology: Array of objects containing hostName and capacityUnitId
+                                      mappings for each node in the cluster
     """
     return _read_json(resource_config_file_dir)
 
@@ -640,6 +642,9 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         # ethwe is the current network interface defined by SageMaker training, it will be
         # changed to eth0 in the short future.
         self._network_interface_name = resource_config.get("network_interface_name", "eth0")
+
+        # topology info will only exist for GB200 Ultraserver
+        self._topology = resource_config.get("topology", [])
 
         self._hyperparameters = split_result.excluded
         self._additional_framework_parameters = additional_framework_parameters
@@ -1031,6 +1036,10 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             "output_intermediate_dir": self.output_intermediate_dir,
         }
 
+        # Only include topology info when it exists (for GB200 Ultraserver)
+        if self.topology:
+            env["topology"] = self.topology
+
         for name, path in self.channel_input_dirs.items():
             env["channel_%s" % name] = path
 
@@ -1144,9 +1153,11 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
             - instance_groups: List of instance group dicts containing info about
                         instance_type, hosts list and group name
             - network_interface_name: Name of network interface exposed to container
+            - topology: Array of objects containing hostName and capacityUnitId mappings
+                       for each node in the cluster
 
         Returns:
-            dict[str, str or list(str)]
+            dict[str, str or list(str) or list(dict)]
         """
         return self._resource_config
 
@@ -1243,6 +1254,16 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         """
         return self._is_smddprun_installed
 
+    @property
+    def topology(self):  # type: () -> list
+        """The topology configuration for the cluster. Contains mappings between hosts and capacity
+        units for GB200 Ultraserver, empty list otherwise.
+
+        Returns:
+            list[dict]: Array of objects containing hostName and capacityUnitId mappings for each
+            node in the cluster.
+        """
+        return self._topology
 
 def write_env_vars(env_vars=None):  # type: (dict) -> None
     """Write the dictionary env_vars in the system, as environment variables.

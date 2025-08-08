@@ -290,6 +290,7 @@ def test_env_mapping_properties(training_env):
         "is_hetero",
         "is_smddpmprun_installed",
         "is_smddprun_installed",
+        "topology",
     }
 
 
