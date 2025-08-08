@@ -66,9 +66,7 @@ setuptools.setup(
     description="Open source library for creating containers to run on Amazon SageMaker.",
     packages=packages,
     package_dir={"sagemaker_training": "src/sagemaker_training"},
-    py_modules=[
-        os.path.splitext(os.path.basename(path))[0] for path in glob("src/*.py")
-    ],
+    py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob("src/*.py")],
     ext_modules=[gethostname],
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
