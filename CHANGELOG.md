@@ -1,5 +1,16 @@
 # Changelog
 
+## v5.1.0 (2025-08-08)
+
+### Features
+
+ * Add support for Ultraserver jobs
+
+### Bug Fixes and Other Changes
+
+ * formatting
+ * compile args not working on macOS
+
 ## v5.0.0 (2025-06-04)
 
 ### Breaking Changes
