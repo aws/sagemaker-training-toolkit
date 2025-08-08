@@ -1265,6 +1265,7 @@ class Environment(mapping.MappingMixin):  # pylint:disable=too-many-public-metho
         """
         return self._topology
 
+
 def write_env_vars(env_vars=None):  # type: (dict) -> None
     """Write the dictionary env_vars in the system, as environment variables.
 
