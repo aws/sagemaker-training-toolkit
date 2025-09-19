@@ -132,6 +132,7 @@ def download_and_extract(uri, path):  # type: (str, str) -> None
     if not os.path.exists(path):
         os.makedirs(path)
     if not os.listdir(path):
+        logger.info(f"Provided path: {path}  is empty, unzipping")
         with tmpdir() as tmp:
             if uri.startswith("s3://"):
                 dst = os.path.join(tmp, "tar_file")
@@ -151,6 +152,8 @@ def download_and_extract(uri, path):  # type: (str, str) -> None
                     t.extractall(path=path)
             else:
                 shutil.copy2(uri, path)
+    else:
+        logger.info(f"Provided path: {path} is not empty, abandoning unzipping sourcedir.tar.gz")
 
 
 def s3_download(url, dst):  # type: (str, str) -> None
