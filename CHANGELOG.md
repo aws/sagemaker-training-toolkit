@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.1.1 (2025-09-22)
+
+### Bug Fixes and Other Changes
+
+ * Update files.py
+
 ## v5.1.0 (2025-08-08)
 
 ### Features
