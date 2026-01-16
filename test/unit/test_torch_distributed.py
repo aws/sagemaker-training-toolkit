@@ -126,6 +126,38 @@ class TestTorchDistributedRunner:
             assert os.environ["FI_EFA_USE_DEVICE_RDMA"] == "1"
             assert os.environ["FI_PROVIDER"] == "efa"
 
+    @pytest.mark.parametrize("instance_type", ["ml.p5.48xlarge", "ml.p5e.48xlarge"])
+    @pytest.mark.parametrize("cluster_size", [4])
+    def test_setup_p5_p5e_efa(
+        self, cluster, cluster_size, master, instance_type, *patches
+    ):
+        for rank, current_host in enumerate(cluster):
+            print(f"Testing as host {rank+1} in cluster of size {cluster_size}")
+            runner = TorchDistributedRunner(
+                user_entry_point="train.py",
+                args=["-v", "--lr", "35"],
+                env_vars={
+                    "SM_TRAINING_ENV": json.dumps(
+                        {
+                            "additional_framework_parameters": {
+                                "sagemaker_instance_type": instance_type
+                            }
+                        }
+                    ),
+                },
+                master_hostname=master,
+                hosts=cluster,
+                current_host=current_host,
+                processes_per_host=8,
+                network_interface_name="eth0",
+                instance_type=instance_type,
+            )
+            runner._check_compatibility = lambda: None
+            runner._setup()
+            assert os.environ["FI_EFA_USE_DEVICE_RDMA"] == "1"
+            assert os.environ["FI_PROVIDER"] == "efa"
+            assert os.environ["RDMAV_FORK_SAFE"] == "1"
+
     @pytest.mark.parametrize("instance_type", ["ml.trn1.2xlarge", "ml.trn1.32xlarge"])
     @pytest.mark.parametrize("cluster_size", [1, 1])
     def test_create_singlenode_command_with_py_script(
