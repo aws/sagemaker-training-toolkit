@@ -128,9 +128,7 @@ class TestTorchDistributedRunner:
 
     @pytest.mark.parametrize("instance_type", ["ml.p5.48xlarge", "ml.p5e.48xlarge"])
     @pytest.mark.parametrize("cluster_size", [4])
-    def test_setup_p5_p5e_efa(
-        self, cluster, cluster_size, master, instance_type, *patches
-    ):
+    def test_setup_p5_p5e_efa(self, cluster, cluster_size, master, instance_type, *patches):
         for rank, current_host in enumerate(cluster):
             print(f"Testing as host {rank+1} in cluster of size {cluster_size}")
             runner = TorchDistributedRunner(
