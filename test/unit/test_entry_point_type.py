@@ -36,6 +36,10 @@ def has_requirements():
         yield
 
 
+def test_get_module():
+    assert _entry_point_type.get("bla", "-m program") == _entry_point_type.PYTHON_MODULE
+
+
 def test_get_package(entry_point_type_module):
     assert _entry_point_type.get("bla", "program.py") == _entry_point_type.PYTHON_PACKAGE
 
