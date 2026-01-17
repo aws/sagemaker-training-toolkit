@@ -102,21 +102,21 @@ def test_mapping_throws_exception_trying_to_access_non_properties(property, erro
     [
         (
             {"da-sh": "1", "un_der": "2", "un-sh": "3", "da_der": "2"},
-            ["--da-sh", "1", "--da_der", "2", "--un-sh", "3", "--un_der", "2"],
+            ["--da-sh", "1", "--un_der", "2", "--un-sh", "3", "--da_der", "2"],
         ),
         ({}, []),
         ({"": ""}, ["", ""]),
         (
             {"unicode": "¡ø", "bytes": b"2", "floats": 4.0, "int": 2},
-            ["--bytes", "2", "--floats", "4.0", "--int", "2", "--unicode", "¡ø"],
+            ["--unicode", "¡ø", "--bytes", "2", "--floats", "4.0", "--int", "2"],
         ),
-        ({"U": "1", "b": b"2", "T": "", "": "42"}, ["", "42", "-T", "", "-U", "1", "-b", "2"]),
+        ({"U": "1", "b": b"2", "T": "", "": "42"}, ["-U", "1", "-b", "2", "-T", "", "", "42" ]),
         ({"nested": ["1", ["2", "3", [["6"]]]]}, ["--nested", "['1', ['2', '3', [['6']]]]"]),
         (
             {"map": {"a": [1, 3, 4]}, "channel_dirs": {"train": "foo", "eval": "bar"}},
-            ["--channel_dirs", "eval=bar,train=foo", "--map", "a=[1, 3, 4]"],
+            ["--map", "a=[1, 3, 4]", "--channel_dirs", "train=foo,eval=bar"],
         ),
-        ({"truthy": True, "falsy": False}, ["--falsy", "False", "--truthy", "True"]),
+        ({"truthy": True, "falsy": False}, ["--truthy", "True", "--falsy", "False"]),
     ],
 )
 def test_to_cmd_args(target, expected):
@@ -218,7 +218,7 @@ def test_env_vars_round_trip():
     )
     assert env_vars["SM_MODULE_NAME"] == "user_script"
     assert env_vars["SM_INPUT_CONFIG_DIR"].endswith("/opt/ml/input/config")
-    assert env_vars["SM_USER_ARGS"] == "--batch_size 64 --epochs 10 --loss SGD --precision 5.434322"
+    assert env_vars["SM_USER_ARGS"] == "--loss SGD --epochs 10 --batch_size 64 --precision 5.434322"
     assert env_vars["SM_OUTPUT_DIR"].endswith("/opt/ml/output")
     assert env_vars["SM_MODEL_DIR"].endswith("/opt/ml/model")
     assert env_vars["SM_HOSTS"] == '["algo-1","algo-2","algo-3"]'
