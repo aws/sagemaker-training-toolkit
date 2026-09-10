@@ -42,6 +42,64 @@ logger = logging_config.get_logger()
 _DEFAULT_BUF_SIZE = 1024 * 64
 DEFAULT_ERROR_CLASS = errors.ExecuteUserScriptError
 
+# A shell-executed entry point is a path relative to the code directory. Anything
+# outside this set cannot name a real file the shell would run unquoted anyway, so
+# rejecting it loses no working configuration while keeping shell metacharacters out
+# of the command string.
+_SAFE_ENTRY_POINT = re.compile(r"^[A-Za-z0-9._][A-Za-z0-9._+-]*(/[A-Za-z0-9._+-]+)*$")
+# Used only to name the offending characters back to the customer in the error message.
+_SAFE_CHARACTER = re.compile(r"[A-Za-z0-9._+/-]")
+
+
+def _validate_shell_entry_point(user_entry_point):  # type: (str) -> str
+    """Reject entry point names that would be reinterpreted by a shell.
+
+    The COMMAND entry point is interpolated into a ``/bin/sh -c`` string which, on the
+    ``capture_error=True`` path, is itself re-parsed by an outer shell. Escaping alone
+    cannot make that safe at both levels, so the name is validated instead.
+
+    Args:
+        user_entry_point (str): The name of the user entry point.
+
+    Returns:
+        str: The entry point, unchanged, when it is safe to place in a shell command.
+
+    Raises:
+        errors.ClientError: If the name contains characters a shell would interpret.
+    """
+    if not user_entry_point:
+        raise errors.ClientError(
+            "The training entry point name is empty. Set the 'sagemaker_program' "
+            "hyperparameter (or ContainerEntrypoint) to the name of the script to run, "
+            "relative to your source directory -- for example 'train.sh'."
+        )
+
+    if not _SAFE_ENTRY_POINT.match(user_entry_point):
+        unsupported = sorted({char for char in user_entry_point if not _SAFE_CHARACTER.match(char)})
+        detail = (
+            "the character(s) %s" % ", ".join(repr(char) for char in unsupported)
+            if unsupported
+            else "an unsupported character at the start of the name"
+        )
+        raise errors.ClientError(
+            "The training entry point %r cannot be used because it contains %s. "
+            "Rename the script so its name contains only letters, digits, '.', '_', "
+            "'+', '-' and '/', then set the 'sagemaker_program' hyperparameter (or "
+            "ContainerEntrypoint) to the new name -- for example 'train.sh' or "
+            "'bin/train.sh'." % (user_entry_point, detail)
+        )
+
+    if any(segment in (".", os.pardir) for segment in user_entry_point.split("/")):
+        raise errors.ClientError(
+            "The training entry point %r cannot be used because it contains '.' or '..' "
+            "path segments. The entry point must be a path inside your source directory. "
+            "Set the 'sagemaker_program' hyperparameter (or ContainerEntrypoint) to a "
+            "path relative to that directory -- for example 'train.sh' or 'bin/train.sh'."
+            % user_entry_point
+        )
+
+    return user_entry_point
+
 
 def get_debugger_exception_classes():
     """Set exception classes"""
@@ -384,10 +442,13 @@ class ProcessRunner(object):
                 six.moves.shlex_quote(arg)  # pylint: disable=too-many-function-args
                 for arg in self._args
             ]
+            entry_point = six.moves.shlex_quote(  # pylint: disable=too-many-function-args
+                _validate_shell_entry_point(self._user_entry_point)
+            )
             return [
                 "/bin/sh",
                 "-c",
-                '"./%s %s"' % (self._user_entry_point, " ".join(args)),
+                '"./%s %s"' % (entry_point, " ".join(args)),
             ]
 
     def _python_command(self):  # pylint: disable=no-self-use
