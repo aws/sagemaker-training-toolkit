@@ -102,10 +102,51 @@ def test_run_module(log, popen, entry_point_type_module):
 @patch("sagemaker_training.environment.Environment", lambda: {})
 def test_run_error():
     with pytest.raises(errors.ExecuteUserScriptError) as e:
-        process.ProcessRunner("wrong module", [], {}, 1).run()
+        process.ProcessRunner("wrong_module.sh", [], {}, 1).run()
 
     message = str(e.value)
     assert "ExecuteUserScriptError:" in message
+
+
+@pytest.mark.parametrize(
+    "entry_point",
+    [
+        "train.sh; touch /tmp/pwned",
+        'train.sh"; touch /tmp/pwned; echo "',
+        "train.sh`touch /tmp/pwned`",
+        "train.sh$(touch /tmp/pwned)",
+        "train.sh | touch /tmp/pwned",
+        "train.sh && touch /tmp/pwned",
+        "train.sh\ntouch /tmp/pwned",
+        "train.sh $HOME",
+        "wrong module",
+        "../../../bin/sh",
+        "./train.sh",
+        "/bin/sh",
+        "",
+    ],
+)
+@patch("sagemaker_training.environment.Environment", lambda: {})
+def test_create_command_rejects_unsafe_entry_point(entry_point):
+    """An entry point that a shell would reinterpret must be rejected, not quoted."""
+    runner = process.ProcessRunner(entry_point, [], {}, 1)
+    with pytest.raises(errors.ClientError):
+        runner._create_command()
+
+
+@pytest.mark.parametrize(
+    "entry_point", ["train.sh", "run_training.sh", "my-script_v2.sh", "bin/train.sh", "a.b+c.sh"]
+)
+@patch("sagemaker_training.environment.Environment", lambda: {})
+def test_create_command_accepts_safe_entry_point(entry_point):
+    """Ordinary shell entry points keep working and are not mangled."""
+    runner = process.ProcessRunner(entry_point, ["--epochs", "10"], {}, 1)
+
+    assert runner._create_command() == [
+        "/bin/sh",
+        "-c",
+        '"./%s --epochs 10"' % entry_point,
+    ]
 
 
 @pytest.mark.asyncio
