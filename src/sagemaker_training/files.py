@@ -118,6 +118,142 @@ def read_json(path):  # type: (str) -> dict
         return json.load(f)
 
 
+def _normalize_member_name(name):  # type: (str) -> str
+    """Rewrite an archive member name so it cannot escape its extraction directory.
+
+    Strips any drive letter, leading separators and ``.``/``..`` segments, leaving a
+    relative path that is always anchored inside the destination. ``../../etc/passwd``
+    becomes ``etc/passwd``; ``/etc/passwd`` becomes ``etc/passwd``.
+
+    Args:
+        name (str): The member name as recorded in the archive.
+
+    Returns:
+        str: A relative path safe to join onto the destination directory, or an
+            empty string if nothing is left after normalization.
+    """
+    # Archives are POSIX-separated, but a Windows-authored tar may carry backslashes
+    # or a drive letter; treat both separators so neither survives normalization.
+    candidate = name.replace("\\", "/")
+    candidate = os.path.splitdrive(candidate)[1]
+
+    safe_segments = []
+    for segment in candidate.split("/"):
+        if segment in ("", ".", os.pardir):
+            continue
+        safe_segments.append(segment)
+    return "/".join(safe_segments)
+
+
+def _sanitize_member(member, destination):
+    # type: (tarfile.TarInfo, str) -> tarfile.TarInfo
+    """Normalize a member's path and drop it if it still cannot be extracted safely.
+
+    Two layers, in order:
+
+    1. Normalization -- the member name is rewritten to stay inside ``destination``,
+       so traversal cannot escape by construction rather than by rejection.
+    2. Validation -- the normalized target is re-checked against ``destination``, and
+       members that cannot be represented safely (special files, links pointing
+       outside, names that normalize away entirely) are skipped.
+
+    Args:
+        member (tarfile.TarInfo): The member to sanitize. Mutated in place.
+        destination (str): The real path of the extraction directory.
+
+    Returns:
+        tarfile.TarInfo: The sanitized member, or ``None`` to skip it.
+    """
+    original_name = member.name
+    normalized = _normalize_member_name(original_name)
+
+    if not normalized:
+        logger.warning(
+            "Skipping archive member %r: no usable path remains after normalization.",
+            original_name,
+        )
+        return None
+
+    if normalized != original_name:
+        logger.warning(
+            "Archive member %r would have been extracted outside the code directory; "
+            "normalized to %r.",
+            original_name,
+            normalized,
+        )
+    member.name = normalized
+
+    # Layer 2: nothing should escape after normalization -- verify rather than assume.
+    target = os.path.realpath(os.path.join(destination, member.name))
+    if target != destination and not target.startswith(destination + os.sep):
+        logger.warning(
+            "Skipping archive member %r: it still resolves outside the code directory.",
+            original_name,
+        )
+        return None
+
+    # Device and FIFO members have no legitimate place in a source bundle.
+    if member.ischr() or member.isblk() or member.isfifo() or member.isdev():
+        logger.warning(
+            "Skipping archive member %r: special files are not supported.", original_name
+        )
+        return None
+
+    if member.issym() or member.islnk():
+        link_base = destination if member.islnk() else os.path.dirname(target)
+        link_target = os.path.realpath(os.path.join(link_base, member.linkname))
+        if link_target != destination and not link_target.startswith(destination + os.sep):
+            logger.warning(
+                "Skipping archive member %r: link target %r points outside the code "
+                "directory.",
+                original_name,
+                member.linkname,
+            )
+            return None
+
+    return member
+
+
+def _safe_extractall(tar, path):  # type: (tarfile.TarFile, str) -> None
+    """Extract a tar archive, normalizing member paths so none escape ``path``.
+
+    Implements the two-layer defence agreed on P427358576: normalize each member's
+    path so traversal cannot escape, then validate the normalized result. A hostile
+    archive extracts inside the code directory with a warning rather than failing the
+    job, so a malformed customer bundle does not become a training failure.
+
+    Where the interpreter provides it (Python 3.12, backported to 3.8.17, 3.9.17,
+    3.10.12 and 3.11.4), the stdlib ``data`` filter also runs, which strips setuid,
+    setgid, sticky bits and ownership metadata. On older interpreters the member list
+    is sanitized directly, since ``filter`` is not accepted there.
+
+    Args:
+        tar (tarfile.TarFile): The open archive.
+        path (str): The directory members must stay within.
+    """
+    destination = os.path.realpath(path)
+
+    if hasattr(tarfile, "data_filter"):
+
+        def _filter(member, dest_path):
+            sanitized = _sanitize_member(member, destination)
+            if sanitized is None:
+                return None
+            # Metadata hardening from the stdlib filter. The path is already safe, so
+            # the traversal checks inside data_filter cannot trip on our own output.
+            return tarfile.data_filter(sanitized, dest_path)
+
+        tar.extractall(path=path, filter=_filter)
+        return
+
+    sanitized_members = []
+    for member in tar.getmembers():
+        sanitized = _sanitize_member(member, destination)
+        if sanitized is not None:
+            sanitized_members.append(sanitized)
+    tar.extractall(path=path, members=sanitized_members)
+
+
 def download_and_extract(uri, path):  # type: (str, str) -> None
     """Download, prepare and install a compressed tar file from S3 or local directory as
     an entry point.
@@ -139,7 +275,7 @@ def download_and_extract(uri, path):  # type: (str, str) -> None
                 s3_download(uri, dst)
 
                 with tarfile.open(name=dst, mode="r:gz") as t:
-                    t.extractall(path=path)
+                    _safe_extractall(t, path)
 
             elif os.path.isdir(uri):
                 if uri == path:
@@ -149,7 +285,7 @@ def download_and_extract(uri, path):  # type: (str, str) -> None
                 shutil.copytree(uri, path)
             elif tarfile.is_tarfile(uri):
                 with tarfile.open(name=uri, mode="r:gz") as t:
-                    t.extractall(path=path)
+                    _safe_extractall(t, path)
             else:
                 shutil.copy2(uri, path)
     else:
