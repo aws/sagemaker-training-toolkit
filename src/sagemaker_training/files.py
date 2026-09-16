@@ -204,8 +204,7 @@ def _sanitize_member(member, destination):
         link_target = os.path.realpath(os.path.join(link_base, member.linkname))
         if link_target != destination and not link_target.startswith(destination + os.sep):
             logger.warning(
-                "Skipping archive member %r: link target %r points outside the code "
-                "directory.",
+                "Skipping archive member %r: link target %r points outside the code directory.",
                 original_name,
                 member.linkname,
             )
