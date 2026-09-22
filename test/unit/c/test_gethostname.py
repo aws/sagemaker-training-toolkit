@@ -23,6 +23,12 @@ from sagemaker_training import errors, process
 OPT_ML = "/opt/ml"
 INPUT_CONFIG = "/opt/ml/input/config/"
 
+# The fixture removes and recreates /opt/ml, so /opt must be writable (root in CodeBuild).
+requires_opt_ml = pytest.mark.skipif(
+    not (os.geteuid() == 0 or os.access(os.path.dirname(OPT_ML), os.W_OK)),
+    reason="Needs permission to create /opt/ml.",
+)
+
 
 @pytest.fixture()
 def opt_ml_input_config():
@@ -45,10 +51,7 @@ def opt_ml_input_config():
         [{"current_host": "algo-1-thse"}, "algo-1-thse"],
     ],
 )
-@pytest.mark.xfail(
-    os.environ.get("IS_CODEBUILD_IMAGE") != "true",
-    reason="Needs root permissions to create /opt/ml when run locally.",
-)
+@requires_opt_ml
 def test_gethostname_resource_config_set(content, value, opt_ml_input_config):
     with open("/opt/ml/input/config/resourceconfig.json", "w") as f:
         json.dump(content, f)
@@ -56,12 +59,9 @@ def test_gethostname_resource_config_set(content, value, opt_ml_input_config):
     assert gethostname.call(30)
 
 
-@pytest.mark.xfail(
-    os.environ.get("IS_CODEBUILD_IMAGE") != "true",
-    reason="Needs root permissions to create /opt/ml when run locally.",
-)
+@requires_opt_ml
 def test_gethostname_with_env_not_set(opt_ml_input_config):
     py_cmd = "import gethostname\nassert gethostname.call(30) == 'algo-9'"
 
     with pytest.raises(errors.ExecuteUserScriptError):
-        process.check_error([sys.executable, "-c", py_cmd], errors.ExecuteUserScriptError)
+        process.check_error([sys.executable, "-c", py_cmd], errors.ExecuteUserScriptError, 1)
