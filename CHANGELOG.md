@@ -1,5 +1,17 @@
 # Changelog
 
+## v5.1.2 (2026-09-23)
+
+### Bug Fixes and Other Changes
+
+ * pin sagemaker SDK below v3 in tox so functional tests import
+ * disable anyio pytest plugin to unbreak py310 test env
+ * Apply black formatting to files.py
+ * validate the shell entry point name before building the command
+ * contain archive path traversal during entry point extraction
+ * Apply black formatting to test_torch_distributed.py
+ * Add ml.p5e.48xlarge and ml.p5.48xlarge to EFA instance lists
+
 ## v5.1.1 (2025-09-22)
 
 ### Bug Fixes and Other Changes
