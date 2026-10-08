@@ -243,7 +243,7 @@ class TestTorchDistributedRunner:
             assert received_command[1:] == expected_command[1:]
 
     @patch("asyncio.gather", new_callable=AsyncMock)
-    @patch("asyncio.create_subprocess_shell")
+    @patch("asyncio.create_subprocess_exec")
     @patch("sagemaker_training.environment.Environment")
     @patch("subprocess.run")
     def test_run_multinode_job_with_py_script(
@@ -291,7 +291,7 @@ class TestTorchDistributedRunner:
             "35",
         ]
         async_shell.assert_called_with(
-            " ".join(cmd),
+            *cmd,
             cwd=environment.code_dir,
             env=ANY,
             stderr=asyncio.subprocess.PIPE,

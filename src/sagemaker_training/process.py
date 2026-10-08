@@ -54,9 +54,10 @@ _SAFE_CHARACTER = re.compile(r"[A-Za-z0-9._+/-]")
 def _validate_shell_entry_point(user_entry_point):  # type: (str) -> str
     """Reject entry point names that would be reinterpreted by a shell.
 
-    The COMMAND entry point is interpolated into a ``/bin/sh -c`` string which, on the
-    ``capture_error=True`` path, is itself re-parsed by an outer shell. Escaping alone
-    cannot make that safe at both levels, so the name is validated instead.
+    The COMMAND entry point is interpolated into a ``/bin/sh -c`` string. The name is
+    validated against a strict relative-path pattern and additionally quoted, so a
+    name containing characters a shell would interpret is rejected with a clear error
+    instead of being executed in a mangled form.
 
     Args:
         user_entry_point (str): The name of the user entry point.
@@ -228,11 +229,16 @@ async def watch(stream, proc_per_host, error_classes=None):
 
 
 async def run_async(cmd, processes_per_host, env, cwd, stderr, error_classes=None, **kwargs):
-    """Method responsible for launching asyncio subprocess shell
+    """Method responsible for launching an asyncio subprocess
     Use asyncio gather to collect processed stdout and stderr
 
+    The command is executed directly as an argument vector. No shell is involved at this
+    level, so argument values (for example hyperparameters forwarded to a Python entry
+    point) are never re-parsed and cannot alter the command that runs. This matches the
+    ``subprocess.Popen`` path taken when ``capture_error`` is False.
+
     Args:
-        cmd (list): The command to be run
+        cmd (list): The command to be run, as a list of arguments
         processes_per_host (int): Number of processes per host
         env: os.environ
         cwd (str): The location from which to run the command (default: None).
@@ -248,9 +254,8 @@ async def run_async(cmd, processes_per_host, env, cwd, stderr, error_classes=Non
     Raises:
         ExecuteUserScriptError: If there is an exception raised when creating the process.
     """
-    cmd = " ".join(cmd)
-    proc = await asyncio.create_subprocess_shell(
-        cmd, env=env, cwd=cwd, stdout=PIPE, stderr=stderr, **kwargs
+    proc = await asyncio.create_subprocess_exec(
+        *cmd, env=env, cwd=cwd, stdout=PIPE, stderr=stderr, **kwargs
     )
 
     output = await asyncio.gather(
@@ -346,8 +351,6 @@ def check_error(cmd, error_classes, processes_per_host, cwd=None, capture_error=
         stderr = "\n".join(list(dict.fromkeys(stderr.split("\n")))).strip()
     else:
         stderr = None
-        # remove extra quotes for subprocess.Popen
-        cmd[-1] = cmd[-1].strip('"')
         process = subprocess.Popen(
             cmd,
             env=os.environ,
@@ -438,6 +441,11 @@ class ProcessRunner(object):
         elif entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
             return self._python_command() + [self._user_entry_point] + self._args
         else:
+            # The shell entry point is the only place a shell is involved. The command
+            # list is passed to the subprocess as an argument vector, so the single
+            # ``sh -c`` string below is parsed exactly once, and every piece of it that
+            # the customer controls (the validated entry point name and each argument)
+            # is quoted for that one parse.
             args = [
                 six.moves.shlex_quote(arg)  # pylint: disable=too-many-function-args
                 for arg in self._args
@@ -448,7 +456,7 @@ class ProcessRunner(object):
             return [
                 "/bin/sh",
                 "-c",
-                '"./%s %s"' % (entry_point, " ".join(args)),
+                "./%s %s" % (entry_point, " ".join(args)),
             ]
 
     def _python_command(self):  # pylint: disable=no-self-use
