@@ -34,7 +34,7 @@ class AsyncMock(MagicMock):
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.environment.Environment")
 @patch("subprocess.run")
 def test_smdataparallel_run_multi_node_python(
@@ -145,7 +145,7 @@ def test_smdataparallel_run_multi_node_python(
             "35",
         ]
         async_shell.assert_called_with(
-            " ".join(cmd),
+            *cmd,
             cwd=environment.code_dir,
             env=ANY,
             stderr=None,
@@ -163,7 +163,7 @@ def test_smdataparallel_run_multi_node_python(
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.environment.Environment")
 @patch("subprocess.run")
 def test_smdataparallel_run_single_node_python(
@@ -265,7 +265,7 @@ def test_smdataparallel_run_single_node_python(
             "35",
         ]
         async_shell.assert_called_with(
-            " ".join(cmd),
+            *cmd,
             cwd=environment.code_dir,
             env=ANY,
             stdout=asyncio.subprocess.PIPE,
@@ -283,7 +283,7 @@ def test_smdataparallel_run_single_node_python(
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.environment.Environment")
 @patch("subprocess.run")
 def test_hc_smdataparallel_run_single_node_python(
@@ -386,7 +386,7 @@ def test_hc_smdataparallel_run_single_node_python(
             "35",
         ]
         async_shell.assert_called_with(
-            " ".join(cmd),
+            *cmd,
             cwd=environment.code_dir,
             env=ANY,
             stdout=asyncio.subprocess.PIPE,

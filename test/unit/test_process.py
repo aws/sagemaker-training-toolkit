@@ -13,12 +13,14 @@
 from __future__ import absolute_import
 
 import asyncio
+import json
 import logging
 import os
 import sys
 
 from mock import ANY, MagicMock, patch
 import pytest
+import six
 
 from sagemaker_training import environment, errors, process
 
@@ -145,7 +147,7 @@ def test_create_command_accepts_safe_entry_point(entry_point):
     assert runner._create_command() == [
         "/bin/sh",
         "-c",
-        '"./%s --epochs 10"' % entry_point,
+        "./%s --epochs 10" % entry_point,
     ]
 
 
@@ -293,7 +295,7 @@ def test_create_error():
 
 
 @patch("asyncio.gather", new_callable=AsyncMock1)
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @pytest.mark.asyncio
 async def test_run_async(async_shell, async_gather):
     processes_per_host = 2
@@ -309,7 +311,7 @@ async def test_run_async(async_shell, async_gather):
     async_shell.assert_called_once()
     async_gather.assert_called_once()
     async_shell.assert_called_with(
-        " ".join(cmd),
+        *cmd,
         stdout=asyncio.subprocess.PIPE,
         env=ANY,
         cwd=ANY,
@@ -319,7 +321,7 @@ async def test_run_async(async_shell, async_gather):
 
 
 @patch("asyncio.gather", new_callable=AsyncMock1)
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.logging_config.log_script_invocation")
 def test_run_python(log, async_shell, async_gather, entry_point_type_script, event_loop):
     async_gather.return_value = ("stdout", "stderr")
@@ -334,10 +336,225 @@ def test_run_python(log, async_shell, async_gather, entry_point_type_script, eve
     async_shell.assert_called_once()
     async_gather.assert_called_once()
     async_shell.assert_called_with(
-        " ".join(cmd),
+        *cmd,
         cwd=environment.code_dir,
         env=os.environ,
         stderr=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
     )
     log.assert_called_with(cmd, {})
+
+
+# Argument values containing characters that are significant to a shell. Each must reach
+# the user script as a single, verbatim argument.
+_SPECIAL_CHARACTER_VALUES = [
+    "1; touch /tmp/marker",
+    "1 && touch /tmp/marker",
+    "1 | touch /tmp/marker",
+    "$(touch /tmp/marker)",
+    "`touch /tmp/marker`",
+    '1"; touch /tmp/marker; echo "',
+    "1'; touch /tmp/marker; echo '",
+    "1\ntouch /tmp/marker",
+    "$HOME",
+    "a b",
+    '{"key": "value with spaces"}',
+]
+
+
+@pytest.mark.parametrize("value", _SPECIAL_CHARACTER_VALUES)
+@patch("asyncio.gather", new_callable=AsyncMock1)
+@patch("asyncio.create_subprocess_exec")
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_run_python_special_character_hyperparameter_capture_error(
+    log, async_exec, async_gather, entry_point_type_script, event_loop, value
+):
+    """A Python entry point's hyperparameter is passed as one argv element on the
+    capture_error (asyncio) path."""
+    async_gather.return_value = ("stdout", "stderr")
+
+    with pytest.raises(errors.ExecuteUserScriptError):
+        process.ProcessRunner("train.py", ["--lr", value], {}, 1).run(capture_error=True)
+
+    async_exec.assert_called_once()
+    positional = async_exec.call_args[0]
+    assert positional == (sys.executable, "train.py", "--lr", value)
+
+
+@pytest.mark.parametrize("value", _SPECIAL_CHARACTER_VALUES)
+@patch("subprocess.Popen")
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_run_python_special_character_hyperparameter_popen(
+    log, popen, entry_point_type_script, value
+):
+    """Same guarantee on the non-capture (Popen) path."""
+    with pytest.raises(errors.ExecuteUserScriptError):
+        process.ProcessRunner("train.py", ["--lr", value], {}, 1).run(capture_error=False)
+
+    popen.assert_called_once()
+    assert popen.call_args[0][0] == [sys.executable, "train.py", "--lr", value]
+
+
+@pytest.mark.parametrize("value", _SPECIAL_CHARACTER_VALUES)
+@patch("asyncio.gather", new_callable=AsyncMock1)
+@patch("asyncio.create_subprocess_exec")
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_run_module_special_character_hyperparameter(
+    log, async_exec, async_gather, entry_point_type_module, event_loop, value
+):
+    """Python package entry points get the same treatment."""
+    async_gather.return_value = ("stdout", "stderr")
+
+    with pytest.raises(errors.ExecuteUserScriptError):
+        process.ProcessRunner("module.py", ["--lr", value], {}, 1).run(capture_error=True)
+
+    assert async_exec.call_args[0] == (sys.executable, "-m", "module", "--lr", value)
+
+
+@pytest.mark.parametrize(
+    "entry_point",
+    [
+        "train.py; touch /tmp/marker; echo .py",
+        "train.py && touch /tmp/marker #.py",
+        "$(touch /tmp/marker).py",
+        "`touch /tmp/marker`.py",
+        'train.py"; touch /tmp/marker; echo ".py',
+        "train.py | touch /tmp/marker; echo .py",
+    ],
+)
+@patch("asyncio.gather", new_callable=AsyncMock1)
+@patch("asyncio.create_subprocess_exec")
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_run_python_special_character_entry_point_is_single_argv(
+    log, async_exec, async_gather, entry_point_type_script, event_loop, entry_point
+):
+    """A Python entry point name containing special characters is handed to the
+    interpreter as a single file name argument."""
+    async_gather.return_value = ("stdout", "stderr")
+
+    with pytest.raises(errors.ExecuteUserScriptError):
+        process.ProcessRunner(entry_point, [], {}, 1).run(capture_error=True)
+
+    assert async_exec.call_args[0] == (sys.executable, entry_point)
+
+
+@pytest.mark.parametrize("value", _SPECIAL_CHARACTER_VALUES)
+@patch("asyncio.gather", new_callable=AsyncMock1)
+@patch("asyncio.create_subprocess_exec")
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_run_bash_special_character_hyperparameter_capture_error(
+    log, async_exec, async_gather, entry_point_type_script, event_loop, value
+):
+    """The shell entry point keeps exactly one shell level: argv is ['/bin/sh', '-c', s]
+    and s carries the hyperparameter shlex-quoted for that single parse."""
+    async_gather.return_value = ("stdout", "stderr")
+
+    with pytest.raises(errors.ExecuteUserScriptError):
+        process.ProcessRunner("train.sh", ["--lr", value], {}, 1).run(capture_error=True)
+
+    positional = async_exec.call_args[0]
+    assert positional[:2] == ("/bin/sh", "-c")
+    assert len(positional) == 3
+    assert positional[2] == "./train.sh --lr %s" % six.moves.shlex_quote(value)
+    assert not positional[2].startswith('"')
+
+
+def _write_script(directory, name, body, executable=False):
+    path = os.path.join(directory, name)
+    with open(path, "w") as handle:
+        handle.write(body)
+    if executable:
+        os.chmod(path, 0o755)
+    return path
+
+
+# Real-process check that argument values and entry point names are passed through
+# verbatim. Each case would create a marker file if the value were interpreted rather
+# than passed as data.
+_END_TO_END_SPECIAL_CHARACTER_CASES = [
+    ("train.py", ["--lr", "1; touch {marker}"]),
+    ("train.py", ["--lr", "1 && touch {marker}"]),
+    ("train.py", ["--out", "$(touch {marker})"]),
+    ("train.py", ["--out", "`touch {marker}`"]),
+    ("train.py", ["--out", '1"; touch {marker}; echo "']),
+    ("train.py", ["--out", "1'; touch {marker}; echo '"]),
+    ("train.py; touch {marker}; echo .py", []),
+    ("train.py && touch {marker} #.py", []),
+    ("train.sh", ["--lr", "1; touch {marker}"]),
+    ("train.sh", ["--out", "$(touch {marker})"]),
+    ("train.sh", ["--out", '1"; touch {marker}; echo "']),
+]
+
+
+@pytest.mark.parametrize("capture_error", [True, False])
+@pytest.mark.parametrize("entry_point, args", _END_TO_END_SPECIAL_CHARACTER_CASES)
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_special_character_values_are_passed_as_data(
+    log, tmpdir, entry_point_type_script, entry_point, args, capture_error
+):
+    code_dir = str(tmpdir.mkdir("code"))
+    marker = os.path.join(str(tmpdir), "marker")
+    entry_point = entry_point.format(marker=marker)
+    args = [arg.format(marker=marker) for arg in args]
+
+    # Scripts exit non-zero so the runner raises and we do not depend on success.
+    _write_script(code_dir, "train.py", "import sys\nprint(sys.argv[1:])\nsys.exit(3)\n")
+    _write_script(code_dir, "train.sh", '#!/bin/sh\necho "$@"\nexit 3\n', executable=True)
+
+    with patch.object(environment, "code_dir", code_dir):
+        with pytest.raises(errors.ExecuteUserScriptError):
+            process.ProcessRunner(entry_point, args, {}, 1).run(capture_error=capture_error)
+
+    assert not os.path.exists(
+        marker
+    ), "value in %r / %r was interpreted rather than passed as data" % (
+        entry_point,
+        args,
+    )
+
+
+@pytest.mark.parametrize("capture_error", [True, False])
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_hyperparameters_reach_python_entry_point_verbatim(
+    log, tmpdir, entry_point_type_script, capture_error
+):
+    """Values with spaces, quotes and JSON survive end to end unchanged."""
+    code_dir = str(tmpdir.mkdir("code"))
+    received = os.path.join(str(tmpdir), "argv.json")
+    _write_script(
+        code_dir,
+        "train.py",
+        "import json, sys\n"
+        "with open(sys.argv[1], 'w') as f:\n"
+        "    json.dump(sys.argv[2:], f)\n",
+    )
+    args = [received, "--name", "a b", "--json", '{"k": "v w"}', "--q", "it's", "--s", "$HOME;x"]
+
+    with patch.object(environment, "code_dir", code_dir):
+        process.ProcessRunner("train.py", args, {}, 1).run(capture_error=capture_error)
+
+    with open(received) as handle:
+        assert json.load(handle) == args[1:]
+
+
+@pytest.mark.parametrize("capture_error", [True, False])
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_hyperparameters_reach_shell_entry_point_verbatim(
+    log, tmpdir, entry_point_type_script, capture_error
+):
+    """The shell entry point still receives each argument intact through its one shell level."""
+    code_dir = str(tmpdir.mkdir("code"))
+    received = os.path.join(str(tmpdir), "argv.txt")
+    _write_script(
+        code_dir,
+        "train.sh",
+        '#!/bin/sh\nout="$1"; shift\nfor a in "$@"; do printf "%s\\n" "$a" >> "$out"; done\n',
+        executable=True,
+    )
+    args = [received, "--name", "a b", "--json", '{"k": "v w"}', "--q", "it's", "--s", "$HOME;x"]
+
+    with patch.object(environment, "code_dir", code_dir):
+        process.ProcessRunner("train.sh", args, {}, 1).run(capture_error=capture_error)
+
+    with open(received) as handle:
+        assert handle.read().splitlines() == args[1:]

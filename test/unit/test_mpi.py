@@ -141,7 +141,7 @@ def test_mpi_worker_run_no_wait(popen, ssh_client, path_exists, write_env_vars):
 @patch("os.path.exists")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.environment.Environment")
 @patch("subprocess.run")
 @patch("sagemaker_training.mpi._modelparallel_environment_command", lambda x: [])
@@ -228,11 +228,10 @@ def test_mpi_master_run(
             "LD_CONFIG_PATH",
             "/bin/sh",
             "-c",
-            '"./train.sh -v --lr 35"',
+            "./train.sh -v --lr 35",
         ]
-        extended_cmd = " ".join(cmd)
         async_shell.assert_called_with(
-            extended_cmd,
+            *cmd,
             env=ANY,
             cwd=environment.code_dir,
             stdout=asyncio.subprocess.PIPE,
@@ -250,7 +249,7 @@ def test_mpi_master_run(
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.environment.Environment")
 @patch("sagemaker_training.mpi._write_status_file")
 @patch("sagemaker_training.mpi._modelparallel_environment_command", lambda x: [])
@@ -343,7 +342,7 @@ def test_mpi_master_run_python(
             "35",
         ]
         async_shell.assert_called_with(
-            " ".join(cmd),
+            *cmd,
             cwd=environment.code_dir,
             env=ANY,
             stdout=asyncio.subprocess.PIPE,
@@ -362,7 +361,7 @@ def test_mpi_master_run_python(
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.environment.Environment")
 @patch("sagemaker_training.mpi._write_status_file")
 def test_mpi_master_run_python_with_smddpmprun(
@@ -458,7 +457,7 @@ def test_mpi_master_run_python_with_smddpmprun(
             "35",
         ]
         async_shell.assert_called_with(
-            " ".join(cmd),
+            *cmd,
             cwd=environment.code_dir,
             env=ANY,
             stdout=asyncio.subprocess.PIPE,
@@ -477,7 +476,7 @@ def test_mpi_master_run_python_with_smddpmprun(
 @patch("sagemaker_training.process.python_executable", return_value="usr/bin/python3")
 @patch("paramiko.SSHClient", new_callable=MockSSHClient)
 @patch("paramiko.AutoAddPolicy")
-@patch("asyncio.create_subprocess_shell")
+@patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.environment.Environment")
 @patch("sagemaker_training.mpi._modelparallel_environment_command", lambda x: [])
 def test_mpi_master_run_python_efa(
@@ -575,7 +574,7 @@ def test_mpi_master_run_python_efa(
             "35",
         ]
         async_shell.assert_called_with(
-            " ".join(cmd),
+            *cmd,
             cwd=environment.code_dir,
             env=ANY,
             stdout=asyncio.subprocess.PIPE,
