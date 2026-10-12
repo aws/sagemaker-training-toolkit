@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.1.3 (2026-10-12)
+
+### Bug Fixes and Other Changes
+
+ * launch subprocesses as an argument vector instead of a shell string
+
 ## v5.1.2 (2026-09-23)
 
 ### Bug Fixes and Other Changes
