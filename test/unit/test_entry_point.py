@@ -69,7 +69,7 @@ def test_install_script(check_error, prepare, entry_point_type_module, has_requi
     entry_point.install("train.py", path)
 
     with patch("os.path.exists", return_value=True):
-        entry_point.install(path, "python_module.py")
+        entry_point.install("python_module.py", path)
 
 
 @patch("sagemaker_training.modules.prepare")
@@ -77,7 +77,64 @@ def test_install_script(check_error, prepare, entry_point_type_module, has_requi
 def test_install_fails(check_error, prepare, entry_point_type_module):
     check_error.side_effect = errors.ClientError()
     with pytest.raises(errors.ClientError):
-        entry_point.install("git://aws/container-support", "script")
+        entry_point.install("script", "git://aws/container-support")
+    check_error.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["../victim.sh", "/etc/passwd", "sub/../../victim.sh", "-x.sh", "train.sh; touch /tmp/x", ""],
+)
+@patch("os.chmod")
+def test_install_rejects_unsafe_entry_point_before_chmod(chmod, name, tmpdir):
+    """install() validates the entry point before any file system side effect, so a name
+    that is not a plain relative path never reaches os.chmod."""
+    with pytest.raises(errors.ClientError):
+        entry_point.install(name, str(tmpdir))
+
+    chmod.assert_not_called()
+
+
+def test_install_does_not_chmod_outside_code_dir(tmpdir):
+    """Real file system check: a path that escapes the code directory does not have its
+    permissions changed."""
+    code_dir = tmpdir.mkdir("code")
+    victim = tmpdir.join("victim")
+    victim.write("secret")
+    victim.chmod(0o600)
+
+    for name in ["../victim", str(victim)]:
+        with pytest.raises(errors.ClientError):
+            entry_point.install(name, str(code_dir))
+
+    assert oct(victim.stat().mode & 0o777) == oct(0o600)
+
+
+def test_install_rejects_symlink_escaping_code_dir(tmpdir):
+    """A validated-looking name that is a symlink to a file outside the code directory is
+    rejected by the resolved-path check, and the target is untouched."""
+    code_dir = tmpdir.mkdir("code")
+    victim = tmpdir.join("victim")
+    victim.write("secret")
+    victim.chmod(0o600)
+    os.symlink(str(victim), str(code_dir.join("link.sh")))
+
+    with pytest.raises(errors.ClientError):
+        entry_point.install("link.sh", str(code_dir))
+
+    assert oct(victim.stat().mode & 0o777) == oct(0o600)
+
+
+def test_install_chmods_command_inside_code_dir(tmpdir):
+    """An ordinary shell entry point inside the code directory is made executable."""
+    code_dir = tmpdir.mkdir("code")
+    script = code_dir.join("train.sh")
+    script.write("#!/bin/sh\n")
+    script.chmod(0o600)
+
+    entry_point.install("train.sh", str(code_dir))
+
+    assert oct(script.stat().mode & 0o777) == oct(0o777)
 
 
 @patch("sagemaker_training.modules.prepare")

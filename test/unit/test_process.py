@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 
 import asyncio
+import importlib.util
 import json
 import logging
 import os
@@ -332,7 +333,7 @@ def test_run_python(log, async_shell, async_gather, entry_point_type_script, eve
         )
         assert output == "stderr"
 
-    cmd = [sys.executable, "launcher.py", "--lr", "13"]
+    cmd = [sys.executable, "--", "launcher.py", "--lr", "13"]
     async_shell.assert_called_once()
     async_gather.assert_called_once()
     async_shell.assert_called_with(
@@ -378,7 +379,7 @@ def test_run_python_special_character_hyperparameter_capture_error(
 
     async_exec.assert_called_once()
     positional = async_exec.call_args[0]
-    assert positional == (sys.executable, "train.py", "--lr", value)
+    assert positional == (sys.executable, "--", "train.py", "--lr", value)
 
 
 @pytest.mark.parametrize("value", _SPECIAL_CHARACTER_VALUES)
@@ -392,7 +393,7 @@ def test_run_python_special_character_hyperparameter_popen(
         process.ProcessRunner("train.py", ["--lr", value], {}, 1).run(capture_error=False)
 
     popen.assert_called_once()
-    assert popen.call_args[0][0] == [sys.executable, "train.py", "--lr", value]
+    assert popen.call_args[0][0] == [sys.executable, "--", "train.py", "--lr", value]
 
 
 @pytest.mark.parametrize("value", _SPECIAL_CHARACTER_VALUES)
@@ -420,22 +421,197 @@ def test_run_module_special_character_hyperparameter(
         "`touch /tmp/marker`.py",
         'train.py"; touch /tmp/marker; echo ".py',
         "train.py | touch /tmp/marker; echo .py",
+        "/etc/train.py",
+        "../train.py",
+        "sub/../train.py",
     ],
 )
-@patch("asyncio.gather", new_callable=AsyncMock1)
 @patch("asyncio.create_subprocess_exec")
 @patch("sagemaker_training.logging_config.log_script_invocation")
-def test_run_python_special_character_entry_point_is_single_argv(
-    log, async_exec, async_gather, entry_point_type_script, event_loop, entry_point
+def test_run_python_special_character_entry_point_is_rejected(
+    log, async_exec, entry_point_type_script, entry_point
 ):
-    """A Python entry point name containing special characters is handed to the
-    interpreter as a single file name argument."""
-    async_gather.return_value = ("stdout", "stderr")
-
-    with pytest.raises(errors.ExecuteUserScriptError):
+    """A Python entry point name that is not a plain relative path is rejected before
+    any process is started."""
+    with pytest.raises(errors.ClientError):
         process.ProcessRunner(entry_point, [], {}, 1).run(capture_error=True)
 
-    assert async_exec.call_args[0] == (sys.executable, entry_point)
+    async_exec.assert_not_called()
+
+
+# Entry point names that end in '.py' (so they are classified as a Python program) but
+# begin with '-'. The interpreter reads a leading '-' as one of its own command-line
+# options, so these must be rejected rather than passed to it.
+_LEADING_DASH_ENTRY_POINTS = [
+    "-c.py",
+    "-m.py",
+    "-W.py",
+    "-X.py",
+    "--version.py",
+    "-train.py",
+    "-.py",
+]
+
+
+@pytest.mark.parametrize("entry_point", _LEADING_DASH_ENTRY_POINTS)
+@patch("sagemaker_training.environment.Environment", lambda: {})
+def test_create_command_rejects_leading_dash_python_entry_point(entry_point):
+    """A Python entry point whose name begins with '-' is rejected with a clear error
+    instead of being passed to the interpreter."""
+    runner = process.ProcessRunner(entry_point, [], {}, 1)
+    with pytest.raises(errors.ClientError):
+        runner._create_command()
+
+
+@pytest.mark.parametrize("entry_point", _LEADING_DASH_ENTRY_POINTS)
+@patch("os.listdir", lambda x: ("setup.py",))
+@patch("sagemaker_training.environment.Environment", lambda: {})
+def test_create_command_rejects_leading_dash_python_package(entry_point):
+    """The same rule applies to the Python package ('-m') branch."""
+    runner = process.ProcessRunner(entry_point, [], {}, 1)
+    with pytest.raises(errors.ClientError):
+        runner._create_command()
+
+
+@pytest.mark.parametrize("entry_point", ["train.py", "run_training.py", "my_script.py", "a.b+c.py"])
+@patch("sagemaker_training.environment.Environment", lambda: {})
+def test_create_command_accepts_safe_python_entry_point(entry_point):
+    """Ordinary Python entry points keep working and are passed after the '--'
+    end-of-options marker."""
+    runner = process.ProcessRunner(entry_point, ["--epochs", "10"], {}, 1)
+
+    assert runner._create_command() == [
+        sys.executable,
+        "--",
+        entry_point,
+        "--epochs",
+        "10",
+    ]
+
+
+@patch("sagemaker_training.environment.Environment", lambda: {})
+def test_create_command_emits_end_of_options_marker_for_bare_interpreter():
+    """The bare interpreter receives the entry point after a '--' marker, immediately
+    before the name, so the name can only be a file argument."""
+    runner = process.ProcessRunner("train.py", ["--lr", "1"], {}, 1)
+
+    cmd = runner._create_command()
+
+    assert cmd == [sys.executable, "--", "train.py", "--lr", "1"]
+    assert cmd[cmd.index("train.py") - 1] == "--"
+
+
+@patch("os.listdir", lambda x: ("setup.py",))
+@patch("sagemaker_training.environment.Environment", lambda: {})
+def test_create_command_package_module_strips_only_trailing_py():
+    """The '-m' module name is derived by stripping only a trailing '.py', not every
+    occurrence, so an interior '.py' in the name is preserved."""
+    runner = process.ProcessRunner("a.pyb.py", [], {}, 1)
+
+    assert runner._create_command() == [sys.executable, "-m", "a.pyb"]
+
+
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_leading_dash_entry_point_is_rejected_before_running(log, tmpdir):
+    """Real-process check: a leading-dash entry point is rejected before any process is
+    started, so nothing in the code directory runs."""
+    code_dir = str(tmpdir.mkdir("code"))
+    marker = os.path.join(str(tmpdir), "marker")
+    _write_script(code_dir, "-train.py", "open(%r, 'w').close()\n" % marker)
+
+    with patch("os.listdir", lambda x: ()):
+        with patch.object(environment, "code_dir", code_dir):
+            with pytest.raises(errors.ClientError):
+                process.ProcessRunner("-train.py", [], {}, 1).run(capture_error=True)
+
+    assert not os.path.exists(marker)
+
+
+@pytest.mark.parametrize(
+    "user_entry_point",
+    [
+        "-c.py",
+        "-m.py",
+        "-W.py",
+        "-X.py",
+        "--help.py",
+        "-",
+        "-x",
+        "/etc/passwd",
+        "/tmp/train.py",
+        "../train.py",
+        "sub/../train.py",
+        "./train.py",
+        "train.py; touch /tmp/x",
+        "train.py x",
+    ],
+)
+def test_validate_entry_point_rejects_unsafe(user_entry_point):
+    with pytest.raises(errors.ClientError):
+        process.validate_entry_point(user_entry_point)
+
+
+def test_validate_entry_point_rejects_empty():
+    with pytest.raises(errors.ClientError):
+        process.validate_entry_point("")
+
+
+class _ModuleLauncherRunner(process.ProcessRunner):
+    """A runner whose launcher runs the interpreter through a module, like the MPI
+    runners do with 'python -m mpi4py'. Such launchers parse their own arguments and do
+    not accept the '--' marker."""
+
+    def _python_command(self):
+        return super(_ModuleLauncherRunner, self)._python_command() + ["-m", "mpi4py"]
+
+
+@patch("sagemaker_training.environment.Environment", lambda: {})
+def test_create_command_omits_end_of_options_marker_for_module_launcher():
+    """'--' is only inserted when the launcher is the bare interpreter."""
+    runner = _ModuleLauncherRunner("train.py", ["--lr", "1"], {}, 1)
+
+    assert runner._create_command() == [sys.executable, "-m", "mpi4py", "train.py", "--lr", "1"]
+
+
+@pytest.mark.parametrize("entry_point", _LEADING_DASH_ENTRY_POINTS)
+@patch("sagemaker_training.environment.Environment", lambda: {})
+def test_create_command_module_launcher_rejects_leading_dash(entry_point):
+    """Without the '--' marker, the validator alone must still reject leading-dash names."""
+    runner = _ModuleLauncherRunner(entry_point, [], {}, 1)
+    with pytest.raises(errors.ClientError):
+        runner._create_command()
+
+
+@pytest.mark.skipif(importlib.util.find_spec("mpi4py") is None, reason="mpi4py not installed")
+@patch("sagemaker_training.logging_config.log_script_invocation")
+def test_module_launcher_command_runs_script_end_to_end(log, tmpdir):
+    """Real-process check with mpi4py: the module-launcher command shape actually runs the
+    user script and delivers its arguments."""
+    code_dir = str(tmpdir.mkdir("code"))
+    received = os.path.join(str(tmpdir), "argv.json")
+    _write_script(
+        code_dir,
+        "train.py",
+        "import json, sys\n"
+        "with open(sys.argv[1], 'w') as f:\n"
+        "    json.dump(sys.argv[2:], f)\n",
+    )
+    args = [received, "--lr", "1", "--name", "a b"]
+
+    with patch("os.listdir", lambda x: ()):
+        with patch.object(environment, "code_dir", code_dir):
+            _ModuleLauncherRunner("train.py", args, {}, 1).run(capture_error=True)
+
+    with open(received) as handle:
+        assert json.load(handle) == args[1:]
+
+
+@pytest.mark.parametrize(
+    "user_entry_point",
+    ["train.py", "module", "a.b+c.py", "sub_dir.train.py", "bin/train.sh"],
+)
+def test_validate_entry_point_accepts_safe(user_entry_point):
+    assert process.validate_entry_point(user_entry_point) == user_entry_point
 
 
 @pytest.mark.parametrize("value", _SPECIAL_CHARACTER_VALUES)
@@ -501,8 +677,11 @@ def test_special_character_values_are_passed_as_data(
     _write_script(code_dir, "train.py", "import sys\nprint(sys.argv[1:])\nsys.exit(3)\n")
     _write_script(code_dir, "train.sh", '#!/bin/sh\necho "$@"\nexit 3\n', executable=True)
 
+    # An invalid entry point name is rejected before launch (ClientError); a valid
+    # entry point with special characters in its argument values runs and exits
+    # non-zero (ExecuteUserScriptError). In both cases the values are data, not commands.
     with patch.object(environment, "code_dir", code_dir):
-        with pytest.raises(errors.ExecuteUserScriptError):
+        with pytest.raises((errors.ClientError, errors.ExecuteUserScriptError)):
             process.ProcessRunner(entry_point, args, {}, 1).run(capture_error=capture_error)
 
     assert not os.path.exists(

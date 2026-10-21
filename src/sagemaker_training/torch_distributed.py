@@ -131,7 +131,7 @@ class TorchDistributedRunner(process.ProcessRunner):
 
             # match = re.match(r"^ml[\._]([a-z\d]+)\.?\w*$", instance_type)
 
-            torchrun_cmd.append(str(self._user_entry_point))
+            torchrun_cmd.append(process.validate_entry_point(str(self._user_entry_point)))
             torchrun_cmd += self._args
             return torchrun_cmd
         else:

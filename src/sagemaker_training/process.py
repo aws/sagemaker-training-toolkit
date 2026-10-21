@@ -42,52 +42,58 @@ logger = logging_config.get_logger()
 _DEFAULT_BUF_SIZE = 1024 * 64
 DEFAULT_ERROR_CLASS = errors.ExecuteUserScriptError
 
-# A shell-executed entry point is a path relative to the code directory. Anything
-# outside this set cannot name a real file the shell would run unquoted anyway, so
-# rejecting it loses no working configuration while keeping shell metacharacters out
-# of the command string.
+# An entry point is a path relative to the code directory. Anything outside this set
+# cannot name a real file inside that directory, so rejecting it loses no working
+# configuration while keeping shell metacharacters, interpreter options (a leading
+# '-'), absolute paths and parent-directory traversal out of every place the name is
+# used: the command line, and the file system operations performed on it before launch.
 _SAFE_ENTRY_POINT = re.compile(r"^[A-Za-z0-9._][A-Za-z0-9._+-]*(/[A-Za-z0-9._+-]+)*$")
 # Used only to name the offending characters back to the customer in the error message.
 _SAFE_CHARACTER = re.compile(r"[A-Za-z0-9._+/-]")
 
 
-def _validate_shell_entry_point(user_entry_point):  # type: (str) -> str
-    """Reject entry point names that would be reinterpreted by a shell.
+def validate_entry_point(user_entry_point):  # type: (str) -> str
+    """Reject entry point names that are not a plain relative path inside the code directory.
 
-    The COMMAND entry point is interpolated into a ``/bin/sh -c`` string. The name is
-    validated against a strict relative-path pattern and additionally quoted, so a
-    name containing characters a shell would interpret is rejected with a clear error
-    instead of being executed in a mangled form.
+    The name is validated against a strict relative-path pattern: it may not be empty,
+    may not begin with ``-`` (which a shell or the Python interpreter would read as an
+    option) or ``/`` (an absolute path), may not contain ``.`` or ``..`` path segments,
+    and may contain only letters, digits and ``. _ + - /``. This single rule covers
+    every entry point type, so it can be applied once, before the entry point is
+    installed or any command is built from it.
 
     Args:
         user_entry_point (str): The name of the user entry point.
 
     Returns:
-        str: The entry point, unchanged, when it is safe to place in a shell command.
+        str: The entry point, unchanged, when it is a safe relative path.
 
     Raises:
-        errors.ClientError: If the name contains characters a shell would interpret.
+        errors.ClientError: If the name is empty or is not a safe relative path.
     """
     if not user_entry_point:
         raise errors.ClientError(
             "The training entry point name is empty. Set the 'sagemaker_program' "
             "hyperparameter (or ContainerEntrypoint) to the name of the script to run, "
-            "relative to your source directory -- for example 'train.sh'."
+            "relative to your source directory -- for example 'train.py' or 'train.sh'."
         )
 
     if not _SAFE_ENTRY_POINT.match(user_entry_point):
         unsupported = sorted({char for char in user_entry_point if not _SAFE_CHARACTER.match(char)})
-        detail = (
-            "the character(s) %s" % ", ".join(repr(char) for char in unsupported)
-            if unsupported
-            else "an unsupported character at the start of the name"
-        )
+        if unsupported:
+            detail = "the character(s) %s" % ", ".join(repr(char) for char in unsupported)
+        elif user_entry_point.startswith("-"):
+            detail = "a leading '-', which is read as a command-line option"
+        elif user_entry_point.startswith("/"):
+            detail = "a leading '/', which makes it an absolute path"
+        else:
+            detail = "an unsupported character at the start of the name"
         raise errors.ClientError(
             "The training entry point %r cannot be used because it contains %s. "
             "Rename the script so its name contains only letters, digits, '.', '_', "
-            "'+', '-' and '/', then set the 'sagemaker_program' hyperparameter (or "
-            "ContainerEntrypoint) to the new name -- for example 'train.sh' or "
-            "'bin/train.sh'." % (user_entry_point, detail)
+            "'+', '-' and '/', and does not start with '-' or '/', then set the "
+            "'sagemaker_program' hyperparameter (or ContainerEntrypoint) to the new name "
+            "-- for example 'train.py' or 'bin/train.sh'." % (user_entry_point, detail)
         )
 
     if any(segment in (".", os.pardir) for segment in user_entry_point.split("/")):
@@ -95,7 +101,7 @@ def _validate_shell_entry_point(user_entry_point):  # type: (str) -> str
             "The training entry point %r cannot be used because it contains '.' or '..' "
             "path segments. The entry point must be a path inside your source directory. "
             "Set the 'sagemaker_program' hyperparameter (or ContainerEntrypoint) to a "
-            "path relative to that directory -- for example 'train.sh' or 'bin/train.sh'."
+            "path relative to that directory -- for example 'train.py' or 'bin/train.sh'."
             % user_entry_point
         )
 
@@ -436,10 +442,25 @@ class ProcessRunner(object):
         entrypoint_type = _entry_point_type.get(environment.code_dir, self._user_entry_point)
 
         if entrypoint_type is _entry_point_type.PYTHON_PACKAGE:
-            entry_module = self._user_entry_point.replace(".py", "")
+            # Validate the name the customer supplied, then derive the module name by
+            # stripping only a trailing '.py'. Validating the raw name (not the derived
+            # one) keeps the check on exactly what was provided; 're.sub' with the '$'
+            # anchor removes only the extension, not every occurrence of '.py'.
+            validate_entry_point(self._user_entry_point)
+            entry_module = re.sub(r"\.py$", "", self._user_entry_point)
             return self._python_command() + ["-m", entry_module] + self._args
         elif entrypoint_type is _entry_point_type.PYTHON_PROGRAM:
-            return self._python_command() + [self._user_entry_point] + self._args
+            # The entry point name is validated so it can never be read as a command-line
+            # option. When the launcher is the bare interpreter, the name is additionally
+            # passed after the '--' end-of-options marker so the interpreter always treats
+            # it as the script file name. Launchers that run through a module (for example
+            # 'python -m mpi4py') parse their own arguments and do not accept '--', so the
+            # marker is omitted there and validation alone applies.
+            entry_point = validate_entry_point(self._user_entry_point)
+            python_command = self._python_command()
+            if python_command == [python_executable()]:
+                python_command = python_command + ["--"]
+            return python_command + [entry_point] + self._args
         else:
             # The shell entry point is the only place a shell is involved. The command
             # list is passed to the subprocess as an argument vector, so the single
@@ -451,7 +472,7 @@ class ProcessRunner(object):
                 for arg in self._args
             ]
             entry_point = six.moves.shlex_quote(  # pylint: disable=too-many-function-args
-                _validate_shell_entry_point(self._user_entry_point)
+                validate_entry_point(self._user_entry_point)
             )
             return [
                 "/bin/sh",
