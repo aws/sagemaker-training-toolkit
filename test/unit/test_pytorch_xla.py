@@ -18,7 +18,7 @@ import os
 from mock import patch
 import pytest
 
-from sagemaker_training.errors import SMTrainingCompilerConfigurationError
+from sagemaker_training.errors import ClientError, SMTrainingCompilerConfigurationError
 from sagemaker_training.pytorch_xla import PyTorchXLARunner
 
 
@@ -250,3 +250,27 @@ def test_check_cpu_compatibility(cluster, cluster_size, master, *patches):
         with pytest.raises(SMTrainingCompilerConfigurationError) as err:
             runner._check_processor_compatibility()
         assert "only supported for GPU" in str(err.value)
+
+
+@pytest.mark.parametrize("entry_point", ["-c.py", "-m.py", "--help.py", "-train.py"])
+@patch.dict(os.environ, {}, clear=True)
+def test_create_command_rejects_leading_dash_entry_point(entry_point):
+    """A Python entry point name beginning with '-' is rejected before it is placed in
+    the xla_spawn command."""
+    runner = PyTorchXLARunner(
+        user_entry_point=entry_point,
+        args=[],
+        env_vars={
+            "SM_TRAINING_ENV": json.dumps(
+                {"additional_framework_parameters": {"sagemaker_instance_type": "ml.p3.2xlarge"}}
+            ),
+        },
+        processes_per_host=1,
+        master_hostname="algo-1",
+        current_host="algo-1",
+        hosts=["algo-1"],
+        num_gpus=1,
+    )
+    runner._check_compatibility = lambda: None
+    with pytest.raises(ClientError):
+        runner._create_command()

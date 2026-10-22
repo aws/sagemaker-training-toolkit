@@ -23,7 +23,15 @@ import sys
 
 from retrying import retry
 
-from sagemaker_training import _entry_point_type, environment, files, modules, runner
+from sagemaker_training import (
+    _entry_point_type,
+    environment,
+    errors,
+    files,
+    modules,
+    process,
+    runner,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +132,10 @@ def install(name, path=environment.code_dir, capture_error=False):
     if path not in sys.path:
         sys.path.insert(0, path)
 
+    # Validate before any file system or install side effect. The same rule is applied
+    # again when the command is built, but this is the first place the name is used.
+    process.validate_entry_point(name)
+
     entry_point_type = _entry_point_type.get(path, name)
 
     if entry_point_type is _entry_point_type.PYTHON_PACKAGE:
@@ -132,7 +144,31 @@ def install(name, path=environment.code_dir, capture_error=False):
         modules.install_requirements(path, capture_error)
 
     if entry_point_type is _entry_point_type.COMMAND:
-        os.chmod(os.path.join(path, name), 511)
+        os.chmod(_entry_point_path(path, name), 511)
+
+
+def _entry_point_path(path, name):  # type: (str, str) -> str
+    """Return the resolved path of the entry point, which must be inside ``path``.
+
+    Args:
+        path (str): The code directory.
+        name (str): The validated entry point name, relative to ``path``.
+
+    Returns:
+        str: The resolved absolute path of the entry point.
+
+    Raises:
+        errors.ClientError: If the resolved path is not inside the code directory.
+    """
+    code_dir = os.path.realpath(path)
+    target = os.path.realpath(os.path.join(code_dir, name))
+    if os.path.commonpath([code_dir, target]) != code_dir:
+        raise errors.ClientError(
+            "The training entry point %r resolves to a location outside your source "
+            "directory. Set the 'sagemaker_program' hyperparameter (or ContainerEntrypoint) "
+            "to a path inside that directory -- for example 'train.py' or 'bin/train.sh'." % name
+        )
+    return target
 
 
 @retry(stop_max_delay=1000 * 60 * 15, wait_exponential_multiplier=100, wait_exponential_max=30000)
