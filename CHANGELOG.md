@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.1.4 (2026-10-23)
+
+### Bug Fixes and Other Changes
+
+ * format pytorch_xla.py with black 22.3.0 to match the release lint check
+ * validate the entry point once before install and launch
+
 ## v5.1.3 (2026-10-12)
 
 ### Bug Fixes and Other Changes
