@@ -93,9 +93,9 @@ class PyTorchXLARunner(process.ProcessRunner):
         )
         os.environ["GPU_NUM_DEVICES"] = str(self._num_gpus)
         if self._num_hosts > 1:
-            os.environ["XRT_MESH_SERVICE_ADDRESS"] = (
-                f"{self._master_hostname}:{self.MESH_SERVICE_PORT}"
-            )
+            os.environ[
+                "XRT_MESH_SERVICE_ADDRESS"
+            ] = f"{self._master_hostname}:{self.MESH_SERVICE_PORT}"
 
         logger.info("Completed environment setup for distributed training through PT-XLA Runtime.")
 
