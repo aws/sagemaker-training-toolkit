@@ -134,6 +134,15 @@ def test_array_to_csv(target, expected):
     np.testing.assert_equal(actual, expected)
 
 
+@pytest.mark.parametrize("value, expected", [(42, "42\n"), (1.25, "1.25\n")])
+@pytest.mark.parametrize("as_array", [False, True])
+def test_encode_scalar_csv(value, expected, as_array):
+    target = np.array(value) if as_array else value
+    result = encoders.encode(target, content_types.CSV)
+    assert result == expected
+    np.testing.assert_equal(encoders.decode(result, content_types.CSV), value)
+
+
 @pytest.mark.parametrize("content_type", [content_types.JSON, content_types.CSV, content_types.NPY])
 def test_encode(content_type):
     encoder = Mock()
