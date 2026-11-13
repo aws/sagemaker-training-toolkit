@@ -138,7 +138,9 @@ def array_to_csv(array_like):
         (str): Object serialized to CSV.
     """
     array = np.array(array_like)
-    if len(array.shape) == 1:
+    if array.ndim == 0:
+        array = array.reshape(1, 1)
+    elif len(array.shape) == 1:
         array = np.reshape(array, (array.shape[0], 1))  # pylint: disable=unsubscriptable-object
 
     try:
