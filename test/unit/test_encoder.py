@@ -24,6 +24,18 @@ from sagemaker_training.record_pb2 import Record
 from sagemaker_training.recordio import _read_recordio
 
 
+@pytest.mark.parametrize("shape", [(2, 3), (3, 2)])
+@pytest.mark.parametrize("as_sparse", [False, True])
+def test_recordio_rejects_labels_matching_columns_instead_of_rows(shape, as_sparse):
+    matrix = np.ones(shape, dtype="float32")
+    if as_sparse:
+        matrix = sparse.csr_matrix(matrix)
+    labels = np.ones(shape[1], dtype="float32")
+
+    with pytest.raises(ValueError, match="Label shape"):
+        encoders.array_to_recordio_protobuf(matrix, labels)
+
+
 @pytest.mark.parametrize(
     "target",
     ([42, 6, 9], [42.0, 6.0, 9.0], ["42", "6", "9"], ["42", "6", "9"], {42: {"6": 9.0}}),

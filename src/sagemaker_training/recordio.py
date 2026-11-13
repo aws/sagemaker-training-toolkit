@@ -118,7 +118,7 @@ def _write_numpy_to_dense_tensor(file, array, labels=None):
     if labels is not None:
         if not len(labels.shape) == 1:
             raise ValueError("Labels must be a Vector")
-        if labels.shape[0] not in array.shape:
+        if labels.shape[0] != array.shape[0]:
             raise ValueError(
                 "Label shape {} not compatible with array shape {}".format(
                     labels.shape, array.shape
@@ -157,7 +157,7 @@ def _write_spmatrix_to_sparse_tensor(file, array, labels=None):
     if labels is not None:
         if not len(labels.shape) == 1:
             raise ValueError("Labels must be a Vector")
-        if labels.shape[0] not in array.shape:
+        if labels.shape[0] != array.shape[0]:
             raise ValueError(
                 "Label shape {} not compatible with array shape {}".format(
                     labels.shape, array.shape
