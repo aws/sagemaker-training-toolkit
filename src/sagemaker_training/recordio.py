@@ -29,7 +29,7 @@ def _resolve_type(dtype):
     Returns:
         (str): String corresponding to the dtype.
     """
-    if dtype == np.dtype(int):
+    if dtype == np.dtype(int) or dtype == np.dtype("int32"):
         return "Int32"
     if dtype == np.dtype(float):
         return "Float64"

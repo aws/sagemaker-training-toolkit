@@ -162,6 +162,26 @@ def test_decode(content_type):
         decoder.assert_called_once_with(42)
 
 
+@pytest.mark.parametrize("as_sparse", [False, True])
+@pytest.mark.parametrize("with_labels", [False, True])
+def test_recordio_int32_features_and_labels(as_sparse, with_labels):
+    feature_dtype = "float32" if with_labels else "int32"
+    matrix = np.array([[1, 2], [3, 4]], dtype=feature_dtype)
+    if as_sparse:
+        matrix = sparse.csr_matrix(matrix)
+    labels = np.array([5, 6], dtype="int32") if with_labels else None
+
+    data = encoders.array_to_recordio_protobuf(matrix, labels)
+    records = [Record.FromString(row) for row in _read_recordio(io.BytesIO(data))]
+    tensor_name = "float32_tensor" if with_labels else "int32_tensor"
+    assert [list(getattr(row.features["values"], tensor_name).values) for row in records] == [
+        [1, 2],
+        [3, 4],
+    ]
+    if with_labels:
+        assert [list(row.label["values"].int32_tensor.values) for row in records] == [[5], [6]]
+
+
 def test_array_to_recordio_dense():
     array_data = [[1.0, 2.0, 3.0], [10.0, 20.0, 30.0]]
     buf = encoders.array_to_recordio_protobuf(np.array(array_data))
