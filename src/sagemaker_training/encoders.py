@@ -114,6 +114,10 @@ def csv_to_numpy(string_like, dtype=None):
         stream = StringIO(string_like)
         reader = csv.reader(stream, delimiter=",", quotechar='"', doublequote=True, strict=True)
         array = np.array([row for row in reader]).squeeze()
+    except Exception as e:
+        raise errors.ClientError("Error while decoding csv: {}".format(e))
+
+    try:
         array = array.astype(dtype)
     except ValueError as e:
         if dtype is not None:

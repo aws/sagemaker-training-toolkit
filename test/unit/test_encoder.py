@@ -110,6 +110,13 @@ def test_csv_to_numpy(target, expected):
     np.testing.assert_equal(actual, expected)
 
 
+@pytest.mark.parametrize("data", ["1,2\n3\n", '"a,b",c\nd\n'])
+@pytest.mark.parametrize("dtype", [None, float])
+def test_csv_to_numpy_ragged_rows(data, dtype):
+    with pytest.raises(errors.ClientError):
+        encoders.csv_to_numpy(data, dtype=dtype)
+
+
 def test_csv_to_numpy_error():
     with pytest.raises(errors.ClientError):
         encoders.csv_to_numpy("a\n", dtype="float")
